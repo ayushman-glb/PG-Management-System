@@ -12,11 +12,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     build: {
-      base: "/PG-Management-System/",
       sourcemap: emitSourcemaps ? "inline" : false,
       minify: !emitSourcemaps,
       chunkSizeWarningLimit: 1000, // raises the warning threshold to 1MB
     },
+    base: "/PG-Management-System/",
     plugins: [
       react(),
       tailwindcss(),
