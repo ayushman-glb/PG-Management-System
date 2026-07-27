@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
       figmaReactRefreshBoundaryFallback(),
       figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
     ],
-    base: "/PG-Management-System/",
+    base: "/PG-Management-System",
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
