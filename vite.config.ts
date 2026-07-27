@@ -11,11 +11,6 @@ export default defineConfig(({ mode }) => {
   const emitSourcemaps = mode === "development";
 
   return {
-    base: process.env.FIGMA_PUBLIC_URL
-      ? `${process.env.FIGMA_PUBLIC_URL}/`
-      : process.env.GITHUB_ACTIONS
-        ? "/PG-Management-System/"
-        : "/",
     build: {
       sourcemap: emitSourcemaps ? "inline" : false,
       minify: !emitSourcemaps,
@@ -28,6 +23,7 @@ export default defineConfig(({ mode }) => {
       figmaReactRefreshBoundaryFallback(),
       figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
     ],
+    base: "/PG-Management-System/",
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
