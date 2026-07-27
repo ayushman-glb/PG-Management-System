@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     build: {
+      base: "/PG-Management-System",
       sourcemap: emitSourcemaps ? "inline" : false,
       minify: !emitSourcemaps,
     },
@@ -23,7 +24,6 @@ export default defineConfig(({ mode }) => {
       figmaReactRefreshBoundaryFallback(),
       figmaMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
     ],
-    base: "/PG-Management-System",
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
