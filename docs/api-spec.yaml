@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: PG Management System API
+  version: "1.0.0"
+  description: >
+    Multi-tenant REST API for PG (Paying Guest) management.
+    All endpoints are tenant-scoped via the authenticated JWT; tenant_id is
+    never accepted as a client-supplied parameter.
+servers:
+  - url: https://api.pgmanager.io/api/v1
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new owner account (creates tenant)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      summary: Login with email/password (returns access + refresh token)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+        '423':
+          description: Account locked (rate-limited after repeated failures)
+
+  /auth/verify-2fa:
+    post:
+      summary: Verify TOTP code to complete login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionToken: { type: string }
+                totpCode: { type: string }
+      responses:
+        '200':
+          description: 2FA verified, tokens issued
+
+  /auth/refresh:
+    post:
+      summary: Exchange refresh token (httpOnly cookie) for new access token
+      security: []
+      responses:
+        '200':
+          description: New access token issued
+
+  /pgs:
+    get:
+      summary: List all PG properties for the authenticated tenant
+      responses:
+        '200':
+          description: List of PG properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PGProperty' }
+    post:
+      summary: Create a new PG property
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PGPropertyCreate' }
+      responses:
+        '201':
+          description: PG created
+
+  /pgs/{pgId}:
+    get:
+      summary: Get PG property details
+      parameters:
+        - $ref: '#/components/parameters/pgId'
+      responses:
+        '200':
+          description: PG details
+    patch:
+      summary: Update PG property
+      parameters:
+        - $ref: '#/components/parameters/pgId'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Archive a PG property (soft delete)
+      parameters:
+        - $ref: '#/components/parameters/pgId'
+      responses:
+        '204':
+          description: Archived
+
+  /pgs/{pgId}/rooms:
+    get:
+      summary: List rooms in a PG
+      parameters:
+        - $ref: '#/components/parameters/pgId'
+      responses:
+        '200':
+          description: List of rooms
+    post:
+      summary: Add a room to a PG
+      parameters:
+        - $ref: '#/components/parameters/pgId'
+      responses:
+        '201':
+          description: Room created
+
+  /pgs/{pgId}/rooms/{roomId}/beds:
+    get:
+      summary: List beds in a room, with occupancy status
+      parameters:
+        - $ref: '#/components/parameters/pgId'
+        - name: roomId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: List of beds
+
+  /residents:
+    get:
+      summary: List residents (filterable by pgId, status)
+      parameters:
+        - name: pgId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, notice_period, vacated] }
+      responses:
+        '200':
+          description: List of residents
+    post:
+      summary: Onboard a new resident (assigns bed, triggers KYC + agreement flow)
+      responses:
+        '201':
+          description: Resident created
+
+  /residents/{residentId}/checkout:
+    post:
+      summary: Initiate resident checkout (releases bed, final settlement)
+      parameters:
+        - name: residentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Checkout initiated
+
+  /invoices:
+    get:
+      summary: List invoices (filterable by residentId, status, dueDate range)
+      responses:
+        '200':
+          description: List of invoices
+    post:
+      summary: Generate an invoice manually (auto-generated monthly by default)
+      responses:
+        '201':
+          description: Invoice created
+
+  /invoices/{invoiceId}/pay:
+    post:
+      summary: Initiate payment for an invoice
+      description: Requires Idempotency-Key header to prevent duplicate charges.
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Payment initiated, returns gateway checkout session
+        '409':
+          description: Duplicate request (idempotency key already used)
+
+  /webhooks/payment-gateway:
+    post:
+      summary: Payment gateway webhook (Razorpay/Stripe signature verified)
+      security: []
+      responses:
+        '200':
+          description: Webhook processed
+
+  /complaints:
+    get:
+      summary: List complaints (filterable by pgId, status)
+      responses:
+        '200':
+          description: List of complaints
+    post:
+      summary: Raise a complaint (resident or staff)
+      responses:
+        '201':
+          description: Complaint created
+
+  /complaints/{complaintId}/status:
+    patch:
+      summary: Update complaint status (manager/staff only)
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Status updated
+
+  /analytics/occupancy:
+    get:
+      summary: Occupancy rate per PG, reads from replica
+      parameters:
+        - name: pgId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Occupancy metrics
+
+  /analytics/revenue:
+    get:
+      summary: Revenue summary per PG / date range
+      responses:
+        '200':
+          description: Revenue metrics
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    pgId:
+      name: pgId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, ownerName, businessName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        ownerName: { type: string }
+        businessName: { type: string }
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        expiresIn: { type: integer }
+        requires2FA: { type: boolean }
+
+    PGProperty:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        address: { type: string }
+        city: { type: string }
+        totalRooms: { type: integer }
+        occupancyRate: { type: number, format: float }
+
+    PGPropertyCreate:
+      type: object
+      required: [name, address, city]
+      properties:
+        name: { type: string }
+        address: { type: string }
+        city: { type: string }
+        amenities:
+          type: array
+          items: { type: string }
