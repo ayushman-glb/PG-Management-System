@@ -1,0 +1,378 @@
+import {
+  ArrowRight,
+  BarChart3,
+  Building2,
+  CheckCircle,
+  FileText,
+  HelpCircle,
+  Shield,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import type { Page } from "../App";
+import { ThemeToggle } from "../theme";
+import { BackButton } from "../navigation";
+
+interface Props {
+  navigate: (p: Page) => void;
+  page: Exclude<
+    Page,
+    | "landing"
+    | "dashboard"
+    | "properties"
+    | "residents"
+    | "billing"
+    | "complaints"
+    | "analytics"
+    | "pg-listing"
+    | "pg-details"
+    | "auth"
+    | "rooms"
+    | "beds"
+    | "visitors"
+    | "notifications"
+    | "settings"
+  >;
+}
+
+const pages = {
+  about: {
+    eyebrow: "About PG Manager",
+    title: "The operating system for better PG living",
+    description:
+      "PG Manager brings property owners, teams, and residents into one calm, connected workspace.",
+    icon: Building2,
+    sections: [
+      [
+        "Built around real work",
+        "We designed PG Manager with property owners and managers who were tired of scattered spreadsheets, paper agreements, and payment follow-ups.",
+      ],
+      [
+        "A clearer daily rhythm",
+        "From a resident's first inquiry to their final checkout, every important detail has a place and every team member can see what needs attention.",
+      ],
+      [
+        "Made to grow with you",
+        "Start with one property and add more without changing the way your team works. Reporting, billing, and resident operations stay in one view.",
+      ],
+    ],
+  },
+  blog: {
+    eyebrow: "PG Manager Journal",
+    title: "Ideas for running a sharper PG business",
+    description:
+      "Practical guidance on occupancy, resident experience, payments, and the small systems that make a property feel effortless.",
+    icon: FileText,
+    sections: [
+      [
+        "How to reduce vacancy without discounting rent",
+        "A simple weekly operating rhythm can help you spot upcoming vacancies early and respond with better timing.",
+      ],
+      [
+        "The resident experience is an operating metric",
+        "Fast issue resolution and clear communication are not just nice touches. They directly influence retention and referrals.",
+      ],
+      [
+        "From payment chasing to payment confidence",
+        "Automated reminders, clear records, and easy reconciliation give owners more time back every month.",
+      ],
+    ],
+  },
+  careers: {
+    eyebrow: "Careers",
+    title: "Build the future of property operations",
+    description:
+      "Join a small, thoughtful team making everyday housing operations more human and more useful.",
+    icon: Users,
+    sections: [
+      [
+        "Open roles",
+        "We are always interested in meeting product thinkers, engineers, and customer advocates who care about practical software.",
+      ],
+      [
+        "How we work",
+        "We value clear writing, small experiments, direct customer conversations, and shipping work that earns its place.",
+      ],
+      [
+        "Make an introduction",
+        "Tell us what you would like to build and how you think you could help. Our team will get back to you soon.",
+      ],
+    ],
+  },
+  press: {
+    eyebrow: "Press",
+    title: "PG management, in the story",
+    description:
+      "Find product information, company context, and the latest updates from PG Manager.",
+    icon: Sparkles,
+    sections: [
+      [
+        "What we do",
+        "PG Manager helps owners manage properties, residents, payments, complaints, and operations from one platform.",
+      ],
+      [
+        "Media inquiries",
+        "For interviews, product details, or company information, reach out to our communications team.",
+      ],
+      [
+        "Product assets",
+        "Our logo, product screenshots, and brand details are available for approved editorial use.",
+      ],
+    ],
+  },
+  changelog: {
+    eyebrow: "Product updates",
+    title: "A product that keeps getting better",
+    description:
+      "A concise record of the improvements landing across PG Manager.",
+    icon: Sparkles,
+    sections: [
+      [
+        "Operations views",
+        "Rooms, beds, visitors, notifications, and settings now have dedicated workflows.",
+      ],
+      [
+        "Better visibility",
+        "Owners can see occupancy, revenue, payment health, and resident activity at a glance.",
+      ],
+      [
+        "A calmer interface",
+        "We keep refining navigation, accessibility, and the details that make repeated work feel lighter.",
+      ],
+    ],
+  },
+  roadmap: {
+    eyebrow: "Roadmap",
+    title: "Where PG Manager is heading",
+    description:
+      "We are building toward more connected, predictive, and resident-friendly property operations.",
+    icon: BarChart3,
+    sections: [
+      [
+        "Now",
+        "Richer property operations, faster resident workflows, and more useful alerts.",
+      ],
+      [
+        "Next",
+        "Expanded automation for maintenance, visitor management, and payment reconciliation.",
+      ],
+      [
+        "Later",
+        "Portfolio intelligence that helps owners plan occupancy and costs with confidence.",
+      ],
+    ],
+  },
+  documentation: {
+    eyebrow: "Documentation",
+    title: "Everything your team needs to get moving",
+    description:
+      "Learn the workflows, roles, and conventions that make PG Manager work for your property.",
+    icon: FileText,
+    sections: [
+      [
+        "Start with the dashboard",
+        "Use the dashboard to orient your day, then move into properties, residents, billing, or complaints.",
+      ],
+      [
+        "Set up your properties",
+        "Add rooms, beds, pricing, and team permissions before inviting residents.",
+      ],
+      [
+        "Keep records current",
+        "A few minutes of daily updates keeps reports and resident communication reliable.",
+      ],
+    ],
+  },
+  "help-center": {
+    eyebrow: "Help Center",
+    title: "A little help, right when you need it",
+    description:
+      "Find answers to common questions about setup, billing, residents, and everyday operations.",
+    icon: HelpCircle,
+    sections: [
+      [
+        "Getting started",
+        "Most teams can configure their first property in a day with guided setup.",
+      ],
+      [
+        "Need a hand?",
+        "Our support team can help with data migration, account setup, and workflow questions.",
+      ],
+      [
+        "Talk to support",
+        "Send us the details of what you are trying to do and we will help you find the shortest path.",
+      ],
+    ],
+  },
+  "api-reference": {
+    eyebrow: "API Reference",
+    title: "Connect PG Manager to your stack",
+    description:
+      "Bring property, resident, billing, and operational data into the tools your team already uses.",
+    icon: FileText,
+    sections: [
+      [
+        "Structured data",
+        "Use predictable resources for properties, residents, payments, beds, and complaints.",
+      ],
+      [
+        "Secure by default",
+        "Authenticate integrations with scoped access and keep credentials out of client-side code.",
+      ],
+      [
+        "Built for extension",
+        "Connect notifications, accounting, reporting, and internal tools without duplicating records.",
+      ],
+    ],
+  },
+  status: {
+    eyebrow: "System status",
+    title: "PG Manager is running smoothly",
+    description:
+      "See the health of the services that keep your property operations moving.",
+    icon: Shield,
+    sections: [
+      ["Application", "Operational"],
+      ["Payments", "Operational"],
+      ["Notifications", "Operational"],
+    ],
+  },
+  "privacy-policy": {
+    eyebrow: "Privacy",
+    title: "Your data deserves careful handling",
+    description:
+      "We collect and use information to provide PG Manager, support your team, and keep the service secure.",
+    icon: Shield,
+    sections: [
+      [
+        "What we collect",
+        "Account, property, resident, and usage information needed to provide the product.",
+      ],
+      [
+        "How we use it",
+        "To operate the service, improve workflows, respond to support requests, and protect accounts.",
+      ],
+      [
+        "Your choices",
+        "You can contact us about access, correction, or deletion requests for your information.",
+      ],
+    ],
+  },
+  "terms-of-service": {
+    eyebrow: "Terms",
+    title: "Clear terms for a dependable service",
+    description:
+      "These terms explain how PG Manager may be used and what you can expect from the platform.",
+    icon: FileText,
+    sections: [
+      [
+        "Using the service",
+        "Use PG Manager lawfully, keep account details accurate, and protect your credentials.",
+      ],
+      [
+        "Your content",
+        "You retain responsibility for the information your team enters and shares through the platform.",
+      ],
+      [
+        "Service care",
+        "We work to keep the service reliable and communicate material changes clearly.",
+      ],
+    ],
+  },
+  "cookie-policy": {
+    eyebrow: "Cookies",
+    title: "A transparent approach to cookies",
+    description:
+      "Cookies help PG Manager remember preferences, understand usage, and keep important flows working.",
+    icon: CheckCircle,
+    sections: [
+      [
+        "Essential cookies",
+        "These support sign-in, security, navigation, and saved preferences.",
+      ],
+      [
+        "Usage insights",
+        "Aggregated product insights help us improve speed, clarity, and reliability.",
+      ],
+      [
+        "Your control",
+        "You can manage browser cookie settings, though some product features may stop working as expected.",
+      ],
+    ],
+  },
+} as const;
+
+export default function ContentPage({ navigate, page }: Props) {
+  const content = pages[page];
+  const Icon = content.icon;
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
+      <header className="border-b border-slate-200/70 bg-white/80 px-4 py-4 md:px-6 md:py-5 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          <button
+            onClick={() => navigate("landing")}
+            className="flex items-center gap-2.5"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white">
+              <Building2 className="h-4 w-4" />
+            </span>
+            <span className="font-bold text-slate-900">PG Manager</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <BackButton />
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+        <div className="max-w-3xl animate-page-in">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700">
+            <Icon className="h-3.5 w-3.5" /> {content.eyebrow}
+          </div>
+          <h1 className="text-4xl font-black leading-tight text-slate-900 md:text-6xl">
+            {content.title}
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-500">
+            {content.description}
+          </p>
+        </div>
+
+        <div className="mt-16 grid gap-5 md:grid-cols-3">
+          {content.sections.map(([title, description]) => (
+            <article
+              key={title}
+              className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-transform hover:-translate-y-1"
+            >
+              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <h2 className="font-bold text-slate-900">{title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                {description}
+              </p>
+            </article>
+          ))}
+        </div>
+
+        <section className="mt-16 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-violet-600 to-blue-700 p-8 text-white md:p-12">
+          <div className="relative max-w-2xl">
+            <h2 className="text-3xl font-black">
+              Make your next property day simpler.
+            </h2>
+            <p className="mt-3 text-white/75">
+              Bring your properties, residents, and payments into one clear
+              workspace.
+            </p>
+            <button
+              onClick={() => navigate("auth")}
+              className="mt-7 flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-600 transition-transform hover:scale-105"
+            >
+              Start free trial <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
