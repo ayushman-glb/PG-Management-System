@@ -36,7 +36,7 @@ Please include as much of the following as you can:
 
 In scope:
 - The Spring Boot backend (Identity, Property, Tenancy, Billing, Operations, Notification, Analytics modules)
-- The Next.js dashboard and public marketing/discovery site
+- The React + Vite dashboard and public marketing/discovery site
 - Multi-tenant data isolation (Row-Level Security, `tenant_id` scoping)
 - Authentication and session handling (JWT, TOTP 2FA)
 - Payment integration flows (Razorpay/Stripe)

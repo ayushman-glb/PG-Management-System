@@ -20,7 +20,7 @@ This expands on the high-level roadmap in the [README](../README.md) into concre
 
 Goal: a deployable skeleton with no product features yet, but every later phase builds on it safely.
 
-- [ ] Repo scaffolding: backend (Spring Boot modular monolith skeleton), frontend (Next.js dashboard + marketing site), `docker-compose.yml` for local Postgres/Redis/Kafka
+- [ ] Repo scaffolding: backend (Spring Boot modular monolith skeleton), frontend (React + Vite dashboard + marketing site), `docker-compose.yml` for local Postgres/Redis/Kafka
 - [ ] Identity module: tenant + user tables, JWT access/refresh token issuance, Argon2id password hashing
 - [ ] Postgres Row-Level Security policies scaffolded and tested with a two-tenant seed dataset (prove isolation before building anything on top)
 - [ ] CI/CD: GitHub Actions pipeline — build, lint, test, Dependabot, OWASP ZAP baseline scan

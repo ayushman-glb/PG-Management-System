@@ -34,7 +34,7 @@ This document expands on the architecture summary in the [README](../README.md) 
 ```mermaid
 flowchart TB
     subgraph Client
-        WEB[Next.js Public Site + Dashboard]
+        WEB[React + Vite Public Site + Dashboard]
     end
     subgraph Edge
         CDN[CDN / WAF]
