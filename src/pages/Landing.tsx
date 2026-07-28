@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MotionCard } from "../components/MotionCard";
+import { TypedText } from "../components/TypedText";
 import {
   Building2,
   Users,
@@ -236,6 +240,45 @@ export default function Landing({ navigate }: Props) {
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimateStats(true), 300);
+
+    gsap.registerPlugin(ScrollTrigger);
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!prefersReducedMotion) {
+      const ctx = gsap.context(() => {
+        const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.7 } });
+        tl.fromTo(".hero-badge", { opacity: 0, y: -15 }, { opacity: 1, y: 0 })
+          .fromTo(".hero-title", { opacity: 0, y: 25 }, { opacity: 1, y: 0 }, "-=0.4")
+          .fromTo(".hero-sub", { opacity: 0, y: 15 }, { opacity: 1, y: 0 }, "-=0.5")
+          .fromTo(".hero-cta", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1 }, "-=0.4")
+          .fromTo(".hero-stats", { opacity: 0, y: 15 }, { opacity: 1, y: 0 }, "-=0.3")
+          .fromTo(".hero-mockup", { opacity: 0, y: 40, scale: 0.98 }, { opacity: 1, y: 0, scale: 1 }, "-=0.3");
+
+        gsap.utils.toArray<HTMLElement>(".reveal-section").forEach((sec) => {
+          gsap.fromTo(
+            sec,
+            { opacity: 0, y: 35 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.75,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: sec,
+                start: "top 85%",
+                toggleActions: "play none none none",
+              },
+            }
+          );
+        });
+      });
+
+      return () => {
+        clearTimeout(timer);
+        ctx.revert();
+      };
+    }
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -372,21 +415,33 @@ export default function Landing({ navigate }: Props) {
       <section className="hero-gradient pt-32 pb-20 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-6">
+            <div className="hero-badge inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-6">
               <span className="w-1.5 h-1.5 bg-[#D9A87C] rounded-full animate-pulse" />
               Trusted by 500+ Luxury PG Owners across India
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-[#3B2A24] leading-[1.05] tracking-tight mb-6">
+
+            <h1 className="hero-title text-5xl md:text-6xl lg:text-7xl font-black text-[#3B2A24] leading-[1.05] tracking-tight mb-6">
               Manage Every PG.{" "}
-              <span className="gradient-text">Every Resident.</span> Every
-              Payment.
+              <span className="gradient-text min-h-[1.2em] inline-block">
+                <TypedText
+                  strings={[
+                    "Every Resident.",
+                    "Every Room & Bed.",
+                    "Every Rent Payment.",
+                    "Every Complaint.",
+                  ]}
+                  typeSpeed={60}
+                  backSpeed={40}
+                  backDelay={2000}
+                />
+              </span>
             </h1>
-            <p className="text-lg md:text-xl text-[#6E5A52] max-w-2xl mx-auto leading-relaxed mb-10">
+            <p className="hero-sub text-lg md:text-xl text-[#6E5A52] max-w-2xl mx-auto leading-relaxed mb-10">
               The boutique PG Management platform for property owners. Manage
               rooms, residents, billing, complaints, analytics and payments from
               one warm, elegant dashboard.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="hero-cta flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={() => navigate("auth")}
                 className="flex items-center gap-2.5 luxury-btn-primary px-7 py-3.5 text-base"
@@ -410,7 +465,7 @@ export default function Landing({ navigate }: Props) {
           </div>
 
           {/* Dashboard mockup */}
-          <div className="relative max-w-5xl mx-auto">
+          <div className="hero-mockup relative max-w-5xl mx-auto">
             <div className="glass rounded-2xl border border-white/80 shadow-2xl shadow-blue-100/50 overflow-hidden">
               {/* Browser chrome */}
               <div className="bg-slate-100/80 px-4 py-3 flex items-center gap-2 border-b border-slate-200/50">
@@ -638,7 +693,7 @@ export default function Landing({ navigate }: Props) {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-24 px-6 bg-white">
+      <section id="features" className="reveal-section py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-4">
@@ -654,12 +709,15 @@ export default function Landing({ navigate }: Props) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {features.map((feature) => {
+            {features.map((feature, idx) => {
               const Icon = feature.icon;
               return (
-                <div
+                <MotionCard
                   key={feature.title}
-                  className="feature-card group bg-[#FFFDFB] hover:bg-[#F8EEE5]/50 border border-[#E6D7CA] rounded-2xl p-5 card-hover cursor-default"
+                  delay={idx * 0.04}
+                  hoverY={-6}
+                  hoverScale={1.02}
+                  className="feature-card group bg-[#FFFDFB] hover:bg-[#F8EEE5]/50 border border-[#E6D7CA] rounded-2xl p-5 cursor-default"
                 >
                   <div
                     className="feature-icon w-10 h-10 rounded-xl flex items-center justify-center mb-4 shadow-sm text-white"
@@ -673,7 +731,7 @@ export default function Landing({ navigate }: Props) {
                   <p className="text-xs text-slate-500 leading-relaxed">
                     {feature.desc}
                   </p>
-                </div>
+                </MotionCard>
               );
             })}
           </div>

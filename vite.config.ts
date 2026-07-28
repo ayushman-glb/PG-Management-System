@@ -14,7 +14,28 @@ export default defineConfig(({ mode }) => {
     build: {
       sourcemap: emitSourcemaps ? "inline" : false,
       minify: !emitSourcemaps,
-      chunkSizeWarningLimit: 1000, // raises the warning threshold to 1MB
+      chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes("node_modules")) {
+              if (id.includes("react") || id.includes("react-dom")) {
+                return "vendor-react";
+              }
+              if (id.includes("framer-motion") || id.includes("gsap") || id.includes("lenis")) {
+                return "vendor-motion";
+              }
+              if (id.includes("recharts")) {
+                return "vendor-charts";
+              }
+              if (id.includes("lucide-react")) {
+                return "vendor-icons";
+              }
+              return "vendor";
+            }
+          },
+        },
+      },
     },
     base: "/PG-Management-System/",
     plugins: [

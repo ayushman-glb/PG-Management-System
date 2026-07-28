@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Search,
   Plus,
@@ -227,10 +228,13 @@ export default function Residents({ navigate }: Props) {
             style={{ minHeight: 0 }}
           >
             {filtered.map((r) => (
-              <button
+              <motion.button
                 key={r.id}
+                whileHover={{ x: 3 }}
+                whileTap={{ scale: 0.99 }}
+                transition={{ duration: 0.15 }}
                 onClick={() => setSelected(r)}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer ${
                   selected.id === r.id
                     ? darkMode
                       ? "bg-[#332D2B] border-l-4 border-[#C89A4B]"
@@ -279,7 +283,7 @@ export default function Residents({ navigate }: Props) {
                     </span>
                   </div>
                 </div>
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>

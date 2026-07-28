@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Building2,
@@ -119,13 +120,16 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5" aria-label="Main navigation">
+        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1" aria-label="Main navigation">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.page;
             return (
-              <button
+              <motion.button
                 key={item.label}
+                whileHover={{ x: collapsed ? 0 : 4 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
                 onClick={() => {
                   navigate(item.page);
                   setSidebarOpen(false);
@@ -133,21 +137,28 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                 title={collapsed ? item.label : undefined}
                 aria-current={isActive ? "page" : undefined}
                 className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                  focus-visible:outline-none focus-visible:ring-2
-                  ${isActive
-                    ? "text-white shadow-md focus-visible:ring-white"
-                    : darkMode
-                      ? "text-[#756A63] hover:text-[#F7F3EE] hover:bg-[#332D2B] focus-visible:ring-[#C89A4B]"
-                      : "text-[#6E5A52] hover:text-[#3B2A24] hover:bg-[#F8EEE5] focus-visible:ring-[#D9A87C]"
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer
+                  focus-visible:outline-none focus-visible:ring-2 relative
+                  ${
+                    isActive
+                      ? "text-white shadow-md focus-visible:ring-white"
+                      : darkMode
+                        ? "text-[#756A63] hover:text-[#F7F3EE] hover:bg-[#332D2B] focus-visible:ring-[#C89A4B]"
+                        : "text-[#6E5A52] hover:text-[#3B2A24] hover:bg-[#F8EEE5] focus-visible:ring-[#D9A87C]"
                   }
                 `}
-                style={isActive ? {
-                  background: "linear-gradient(135deg, #D9A87C, #C58B63)",
-                  boxShadow: darkMode
-                    ? "0 4px 14px rgba(200,154,75,0.35)"
-                    : "0 4px 14px rgba(197,139,99,0.3)",
-                } : {}}
+                style={
+                  isActive
+                    ? {
+                        background: darkMode
+                          ? "linear-gradient(135deg, #C89A4B, #D8B36A)"
+                          : "linear-gradient(135deg, #D9A87C, #C58B63)",
+                        boxShadow: darkMode
+                          ? "0 4px 14px rgba(200,154,75,0.35)"
+                          : "0 4px 14px rgba(197,139,99,0.3)",
+                      }
+                    : {}
+                }
               >
                 <Icon
                   className={`w-4 h-4 flex-shrink-0 ${
@@ -160,7 +171,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                   aria-hidden="true"
                 />
                 {!collapsed && <span className="truncate">{item.label}</span>}
-              </button>
+              </motion.button>
             );
           })}
         </nav>

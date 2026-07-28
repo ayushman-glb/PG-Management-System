@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
@@ -15,6 +16,8 @@ import ResidentPortal from "./pages/ResidentPortal";
 import ResidentRegister from "./pages/ResidentRegister";
 import { ThemeProvider, useTheme } from "./theme";
 import { NavigationProvider } from "./navigation";
+import { SmoothScroll } from "./components/SmoothScroll";
+import { ScrollProgressBar } from "./components/ScrollProgressBar";
 import loadingImg from "../public/images/loading.png";
 
 export type Page =
@@ -111,14 +114,35 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <NavigationProvider goBack={goBack}>
-        {skeletonLoading ? (
-          <PageSkeleton page={page} />
-        ) : (
-          renderPage(page, navigate)
-        )}
-        {loading && <LoadingOverlay />}
-      </NavigationProvider>
+      <SmoothScroll>
+        <ScrollProgressBar />
+        <NavigationProvider goBack={goBack}>
+          <AnimatePresence mode="wait">
+            {skeletonLoading ? (
+              <motion.div
+                key="skeleton"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <PageSkeleton page={page} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={page}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                {renderPage(page, navigate)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {loading && <LoadingOverlay />}
+        </NavigationProvider>
+      </SmoothScroll>
     </ThemeProvider>
   );
 }
