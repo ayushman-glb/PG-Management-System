@@ -15,6 +15,7 @@ import ResidentPortal from "./pages/ResidentPortal";
 import ResidentRegister from "./pages/ResidentRegister";
 import { ThemeProvider } from "./theme";
 import { NavigationProvider } from "./navigation";
+import loadingImg from "../public/images/loading.png";
 
 export type Page =
   | "landing"
@@ -90,7 +91,7 @@ function LoadingOverlay() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F8F5F2] animate-loading-in">
       <div className="flex flex-col items-center gap-6">
-        <img src="./images/loading.png" alt="Room Bae" className="w-56 animate-pulse" />
+        <img src={loadingImg} alt="Room Bae" className="w-56 animate-pulse" />
 
         <div className="flex gap-2">
           <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce"></span>

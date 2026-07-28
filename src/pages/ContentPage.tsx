@@ -15,24 +15,7 @@ import { BackButton } from "../navigation";
 
 interface Props {
   navigate: (p: Page) => void;
-  page: Exclude<
-    Page,
-    | "landing"
-    | "dashboard"
-    | "properties"
-    | "residents"
-    | "billing"
-    | "complaints"
-    | "analytics"
-    | "pg-listing"
-    | "pg-details"
-    | "auth"
-    | "rooms"
-    | "beds"
-    | "visitors"
-    | "notifications"
-    | "settings"
-  >;
+  page: Page;
 }
 
 const pages = {
@@ -303,7 +286,7 @@ const pages = {
 } as const;
 
 export default function ContentPage({ navigate, page }: Props) {
-  const content = pages[page];
+  const content = pages[page as keyof typeof pages] ?? pages.about;
   const Icon = content.icon;
 
   return (
@@ -342,7 +325,7 @@ export default function ContentPage({ navigate, page }: Props) {
         </div>
 
         <div className="mt-16 grid gap-5 md:grid-cols-3">
-          {content.sections.map(([title, description]) => (
+          {(content.sections as readonly (readonly [string, string])[]).map(([title, description]) => (
             <article
               key={title}
               className="luxury-card"

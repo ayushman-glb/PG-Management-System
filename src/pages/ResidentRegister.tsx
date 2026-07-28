@@ -9,8 +9,6 @@ import {
   Shield,
   MapPin,
   Home,
-  Briefcase,
-  HeartPulse,
   CreditCard,
   Check,
   X,
@@ -269,7 +267,7 @@ export default function ResidentRegister({ navigate }: Props) {
       // GSAP Shake animation on error
       if (stepCardRef.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         gsap.to(stepCardRef.current, {
-          x: [-10, 10, -8, 8, -4, 4, 0],
+          x: [-10, 10, -8, 8, -4, 4, 0] as any,
           duration: 0.4,
           ease: "power2.inOut",
         });
