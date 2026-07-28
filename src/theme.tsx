@@ -1,8 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
+export type AvatarPaletteMode = "luxury" | "gold" | "amber" | "bronze" | "rose" | "emerald" | "multi";
+
 interface ThemeContextValue {
   darkMode: boolean;
   toggleDark: () => void;
+  avatarTheme: AvatarPaletteMode;
+  setAvatarTheme: (theme: AvatarPaletteMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -14,14 +18,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
   });
 
+  const [avatarTheme, setAvatarThemeState] = useState<AvatarPaletteMode>(() => {
+    const stored = localStorage.getItem("pg-manager-avatar-theme");
+    if (stored && ["luxury", "gold", "amber", "bronze", "rose", "emerald", "multi"].includes(stored)) {
+      return stored as AvatarPaletteMode;
+    }
+    return "luxury";
+  });
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark-theme", darkMode);
     localStorage.setItem("pg-manager-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
+  const setAvatarTheme = (theme: AvatarPaletteMode) => {
+    setAvatarThemeState(theme);
+    localStorage.setItem("pg-manager-avatar-theme", theme);
+  };
+
   return (
     <ThemeContext.Provider
-      value={{ darkMode, toggleDark: () => setDarkMode((v) => !v) }}
+      value={{
+        darkMode,
+        toggleDark: () => setDarkMode((v) => !v),
+        avatarTheme,
+        setAvatarTheme,
+      }}
     >
       {children}
     </ThemeContext.Provider>
@@ -73,3 +95,4 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     </button>
   );
 }
+

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import type { Page } from "../App";
 import { ThemeToggle } from "../theme";
+import { Avatar } from "../components/Avatar";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -815,12 +816,7 @@ export default function Landing({ navigate }: Props) {
                   },
                 ].map((r) => (
                   <div key={r.name} className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                      style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                    >
-                      {r.avatar}
-                    </div>
+                    <Avatar name={r.name} initials={r.avatar} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900">
                         {r.name}
@@ -925,12 +921,7 @@ export default function Landing({ navigate }: Props) {
                   "{t.text}"
                 </p>
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                  >
-                    {t.avatar}
-                  </div>
+                  <Avatar name={t.name} initials={t.avatar} size="md" />
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
                       {t.name}

@@ -126,8 +126,9 @@ html.dark-theme .luxury-card {
   background-color: #332D2B !important;
 }
 html.dark-theme .bg-slate-50,
-html.dark-theme .bg-\[\#FFF8F2\] {
-  background-color: #2B2725 !important;
+html.dark-theme .bg-\[\#FFF8F2\],
+html.dark-theme .bg-\[\#F8F5F2\] {
+  background-color: #1D1B1A !important;
 }
 html.dark-theme .bg-slate-100,
 html.dark-theme .bg-\[\#F8EEE5\] {
@@ -572,4 +573,29 @@ html.dark-theme .accent-gradient {
   );
   background-size: 200% 100%;
   animation: shimmer-warm 2s ease-in-out infinite;
+}
+
+/* ─── Skeleton Shimmer System ─────────────────────── */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #F8EEE5 0%,
+    #FFFDFB 25%,
+    #E7C4A0 50%,
+    #F8EEE5 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  will-change: background-position;
+}
+
+html.dark-theme .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #2B2725 0%,
+    #3D3632 25%,
+    #4A443F 50%,
+    #2B2725 100%
+  );
+  background-size: 200% 100%;
 }

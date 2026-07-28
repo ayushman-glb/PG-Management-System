@@ -11,6 +11,7 @@ import {
   Wrench,
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import { AvatarThemeSelector } from "../components/Avatar";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
 
@@ -151,6 +152,13 @@ export default function Operations({ navigate, page }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Theme Avatar Selector for Settings page */}
+        {page === "settings" && (
+          <div className="my-4">
+            <AvatarThemeSelector />
+          </div>
+        )}
 
         {/* Bottom Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5">

@@ -20,6 +20,7 @@ import {
 import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
+import { Avatar } from "../components/Avatar";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -463,9 +464,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   {/* Roommate 1 - Current User */}
                   <div className={`p-4 rounded-xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#D9A87C] text-white flex items-center justify-center font-bold text-sm">
-                        AJ
-                      </div>
+                      <Avatar name="Ankit Joshi" initials="AJ" size="lg" />
                       <div>
                         <p className="font-bold text-sm">Ankit Joshi (You)</p>
                         <p className="text-xs text-slate-400">Bed 202A-1 · Software Engineer</p>
@@ -476,9 +475,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   {/* Roommate 2 */}
                   <div className={`p-4 rounded-xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#C58B63] text-white flex items-center justify-center font-bold text-sm">
-                        RK
-                      </div>
+                      <Avatar name="Rajesh Kumar" initials="RK" size="lg" />
                       <div>
                         <p className="font-bold text-sm">Rajesh Kumar</p>
                         <p className="text-xs text-slate-400">Bed 202A-2 · Product Manager</p>

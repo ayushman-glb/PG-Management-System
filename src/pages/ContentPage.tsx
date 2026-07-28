@@ -285,25 +285,53 @@ const pages = {
   },
 } as const;
 
+import { useTheme } from "../theme";
+
+interface Props {
+  navigate: (p: Page) => void;
+  page: Page;
+}
+
 export default function ContentPage({ navigate, page }: Props) {
   const content = pages[page as keyof typeof pages] ?? pages.about;
   const Icon = content.icon;
+  const { darkMode } = useTheme();
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] font-sans text-[#3B2A24]">
-      <header className="border-b border-[#E6D7CA]/70 bg-[#FFFDFB]/80 px-4 py-4 md:px-6 md:py-5 backdrop-blur-xl">
+    <div
+      className={`min-h-screen font-sans transition-colors duration-300 ${
+        darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"
+      }`}
+    >
+      <header
+        className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
+          darkMode
+            ? "bg-[#2B2725]/90 border-[#4A443F]"
+            : "bg-[#FFFDFB]/80 border-[#E6D7CA]/70"
+        } px-4 py-4 md:px-6 md:py-5`}
+      >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <button
             onClick={() => navigate("landing")}
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
           >
             <span
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
-              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+              style={{
+                background: darkMode
+                  ? "linear-gradient(135deg, #C89A4B, #D8B36A)"
+                  : "linear-gradient(135deg, #D9A87C, #C58B63)",
+              }}
             >
               <Building2 className="h-4.5 w-4.5" />
             </span>
-            <span className="font-bold text-[#3B2A24]">RoomBae</span>
+            <span
+              className={`font-bold ${
+                darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+              }`}
+            >
+              RoomBae
+            </span>
           </button>
           <div className="flex items-center gap-2">
             <BackButton />
@@ -313,28 +341,64 @@ export default function ContentPage({ navigate, page }: Props) {
       </header>
       <main className="mx-auto max-w-6xl px-6 py-16 md:py-24">
         <div className="max-w-3xl animate-page-in">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6D7CA] bg-[#F8EEE5] px-4 py-2 text-xs font-semibold text-[#C58B63]">
+          <div
+            className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
+              darkMode
+                ? "border-[#4A443F] bg-[#332D2B] text-[#C89A4B]"
+                : "border-[#E6D7CA] bg-[#F8EEE5] text-[#C58B63]"
+            }`}
+          >
             <Icon className="h-3.5 w-3.5" /> {content.eyebrow}
           </div>
-          <h1 className="text-4xl font-black leading-tight text-[#3B2A24] md:text-6xl">
+          <h1
+            className={`text-4xl font-black leading-tight md:text-6xl ${
+              darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+            }`}
+          >
             {content.title}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#6E5A52]">
+          <p
+            className={`mt-6 max-w-2xl text-lg leading-relaxed ${
+              darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"
+            }`}
+          >
             {content.description}
           </p>
         </div>
 
         <div className="mt-16 grid gap-5 md:grid-cols-3">
-          {(content.sections as readonly (readonly [string, string])[]).map(([title, description]) => (
+          {(
+            content.sections as readonly (readonly [string, string])[]
+          ).map(([title, description]) => (
             <article
               key={title}
-              className="luxury-card"
+              className={`luxury-card p-6 rounded-2xl border transition-all ${
+                darkMode
+                  ? "bg-[#332D2B] border-[#4A443F]"
+                  : "bg-[#FFFDFB] border-[#E6D7CA]"
+              }`}
             >
-              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-[#F8EEE5] text-[#C58B63]">
+              <div
+                className={`mb-6 flex h-10 w-10 items-center justify-center rounded-xl ${
+                  darkMode
+                    ? "bg-[#2B2725] text-[#C89A4B]"
+                    : "bg-[#F8EEE5] text-[#C58B63]"
+                }`}
+              >
                 <CheckCircle className="h-5 w-5" />
               </div>
-              <h2 className="font-bold text-[#3B2A24]">{title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-[#6E5A52]">
+              <h2
+                className={`font-bold ${
+                  darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+                }`}
+              >
+                {title}
+              </h2>
+              <p
+                className={`mt-2 text-sm leading-relaxed ${
+                  darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"
+                }`}
+              >
                 {description}
               </p>
             </article>
@@ -343,10 +407,14 @@ export default function ContentPage({ navigate, page }: Props) {
 
         <section
           className="mt-16 overflow-hidden rounded-3xl p-8 text-white md:p-12 shadow-xl"
-          style={{ background: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)" }}
+          style={{
+            background: darkMode
+              ? "linear-gradient(135deg, #C89A4B 0%, #D8B36A 100%)"
+              : "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)",
+          }}
         >
           <div className="relative max-w-2xl">
-            <h2 className="text-3xl font-black">
+            <h2 className="text-3xl font-black text-white">
               Make your next property day simpler.
             </h2>
             <p className="mt-3 text-white/90">
@@ -355,7 +423,11 @@ export default function ContentPage({ navigate, page }: Props) {
             </p>
             <button
               onClick={() => navigate("auth")}
-              className="mt-7 flex items-center gap-2 rounded-xl bg-[#FFFDFB] px-5 py-3 text-sm font-bold text-[#C58B63] transition-transform hover:scale-105 shadow-md"
+              className={`mt-7 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-transform hover:scale-105 shadow-md ${
+                darkMode
+                  ? "bg-[#1D1B1A] text-[#E8C98A]"
+                  : "bg-[#FFFDFB] text-[#C58B63]"
+              }`}
             >
               Start free trial <ArrowRight className="h-4 w-4" />
             </button>

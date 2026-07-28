@@ -9,6 +9,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import { Avatar } from "../components/Avatar";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
 
@@ -327,12 +328,7 @@ export default function Complaints({ navigate }: Props) {
                       </div>
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-2">
-                          <div
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                          >
-                            {complaint.avatar}
-                          </div>
+                          <Avatar name={complaint.resident} initials={complaint.avatar} size="xs" />
                           <div>
                             <p
                               className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-slate-700"}`}

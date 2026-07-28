@@ -20,6 +20,7 @@ import {
 import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
+import { Avatar } from "./Avatar";
 
 interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -167,12 +168,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
         {/* Bottom user area */}
         <div className={`p-4 border-t ${darkMode ? "border-[#4A443F]" : "border-[#E6D7CA]"}`}>
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)", boxShadow: "0 2px 8px rgba(197,139,99,0.35)" }}
-            >
-              RK
-            </div>
+            <Avatar name="Rajesh Kumar" initials="RK" size="md" />
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-semibold truncate ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
@@ -259,12 +255,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                 style={{ background: "#D96B5D", boxShadow: "0 0 0 1.5px #FFFDFB" }}
               />
             </button>
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-            >
-              RK
-            </div>
+            <Avatar name="Rajesh Kumar" initials="RK" size="sm" />
           </div>
         </header>
 

@@ -13,7 +13,7 @@ import {
   Heart,
 } from "lucide-react";
 import type { Page } from "../App";
-import { ThemeToggle } from "../theme";
+import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
 
 interface Props {
@@ -152,6 +152,7 @@ export default function PGListing({ navigate }: Props) {
     Object.fromEntries(pgs.map((p) => [p.id, p.liked])),
   );
   const [showFilters, setShowFilters] = useState(false);
+  const { darkMode } = useTheme();
 
   const filtered = pgs.filter((pg) => {
     const matchSearch =
@@ -163,37 +164,43 @@ export default function PGListing({ navigate }: Props) {
   });
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] text-[#3B2A24]">
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
       {/* Header */}
-      <div className="bg-[#FFFDFB] border-b border-[#E6D7CA] sticky top-0 z-40">
+      <div className={`sticky top-0 z-40 border-b transition-colors ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <div className="flex items-center gap-2">
               <BackButton />
               <button
                 onClick={() => navigate("landing")}
-                className="hidden sm:flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors text-sm font-medium"
+                className={`hidden sm:flex items-center gap-2 transition-colors text-sm font-medium ${darkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"}`}
               >
                 <span>Home</span>
               </button>
             </div>
 
             {/* Search bar */}
-            <div className="order-3 basis-full flex min-w-0 max-w-2xl flex-1 items-center gap-3 rounded-2xl bg-[#F8EEE5] border border-[#E6D7CA] px-4 py-3 sm:order-none sm:basis-auto">
-              <Search className="w-4 h-4 text-[#A8907F] flex-shrink-0" />
+            <div className={`order-3 basis-full flex min-w-0 max-w-2xl flex-1 items-center gap-3 rounded-2xl border px-4 py-3 sm:order-none sm:basis-auto ${
+              darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"
+            }`}>
+              <Search className={`w-4 h-4 flex-shrink-0 ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`} />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by location, name, or amenity..."
-                className="flex-1 bg-transparent text-sm text-[#3B2A24] placeholder:text-[#A8907F] outline-none"
+                className={`flex-1 bg-transparent text-sm outline-none ${darkMode ? "text-[#F7F3EE] placeholder:text-[#756A63]" : "text-[#3B2A24] placeholder:text-[#A8907F]"}`}
               />
             </div>
 
             <ThemeToggle />
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex flex-shrink-0 items-center gap-2 border border-slate-200 text-slate-700 text-sm font-semibold px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+              className={`flex flex-shrink-0 items-center gap-2 border text-sm font-semibold px-3.5 py-2.5 rounded-xl transition-colors ${
+                darkMode
+                  ? "border-[#4A443F] text-slate-300 hover:bg-[#332D2B]"
+                  : "border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
@@ -202,9 +209,9 @@ export default function PGListing({ navigate }: Props) {
 
           {/* Filter bar */}
           {showFilters && (
-            <div className="mt-4 flex flex-wrap items-center gap-4 pb-2">
+            <div className="mt-4 flex flex-wrap items-center gap-4 pb-2 animate-fade-in">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500">
+                <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                   Type:
                 </span>
                 <div className="flex gap-1.5">
@@ -212,7 +219,13 @@ export default function PGListing({ navigate }: Props) {
                     <button
                       key={t}
                       onClick={() => setPgType(t)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${pgType === t ? "luxury-btn-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                        pgType === t
+                          ? "luxury-btn-primary text-white"
+                          : darkMode
+                            ? "bg-[#332D2B] text-slate-300 hover:bg-[#3D3632]"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
                     >
                       {t}
                     </button>
@@ -220,7 +233,7 @@ export default function PGListing({ navigate }: Props) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-slate-500">
+                <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                   Max Price: ₹{maxPrice.toLocaleString()}/mo
                 </span>
                 <input
@@ -239,18 +252,22 @@ export default function PGListing({ navigate }: Props) {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-black text-slate-900">
+            <h1 className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
               PG Accommodations in Bengaluru
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
               {filtered.length} properties found
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <select className="text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-[#D9A87C]">
+            <Filter className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
+            <select className={`text-sm border rounded-xl px-3 py-2 outline-none ${
+              darkMode
+                ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE] focus:ring-[#C89A4B]"
+                : "bg-white border-slate-200 text-slate-600 focus:ring-[#D9A87C]"
+            }`}>
               <option>Best Match</option>
               <option>Price: Low to High</option>
               <option>Price: High to Low</option>
@@ -263,7 +280,11 @@ export default function PGListing({ navigate }: Props) {
           {filtered.map((pg) => (
             <div
               key={pg.id}
-              className="bg-white rounded-2xl border border-slate-100 overflow-hidden card-hover group"
+              className={`rounded-2xl border overflow-hidden card-hover group ${
+                darkMode
+                  ? "bg-[#2B2725] border-[#4A443F]"
+                  : "bg-white border-slate-100"
+              }`}
             >
               {/* Image */}
               <div className="relative h-48 bg-slate-100 overflow-hidden">
@@ -288,7 +309,9 @@ export default function PGListing({ navigate }: Props) {
                   onClick={() =>
                     setLikes((prev) => ({ ...prev, [pg.id]: !prev[pg.id] }))
                   }
-                  className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+                  className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform ${
+                    darkMode ? "bg-[#1D1B1A]/80 backdrop-blur-sm" : "bg-white/90 backdrop-blur-sm"
+                  }`}
                 >
                   <Heart
                     className={`w-4 h-4 ${likes[pg.id] ? "fill-red-500 text-red-500" : "text-slate-400"}`}
@@ -296,7 +319,9 @@ export default function PGListing({ navigate }: Props) {
                 </button>
 
                 {/* Type badge */}
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-xs font-bold px-2.5 py-1 rounded-full text-slate-700">
+                <div className={`absolute bottom-3 left-3 backdrop-blur-sm text-xs font-bold px-2.5 py-1 rounded-full ${
+                  darkMode ? "bg-[#1D1B1A]/80 text-slate-200" : "bg-white/90 text-slate-700"
+                }`}>
                   {pg.type}
                 </div>
               </div>
@@ -304,21 +329,21 @@ export default function PGListing({ navigate }: Props) {
               {/* Content */}
               <div className="p-5">
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-slate-900 leading-snug">
+                  <h3 className={`font-bold leading-snug ${darkMode ? "text-white" : "text-slate-900"}`}>
                     {pg.name}
                   </h3>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-sm font-bold text-slate-800">
+                    <span className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                       {pg.rating}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                       ({pg.reviews})
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-4">
+                <div className={`flex items-center gap-1.5 text-xs mb-4 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                   <MapPin className="w-3 h-3" />
                   <span>
                     {pg.location}, {pg.city}
@@ -333,14 +358,16 @@ export default function PGListing({ navigate }: Props) {
                       <div
                         key={a}
                         title={a}
-                        className="w-7 h-7 bg-slate-100 hover:bg-[#F8EEE5] rounded-lg flex items-center justify-center transition-colors"
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                          darkMode ? "bg-[#332D2B] text-slate-300" : "bg-slate-100 text-slate-500 hover:bg-[#F8EEE5]"
+                        }`}
                       >
-                        <Icon className="w-3.5 h-3.5 text-slate-500" />
+                        <Icon className="w-3.5 h-3.5" />
                       </div>
                     ) : null;
                   })}
                   {pg.amenities.length > 4 && (
-                    <span className="text-xs text-slate-400 font-medium ml-1">
+                    <span className={`text-xs font-medium ml-1 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                       +{pg.amenities.length - 4} more
                     </span>
                   )}
@@ -348,11 +375,11 @@ export default function PGListing({ navigate }: Props) {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-2xl font-black text-slate-900">
+                    <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
                       ₹{pg.price.toLocaleString()}
                     </span>
-                    <span className="text-xs text-slate-400">/month</span>
-                    <p className="text-xs text-green-600 font-medium mt-0.5">
+                    <span className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>/month</span>
+                    <p className="text-xs text-green-500 font-medium mt-0.5">
                       {pg.available} beds available
                     </p>
                   </div>
@@ -371,10 +398,10 @@ export default function PGListing({ navigate }: Props) {
         {filtered.length === 0 && (
           <div className="text-center py-20">
             <p className="text-4xl mb-3">🏠</p>
-            <h3 className="text-lg font-bold text-slate-900 mb-1">
+            <h3 className={`text-lg font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}>
               No PGs found
             </h3>
-            <p className="text-slate-500 text-sm">
+            <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
               Try adjusting your filters or search terms.
             </p>
           </div>

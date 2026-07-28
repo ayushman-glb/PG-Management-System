@@ -13,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
+import { Avatar, AvatarThemeSelector } from "../components/Avatar";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
 
@@ -133,6 +134,7 @@ const paymentHistory = [
 export default function Residents({ navigate }: Props) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(residents[0]);
+  const [showPalette, setShowPalette] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "payments" | "timeline"
   >("overview");
@@ -182,11 +184,25 @@ export default function Residents({ navigate }: Props) {
                 className={`bg-transparent text-sm placeholder:text-slate-400 outline-none flex-1 ${darkMode ? "text-white" : "text-slate-700"}`}
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
               >
                 <Filter className="w-3 h-3" /> Filter
+              </button>
+              <button
+                onClick={() => setShowPalette(!showPalette)}
+                className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors font-medium ${
+                  showPalette
+                    ? darkMode
+                      ? "border-[#C89A4B] text-[#C89A4B] bg-[#332D2B]"
+                      : "border-[#D9A87C] text-[#C58B63] bg-[#F8EEE5]"
+                    : darkMode
+                      ? "border-slate-600 text-slate-400 hover:bg-slate-700"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                🎨 Theme
               </button>
               <button
                 className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
@@ -199,6 +215,11 @@ export default function Residents({ navigate }: Props) {
                 {filtered.length} residents
               </span>
             </div>
+            {showPalette && (
+              <div className="pt-2 animate-fade-in">
+                <AvatarThemeSelector />
+              </div>
+            )}
           </div>
 
           <div
@@ -219,12 +240,7 @@ export default function Residents({ navigate }: Props) {
                       : "hover:bg-slate-50"
                 }`}
               >
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                  style={{ background: darkMode ? "linear-gradient(135deg, #C89A4B, #D8B36A)" : "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                >
-                  {r.avatar}
-                </div>
+                <Avatar name={r.name} initials={r.avatar} size="md" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p
@@ -282,9 +298,7 @@ export default function Residents({ navigate }: Props) {
             }}
           >
             <div className="flex items-start gap-4 md:gap-5">
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-lg md:text-xl font-black shadow-lg flex-shrink-0">
-                {selected.avatar}
-              </div>
+              <Avatar name={selected.name} initials={selected.avatar} size="2xl" />
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg md:text-xl font-black text-white truncate">
                   {selected.name}

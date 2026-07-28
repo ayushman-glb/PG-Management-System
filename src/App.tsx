@@ -13,7 +13,7 @@ import Operations from "./pages/Operations";
 import ContentPage from "./pages/ContentPage";
 import ResidentPortal from "./pages/ResidentPortal";
 import ResidentRegister from "./pages/ResidentRegister";
-import { ThemeProvider } from "./theme";
+import { ThemeProvider, useTheme } from "./theme";
 import { NavigationProvider } from "./navigation";
 import loadingImg from "../public/images/loading.png";
 
@@ -49,13 +49,27 @@ export type Page =
   | "terms-of-service"
   | "cookie-policy";
 
+import {
+  ENABLE_SKELETON_DEBUG_DELAY,
+  SKELETON_DEBUG_DELAY_MS,
+  PageSkeleton,
+} from "./components/Skeletons";
+
 export default function App() {
   const [page, setPage] = useState<Page>("landing");
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
+  const [skeletonLoading, setSkeletonLoading] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 1200);
+    const timer = window.setTimeout(() => {
+      setLoading(false);
+      if (ENABLE_SKELETON_DEBUG_DELAY) {
+        setSkeletonLoading(true);
+        window.setTimeout(() => setSkeletonLoading(false), SKELETON_DEBUG_DELAY_MS);
+      }
+    }, 400);
+
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -64,7 +78,16 @@ export default function App() {
     setPageHistory((previous) => [...previous, page]);
     setPage(p);
     setLoading(true);
-    window.setTimeout(() => setLoading(false), 1200);
+    setSkeletonLoading(false);
+
+    window.setTimeout(() => {
+      setLoading(false);
+      if (ENABLE_SKELETON_DEBUG_DELAY) {
+        setSkeletonLoading(true);
+        window.setTimeout(() => setSkeletonLoading(false), SKELETON_DEBUG_DELAY_MS);
+      }
+    }, 350);
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -73,14 +96,27 @@ export default function App() {
     setPageHistory((history) => history.slice(0, -1));
     setPage(previous);
     setLoading(true);
-    window.setTimeout(() => setLoading(false), 1200);
+    setSkeletonLoading(false);
+
+    window.setTimeout(() => {
+      setLoading(false);
+      if (ENABLE_SKELETON_DEBUG_DELAY) {
+        setSkeletonLoading(true);
+        window.setTimeout(() => setSkeletonLoading(false), SKELETON_DEBUG_DELAY_MS);
+      }
+    }, 350);
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <ThemeProvider>
       <NavigationProvider goBack={goBack}>
-        {renderPage(page, navigate)}
+        {skeletonLoading ? (
+          <PageSkeleton page={page} />
+        ) : (
+          renderPage(page, navigate)
+        )}
         {loading && <LoadingOverlay />}
       </NavigationProvider>
     </ThemeProvider>
@@ -88,15 +124,32 @@ export default function App() {
 }
 
 function LoadingOverlay() {
+  const { darkMode } = useTheme();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F8F5F2] animate-loading-in">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-colors duration-300 animate-loading-in ${
+        darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]"
+      }`}
+    >
       <div className="flex flex-col items-center gap-6">
-        <img src={loadingImg} alt="Room Bae" className="w-56 animate-pulse" />
+        <img src={loadingImg} alt="RoomBae" className="w-52 md:w-60 animate-pulse filter drop-shadow-md" />
 
-        <div className="flex gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce"></span>
-          <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce delay-150"></span>
-          <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce delay-300"></span>
+        <div className="flex gap-2.5 items-center">
+          <span
+            className={`h-2.5 w-2.5 rounded-full animate-bounce ${
+              darkMode ? "bg-[#C89A4B]" : "bg-[#D9A87C]"
+            }`}
+          />
+          <span
+            className={`h-2.5 w-2.5 rounded-full animate-bounce delay-150 ${
+              darkMode ? "bg-[#D8B36A]" : "bg-[#C58B63]"
+            }`}
+          />
+          <span
+            className={`h-2.5 w-2.5 rounded-full animate-bounce delay-300 ${
+              darkMode ? "bg-[#E8C98A]" : "bg-[#E7C4A0]"
+            }`}
+          />
         </div>
       </div>
     </div>

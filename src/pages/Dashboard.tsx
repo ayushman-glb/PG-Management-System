@@ -28,6 +28,7 @@ import {
   Line,
 } from "recharts";
 import DashboardLayout from "../components/DashboardLayout";
+import { Avatar } from "../components/Avatar";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
 
@@ -605,7 +606,7 @@ export default function Dashboard({ navigate }: Props) {
             </h3>
             <button
               onClick={() => navigate("residents")}
-              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:underline"
+              className={`flex items-center gap-1.5 text-xs font-medium hover:underline ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}
             >
               View all residents
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -632,9 +633,7 @@ export default function Dashboard({ navigate }: Props) {
                   >
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {r.avatar}
-                        </div>
+                        <Avatar name={r.name} initials={r.avatar} size="sm" />
                         <span
                           className={`text-sm font-medium ${darkMode ? "text-white" : "text-slate-900"}`}
                         >
