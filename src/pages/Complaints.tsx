@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import type { Page } from "../App";
+import { useTheme } from "../theme";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -188,6 +189,7 @@ export default function Complaints({ navigate }: Props) {
     complaint: Complaint;
     from: string;
   } | null>(null);
+  const { darkMode } = useTheme();
 
   const handleDrop = (targetCol: string) => {
     if (!dragging || dragging.from === targetCol) return;
@@ -206,20 +208,24 @@ export default function Complaints({ navigate }: Props) {
 
   return (
     <DashboardLayout navigate={navigate} activePage="complaints">
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 md:p-6 space-y-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-black text-slate-900">
+            <h1
+              className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
               Complaint Management
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p
+              className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               Track and resolve resident complaints — {resolvedCount}/{total}{" "}
               resolved
             </p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm shadow-blue-200"
+            className="flex items-center gap-2 luxury-btn-primary text-sm font-semibold px-5 py-2.5 flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             New Complaint
@@ -231,12 +237,14 @@ export default function Complaints({ navigate }: Props) {
           {columns.map((col) => (
             <div
               key={col.id}
-              className={`${col.bg} border ${col.border} rounded-2xl p-5 text-center`}
+              className={`rounded-2xl p-5 text-center ${darkMode ? "bg-slate-800 border border-slate-700" : `${col.bg} border ${col.border}`}`}
             >
               <p className={`text-3xl font-black ${col.color}`}>
                 {complaints[col.id].length}
               </p>
-              <p className="text-sm font-medium text-slate-600 mt-0.5">
+              <p
+                className={`text-sm font-medium mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-600"}`}
+              >
                 {col.label}
               </p>
             </div>
@@ -244,17 +252,18 @@ export default function Complaints({ navigate }: Props) {
         </div>
 
         {/* Kanban board */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="overflow-x-auto pb-2">
+          <div className="grid grid-cols-3 gap-4 min-w-[600px]">
           {columns.map((col) => (
             <div
               key={col.id}
-              className="bg-slate-50 rounded-2xl overflow-hidden"
+              className={`rounded-2xl overflow-hidden ${darkMode ? "bg-slate-800" : "bg-slate-50"}`}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => handleDrop(col.id)}
             >
               {/* Column header */}
               <div
-                className={`flex items-center justify-between px-4 py-3 ${col.bg} border-b ${col.border}`}
+                className={`flex items-center justify-between px-4 py-3 border-b ${darkMode ? "bg-slate-800 border-slate-700" : `${col.bg} ${col.border}`}`}
               >
                 <div className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 rounded-full ${col.headerBg}`} />
@@ -263,7 +272,7 @@ export default function Complaints({ navigate }: Props) {
                   </span>
                 </div>
                 <span
-                  className={`text-xs font-bold ${col.color} bg-white/60 px-2 py-0.5 rounded-full`}
+                  className={`text-xs font-bold ${col.color} px-2 py-0.5 rounded-full ${darkMode ? "bg-slate-700" : "bg-white/60"}`}
                 >
                   {complaints[col.id].length}
                 </span>
@@ -283,19 +292,29 @@ export default function Complaints({ navigate }: Props) {
                       }
                       onDragEnd={() => setDragging(null)}
                       onClick={() => setSelected(complaint)}
-                      className="bg-white rounded-xl border border-slate-100 p-4 cursor-pointer hover:border-blue-200 hover:shadow-md transition-all select-none"
+                      className={`rounded-xl border p-4 cursor-pointer transition-all select-none focus-visible:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 hover:border-[#C89A4B] hover:shadow-lg focus-visible:ring-[#C89A4B]" : "bg-white border-slate-100 hover:border-[#D9A87C] hover:shadow-md focus-visible:ring-[#D9A87C]"}`}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`View complaint: ${complaint.title}`}
+                      onKeyDown={(e) => e.key === "Enter" && setSelected(complaint)}
                     >
                       <div className="flex items-start justify-between gap-2 mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-xs font-mono text-slate-400">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <span
+                              className={`text-xs font-mono ${darkMode ? "text-slate-400" : "text-slate-400"}`}
+                            >
                               {complaint.id}
                             </span>
-                            <span className="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-medium">
+                            <span
+                              className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${darkMode ? "bg-slate-600 text-slate-300" : "bg-slate-100 text-slate-500"}`}
+                            >
                               {complaint.category}
                             </span>
                           </div>
-                          <h4 className="font-semibold text-slate-900 text-sm leading-snug">
+                          <h4
+                            className={`font-semibold text-sm leading-snug ${darkMode ? "text-slate-100" : "text-slate-900"}`}
+                          >
                             {complaint.title}
                           </h4>
                         </div>
@@ -308,19 +327,28 @@ export default function Complaints({ navigate }: Props) {
                       </div>
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+                          >
                             {complaint.avatar}
                           </div>
                           <div>
-                            <p className="text-xs font-medium text-slate-700">
+                            <p
+                              className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                            >
                               {complaint.resident}
                             </p>
-                            <p className="text-xs text-slate-400">
+                            <p
+                              className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                            >
                               Room {complaint.room}
                             </p>
                           </div>
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p
+                          className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                        >
                           {complaint.date}
                         </p>
                       </div>
@@ -329,14 +357,23 @@ export default function Complaints({ navigate }: Props) {
                 })}
 
                 {complaints[col.id].length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-slate-200 rounded-xl">
-                    <CheckCircle className="w-5 h-5 text-slate-300 mb-1" />
-                    <p className="text-xs text-slate-400">No complaints</p>
+                  <div
+                    className={`flex flex-col items-center justify-center h-24 border-2 border-dashed rounded-xl ${darkMode ? "border-slate-600" : "border-slate-200"}`}
+                  >
+                    <CheckCircle
+                      className={`w-5 h-5 mb-1 ${darkMode ? "text-slate-600" : "text-slate-300"}`}
+                    />
+                    <p
+                      className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                    >
+                      No complaints
+                    </p>
                   </div>
                 )}
               </div>
             </div>
           ))}
+          </div>
         </div>
       </div>
 
@@ -345,32 +382,48 @@ export default function Complaints({ navigate }: Props) {
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setSelected(null)}
+          aria-modal="true"
+          role="dialog"
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl"
+            className={`rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+            <div
+              className={`flex items-center justify-between px-6 py-5 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-orange-600" />
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-slate-700" : "bg-orange-50"}`}
+                >
+                  <MessageSquare
+                    className={`w-5 h-5 ${darkMode ? "text-orange-400" : "text-orange-600"}`}
+                  />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{selected.title}</h3>
-                  <p className="text-xs text-slate-500 font-mono">
+                  <h3
+                    className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+                  >
+                    {selected.title}
+                  </h3>
+                  <p
+                    className={`text-xs font-mono ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                  >
                     {selected.id}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="p-2 hover:bg-slate-100 rounded-lg"
+                className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-slate-700 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}
               >
-                <X className="w-4 h-4 text-slate-500" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-slate-600 text-sm leading-relaxed">
+              <p
+                className={`text-sm leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+              >
                 {selected.desc}
               </p>
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -380,11 +433,20 @@ export default function Complaints({ navigate }: Props) {
                   { label: "Category", value: selected.category },
                   { label: "Date", value: selected.date },
                 ].map((item) => (
-                  <div key={item.label} className="bg-slate-50 rounded-xl p-3">
-                    <p className="text-xs text-slate-400 mb-0.5">
+                  <div
+                    key={item.label}
+                    className={`rounded-xl p-3 ${darkMode ? "bg-slate-700" : "bg-slate-50"}`}
+                  >
+                    <p
+                      className={`text-xs mb-0.5 ${darkMode ? "text-slate-400" : "text-slate-400"}`}
+                    >
                       {item.label}
                     </p>
-                    <p className="font-semibold text-slate-800">{item.value}</p>
+                    <p
+                      className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}
+                    >
+                      {item.value}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -419,7 +481,7 @@ export default function Complaints({ navigate }: Props) {
                 </button>
                 <button
                   onClick={() => setSelected(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                  className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
                 >
                   Close
                 </button>
@@ -434,18 +496,26 @@ export default function Complaints({ navigate }: Props) {
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowModal(false)}
+          aria-modal="true"
+          role="dialog"
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl"
+            className={`rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900">New Complaint</h3>
+            <div
+              className={`flex items-center justify-between px-6 py-5 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+            >
+              <h3
+                className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
+                New Complaint
+              </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-lg"
+                className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-slate-700 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}
               >
-                <X className="w-4 h-4 text-slate-500" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-6 space-y-4">
@@ -454,42 +524,54 @@ export default function Complaints({ navigate }: Props) {
                 { label: "Room Number", placeholder: "e.g. 202A" },
               ].map((f) => (
                 <div key={f.label}>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
                     {f.label}
                   </label>
                   <input
                     type="text"
                     placeholder={f.placeholder}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[#C89A4B]" : "border-slate-200 text-slate-800 focus:ring-[#D9A87C]"}`}
                   />
                 </div>
               ))}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                >
                   Description
                 </label>
                 <textarea
                   rows={3}
                   placeholder="Detailed description..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 resize-none ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[#C89A4B]" : "border-slate-200 text-slate-800 focus:ring-[#D9A87C]"}`}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
                     Priority
                   </label>
-                  <select className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white focus:ring-[#C89A4B]" : "bg-white border-slate-200 focus:ring-[#D9A87C]"}`}
+                  >
                     <option>High</option>
                     <option>Medium</option>
                     <option>Low</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
                     Category
                   </label>
-                  <select className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  <select
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white focus:ring-[#C89A4B]" : "bg-white border-slate-200 focus:ring-[#D9A87C]"}`}
+                  >
                     <option>Plumbing</option>
                     <option>Electrical</option>
                     <option>Maintenance</option>
@@ -499,16 +581,18 @@ export default function Complaints({ navigate }: Props) {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 px-6 py-4 border-t border-slate-100">
+            <div
+              className={`flex gap-3 px-6 py-4 border-t ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+            >
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
               >
                 Cancel
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+                className="flex-1 py-2.5 luxury-btn-primary text-sm font-semibold flex-shrink-0"
               >
                 Submit
               </button>

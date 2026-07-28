@@ -56,8 +56,8 @@ const residentGrowthData = [
 ];
 
 const pieData = [
-  { name: "Occupied", value: 94, color: "#2563EB" },
-  { name: "Vacant", value: 6, color: "#E2E8F0" },
+  { name: "Occupied", value: 94, color: "#D9A87C" },
+  { name: "Vacant", value: 6, color: "#E6D7CA" },
 ];
 
 const residents = [
@@ -198,61 +198,60 @@ export default function Dashboard({ navigate }: Props) {
 
   return (
     <DashboardLayout navigate={navigate} activePage="dashboard">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1
-              className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+              className={`text-xl md:text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
             >
               Good morning, Rajesh 👋
             </h1>
             <p
               className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
             >
-              Wednesday, 23 July 2025 · Here's what's happening across your
-              properties.
+              Wednesday, 23 July 2025 · Here's what's happening across your properties.
             </p>
           </div>
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm shadow-blue-200">
+          <button className="flex items-center gap-2 luxury-btn-primary px-4 py-2.5 flex-shrink-0">
             <Calendar className="w-4 h-4" />
-            Monthly Report
+            <span className="hidden sm:inline">Monthly Report</span>
           </button>
         </div>
 
         {/* Widget grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
           {widgets.map((w) => {
             const Icon = w.icon;
             return (
               <div
                 key={w.label}
-                className={`${darkMode ? "bg-slate-800 border-slate-700" : `bg-white border ${w.bg}`} rounded-2xl p-4 border card-hover`}
+                className={`${darkMode ? "bg-slate-800 border-slate-700" : `bg-white border ${w.bg}`} rounded-2xl p-3.5 border card-hover min-w-0`}
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2.5">
                   <div
-                    className={`w-8 h-8 rounded-xl ${darkMode ? "bg-slate-700" : w.bg.split(" ")[0]} flex items-center justify-center`}
+                    className={`w-7 h-7 rounded-lg ${darkMode ? "bg-slate-700" : w.bg.split(" ")[0]} flex items-center justify-center flex-shrink-0`}
                   >
                     <Icon
-                      className={`w-4 h-4 ${darkMode ? "text-slate-300" : w.color}`}
+                      className={`w-3.5 h-3.5 ${darkMode ? "text-slate-300" : w.color}`}
                     />
                   </div>
                   <MoreHorizontal
-                    className={`w-4 h-4 ${darkMode ? "text-slate-600" : "text-slate-300"}`}
+                    className={`w-3.5 h-3.5 ${darkMode ? "text-slate-600" : "text-slate-300"}`}
                   />
                 </div>
                 <p
-                  className={`text-2xl font-black mb-0.5 ${darkMode ? "text-white" : "text-slate-900"}`}
+                  className={`text-lg xl:text-xl font-black mb-0.5 truncate ${darkMode ? "text-white" : "text-slate-900"}`}
                 >
                   {w.value}
                 </p>
                 <p
-                  className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                  className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"} truncate`}
                 >
                   {w.label}
                 </p>
                 <p
-                  className={`text-xs mt-1 ${w.trend === "up" || w.trend === "good" ? "text-green-500" : w.trend === "down" ? "text-orange-500" : "text-slate-400"}`}
+                  className={`text-xs mt-1 truncate ${w.trend === "up" || w.trend === "good" ? "text-green-500" : w.trend === "down" ? "text-orange-500" : "text-slate-400"}`}
                 >
                   {w.sub}
                 </p>
@@ -282,11 +281,11 @@ export default function Dashboard({ navigate }: Props) {
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-1.5 bg-blue-600 rounded-full inline-block" />{" "}
+                  <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: darkMode ? "#C89A4B" : "#D9A87C" }} />{" "}
                   Revenue
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-1.5 bg-violet-300 rounded-full inline-block" />{" "}
+                  <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: darkMode ? "#D8B36A" : "#C58B63" }} />{" "}
                   Expenses
                 </span>
               </div>
@@ -294,27 +293,27 @@ export default function Dashboard({ navigate }: Props) {
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart
                 data={revenueData}
-                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+                margin={{ top: 0, right: 8, left: -10, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                    <stop offset="5%" stopColor={darkMode ? "#C89A4B" : "#D9A87C"} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={darkMode ? "#C89A4B" : "#D9A87C"} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
+                    <stop offset="5%" stopColor={darkMode ? "#D8B36A" : "#C58B63"} stopOpacity={0.15} />
+                    <stop offset="95%" stopColor={darkMode ? "#D8B36A" : "#C58B63"} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke={darkMode ? "#334155" : "#F1F5F9"}
+                  stroke={darkMode ? "#4A443F" : "#E6D7CA"}
                 />
                 <XAxis
                   dataKey="month"
                   tick={{
                     fontSize: 11,
-                    fill: darkMode ? "#94A3B8" : "#94A3B8",
+                    fill: darkMode ? "#C6B9AE" : "#6E5A52",
                   }}
                   axisLine={false}
                   tickLine={false}
@@ -322,7 +321,7 @@ export default function Dashboard({ navigate }: Props) {
                 <YAxis
                   tick={{
                     fontSize: 11,
-                    fill: darkMode ? "#94A3B8" : "#94A3B8",
+                    fill: darkMode ? "#C6B9AE" : "#6E5A52",
                   }}
                   axisLine={false}
                   tickLine={false}
@@ -330,24 +329,25 @@ export default function Dashboard({ navigate }: Props) {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: darkMode ? "#1e293b" : "white",
-                    border: "none",
+                    background: darkMode ? "#332D2B" : "#FFFDFB",
+                    border: darkMode ? "1px solid #4A443F" : "1px solid #E6D7CA",
                     borderRadius: 12,
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                    boxShadow: "0 10px 30px rgba(93,55,28,0.12)",
+                    color: darkMode ? "#F7F3EE" : "#3B2A24",
                   }}
                   formatter={(v) => [`₹${(Number(v ?? 0) / 1000).toFixed(1)}K`]}
                 />
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#2563EB"
+                  stroke={darkMode ? "#C89A4B" : "#D9A87C"}
                   strokeWidth={2.5}
                   fill="url(#revGrad)"
                 />
                 <Area
                   type="monotone"
                   dataKey="expenses"
-                  stroke="#7C3AED"
+                  stroke={darkMode ? "#D8B36A" : "#C58B63"}
                   strokeWidth={2}
                   fill="url(#expGrad)"
                 />
@@ -405,7 +405,7 @@ export default function Dashboard({ navigate }: Props) {
             <div className="space-y-2 mt-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-slate-500">
-                  <span className="w-3 h-3 rounded-sm bg-blue-600 inline-block" />{" "}
+                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: darkMode ? "#C89A4B" : "#D9A87C" }} />{" "}
                   Occupied
                 </span>
                 <span
@@ -416,7 +416,7 @@ export default function Dashboard({ navigate }: Props) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-slate-500">
-                  <span className="w-3 h-3 rounded-sm bg-slate-200 inline-block" />{" "}
+                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: darkMode ? "#4A443F" : "#E6D7CA" }} />{" "}
                   Vacant
                 </span>
                 <span
@@ -448,7 +448,7 @@ export default function Dashboard({ navigate }: Props) {
             <ResponsiveContainer width="100%" height={120}>
               <LineChart
                 data={residentGrowthData}
-                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+                margin={{ top: 0, right: 8, left: -10, bottom: 0 }}
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -476,9 +476,9 @@ export default function Dashboard({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="residents"
-                  stroke="#14B8A6"
+                  stroke={darkMode ? "#C89A4B" : "#D9A87C"}
                   strokeWidth={2.5}
-                  dot={{ fill: "#14B8A6", r: 3 }}
+                  dot={{ fill: darkMode ? "#C89A4B" : "#D9A87C", r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -496,7 +496,8 @@ export default function Dashboard({ navigate }: Props) {
               </h3>
               <button
                 onClick={() => navigate("billing")}
-                className="text-xs text-blue-600 font-medium hover:underline"
+                className="text-xs font-medium hover:underline"
+                style={{ color: darkMode ? "#C89A4B" : "#C58B63" }}
               >
                 View all →
               </button>
@@ -596,9 +597,9 @@ export default function Dashboard({ navigate }: Props) {
         <div
           className={`${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"} rounded-2xl border overflow-hidden`}
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className={`flex items-center justify-between px-6 py-4 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}>
             <h3
-              className={`font-bold ${darkMode ? "text-white border-slate-700" : "text-slate-900"}`}
+              className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
             >
               Recent Residents
             </h3>
@@ -611,10 +612,10 @@ export default function Dashboard({ navigate }: Props) {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead>
                 <tr
-                  className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? "text-slate-500 bg-slate-900/50" : "text-slate-400 bg-slate-50"}`}
+                  className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? "text-slate-400 bg-slate-900/60" : "text-slate-400 bg-slate-50"}`}
                 >
                   <th className="text-left px-6 py-3">Resident</th>
                   <th className="text-left px-6 py-3">Room</th>
@@ -623,11 +624,11 @@ export default function Dashboard({ navigate }: Props) {
                   <th className="text-left px-6 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className={`divide-y ${darkMode ? "divide-slate-700" : "divide-slate-50"}`}>
                 {residents.map((r) => (
                   <tr
                     key={r.name}
-                    className={`transition-colors ${darkMode ? "hover:bg-slate-700/50 divide-slate-700" : "hover:bg-slate-50"}`}
+                    className={`transition-colors ${darkMode ? "hover:bg-slate-700/50" : "hover:bg-slate-50"}`}
                   >
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-3">

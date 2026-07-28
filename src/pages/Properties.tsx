@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Building2, Plus, MapPin, BedDouble, X, Star } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import type { Page } from "../App";
+import { useTheme } from "../theme";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -78,6 +79,7 @@ export default function Properties({ navigate }: Props) {
   const [selectedProperty, setSelectedProperty] = useState(properties[0]);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [beds, setBeds] = useState(bedGrid);
+  const { darkMode } = useTheme();
 
   const handleDrop = (targetId: string) => {
     // Visual drag-drop demo: swap statuses
@@ -96,17 +98,23 @@ export default function Properties({ navigate }: Props) {
 
   return (
     <DashboardLayout navigate={navigate} activePage="properties">
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 md:p-6 space-y-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Properties</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h1
+              className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
+              Properties
+            </h1>
+            <p
+              className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               Manage your PG properties and bed allocation
             </p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm shadow-blue-200"
+            className="flex items-center gap-2 luxury-btn-primary text-sm font-semibold px-5 py-2.5 flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             Add Property
@@ -119,7 +127,13 @@ export default function Properties({ navigate }: Props) {
             <div
               key={prop.id}
               onClick={() => setSelectedProperty(prop)}
-              className={`bg-white rounded-2xl border overflow-hidden cursor-pointer card-hover transition-all ${selectedProperty.id === prop.id ? "border-blue-400 shadow-lg shadow-blue-100" : "border-slate-100"}`}
+              className={`rounded-2xl border overflow-hidden cursor-pointer card-hover transition-all ${darkMode ? "bg-slate-800" : "bg-white"} ${
+                selectedProperty.id === prop.id
+                  ? darkMode ? "border-[#C89A4B] shadow-lg shadow-[#C89A4B]/10" : "border-[#D9A87C] shadow-lg shadow-[#D9A87C]/15"
+                  : darkMode
+                    ? "border-slate-700"
+                    : "border-slate-100"
+              }`}
             >
               <div className="relative h-36 bg-slate-100">
                 <img
@@ -139,44 +153,73 @@ export default function Properties({ navigate }: Props) {
                 </div>
               </div>
               <div className="p-4">
-                <h3 className="font-bold text-slate-900 text-sm mb-1">
+                <h3
+                  className={`font-bold text-sm mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}
+                >
                   {prop.name}
                 </h3>
-                <div className="flex items-center gap-1 text-slate-500 text-xs mb-3">
+                <div
+                  className={`flex items-center gap-1 text-xs mb-3 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                >
                   <MapPin className="w-3 h-3" />
                   <span>{prop.location}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center">
-                    <p className="font-bold text-slate-900 text-sm">
+                    <p
+                      className={`font-bold text-sm ${darkMode ? "text-white" : "text-slate-900"}`}
+                    >
                       {prop.beds}
                     </p>
-                    <p className="text-xs text-slate-400">Total</p>
+                    <p
+                      className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                    >
+                      Total
+                    </p>
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-blue-600 text-sm">
+                    <p className={`font-bold text-sm ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}>
                       {prop.occupied}
                     </p>
-                    <p className="text-xs text-slate-400">Occupied</p>
+                    <p
+                      className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                    >
+                      Occupied
+                    </p>
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-green-600 text-sm">
+                    <p className="font-bold text-green-500 text-sm">
                       {prop.revenue}
                     </p>
-                    <p className="text-xs text-slate-400">Revenue</p>
+                    <p
+                      className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                    >
+                      Revenue
+                    </p>
                   </div>
                 </div>
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-500">Occupancy</span>
-                    <span className="font-semibold text-slate-700">
+                    <span
+                      className={darkMode ? "text-slate-400" : "text-slate-500"}
+                    >
+                      Occupancy
+                    </span>
+                    <span
+                      className={`font-semibold ${darkMode ? "text-white" : "text-slate-700"}`}
+                    >
                       {Math.round((prop.occupied / prop.beds) * 100)}%
                     </span>
                   </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full">
+                  <div
+                    className={`h-1.5 rounded-full ${darkMode ? "bg-slate-700" : "bg-slate-100"}`}
+                  >
                     <div
-                      className="h-1.5 bg-blue-600 rounded-full"
-                      style={{ width: `${(prop.occupied / prop.beds) * 100}%` }}
+                      className="h-1.5 rounded-full"
+                      style={{
+                        width: `${(prop.occupied / prop.beds) * 100}%`,
+                        background: darkMode ? "linear-gradient(135deg, #C89A4B, #D8B36A)" : "linear-gradient(135deg, #D9A87C, #C58B63)"
+                      }}
                     />
                   </div>
                 </div>
@@ -186,23 +229,33 @@ export default function Properties({ navigate }: Props) {
         </div>
 
         {/* Bed allocation */}
-        <div className="bg-white border border-slate-100 rounded-2xl p-6">
+        <div
+          className={`border rounded-2xl p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+        >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-bold text-slate-900">
+              <h3
+                className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
                 {selectedProperty.name} — Bed Allocation
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p
+                className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+              >
                 Drag vacant beds to assign residents
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs">
+            <div
+              className={`flex items-center gap-4 text-xs ${darkMode ? "text-slate-400" : "text-slate-600"}`}
+            >
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-blue-500 inline-block" />{" "}
+                <span className="w-3 h-3 rounded inline-block" style={{ background: darkMode ? "#C89A4B" : "#D9A87C" }} />{" "}
                 Occupied
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-slate-200 inline-block" />{" "}
+                <span
+                  className={`w-3 h-3 rounded inline-block ${darkMode ? "bg-slate-600" : "bg-slate-200"}`}
+                />{" "}
                 Vacant
               </span>
               <span className="flex items-center gap-1.5">
@@ -225,24 +278,32 @@ export default function Properties({ navigate }: Props) {
                 onDragLeave={() => setDragOver(null)}
                 className={`
                   relative rounded-xl p-3 text-center cursor-pointer transition-all select-none
-                  ${bed.status === "occupied" ? "bg-blue-50 border-2 border-blue-200 hover:border-blue-400" : ""}
-                  ${bed.status === "vacant" ? "bg-slate-50 border-2 border-dashed border-slate-300 hover:border-blue-400" : ""}
-                  ${bed.status === "maintenance" ? "bg-orange-50 border-2 border-orange-200" : ""}
-                  ${dragOver === bed.id ? "scale-105 border-blue-500" : ""}
+                  ${bed.status === "occupied" ? darkMode ? "bg-[#332D2B] border-2 border-[#C89A4B] hover:border-[#E8C98A]" : "bg-[#F8EEE5] border-2 border-[#D9A87C] hover:border-[#C58B63]" : ""}
+                  ${bed.status === "vacant" ? darkMode ? "bg-[#2B2725] border-2 border-dashed border-[#4A443F] hover:border-[#C89A4B]" : "bg-[#FFFDFB] border-2 border-dashed border-[#E6D7CA] hover:border-[#D9A87C]" : ""}
+                  ${bed.status === "maintenance" ? darkMode ? "bg-orange-900/20 border-2 border-orange-700" : "bg-orange-50 border-2 border-orange-200" : ""}
+                  ${dragOver === bed.id ? "scale-105 border-[#D9A87C]" : ""}
                 `}
               >
                 <BedDouble
                   className={`w-4 h-4 mx-auto mb-1 ${
                     bed.status === "occupied"
-                      ? "text-blue-600"
+                      ? darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"
                       : bed.status === "vacant"
-                        ? "text-slate-400"
+                        ? darkMode
+                          ? "text-slate-500"
+                          : "text-slate-400"
                         : "text-orange-500"
                   }`}
                 />
-                <p className="text-xs font-bold text-slate-700">{bed.id}</p>
+                <p
+                  className={`text-xs font-bold ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                >
+                  {bed.id}
+                </p>
                 {bed.name && (
-                  <p className="text-xs text-slate-500 leading-tight mt-0.5 truncate">
+                  <p
+                    className={`text-xs leading-tight mt-0.5 truncate ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                  >
                     {bed.name}
                   </p>
                 )}
@@ -255,25 +316,29 @@ export default function Properties({ navigate }: Props) {
               {
                 label: "Total Beds",
                 value: beds.length,
-                color: "text-slate-900",
+                color: darkMode ? "text-white" : "text-slate-900",
               },
               {
                 label: "Occupied",
                 value: beds.filter((b) => b.status === "occupied").length,
-                color: "text-blue-600",
+                color: darkMode ? "text-[#C89A4B]" : "text-[#C58B63]",
               },
               {
                 label: "Vacant",
                 value: beds.filter((b) => b.status === "vacant").length,
-                color: "text-green-600",
+                color: "text-green-500",
               },
             ].map((s) => (
               <div
                 key={s.label}
-                className="text-center bg-slate-50 rounded-xl py-4"
+                className={`text-center rounded-xl py-4 ${darkMode ? "bg-slate-700" : "bg-slate-50"}`}
               >
                 <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                <p
+                  className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                >
+                  {s.label}
+                </p>
               </div>
             ))}
           </div>
@@ -285,23 +350,35 @@ export default function Properties({ navigate }: Props) {
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowModal(false)}
+          aria-modal="true"
+          role="dialog"
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl"
+            className={`rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+            <div
+              className={`flex items-center justify-between px-6 py-5 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-[#2B2725]" : "bg-[#F8EEE5]"}`}
+                >
+                  <Building2
+                    className={`w-5 h-5 ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}
+                  />
                 </div>
-                <h3 className="font-bold text-slate-900">Add New Property</h3>
+                <h3
+                  className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+                >
+                  Add New Property
+                </h3>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-slate-700 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}
               >
-                <X className="w-4 h-4 text-slate-500" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-6 space-y-4">
@@ -314,13 +391,15 @@ export default function Properties({ navigate }: Props) {
                 { label: "City", placeholder: "e.g. Bengaluru" },
               ].map((f) => (
                 <div key={f.label}>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
                     {f.label}
                   </label>
                   <input
                     type="text"
                     placeholder={f.placeholder}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                   />
                 </div>
               ))}
@@ -330,28 +409,32 @@ export default function Properties({ navigate }: Props) {
                   { label: "Total Floors", placeholder: "e.g. 3" },
                 ].map((f) => (
                   <div key={f.label}>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                    <label
+                      className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                    >
                       {f.label}
                     </label>
                     <input
                       type="number"
                       placeholder={f.placeholder}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                     />
                   </div>
                 ))}
               </div>
             </div>
-            <div className="flex gap-3 px-6 py-4 border-t border-slate-100">
+            <div
+              className={`flex gap-3 px-6 py-4 border-t ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+            >
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
               >
                 Cancel
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+                className="flex-1 py-2.5 rounded-xl luxury-btn-primary text-sm font-semibold transition-colors"
               >
                 Add Property
               </button>

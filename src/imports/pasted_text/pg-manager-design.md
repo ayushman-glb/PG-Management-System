@@ -1,4 +1,4 @@
-Design a premium modern SaaS website for a product called "PG Manager" (Paying Guest Management System).
+Design a premium modern SaaS website for a product called "RoomBae" (Paying Guest Management System).
 
 The website should look like Stripe, Linear, Vercel, Notion, Clerk, and Airbnb combined.
 

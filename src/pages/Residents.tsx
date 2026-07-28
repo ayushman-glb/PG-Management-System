@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import type { Page } from "../App";
+import { useTheme } from "../theme";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -135,6 +136,7 @@ export default function Residents({ navigate }: Props) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "payments" | "timeline"
   >("overview");
+  const { darkMode } = useTheme();
 
   const filtered = residents.filter(
     (r) =>
@@ -146,63 +148,110 @@ export default function Residents({ navigate }: Props) {
     <DashboardLayout navigate={navigate} activePage="residents">
       <div className="flex h-full flex-col lg:flex-row">
         {/* List panel */}
-        <div className="w-full lg:w-96 max-h-[52vh] lg:max-h-none border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-col">
-          <div className="p-4 border-b border-slate-100 space-y-3">
+        <div
+          className={`w-full lg:w-96 lg:min-w-[24rem] border-b lg:border-b-0 lg:border-r flex flex-col overflow-hidden ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+          style={{ maxHeight: "none" }}
+        >
+          <div
+            className={`p-4 border-b space-y-3 flex-shrink-0 ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+          >
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-black text-slate-900">Residents</h1>
-              <button className="flex items-center gap-1.5 text-xs bg-blue-600 text-white px-3 py-2 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+              <h1
+                className={`text-lg font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
+                Residents
+              </h1>
+              <button
+                className="flex items-center gap-1.5 text-xs px-3.5 py-2 luxury-btn-primary font-semibold flex-shrink-0"
+              >
                 <Plus className="w-3.5 h-3.5" />
                 Add
               </button>
             </div>
-            <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2.5">
-              <Search className="w-4 h-4 text-slate-400" />
+            <div
+              className={`flex items-center gap-2 rounded-xl px-3 py-2.5 ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}
+            >
+              <Search
+                className={`w-4 h-4 ${darkMode ? "text-slate-400" : "text-slate-400"}`}
+              />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search residents..."
-                className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none flex-1"
+                className={`bg-transparent text-sm placeholder:text-slate-400 outline-none flex-1 ${darkMode ? "text-white" : "text-slate-700"}`}
               />
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 text-xs border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+              <button
+                className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+              >
                 <Filter className="w-3 h-3" /> Filter
               </button>
-              <button className="flex items-center gap-1.5 text-xs border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+              <button
+                className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+              >
                 <Download className="w-3 h-3" /> Export
               </button>
-              <span className="ml-auto text-xs text-slate-400 font-medium">
+              <span
+                className={`ml-auto text-xs font-medium ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+              >
                 {filtered.length} residents
               </span>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
+          <div
+            className={`flex-1 overflow-y-auto divide-y ${darkMode ? "divide-slate-700/60" : "divide-slate-50"}`}
+            style={{ minHeight: 0 }}
+          >
             {filtered.map((r) => (
               <button
                 key={r.id}
                 onClick={() => setSelected(r)}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${selected.id === r.id ? "bg-blue-50" : "hover:bg-slate-50"}`}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
+                  selected.id === r.id
+                    ? darkMode
+                      ? "bg-[#332D2B] border-l-4 border-[#C89A4B]"
+                      : "bg-[#F8EEE5] border-l-4 border-[#D9A87C]"
+                    : darkMode
+                      ? "hover:bg-slate-700/50"
+                      : "hover:bg-slate-50"
+                }`}
               >
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                  style={{ background: darkMode ? "linear-gradient(135deg, #C89A4B, #D8B36A)" : "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+                >
                   {r.avatar}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-slate-900 truncate">
+                    <p
+                      className={`text-sm font-semibold truncate ${darkMode ? "text-white" : "text-slate-900"}`}
+                    >
                       {r.name}
                     </p>
                     <ChevronRight
-                      className={`w-4 h-4 flex-shrink-0 ${selected.id === r.id ? "text-blue-500" : "text-slate-300"}`}
+                      className={`w-4 h-4 flex-shrink-0 ml-1 ${
+                        selected.id === r.id
+                          ? darkMode
+                            ? "text-[#C89A4B]"
+                            : "text-[#C58B63]"
+                          : darkMode
+                            ? "text-slate-600"
+                            : "text-slate-300"
+                      }`}
                     />
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <p className="text-xs text-slate-500">
+                    <p
+                      className={`text-xs truncate ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                    >
                       {r.pg} · Room {r.room}
                     </p>
                     <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ml-1 flex-shrink-0 ${
                         r.status === "Active"
                           ? "bg-green-100 text-green-700"
                           : r.status === "Due"
@@ -220,21 +269,28 @@ export default function Residents({ navigate }: Props) {
         </div>
 
         {/* Profile panel */}
-        <div className="flex min-h-[520px] flex-1 flex-col overflow-y-auto bg-slate-50">
+        <div
+          className={`flex min-h-[520px] flex-1 flex-col overflow-y-auto ${darkMode ? "bg-slate-900" : "bg-slate-50"}`}
+        >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-8">
-            <div className="flex items-start gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-xl font-black shadow-lg">
+          <div
+            className="p-6 md:p-8 text-white shadow-md"
+            style={{
+              background: darkMode
+                ? "linear-gradient(135deg, #C89A4B 0%, #D8B36A 100%)"
+                : "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)"
+            }}
+          >
+            <div className="flex items-start gap-4 md:gap-5">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-lg md:text-xl font-black shadow-lg flex-shrink-0">
                 {selected.avatar}
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-black text-white">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg md:text-xl font-black text-white truncate">
                   {selected.name}
                 </h2>
-                <p className="text-white/70 text-sm mt-0.5">
-                  {selected.profession}
-                </p>
-                <div className="flex items-center gap-3 mt-3">
+                <p className="text-white/70 text-sm mt-0.5">{selected.profession}</p>
+                <div className="flex items-center gap-3 mt-3 flex-wrap">
                   <span
                     className={`text-xs font-bold px-3 py-1.5 rounded-full ${
                       selected.status === "Active"
@@ -257,9 +313,9 @@ export default function Residents({ navigate }: Props) {
                   </span>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right flex-shrink-0">
                 <p className="text-white/60 text-xs">Monthly Rent</p>
-                <p className="text-2xl font-black text-white">
+                <p className="text-xl md:text-2xl font-black text-white">
                   ₹{selected.rent.toLocaleString()}
                 </p>
               </div>
@@ -267,32 +323,54 @@ export default function Residents({ navigate }: Props) {
           </div>
 
           {/* Contact info */}
-          <div className="bg-white border-b border-slate-100 px-8 py-4">
-            <div className="flex items-center gap-8 text-sm">
-              <div className="flex items-center gap-2 text-slate-600">
-                <Phone className="w-4 h-4 text-slate-400" /> {selected.phone}
+          <div
+            className={`border-b px-6 md:px-8 py-3 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <div className="flex items-center gap-4 md:gap-8 text-sm flex-wrap gap-y-2">
+              <div
+                className={`flex items-center gap-2 ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+              >
+                <Phone
+                  className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                />{" "}
+                {selected.phone}
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Mail className="w-4 h-4 text-slate-400" /> {selected.email}
+              <div
+                className={`flex items-center gap-2 ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+              >
+                <Mail
+                  className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                />{" "}
+                {selected.email}
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <MapPin className="w-4 h-4 text-slate-400" /> {selected.pg} ·
-                Room {selected.room}
+              <div
+                className={`flex items-center gap-2 ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+              >
+                <MapPin
+                  className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                />{" "}
+                {selected.pg} · Room {selected.room}
               </div>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="bg-white border-b border-slate-100 px-8">
-            <div className="flex gap-6">
+          <div
+            className={`border-b px-6 md:px-8 overflow-x-auto ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <div className="flex gap-6 min-w-max">
               {(["overview", "payments", "timeline"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 text-sm font-semibold capitalize border-b-2 transition-colors ${
+                  className={`py-4 text-sm font-semibold capitalize border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-slate-500 hover:text-slate-700"
+                      ? darkMode
+                        ? "border-[#C89A4B] text-[#C89A4B]"
+                        : "border-[#C58B63] text-[#C58B63]"
+                      : darkMode
+                        ? "border-transparent text-slate-400 hover:text-slate-200"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 >
                   {tab}
@@ -301,12 +379,16 @@ export default function Residents({ navigate }: Props) {
             </div>
           </div>
 
-          <div className="p-8">
+          <div className={`p-6 md:p-8 ${darkMode ? "bg-slate-900" : ""}`}>
             {activeTab === "overview" && (
-              <div className="grid grid-cols-2 gap-5">
-                <div className="bg-white rounded-2xl border border-slate-100 p-5">
-                  <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-600" /> Agreement
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div
+                  className={`rounded-2xl border p-5 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <h4
+                    className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-slate-900"}`}
+                  >
+                    <FileText className={`w-4 h-4 ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`} /> Agreement
                     Details
                   </h4>
                   <div className="space-y-3 text-sm">
@@ -319,18 +401,28 @@ export default function Residents({ navigate }: Props) {
                         value: `₹${(selected.rent * 2).toLocaleString()}`,
                       },
                     ].map((item) => (
-                      <div key={item.label} className="flex justify-between">
-                        <span className="text-slate-500">{item.label}</span>
-                        <span className="font-semibold text-slate-800">
+                      <div key={item.label} className="flex justify-between gap-4">
+                        <span
+                          className={darkMode ? "text-slate-400" : "text-slate-500"}
+                        >
+                          {item.label}
+                        </span>
+                        <span
+                          className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}
+                        >
                           {item.value}
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="bg-white rounded-2xl border border-slate-100 p-5">
-                  <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-violet-600" /> Rent
+                <div
+                  className={`rounded-2xl border p-5 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <h4
+                    className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-slate-900"}`}
+                  >
+                    <CreditCard className={`w-4 h-4 ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`} /> Rent
                     Summary
                   </h4>
                   <div className="space-y-3 text-sm">
@@ -355,18 +447,28 @@ export default function Residents({ navigate }: Props) {
                             : `₹${selected.rent.toLocaleString()}`,
                       },
                     ].map((item) => (
-                      <div key={item.label} className="flex justify-between">
-                        <span className="text-slate-500">{item.label}</span>
-                        <span className="font-semibold text-slate-800">
+                      <div key={item.label} className="flex justify-between gap-4">
+                        <span
+                          className={darkMode ? "text-slate-400" : "text-slate-500"}
+                        >
+                          {item.label}
+                        </span>
+                        <span
+                          className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}
+                        >
                           {item.value}
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="col-span-2 bg-white rounded-2xl border border-slate-100 p-5">
-                  <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-teal-600" /> Recent
+                <div
+                  className={`md:col-span-2 rounded-2xl border p-5 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                >
+                  <h4
+                    className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-slate-900"}`}
+                  >
+                    <MessageSquare className={`w-4 h-4 ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`} /> Recent
                     Complaints
                   </h4>
                   <div className="space-y-3">
@@ -384,13 +486,19 @@ export default function Residents({ navigate }: Props) {
                     ].map((c) => (
                       <div
                         key={c.title}
-                        className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+                        className={`flex items-center justify-between py-2 border-b last:border-0 ${darkMode ? "border-slate-700" : "border-slate-50"}`}
                       >
                         <div>
-                          <p className="text-sm font-medium text-slate-800">
+                          <p
+                            className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}
+                          >
                             {c.title}
                           </p>
-                          <p className="text-xs text-slate-400">{c.date}</p>
+                          <p
+                            className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                          >
+                            {c.date}
+                          </p>
                         </div>
                         <span className="text-xs bg-green-100 text-green-700 font-semibold px-2.5 py-1 rounded-full">
                           {c.status}
@@ -403,43 +511,62 @@ export default function Residents({ navigate }: Props) {
             )}
 
             {activeTab === "payments" && (
-              <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-slate-50">
-                    <tr className="text-xs font-semibold uppercase text-slate-400 tracking-wide">
-                      <th className="text-left px-6 py-3">Month</th>
-                      <th className="text-left px-6 py-3">Amount</th>
-                      <th className="text-left px-6 py-3">Date Paid</th>
-                      <th className="text-left px-6 py-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {paymentHistory.map((p) => (
-                      <tr key={p.month} className="hover:bg-slate-50">
-                        <td className="px-6 py-3.5 text-sm font-medium text-slate-800">
-                          {p.month}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm font-bold text-slate-900">
-                          ₹{p.amount.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-3.5 text-sm text-slate-500">
-                          {p.date}
-                        </td>
-                        <td className="px-6 py-3.5">
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                              p.status === "Paid"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-orange-100 text-orange-700"
-                            }`}
-                          >
-                            {p.status}
-                          </span>
-                        </td>
+              <div
+                className={`rounded-2xl border overflow-hidden ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[480px]">
+                    <thead
+                      className={darkMode ? "bg-slate-900/50" : "bg-slate-50"}
+                    >
+                      <tr
+                        className={`text-xs font-semibold uppercase text-slate-400 tracking-wide`}
+                      >
+                        <th className="text-left px-6 py-3">Month</th>
+                        <th className="text-left px-6 py-3">Amount</th>
+                        <th className="text-left px-6 py-3">Date Paid</th>
+                        <th className="text-left px-6 py-3">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody
+                      className={`divide-y ${darkMode ? "divide-slate-700" : "divide-slate-50"}`}
+                    >
+                      {paymentHistory.map((p) => (
+                        <tr
+                          key={p.month}
+                          className={`transition-colors ${darkMode ? "hover:bg-slate-700/50" : "hover:bg-slate-50"}`}
+                        >
+                          <td
+                            className={`px-6 py-3.5 text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}
+                          >
+                            {p.month}
+                          </td>
+                          <td
+                            className={`px-6 py-3.5 text-sm font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+                          >
+                            ₹{p.amount.toLocaleString()}
+                          </td>
+                          <td
+                            className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                          >
+                            {p.date}
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                p.status === "Paid"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-orange-100 text-orange-700"
+                              }`}
+                            >
+                              {p.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -448,16 +575,26 @@ export default function Residents({ navigate }: Props) {
                 {timeline.map((t, i) => (
                   <div key={i} className="flex gap-4 pb-6 relative">
                     {i < timeline.length - 1 && (
-                      <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-slate-100" />
+                      <div
+                        className={`absolute left-5 top-10 bottom-0 w-0.5 ${darkMode ? "bg-slate-700" : "bg-slate-100"}`}
+                      />
                     )}
-                    <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-lg z-10 flex-shrink-0">
+                    <div
+                      className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg z-10 flex-shrink-0 ${darkMode ? "bg-slate-800 border-slate-600" : "bg-white border-slate-200"}`}
+                    >
                       {t.icon}
                     </div>
                     <div className="pt-2">
-                      <p className="font-semibold text-slate-900 text-sm">
+                      <p
+                        className={`font-semibold text-sm ${darkMode ? "text-slate-200" : "text-slate-900"}`}
+                      >
                         {t.label}
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">{t.date}</p>
+                      <p
+                        className={`text-xs mt-0.5 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                      >
+                        {t.date}
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -11,6 +11,8 @@ import PGDetails from "./pages/PGDetails";
 import Auth from "./pages/Auth";
 import Operations from "./pages/Operations";
 import ContentPage from "./pages/ContentPage";
+import ResidentPortal from "./pages/ResidentPortal";
+import ResidentRegister from "./pages/ResidentRegister";
 import { ThemeProvider } from "./theme";
 import { NavigationProvider } from "./navigation";
 
@@ -25,6 +27,8 @@ export type Page =
   | "pg-listing"
   | "pg-details"
   | "auth"
+  | "resident-portal"
+  | "resident-register"
   | "rooms"
   | "beds"
   | "visitors"
@@ -84,16 +88,14 @@ export default function App() {
 
 function LoadingOverlay() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 text-white animate-loading-in">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-xl shadow-blue-500/30">
-          <span className="absolute inset-0 rounded-2xl border-2 border-white/40 animate-ping" />
-          <span className="text-xl font-black">PG</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-loading-dot" />
-          <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-loading-dot [animation-delay:120ms]" />
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-loading-dot [animation-delay:240ms]" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F8F5F2] animate-loading-in">
+      <div className="flex flex-col items-center gap-6">
+        <img src="./images/loading.png" alt="Room Bae" className="w-56 animate-pulse" />
+
+        <div className="flex gap-2">
+          <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce"></span>
+          <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce delay-150"></span>
+          <span className="h-2 w-2 rounded-full bg-[#C89B6D] animate-bounce delay-300"></span>
         </div>
       </div>
     </div>
@@ -122,6 +124,10 @@ function renderPage(page: Page, navigate: (p: Page) => void) {
       return <PGDetails navigate={navigate} />;
     case "auth":
       return <Auth navigate={navigate} />;
+    case "resident-portal":
+      return <ResidentPortal navigate={navigate} />;
+    case "resident-register":
+      return <ResidentRegister navigate={navigate} />;
     case "rooms":
       return <Operations navigate={navigate} page="rooms" />;
     case "beds":

@@ -16,7 +16,6 @@ import {
   X,
   ChevronRight,
   DoorOpen,
-  Package,
 } from "lucide-react";
 import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
@@ -37,7 +36,6 @@ const sidebarItems: SidebarItem[] = [
   { icon: CreditCard, label: "Payments", page: "billing" },
   { icon: MessageSquare, label: "Complaints", page: "complaints" },
   { icon: UserCheck, label: "Visitors", page: "visitors" },
-  { icon: Package, label: "Expenses", page: "billing" },
   { icon: TrendingUp, label: "Analytics", page: "analytics" },
   { icon: Bell, label: "Notifications", page: "notifications" },
   { icon: Settings, label: "Settings", page: "settings" },
@@ -47,29 +45,23 @@ interface Props {
   children: React.ReactNode;
   navigate: (p: Page) => void;
   activePage: Page;
-  darkMode?: boolean;
-  toggleDark?: () => void;
 }
 
-export default function DashboardLayout({
-  children,
-  navigate,
-  activePage,
-  darkMode = false,
-}: Props) {
+export default function DashboardLayout({ children, navigate, activePage }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const theme = useTheme();
-  darkMode = theme.darkMode;
+  const { darkMode } = useTheme();
+
+  const sidebarBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
+  const mainBg = darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]";
+  const headerBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
 
   return (
-    <div
-      className={`flex h-screen overflow-hidden ${darkMode ? "bg-slate-900" : "bg-slate-50"}`}
-    >
+    <div className={`flex h-screen overflow-hidden ${mainBg}`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-20 lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -81,35 +73,43 @@ export default function DashboardLayout({
           transition-all duration-300 ease-in-out
           ${collapsed ? "w-16" : "w-64"}
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}
+          ${sidebarBg}
           border-r
         `}
+        style={{ boxShadow: darkMode ? "4px 0 24px rgba(0,0,0,0.25)" : "4px 0 24px rgba(93,55,28,0.08)" }}
       >
         {/* Logo */}
         <div
-          className={`flex items-center gap-3 px-4 py-5 border-b ${darkMode ? "border-slate-800" : "border-slate-100"}`}
+          className={`flex items-center gap-3 px-4 py-5 border-b ${darkMode ? "border-[#4A443F]" : "border-[#E6D7CA]"}`}
         >
           <button
             type="button"
             onClick={() => navigate("landing")}
-            aria-label="Go to PG Manager home"
+            aria-label="Go to home"
             className="flex min-w-0 items-center gap-3"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-4 h-4 text-white" />
+            <div
+              className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)", boxShadow: "0 4px 12px rgba(197,139,99,0.4)" }}
+            >
+              <Building2 className="w-4.5 h-4.5 text-white" />
             </div>
             {!collapsed && (
               <span
-                className={`font-bold text-base ${darkMode ? "text-white" : "text-slate-900"}`}
+                className={`font-bold text-base truncate tracking-wide ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}
               >
-                PG Manager
+                RoomBae
               </span>
             )}
           </button>
           <button
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`ml-auto hidden lg:flex flex-shrink-0 p-1 rounded-md transition-colors ${darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"}`}
+            className={`ml-auto hidden lg:flex flex-shrink-0 p-1.5 rounded-lg transition-colors ${
+              darkMode
+                ? "text-[#756A63] hover:text-[#C89A4B] hover:bg-[#332D2B]"
+                : "text-[#A8907F] hover:text-[#C58B63] hover:bg-[#F8EEE5]"
+            }`}
           >
             <ChevronRight
               className={`w-4 h-4 transition-transform ${collapsed ? "" : "rotate-180"}`}
@@ -118,7 +118,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2">
+        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5" aria-label="Main navigation">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.page;
@@ -129,42 +129,56 @@ export default function DashboardLayout({
                   navigate(item.page);
                   setSidebarOpen(false);
                 }}
+                title={collapsed ? item.label : undefined}
+                aria-current={isActive ? "page" : undefined}
                 className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm font-medium transition-all duration-150
-                  ${
-                    isActive
-                      ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
-                      : darkMode
-                        ? "text-slate-400 hover:text-white hover:bg-slate-800"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                  focus-visible:outline-none focus-visible:ring-2
+                  ${isActive
+                    ? "text-white shadow-md focus-visible:ring-white"
+                    : darkMode
+                      ? "text-[#756A63] hover:text-[#F7F3EE] hover:bg-[#332D2B] focus-visible:ring-[#C89A4B]"
+                      : "text-[#6E5A52] hover:text-[#3B2A24] hover:bg-[#F8EEE5] focus-visible:ring-[#D9A87C]"
                   }
                 `}
+                style={isActive ? {
+                  background: "linear-gradient(135deg, #D9A87C, #C58B63)",
+                  boxShadow: darkMode
+                    ? "0 4px 14px rgba(200,154,75,0.35)"
+                    : "0 4px 14px rgba(197,139,99,0.3)",
+                } : {}}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                <Icon
+                  className={`w-4 h-4 flex-shrink-0 ${
+                    isActive
+                      ? "text-white"
+                      : darkMode
+                        ? "text-[#756A63]"
+                        : "text-[#A8907F]"
+                  }`}
+                  aria-hidden="true"
+                />
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </button>
             );
           })}
         </nav>
 
-        {/* Bottom user */}
-        <div
-          className={`p-4 border-t ${darkMode ? "border-slate-800" : "border-slate-100"}`}
-        >
+        {/* Bottom user area */}
+        <div className={`p-4 border-t ${darkMode ? "border-[#4A443F]" : "border-[#E6D7CA]"}`}>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-semibold">RK</span>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold"
+              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)", boxShadow: "0 2px 8px rgba(197,139,99,0.35)" }}
+            >
+              RK
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p
-                  className={`text-sm font-medium truncate ${darkMode ? "text-white" : "text-slate-900"}`}
-                >
+                <p className={`text-sm font-semibold truncate ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
                   Rajesh Kumar
                 </p>
-                <p
-                  className={`text-xs truncate ${darkMode ? "text-slate-500" : "text-slate-500"}`}
-                >
+                <p className={`text-xs truncate ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`}>
                   Owner
                 </p>
               </div>
@@ -172,7 +186,12 @@ export default function DashboardLayout({
             {!collapsed && (
               <button
                 onClick={() => navigate("landing")}
-                className={`p-1.5 rounded-lg transition-colors ${darkMode ? "text-slate-400 hover:text-red-400 hover:bg-slate-800" : "text-slate-400 hover:text-red-500 hover:bg-red-50"}`}
+                title="Sign out"
+                className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                  darkMode
+                    ? "text-[#756A63] hover:text-[#D96B5D] hover:bg-[#332D2B]"
+                    : "text-[#A8907F] hover:text-[#D96B5D] hover:bg-[#F8EEE5]"
+                }`}
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -183,52 +202,75 @@ export default function DashboardLayout({
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top navbar */}
+        {/* Top header */}
         <header
-          className={`flex items-center gap-2 px-4 md:px-6 py-4 border-b ${darkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
+          className={`flex items-center gap-2 px-3 md:px-6 py-3 border-b flex-shrink-0 ${headerBg}`}
+          style={{ boxShadow: darkMode ? "0 2px 12px rgba(0,0,0,0.2)" : "0 2px 12px rgba(93,55,28,0.06)" }}
         >
+          {/* Mobile menu */}
           <button
-            className={`lg:hidden p-2 rounded-lg transition-colors ${darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
+            className={`lg:hidden p-2 rounded-xl transition-colors flex-shrink-0 ${
+              darkMode
+                ? "text-[#756A63] hover:text-[#F7F3EE] hover:bg-[#332D2B]"
+                : "text-[#A8907F] hover:text-[#3B2A24] hover:bg-[#F8EEE5]"
+            }`}
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
-            {sidebarOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
+          {/* Search */}
           <div
-            className={`flex items-center gap-2.5 flex-1 max-w-md px-3 py-2 rounded-xl ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}
+            className={`flex items-center gap-2.5 flex-1 min-w-0 max-w-sm px-4 py-2 rounded-xl border transition-all ${
+              darkMode
+                ? "bg-[#332D2B] border-[#4A443F] focus-within:border-[#C89A4B]"
+                : "bg-[#F8EEE5] border-[#E6D7CA] focus-within:border-[#D9A87C]"
+            }`}
+            style={{ transition: "border-color 0.2s, box-shadow 0.2s" }}
           >
-            <Search
-              className={`w-4 h-4 flex-shrink-0 ${darkMode ? "text-slate-400" : "text-slate-400"}`}
-            />
+            <Search className={`w-4 h-4 flex-shrink-0 ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`} />
             <input
               type="text"
-              placeholder="Search residents, rooms, payments..."
-              className={`flex-1 bg-transparent text-sm outline-none ${darkMode ? "text-white placeholder:text-slate-500" : "text-slate-700 placeholder:text-slate-400"}`}
+              placeholder="Search residents, rooms…"
+              className={`flex-1 min-w-0 bg-transparent text-sm outline-none font-medium ${
+                darkMode
+                  ? "text-[#F7F3EE] placeholder:text-[#756A63]"
+                  : "text-[#3B2A24] placeholder:text-[#A8907F]"
+              }`}
             />
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
+          {/* Right actions */}
+          <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
             <BackButton />
             <ThemeToggle />
             <button
-              className={`relative p-2 rounded-xl transition-colors ${darkMode ? "text-slate-400 bg-slate-800 hover:bg-slate-700" : "text-slate-500 bg-slate-100 hover:bg-slate-200"}`}
+              className={`relative p-2 rounded-xl transition-colors ${
+                darkMode
+                  ? "text-[#756A63] bg-[#332D2B] hover:bg-[#3D3632] hover:text-[#C89A4B]"
+                  : "text-[#A8907F] bg-[#F8EEE5] hover:bg-[#EDE0D4] hover:text-[#C58B63]"
+              }`}
+              aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              <span
+                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                style={{ background: "#D96B5D", boxShadow: "0 0 0 1.5px #FFFDFB" }}
+              />
             </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
-              <span className="text-white text-xs font-semibold">RK</span>
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-semibold"
+              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+            >
+              RK
             </div>
           </div>
         </header>
 
         {/* Page content */}
         <main
-          className={`flex-1 overflow-y-auto ${darkMode ? "bg-slate-950" : "bg-slate-50"}`}
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]"}`}
         >
           {children}
         </main>

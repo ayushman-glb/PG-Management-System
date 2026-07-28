@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import type { Page } from "../App";
+import { useTheme } from "../theme";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -103,11 +104,11 @@ const paymentData = [
 ];
 
 const categoryPie = [
-  { name: "Plumbing", value: 32, color: "#2563EB" },
-  { name: "Electrical", value: 28, color: "#7C3AED" },
-  { name: "Maintenance", value: 20, color: "#14B8A6" },
-  { name: "Sanitation", value: 12, color: "#F59E0B" },
-  { name: "Misc", value: 8, color: "#EF4444" },
+  { name: "Plumbing", value: 32, color: "#D9A87C" },
+  { name: "Electrical", value: 28, color: "#C58B63" },
+  { name: "Maintenance", value: 20, color: "#E7C4A0" },
+  { name: "Sanitation", value: 12, color: "#D9A441" },
+  { name: "Misc", value: 8, color: "#D96B5D" },
 ];
 
 const vacancyPrediction = [
@@ -127,23 +128,40 @@ const heatmapData = [
 
 export default function Analytics({ navigate }: Props) {
   const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "1y">("30d");
+  const { darkMode } = useTheme();
 
   return (
     <DashboardLayout navigate={navigate} activePage="analytics">
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 md:p-6 space-y-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Analytics</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h1
+              className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
+              Analytics
+            </h1>
+            <p
+              className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               Deep insights across all your properties
             </p>
           </div>
-          <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl">
+          <div
+            className={`flex gap-1.5 p-1 rounded-xl flex-shrink-0 ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}
+          >
             {(["7d", "30d", "90d", "1y"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${period === p ? "bg-white shadow-sm text-slate-900" : "text-slate-500"}`}
+                className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  period === p
+                    ? darkMode
+                      ? "bg-slate-700 shadow-sm text-white"
+                      : "bg-white shadow-sm text-slate-900"
+                    : darkMode
+                      ? "text-slate-400"
+                      : "text-slate-500"
+                }`}
               >
                 {p}
               </button>
@@ -160,8 +178,8 @@ export default function Analytics({ navigate }: Props) {
               change: "+18%",
               up: true,
               icon: CreditCard,
-              color: "text-blue-600",
-              bg: "bg-blue-50",
+              color: "text-[#C58B63]",
+              bg: "bg-[#F8EEE5]",
             },
             {
               label: "Avg Occupancy",
@@ -169,8 +187,8 @@ export default function Analytics({ navigate }: Props) {
               change: "+5.1%",
               up: true,
               icon: Users,
-              color: "text-green-600",
-              bg: "bg-green-50",
+              color: "text-emerald-600",
+              bg: "bg-emerald-50",
             },
             {
               label: "Total Complaints",
@@ -178,8 +196,8 @@ export default function Analytics({ navigate }: Props) {
               change: "-12%",
               up: false,
               icon: AlertTriangle,
-              color: "text-orange-600",
-              bg: "bg-orange-50",
+              color: "text-amber-600",
+              bg: "bg-amber-50",
             },
             {
               label: "Resident Growth",
@@ -187,24 +205,24 @@ export default function Analytics({ navigate }: Props) {
               change: "+34%",
               up: true,
               icon: TrendingUp,
-              color: "text-violet-600",
-              bg: "bg-violet-50",
+              color: "text-[#D9A87C]",
+              bg: "bg-[#F8EEE5]",
             },
           ].map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.label}
-                className="bg-white rounded-2xl border border-slate-100 p-5 card-hover"
+                className={`rounded-2xl border p-5 card-hover ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div
-                    className={`w-9 h-9 ${s.bg} rounded-xl flex items-center justify-center`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-slate-700" : s.bg}`}
                   >
-                    <Icon className={`w-4.5 h-4.5 ${s.color}`} />
+                    <Icon className={`w-4 h-4 ${darkMode ? "text-slate-300" : s.color}`} />
                   </div>
                   <span
-                    className={`flex items-center gap-1 text-xs font-semibold ${s.up ? "text-green-600" : "text-red-600"}`}
+                    className={`flex items-center gap-1 text-xs font-semibold ${s.up ? "text-green-500" : "text-red-500"}`}
                   >
                     {s.up ? (
                       <TrendingUp className="w-3 h-3" />
@@ -214,29 +232,49 @@ export default function Analytics({ navigate }: Props) {
                     {s.change}
                   </span>
                 </div>
-                <p className="text-2xl font-black text-slate-900">{s.value}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                <p
+                  className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+                >
+                  {s.value}
+                </p>
+                <p
+                  className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                >
+                  {s.label}
+                </p>
               </div>
             );
           })}
         </div>
 
         {/* Revenue chart */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-6">
+        <div
+          className={`rounded-2xl border p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+        >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-bold text-slate-900">Revenue vs Target</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h3
+                className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
+                Revenue vs Target
+              </h3>
+              <p
+                className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+              >
                 Monthly performance against targets
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs">
+            <div
+              className={`flex items-center gap-4 text-xs ${darkMode ? "text-slate-400" : "text-slate-600"}`}
+            >
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 bg-blue-600 rounded-full inline-block" />{" "}
+                <span className="w-3 h-1.5 bg-[#D9A87C] rounded-full inline-block" />{" "}
                 Actual
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 bg-slate-300 rounded-full inline-block" />{" "}
+                <span
+                  className={`w-3 h-1.5 rounded-full inline-block ${darkMode ? "bg-slate-500" : "bg-slate-300"}`}
+                />{" "}
                 Target
               </span>
             </div>
@@ -244,40 +282,44 @@ export default function Analytics({ navigate }: Props) {
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart
               data={revenueData}
-              margin={{ left: -10, right: 0, top: 0, bottom: 0 }}
+              margin={{ left: -10, right: 8, top: 0, bottom: 0 }}
             >
               <defs>
                 <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563EB" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                  <stop offset="5%" stopColor={darkMode ? "#C89A4B" : "#D9A87C"} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={darkMode ? "#C89A4B" : "#D9A87C"} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={darkMode ? "#4A433F" : "#E6D7CA"}
+              />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 11, fill: "#94A3B8" }}
+                tick={{ fontSize: 11, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: "#94A3B8" }}
+                tick={{ fontSize: 11, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`}
               />
               <Tooltip
                 contentStyle={{
-                  background: "white",
-                  border: "none",
+                  background: darkMode ? "#332D2B" : "#FFFDFB",
+                  border: `1px solid ${darkMode ? "#4A433F" : "#E6D7CA"}`,
                   borderRadius: 12,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                  color: darkMode ? "#F7F3EE" : "#3B2A24",
                 }}
                 formatter={(v) => [`₹${(Number(v ?? 0) / 1000).toFixed(1)}K`]}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#2563EB"
+                stroke={darkMode ? "#C89A4B" : "#D9A87C"}
                 strokeWidth={2.5}
                 fill="url(#revG)"
                 name="Revenue"
@@ -285,7 +327,7 @@ export default function Analytics({ navigate }: Props) {
               <Line
                 type="monotone"
                 dataKey="target"
-                stroke="#CBD5E1"
+                stroke={darkMode ? "#475569" : "#CBD5E1"}
                 strokeWidth={2}
                 strokeDasharray="6 3"
                 dot={false}
@@ -298,19 +340,28 @@ export default function Analytics({ navigate }: Props) {
         {/* Charts row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Occupancy by property */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6">
-            <h3 className="font-bold text-slate-900 mb-1">
+          <div
+            className={`rounded-2xl border p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <h3
+              className={`font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
               Occupancy by Property
             </h3>
-            <p className="text-xs text-slate-500 mb-5">
+            <p
+              className={`text-xs mb-5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               Monthly occupancy rate per PG
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart
                 data={occupancyData}
-                margin={{ left: -20, right: 0, top: 0, bottom: 0 }}
+                margin={{ left: -10, right: 8, top: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={darkMode ? "#1E293B" : "#F1F5F9"}
+                />
                 <XAxis
                   dataKey="month"
                   tick={{ fontSize: 10, fill: "#94A3B8" }}
@@ -326,17 +377,18 @@ export default function Analytics({ navigate }: Props) {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "white",
+                    background: darkMode ? "#1E293B" : "white",
                     border: "none",
                     borderRadius: 10,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                    color: darkMode ? "#F1F5F9" : "#0F172A",
                   }}
                   formatter={(v) => [`${Number(v ?? 0)}%`]}
                 />
                 <Line
                   type="monotone"
                   dataKey="sunrise"
-                  stroke="#2563EB"
+                  stroke="#D9A87C"
                   strokeWidth={2}
                   dot={false}
                   name="Sunrise PG"
@@ -344,7 +396,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="greenValley"
-                  stroke="#7C3AED"
+                  stroke="#C58B63"
                   strokeWidth={2}
                   dot={false}
                   name="Green Valley"
@@ -352,7 +404,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="urbanNest"
-                  stroke="#14B8A6"
+                  stroke="#E7C4A0"
                   strokeWidth={2}
                   dot={false}
                   name="Urban Nest"
@@ -360,7 +412,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="cityHeights"
-                  stroke="#F59E0B"
+                  stroke="#D9A441"
                   strokeWidth={2}
                   dot={false}
                   name="City Heights"
@@ -371,19 +423,28 @@ export default function Analytics({ navigate }: Props) {
           </div>
 
           {/* Payment breakdown */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6">
-            <h3 className="font-bold text-slate-900 mb-1">
+          <div
+            className={`rounded-2xl border p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <h3
+              className={`font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
               Payment Collections
             </h3>
-            <p className="text-xs text-slate-500 mb-5">
+            <p
+              className={`text-xs mb-5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               On-time vs late vs defaulted
             </p>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart
                 data={paymentData}
-                margin={{ left: -20, right: 0, top: 0, bottom: 0 }}
+                margin={{ left: -10, right: 8, top: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={darkMode ? "#1E293B" : "#F1F5F9"}
+                />
                 <XAxis
                   dataKey="month"
                   tick={{ fontSize: 10, fill: "#94A3B8" }}
@@ -397,10 +458,11 @@ export default function Analytics({ navigate }: Props) {
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "white",
+                    background: darkMode ? "#1E293B" : "white",
                     border: "none",
                     borderRadius: 10,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                    color: darkMode ? "#F1F5F9" : "#0F172A",
                   }}
                 />
                 <Bar
@@ -433,11 +495,17 @@ export default function Analytics({ navigate }: Props) {
         {/* Bottom charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Complaint pie */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6">
-            <h3 className="font-bold text-slate-900 mb-1">
+          <div
+            className={`rounded-2xl border p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <h3
+              className={`font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
               Complaints by Category
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <p
+              className={`text-xs mb-4 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               Distribution this year
             </p>
             <div className="relative flex items-center justify-center">
@@ -450,7 +518,7 @@ export default function Analytics({ navigate }: Props) {
                     outerRadius={65}
                     dataKey="value"
                     strokeWidth={2}
-                    stroke="white"
+                    stroke={darkMode ? "#1E293B" : "white"}
                   >
                     {categoryPie.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
@@ -458,10 +526,11 @@ export default function Analytics({ navigate }: Props) {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: "white",
+                      background: darkMode ? "#1E293B" : "white",
                       border: "none",
                       borderRadius: 8,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                      color: darkMode ? "#F1F5F9" : "#0F172A",
                     }}
                   />
                 </PieChart>
@@ -473,14 +542,18 @@ export default function Analytics({ navigate }: Props) {
                   key={item.name}
                   className="flex items-center justify-between text-xs"
                 >
-                  <span className="flex items-center gap-2 text-slate-600">
+                  <span
+                    className={`flex items-center gap-2 ${darkMode ? "text-slate-300" : "text-slate-600"}`}
+                  >
                     <span
                       className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0"
                       style={{ background: item.color }}
                     />
                     {item.name}
                   </span>
-                  <span className="font-semibold text-slate-800">
+                  <span
+                    className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}
+                  >
                     {item.value}%
                   </span>
                 </div>
@@ -489,29 +562,43 @@ export default function Analytics({ navigate }: Props) {
           </div>
 
           {/* Occupancy heatmap */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6">
-            <h3 className="font-bold text-slate-900 mb-1">Occupancy Heatmap</h3>
-            <p className="text-xs text-slate-500 mb-4">Sunrise PG — by room</p>
+          <div
+            className={`rounded-2xl border p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <h3
+              className={`font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
+              Occupancy Heatmap
+            </h3>
+            <p
+              className={`text-xs mb-4 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
+              Sunrise PG — by room
+            </p>
             <div className="space-y-2">
               {heatmapData.map((row) => (
                 <div key={row.floor} className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400 w-14 flex-shrink-0">
+                  <span
+                    className={`text-xs w-14 flex-shrink-0 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+                  >
                     {row.floor}
                   </span>
                   <div className="flex gap-1.5 flex-1">
                     {row.rooms.map((val, i) => (
                       <div
                         key={i}
-                        className="flex-1 h-7 rounded-md"
+                        className="flex-1 h-7 rounded-md transition-all"
                         style={{
                           background:
                             val === 100
-                              ? "#2563EB"
+                              ? darkMode ? "#C89A4B" : "#D9A87C"
                               : val >= 80
-                                ? "#60A5FA"
+                                ? darkMode ? "#D8B36A" : "#C58B63"
                                 : val >= 60
-                                  ? "#BFDBFE"
-                                  : "#EFF6FF",
+                                  ? darkMode ? "#E8C98A" : "#E7C4A0"
+                                  : darkMode
+                                    ? "#332D2B"
+                                    : "#F8EEE5",
                           opacity: val === 0 ? 0.3 : 1,
                         }}
                         title={`${val}%`}
@@ -522,9 +609,13 @@ export default function Analytics({ navigate }: Props) {
               ))}
             </div>
             <div className="flex items-center gap-2 mt-4 text-xs">
-              <span className="text-slate-400">Empty</span>
+              <span
+                className={darkMode ? "text-slate-500" : "text-slate-400"}
+              >
+                Empty
+              </span>
               <div className="flex gap-1 flex-1">
-                {["#EFF6FF", "#BFDBFE", "#60A5FA", "#2563EB"].map((c) => (
+                {["#F8EEE5", "#E7C4A0", "#C58B63", "#D9A87C"].map((c) => (
                   <div
                     key={c}
                     className="flex-1 h-2 rounded-sm"
@@ -532,55 +623,73 @@ export default function Analytics({ navigate }: Props) {
                   />
                 ))}
               </div>
-              <span className="text-slate-400">Full</span>
+              <span
+                className={darkMode ? "text-slate-500" : "text-slate-400"}
+              >
+                Full
+              </span>
             </div>
           </div>
 
           {/* Vacancy prediction */}
-          <div className="bg-white rounded-2xl border border-slate-100 p-6">
+          <div
+            className={`rounded-2xl border p-6 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-slate-900">Vacancy Prediction</h3>
-              <span className="text-xs bg-violet-100 text-violet-700 font-bold px-2 py-0.5 rounded-full">
+              <h3
+                className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
+                Vacancy Prediction
+              </h3>
+              <span className="text-xs bg-[#F8EEE5] text-[#C58B63] font-bold px-2 py-0.5 rounded-full">
                 AI
               </span>
             </div>
-            <p className="text-xs text-slate-500 mb-5">
+            <p
+              className={`text-xs mb-5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
               Predicted vacant beds next 5 months
             </p>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart
                 data={vacancyPrediction}
-                margin={{ left: -20, right: 0, top: 0, bottom: 0 }}
+                margin={{ left: -10, right: 8, top: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={darkMode ? "#4A433F" : "#E6D7CA"}
+                />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  tick={{ fontSize: 10, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  tick={{ fontSize: 10, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: "white",
-                    border: "none",
+                    background: darkMode ? "#332D2B" : "#FFFDFB",
+                    border: `1px solid ${darkMode ? "#4A433F" : "#E6D7CA"}`,
                     borderRadius: 8,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                    color: darkMode ? "#F7F3EE" : "#3B2A24",
                   }}
                 />
                 <Bar
                   dataKey="predicted"
-                  fill="#7C3AED"
+                  fill={darkMode ? "#C89A4B" : "#D9A87C"}
                   radius={[4, 4, 0, 0]}
                   name="Predicted Vacancies"
                 />
               </BarChart>
             </ResponsiveContainer>
-            <p className="text-xs text-slate-400 mt-3 text-center">
+            <p
+              className={`text-xs mt-3 text-center ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+            >
               Based on historical checkout patterns
             </p>
           </div>

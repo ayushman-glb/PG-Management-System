@@ -103,9 +103,9 @@ export default function PGDetails({ navigate }: Props) {
   const [showBooking, setShowBooking] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#FFF8F2] text-[#3B2A24]">
       {/* Top nav */}
-      <div className="bg-white border-b border-slate-100 sticky top-0 z-40 px-4 py-3 md:px-6 md:py-4">
+      <div className="bg-[#FFFDFB] border-b border-[#E6D7CA] sticky top-0 z-40 px-4 py-3 md:px-6 md:py-4">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BackButton />
@@ -180,7 +180,7 @@ export default function PGDetails({ navigate }: Props) {
                   <button
                     key={i}
                     onClick={() => setCurrentImg(i)}
-                    className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${currentImg === i ? "border-blue-600" : "border-transparent"}`}
+                    className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${currentImg === i ? "border-[#D9A87C]" : "border-transparent"}`}
                   >
                     <img
                       src={img}
@@ -196,8 +196,8 @@ export default function PGDetails({ navigate }: Props) {
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <span className="text-xs font-bold bg-blue-600 text-white px-2.5 py-1 rounded-full mb-3 inline-block">
-                    Premium
+                  <span className="text-xs font-bold text-white px-3 py-1 rounded-full mb-3 inline-block shadow-sm" style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}>
+                    Boutique Luxury
                   </span>
                   <h1 className="text-2xl font-black text-slate-900 mb-2">
                     Urban Nest Co-living
@@ -234,7 +234,7 @@ export default function PGDetails({ navigate }: Props) {
                       key={a.label}
                       className="bg-white border border-slate-100 rounded-xl p-4 card-hover"
                     >
-                      <Icon className="w-5 h-5 text-blue-600 mb-2" />
+                      <Icon className="w-5 h-5 text-[#C58B63] mb-2" />
                       <p className="font-semibold text-slate-900 text-sm">
                         {a.label}
                       </p>
@@ -255,7 +255,7 @@ export default function PGDetails({ navigate }: Props) {
                   <button
                     key={room.type}
                     onClick={() => setSelectedRoom(room)}
-                    className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 text-left transition-all ${selectedRoom.type === room.type ? "border-blue-600 bg-blue-50" : "border-slate-100 bg-white hover:border-slate-200"}`}
+                    className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 text-left transition-all ${selectedRoom.type === room.type ? "border-[#D9A87C] bg-[#F8EEE5]" : "border-slate-100 bg-white hover:border-slate-200"}`}
                   >
                     <div>
                       <div className="flex items-center gap-3 mb-1">
@@ -307,7 +307,10 @@ export default function PGDetails({ navigate }: Props) {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                          style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+                        >
                           {r.avatar}
                         </div>
                         <div>
@@ -389,7 +392,7 @@ export default function PGDetails({ navigate }: Props) {
 
               <button
                 onClick={() => setShowBooking(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl transition-colors shadow-md shadow-blue-200 mb-3"
+                className="w-full luxury-btn-primary font-bold py-3.5 flex-shrink-0 mb-3"
               >
                 Book Visit
               </button>
@@ -403,7 +406,10 @@ export default function PGDetails({ navigate }: Props) {
                   Managed by
                 </p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                    style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+                  >
                     RK
                   </div>
                   <div>
@@ -416,9 +422,9 @@ export default function PGDetails({ navigate }: Props) {
                   </div>
                   <a
                     href="tel:+919876543210"
-                    className="ml-auto w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-colors"
+                    className="ml-auto w-8 h-8 bg-[#F8EEE5] rounded-xl flex items-center justify-center hover:bg-[#EDE0D4] transition-colors"
                   >
-                    <Phone className="w-3.5 h-3.5 text-blue-600" />
+                    <Phone className="w-3.5 h-3.5 text-[#C58B63]" />
                   </a>
                 </div>
               </div>
@@ -477,7 +483,7 @@ export default function PGDetails({ navigate }: Props) {
             </div>
             <button
               onClick={() => setShowBooking(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors"
+              className="w-full luxury-btn-primary font-semibold py-3"
             >
               Done
             </button>

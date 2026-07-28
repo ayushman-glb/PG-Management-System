@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import type { Page } from "../App";
+import { useTheme } from "../theme";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -96,64 +97,101 @@ const activity = [
 export default function Operations({ navigate, page }: Props) {
   const content = pageContent[page];
   const Icon = content.icon;
+  const { darkMode } = useTheme();
 
   return (
     <DashboardLayout navigate={navigate} activePage={page}>
-      <div className="p-6 space-y-6 animate-page-in">
-        <div className="flex items-start justify-between gap-4">
+      <div className="p-4 md:p-6 space-y-5 animate-page-in">
+        {/* Page Header */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#2B2725] text-[#C89A4B]" : "bg-[#F8EEE5] text-[#C58B63]"}`}
+            >
               <Icon className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900">
+              <h1
+                className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
                 {content.title}
               </h1>
-              <p className="text-sm text-slate-500 mt-0.5">
+              <p
+                className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+              >
                 {content.description}
               </p>
             </div>
           </div>
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors">
+          <button
+            className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 luxury-btn-primary flex-shrink-0"
+          >
             <Save className="w-4 h-4" />
             Save changes
           </button>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {content.stats.map(([label, value]) => (
             <div
               key={label}
-              className="bg-white border border-slate-100 rounded-2xl p-5"
+              className={`rounded-2xl p-5 border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
             >
-              <p className="text-xs text-slate-500">{label}</p>
-              <p className="text-2xl font-black text-slate-900 mt-2">{value}</p>
+              <p
+                className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+              >
+                {label}
+              </p>
+              <p
+                className={`text-2xl font-black mt-2 ${darkMode ? "text-white" : "text-slate-900"}`}
+              >
+                {value}
+              </p>
             </div>
           ))}
         </div>
 
+        {/* Bottom Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5">
-          <section className="bg-white border border-slate-100 rounded-2xl p-6">
+          {/* Recent Activity */}
+          <section
+            className={`rounded-2xl p-6 border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="font-bold text-slate-900">Recent activity</h2>
-                <p className="text-xs text-slate-500 mt-1">
+                <h2
+                  className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
+                >
+                  Recent activity
+                </h2>
+                <p
+                  className={`text-xs mt-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                >
                   A live view of your workspace
                 </p>
               </div>
-              <Users className="w-4 h-4 text-slate-400" />
+              <Users
+                className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
+              />
             </div>
             <div className="space-y-4">
               {activity.map(([property, text, time, ActivityIcon]) => (
                 <div key={text} className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#332D2B] text-[#C89A4B]" : "bg-[#F8EEE5] text-[#C58B63]"}`}
+                  >
                     <ActivityIcon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800">
+                    <p
+                      className={`text-sm font-semibold ${darkMode ? "text-slate-200" : "text-slate-800"}`}
+                    >
                       {text}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p
+                      className={`text-xs mt-0.5 ${darkMode ? "text-slate-500" : "text-slate-500"}`}
+                    >
                       {property} · {time}
                     </p>
                   </div>
@@ -162,9 +200,21 @@ export default function Operations({ navigate, page }: Props) {
             </div>
           </section>
 
-          <section className="bg-white border border-slate-100 rounded-2xl p-6">
-            <h2 className="font-bold text-slate-900">Quick actions</h2>
-            <div className="space-y-2 mt-4">
+          {/* Quick Actions */}
+          <section
+            className={`rounded-2xl p-6 border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          >
+            <h2
+              className={`font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}
+            >
+              Quick actions
+            </h2>
+            <p
+              className={`text-xs mb-4 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
+              Navigate to key sections
+            </p>
+            <div className="space-y-2">
               {[
                 ["Add a resident", "residents"],
                 ["Review payments", "billing"],
@@ -174,7 +224,7 @@ export default function Operations({ navigate, page }: Props) {
                 <button
                   key={destination}
                   onClick={() => navigate(destination as Page)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-sm font-medium text-slate-700 hover:text-blue-700 transition-colors"
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${darkMode ? "bg-slate-700/50 hover:bg-[#332D2B] text-slate-300 hover:text-[#C89A4B]" : "bg-slate-50 hover:bg-[#F8EEE5] text-slate-700 hover:text-[#C58B63]"}`}
                 >
                   {label}
                   <span aria-hidden="true">→</span>

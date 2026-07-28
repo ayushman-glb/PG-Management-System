@@ -37,15 +37,15 @@ interface Props {
 
 const pages = {
   about: {
-    eyebrow: "About PG Manager",
+    eyebrow: "About RoomBae",
     title: "The operating system for better PG living",
     description:
-      "PG Manager brings property owners, teams, and residents into one calm, connected workspace.",
+      "RoomBae brings property owners, teams, and residents into one calm, connected workspace.",
     icon: Building2,
     sections: [
       [
         "Built around real work",
-        "We designed PG Manager with property owners and managers who were tired of scattered spreadsheets, paper agreements, and payment follow-ups.",
+        "We designed RoomBae with property owners and managers who were tired of scattered spreadsheets, paper agreements, and payment follow-ups.",
       ],
       [
         "A clearer daily rhythm",
@@ -58,7 +58,7 @@ const pages = {
     ],
   },
   blog: {
-    eyebrow: "PG Manager Journal",
+    eyebrow: "RoomBae Journal",
     title: "Ideas for running a sharper PG business",
     description:
       "Practical guidance on occupancy, resident experience, payments, and the small systems that make a property feel effortless.",
@@ -103,12 +103,12 @@ const pages = {
     eyebrow: "Press",
     title: "PG management, in the story",
     description:
-      "Find product information, company context, and the latest updates from PG Manager.",
+      "Find product information, company context, and the latest updates from RoomBae.",
     icon: Sparkles,
     sections: [
       [
         "What we do",
-        "PG Manager helps owners manage properties, residents, payments, complaints, and operations from one platform.",
+        "RoomBae helps owners manage properties, residents, payments, complaints, and operations from one platform.",
       ],
       [
         "Media inquiries",
@@ -124,7 +124,7 @@ const pages = {
     eyebrow: "Product updates",
     title: "A product that keeps getting better",
     description:
-      "A concise record of the improvements landing across PG Manager.",
+      "A concise record of the improvements landing across RoomBae.",
     icon: Sparkles,
     sections: [
       [
@@ -143,7 +143,7 @@ const pages = {
   },
   roadmap: {
     eyebrow: "Roadmap",
-    title: "Where PG Manager is heading",
+    title: "Where RoomBae is heading",
     description:
       "We are building toward more connected, predictive, and resident-friendly property operations.",
     icon: BarChart3,
@@ -166,7 +166,7 @@ const pages = {
     eyebrow: "Documentation",
     title: "Everything your team needs to get moving",
     description:
-      "Learn the workflows, roles, and conventions that make PG Manager work for your property.",
+      "Learn the workflows, roles, and conventions that make RoomBae work for your property.",
     icon: FileText,
     sections: [
       [
@@ -206,7 +206,7 @@ const pages = {
   },
   "api-reference": {
     eyebrow: "API Reference",
-    title: "Connect PG Manager to your stack",
+    title: "Connect RoomBae to your stack",
     description:
       "Bring property, resident, billing, and operational data into the tools your team already uses.",
     icon: FileText,
@@ -227,7 +227,7 @@ const pages = {
   },
   status: {
     eyebrow: "System status",
-    title: "PG Manager is running smoothly",
+    title: "RoomBae is running smoothly",
     description:
       "See the health of the services that keep your property operations moving.",
     icon: Shield,
@@ -241,7 +241,7 @@ const pages = {
     eyebrow: "Privacy",
     title: "Your data deserves careful handling",
     description:
-      "We collect and use information to provide PG Manager, support your team, and keep the service secure.",
+      "We collect and use information to provide RoomBae, support your team, and keep the service secure.",
     icon: Shield,
     sections: [
       [
@@ -262,12 +262,12 @@ const pages = {
     eyebrow: "Terms",
     title: "Clear terms for a dependable service",
     description:
-      "These terms explain how PG Manager may be used and what you can expect from the platform.",
+      "These terms explain how RoomBae may be used and what you can expect from the platform.",
     icon: FileText,
     sections: [
       [
         "Using the service",
-        "Use PG Manager lawfully, keep account details accurate, and protect your credentials.",
+        "Use RoomBae lawfully, keep account details accurate, and protect your credentials.",
       ],
       [
         "Your content",
@@ -283,7 +283,7 @@ const pages = {
     eyebrow: "Cookies",
     title: "A transparent approach to cookies",
     description:
-      "Cookies help PG Manager remember preferences, understand usage, and keep important flows working.",
+      "Cookies help RoomBae remember preferences, understand usage, and keep important flows working.",
     icon: CheckCircle,
     sections: [
       [
@@ -307,17 +307,20 @@ export default function ContentPage({ navigate, page }: Props) {
   const Icon = content.icon;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
-      <header className="border-b border-slate-200/70 bg-white/80 px-4 py-4 md:px-6 md:py-5 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#FFF8F2] font-sans text-[#3B2A24]">
+      <header className="border-b border-[#E6D7CA]/70 bg-[#FFFDFB]/80 px-4 py-4 md:px-6 md:py-5 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <button
             onClick={() => navigate("landing")}
             className="flex items-center gap-2.5"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white">
-              <Building2 className="h-4 w-4" />
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
+              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
+            >
+              <Building2 className="h-4.5 w-4.5" />
             </span>
-            <span className="font-bold text-slate-900">PG Manager</span>
+            <span className="font-bold text-[#3B2A24]">RoomBae</span>
           </button>
           <div className="flex items-center gap-2">
             <BackButton />
@@ -327,13 +330,13 @@ export default function ContentPage({ navigate, page }: Props) {
       </header>
       <main className="mx-auto max-w-6xl px-6 py-16 md:py-24">
         <div className="max-w-3xl animate-page-in">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E6D7CA] bg-[#F8EEE5] px-4 py-2 text-xs font-semibold text-[#C58B63]">
             <Icon className="h-3.5 w-3.5" /> {content.eyebrow}
           </div>
-          <h1 className="text-4xl font-black leading-tight text-slate-900 md:text-6xl">
+          <h1 className="text-4xl font-black leading-tight text-[#3B2A24] md:text-6xl">
             {content.title}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-500">
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#6E5A52]">
             {content.description}
           </p>
         </div>
@@ -342,31 +345,34 @@ export default function ContentPage({ navigate, page }: Props) {
           {content.sections.map(([title, description]) => (
             <article
               key={title}
-              className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-transform hover:-translate-y-1"
+              className="luxury-card"
             >
-              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-[#F8EEE5] text-[#C58B63]">
                 <CheckCircle className="h-5 w-5" />
               </div>
-              <h2 className="font-bold text-slate-900">{title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              <h2 className="font-bold text-[#3B2A24]">{title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-[#6E5A52]">
                 {description}
               </p>
             </article>
           ))}
         </div>
 
-        <section className="mt-16 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-violet-600 to-blue-700 p-8 text-white md:p-12">
+        <section
+          className="mt-16 overflow-hidden rounded-3xl p-8 text-white md:p-12 shadow-xl"
+          style={{ background: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)" }}
+        >
           <div className="relative max-w-2xl">
             <h2 className="text-3xl font-black">
               Make your next property day simpler.
             </h2>
-            <p className="mt-3 text-white/75">
+            <p className="mt-3 text-white/90">
               Bring your properties, residents, and payments into one clear
               workspace.
             </p>
             <button
               onClick={() => navigate("auth")}
-              className="mt-7 flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-600 transition-transform hover:scale-105"
+              className="mt-7 flex items-center gap-2 rounded-xl bg-[#FFFDFB] px-5 py-3 text-sm font-bold text-[#C58B63] transition-transform hover:scale-105 shadow-md"
             >
               Start free trial <ArrowRight className="h-4 w-4" />
             </button>

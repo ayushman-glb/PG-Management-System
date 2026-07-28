@@ -83,7 +83,7 @@ const pgs = [
     ],
     available: 2,
     badge: "Premium",
-    badgeColor: "bg-blue-600",
+    badgeColor: "luxury-btn-primary",
     liked: false,
   },
   {
@@ -163,9 +163,9 @@ export default function PGListing({ navigate }: Props) {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#FFF8F2] text-[#3B2A24]">
       {/* Header */}
-      <div className="bg-white border-b border-slate-100 sticky top-0 z-40">
+      <div className="bg-[#FFFDFB] border-b border-[#E6D7CA] sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <div className="flex items-center gap-2">
@@ -179,14 +179,14 @@ export default function PGListing({ navigate }: Props) {
             </div>
 
             {/* Search bar */}
-            <div className="order-3 basis-full flex min-w-0 max-w-2xl flex-1 items-center gap-3 rounded-2xl bg-slate-100 px-4 py-3 sm:order-none sm:basis-auto">
-              <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <div className="order-3 basis-full flex min-w-0 max-w-2xl flex-1 items-center gap-3 rounded-2xl bg-[#F8EEE5] border border-[#E6D7CA] px-4 py-3 sm:order-none sm:basis-auto">
+              <Search className="w-4 h-4 text-[#A8907F] flex-shrink-0" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by location, name, or amenity..."
-                className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none"
+                className="flex-1 bg-transparent text-sm text-[#3B2A24] placeholder:text-[#A8907F] outline-none"
               />
             </div>
 
@@ -212,7 +212,7 @@ export default function PGListing({ navigate }: Props) {
                     <button
                       key={t}
                       onClick={() => setPgType(t)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${pgType === t ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${pgType === t ? "luxury-btn-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                     >
                       {t}
                     </button>
@@ -230,7 +230,7 @@ export default function PGListing({ navigate }: Props) {
                   step={500}
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-32 accent-blue-600"
+                  className="w-32 accent-[#D9A87C]"
                 />
               </div>
             </div>
@@ -250,7 +250,7 @@ export default function PGListing({ navigate }: Props) {
           </div>
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-slate-400" />
-            <select className="text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+            <select className="text-sm text-slate-600 bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-[#D9A87C]">
               <option>Best Match</option>
               <option>Price: Low to High</option>
               <option>Price: High to Low</option>
@@ -333,7 +333,7 @@ export default function PGListing({ navigate }: Props) {
                       <div
                         key={a}
                         title={a}
-                        className="w-7 h-7 bg-slate-100 hover:bg-blue-50 rounded-lg flex items-center justify-center transition-colors"
+                        className="w-7 h-7 bg-slate-100 hover:bg-[#F8EEE5] rounded-lg flex items-center justify-center transition-colors"
                       >
                         <Icon className="w-3.5 h-3.5 text-slate-500" />
                       </div>
@@ -358,7 +358,7 @@ export default function PGListing({ navigate }: Props) {
                   </div>
                   <button
                     onClick={() => navigate("pg-details")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm shadow-blue-200"
+                    className="luxury-btn-primary text-sm font-semibold px-4 py-2.5"
                   >
                     Book Visit
                   </button>
