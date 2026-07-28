@@ -2,15 +2,19 @@
 
 <div align="center">
 
+![MERN Stack](https://img.shields.io/badge/MERN_Stack-MongoDB_Express_React_Node-green?style=for-the-badge&logo=mongodb)
+![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?style=for-the-badge&logo=express&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma_ORM-5.x-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-6.0.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38BDF8?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green.style=for-the-badge)
 
 ### 🌟 Premium Multi-Tenant SaaS Platform for PG Hostels & Coliving Management
 
-[🌐 **View Live Interactive Demo**](https://ayushman-glb.github.io/PG-Management-System/) • [📖 **System Architecture**](./docs/System.md) • [🔒 **Security Policy**](./docs/Security.md) • [🗺️ **Project Roadmap**](./docs/roadmap.md)
+[🌐 **View Live Interactive Demo**](https://ayushman-glb.github.io/PG-Management-System/) • [📄 **IEEE 830 SRS Spec**](./docs/SRS.md) • [📖 **System Architecture**](./docs/System.md) • [🔒 **Security Policy**](./docs/Security.md) • [🗺️ **Project Roadmap**](./docs/roadmap.md)
 
 </div>
 

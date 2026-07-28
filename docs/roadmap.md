@@ -20,9 +20,9 @@ This expands on the high-level roadmap in the [README](../README.md) into concre
 
 Goal: a deployable skeleton with no product features yet, but every later phase builds on it safely.
 
-- [ ] Repo scaffolding: backend (Spring Boot modular monolith skeleton), frontend (React + Vite dashboard + marketing site), `docker-compose.yml` for local Postgres/Redis/Kafka
-- [ ] Identity module: tenant + user tables, JWT access/refresh token issuance, Argon2id password hashing
-- [ ] Postgres Row-Level Security policies scaffolded and tested with a two-tenant seed dataset (prove isolation before building anything on top)
+- [ ] Repo scaffolding: backend (Node.js + Express + Prisma ORM skeleton), frontend (React + Vite dashboard + marketing site), `docker-compose.yml` for local MongoDB/Redis
+- [ ] Identity module: user & tenant collections, Google OAuth2 + JWT issuance, Passport.js authentication
+- [ ] Prisma MongoDB tenant query scoping scaffolded and tested with a two-tenant seed dataset
 - [ ] CI/CD: GitHub Actions pipeline — build, lint, test, Dependabot, OWASP ZAP baseline scan
 - [ ] Base observability: Prometheus + Grafana wired up, health-check endpoints per module
 - [ ] `docs/system-design.md` and `docs/api-spec.yaml` stubs created and kept in sync as modules land

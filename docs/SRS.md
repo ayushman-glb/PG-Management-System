@@ -61,6 +61,7 @@ The **PG Management System** is a web-based, multi-tenant SaaS application desig
 
 | Term / Abbreviation | Definition |
 | :--- | :--- |
+| **MERN** | Full-stack architecture (MongoDB, Express.js, React 19, Node.js 20). |
 | **PG** | Paying Guest (Hostel / Coliving accommodation facility). |
 | **SaaS** | Software as a Service. |
 | **SRS** | Software Requirements Specification. |
@@ -91,7 +92,7 @@ The remainder of this document follows the IEEE Std 830-1998 outline:
 ## 2. Overall Description
 
 ### 2.1 Product Perspective
-The system is an autonomous, self-contained single-page frontend web application (SPA) designed to communicate with a modular Spring Boot backend via REST / GraphQL / SOAP protocols.
+The system is an autonomous, self-contained single-page frontend web application (SPA) designed to communicate with a modular Node.js + Express.js + Prisma ORM backend via REST / GraphQL / SOAP protocols.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -107,7 +108,7 @@ The system is an autonomous, self-contained single-page frontend web application
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │                       BACKEND API & DATABASE                           │
-│  Java 21 Spring Boot + PostgreSQL (RLS) + Redis Caching                │
+│  Node.js 20 + Express + Prisma ORM + MongoDB + Redis Caching           │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 

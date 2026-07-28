@@ -35,10 +35,10 @@ Please include as much of the following as you can:
 ## Scope
 
 In scope:
-- The Spring Boot backend (Identity, Property, Tenancy, Billing, Operations, Notification, Analytics modules)
+- The Node.js + Express backend (Identity, Property, Tenancy, Billing, Operations, Notification, Analytics modules)
 - The React + Vite dashboard and public marketing/discovery site
-- Multi-tenant data isolation (Row-Level Security, `tenant_id` scoping)
-- Authentication and session handling (JWT, TOTP 2FA)
+- Multi-tenant data isolation (Prisma scoping, MongoDB `ownerId` filters)
+- Authentication and session handling (Google OAuth2, JWT, Passport.js)
 - Payment integration flows (Razorpay/Stripe)
 
 Out of scope:
@@ -48,6 +48,6 @@ Out of scope:
 
 ## Security Practices
 
-For context on existing protections, see the [Security section of the README](README.md#security) — this includes TLS 1.3/HSTS, Argon2id hashing, field-level encryption for sensitive data, Postgres RLS as a tenant-isolation backstop, and automated dependency/vulnerability scanning in CI.
+For context on existing protections, see the [Security section of the README](README.md#security) — this includes TLS 1.3/HSTS, Google OAuth2, JWT verification, field-level encryption for sensitive data, Prisma ORM query isolation, and automated dependency/vulnerability scanning in CI.
 
 Thank you for helping keep the PG Management System and its users' data safe.
