@@ -322,6 +322,14 @@ html.dark-theme .accent-gradient {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .skeleton-shimmer {
+    animation: none !important;
+    background: #F8EEE5 !important;
+  }
+  html.dark-theme .skeleton-shimmer {
+    animation: none !important;
+    background: #2B2725 !important;
+  }
 }
 
 /* ─── Keyframes ──────────────────────────────────── */
@@ -598,4 +606,5 @@ html.dark-theme .skeleton-shimmer {
     #2B2725 100%
   );
   background-size: 200% 100%;
+  will-change: background-position;
 }

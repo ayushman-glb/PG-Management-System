@@ -58,38 +58,77 @@ import {
   PageSkeleton,
 } from "./components/Skeletons";
 
+export const BRANDED_LOADING_DURATION_MS = 2000;
+export const SESSION_KEY = "loadingShown";
+
 export default function App() {
   const [page, setPage] = useState<Page>("landing");
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [skeletonLoading, setSkeletonLoading] = useState(false);
+
+  // Check sessionStorage on initial load.
+  // The custom branded loading screen appears ONLY ONCE per browser session for EXACTLY 2 seconds.
+  const [showOneTimeLoading, setShowOneTimeLoading] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem(SESSION_KEY);
+    } catch {
+      return true;
+    }
+  });
+
+  const [skeletonDebug, setSkeletonDebug] = useState<boolean>(ENABLE_SKELETON_DEBUG_DELAY);
+  const [skeletonLoading, setSkeletonLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setLoading(false);
-      if (ENABLE_SKELETON_DEBUG_DELAY) {
-        setSkeletonLoading(true);
-        window.setTimeout(() => setSkeletonLoading(false), SKELETON_DEBUG_DELAY_MS);
-      }
-    }, 400);
+    let timer: number;
+    let debugTimer: number;
 
-    return () => window.clearTimeout(timer);
-  }, []);
+    if (showOneTimeLoading) {
+      // First visit in current session: Show custom branded loading screen for EXACTLY 2 seconds (2000ms)
+      timer = window.setTimeout(() => {
+        setShowOneTimeLoading(false);
+        try {
+          sessionStorage.setItem(SESSION_KEY, "true");
+        } catch (e) {
+          console.error("Failed to update sessionStorage:", e);
+        }
+
+        if (skeletonDebug) {
+          setSkeletonLoading(true);
+          debugTimer = window.setTimeout(() => {
+            setSkeletonLoading(false);
+          }, SKELETON_DEBUG_DELAY_MS);
+        }
+      }, BRANDED_LOADING_DURATION_MS);
+    } else {
+      // Subsequent visits in session: skip splash intro completely.
+      if (skeletonDebug) {
+        setSkeletonLoading(true);
+        debugTimer = window.setTimeout(() => {
+          setSkeletonLoading(false);
+        }, SKELETON_DEBUG_DELAY_MS);
+      }
+    }
+
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(debugTimer);
+    };
+  }, [showOneTimeLoading, skeletonDebug]);
 
   const navigate = (p: Page) => {
     if (p === page) return;
     setPageHistory((previous) => [...previous, page]);
     setPage(p);
-    setLoading(true);
-    setSkeletonLoading(false);
 
-    window.setTimeout(() => {
-      setLoading(false);
-      if (ENABLE_SKELETON_DEBUG_DELAY) {
-        setSkeletonLoading(true);
-        window.setTimeout(() => setSkeletonLoading(false), SKELETON_DEBUG_DELAY_MS);
-      }
-    }, 350);
+    // Never trigger showOneTimeLoading on navigation!
+    if (skeletonDebug) {
+      setSkeletonLoading(true);
+      window.setTimeout(() => {
+        setSkeletonLoading(false);
+      }, SKELETON_DEBUG_DELAY_MS);
+    } else {
+      setSkeletonLoading(false);
+    }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -98,18 +137,27 @@ export default function App() {
     const previous = pageHistory[pageHistory.length - 1] ?? "landing";
     setPageHistory((history) => history.slice(0, -1));
     setPage(previous);
-    setLoading(true);
-    setSkeletonLoading(false);
 
-    window.setTimeout(() => {
-      setLoading(false);
-      if (ENABLE_SKELETON_DEBUG_DELAY) {
-        setSkeletonLoading(true);
-        window.setTimeout(() => setSkeletonLoading(false), SKELETON_DEBUG_DELAY_MS);
-      }
-    }, 350);
+    // Never trigger showOneTimeLoading on goBack!
+    if (skeletonDebug) {
+      setSkeletonLoading(true);
+      window.setTimeout(() => {
+        setSkeletonLoading(false);
+      }, SKELETON_DEBUG_DELAY_MS);
+    } else {
+      setSkeletonLoading(false);
+    }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleResetSession = () => {
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+      setShowOneTimeLoading(true);
+    } catch (e) {
+      console.error("Failed to reset sessionStorage:", e);
+    }
   };
 
   return (
@@ -117,6 +165,12 @@ export default function App() {
       <SmoothScroll>
         <ScrollProgressBar />
         <NavigationProvider goBack={goBack}>
+          {/* 1. Custom One-Time Branded Loading Screen (Session Level) */}
+          <AnimatePresence>
+            {showOneTimeLoading && <LoadingOverlay key="branded-overlay" />}
+          </AnimatePresence>
+
+          {/* 2. Skeleton & Main Content Rendering */}
           <AnimatePresence mode="wait">
             {skeletonLoading ? (
               <motion.div
@@ -131,27 +185,120 @@ export default function App() {
             ) : (
               <motion.div
                 key={page}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
+                exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
               >
                 {renderPage(page, navigate)}
               </motion.div>
             )}
           </AnimatePresence>
-          {loading && <LoadingOverlay />}
+
+          {/* Dev Debug Controller Badge */}
+          <SkeletonDebugBadge
+            enabled={skeletonDebug}
+            onToggle={() => setSkeletonDebug((prev) => !prev)}
+            onResetSession={handleResetSession}
+          />
         </NavigationProvider>
       </SmoothScroll>
     </ThemeProvider>
   );
 }
 
+function SkeletonDebugBadge({
+  enabled,
+  onToggle,
+  onResetSession,
+}: {
+  enabled: boolean;
+  onToggle: () => void;
+  onResetSession: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const { darkMode } = useTheme();
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 text-xs font-sans">
+      {open ? (
+        <div
+          className={`p-3.5 rounded-2xl border shadow-2xl flex flex-col gap-2.5 transition-all w-64 ${
+            darkMode
+              ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE]"
+              : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3 font-semibold pb-1.5 border-b border-slate-200/20">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Loading Controls
+            </span>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="p-1 opacity-70 hover:opacity-100 rounded-md"
+              aria-label="Close panel"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <span className="text-slate-500 dark:text-slate-400">Debug Delay (1s):</span>
+            <button
+              type="button"
+              onClick={onToggle}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+                enabled
+                  ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                  : "bg-slate-500/20 text-slate-500 border border-slate-500/20"
+              }`}
+            >
+              {enabled ? "ENABLED" : "DISABLED"}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              onResetSession();
+              setOpen(false);
+            }}
+            className="w-full mt-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#3D3632] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors text-center border border-slate-200 dark:border-[#4A443F]"
+          >
+            Re-test Session Intro Screen
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={`px-3 py-2 rounded-full border shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${
+            darkMode
+              ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE]"
+              : "bg-white border-[#E6D7CA] text-[#3B2A24]"
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${enabled ? "bg-amber-500 animate-pulse" : "bg-slate-400"}`} />
+          <span className="font-semibold text-xs">Loading Config</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function LoadingOverlay() {
   const { darkMode } = useTheme();
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-colors duration-300 animate-loading-in ${
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      aria-busy="true"
+      aria-label="Loading RoomBae"
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-colors duration-300 ${
         darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]"
       }`}
     >
@@ -176,7 +323,7 @@ function LoadingOverlay() {
           />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

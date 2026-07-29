@@ -733,3 +733,135 @@ export function PageSkeleton({ page }: { page: Page }) {
       return <LandingSkeleton />;
   }
 }
+
+// ----------------------------------------------------------------------------
+// Standalone Modular Component Skeletons
+// ----------------------------------------------------------------------------
+
+export function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  const { darkMode } = useTheme();
+  return (
+    <div
+      aria-busy="true"
+      className={`rounded-2xl border overflow-hidden p-4 space-y-3 ${
+        darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+      }`}
+    >
+      <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
+        <SkeletonBlock className="w-40 h-6" />
+        <SkeletonBlock className="w-24 h-8 rounded-lg" />
+      </div>
+      <div className="space-y-3 pt-1">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-center justify-between gap-4 py-1.5">
+            <div className="flex items-center gap-3">
+              <SkeletonBlock className="w-9 h-9 rounded-full" />
+              <div className="space-y-1.5">
+                <SkeletonBlock className="w-32 h-4" />
+                <SkeletonBlock className="w-20 h-3" />
+              </div>
+            </div>
+            <SkeletonBlock className="w-20 h-4" />
+            <SkeletonBlock className="w-24 h-4" />
+            <SkeletonBlock className="w-16 h-6 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FormSkeleton() {
+  const { darkMode } = useTheme();
+  return (
+    <div
+      aria-busy="true"
+      className={`p-6 rounded-2xl border space-y-5 ${
+        darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+      }`}
+    >
+      <SkeletonBlock className="w-48 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <SkeletonBlock className="w-24 h-3.5" />
+          <SkeletonBlock className="w-full h-10 rounded-xl" />
+        </div>
+        <div className="space-y-2">
+          <SkeletonBlock className="w-24 h-3.5" />
+          <SkeletonBlock className="w-full h-10 rounded-xl" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <SkeletonBlock className="w-32 h-3.5" />
+        <SkeletonBlock className="w-full h-24 rounded-xl" />
+      </div>
+      <SkeletonBlock className="w-36 h-10 rounded-xl ml-auto" />
+    </div>
+  );
+}
+
+export function CardSkeleton({ count = 3 }: { count?: number }) {
+  const { darkMode } = useTheme();
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4" aria-busy="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={`p-5 rounded-2xl border space-y-3 ${
+            darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+          }`}
+        >
+          <div className="flex justify-between items-center">
+            <SkeletonBlock className="w-10 h-10 rounded-xl" />
+            <SkeletonBlock className="w-6 h-6 rounded-full" />
+          </div>
+          <SkeletonBlock className="w-28 h-6" />
+          <SkeletonBlock className="w-20 h-4" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ResidentProfileSkeleton() {
+  const { darkMode } = useTheme();
+  return (
+    <div
+      aria-busy="true"
+      className={`p-6 rounded-2xl border space-y-6 ${
+        darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        <SkeletonBlock className="w-20 h-20 rounded-full" />
+        <div className="space-y-2">
+          <SkeletonBlock className="w-48 h-6" />
+          <SkeletonBlock className="w-32 h-4" />
+          <SkeletonBlock className="w-24 h-5 rounded-full" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <SkeletonBlock className="h-16 rounded-xl" />
+        <SkeletonBlock className="h-16 rounded-xl" />
+        <SkeletonBlock className="h-16 rounded-xl" />
+        <SkeletonBlock className="h-16 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+export function PaymentSkeleton() {
+  return <BillingSkeleton />;
+}
+
+export function SettingsSkeleton() {
+  return <OperationsSkeleton page="settings" />;
+}
+
+export function NotificationSkeleton() {
+  return <OperationsSkeleton page="notifications" />;
+}
+
+export function ResidentListSkeleton() {
+  return <ResidentsSkeleton />;
+}
