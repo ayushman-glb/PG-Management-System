@@ -282,8 +282,9 @@ If TRUE -> Render App Immediately (Skip Overlay)
 - **Modular Component Skeletons**: Exported `TableSkeleton`, `FormSkeleton`, `CardSkeleton`, `ResidentProfileSkeleton`, `ResidentListSkeleton`, `PaymentSkeleton`, `SettingsSkeleton`, `NotificationSkeleton`.
 - **Accessibility**: Includes `aria-busy="true"` on wrapper containers and `aria-hidden="true"` on skeleton blocks.
 
-### 11.3 Dev Debug Control Badge
-- A floating `SkeletonDebugBadge` panel in the bottom-right corner allows developers to toggle debug delay ON/OFF and clear `sessionStorage` to test the 2-second splash screen on demand.
+### 11.3 Developer Testing & Debug Configuration
+- Debug delay can be controlled cleanly via the `ENABLE_SKELETON_DEBUG_DELAY` and `SKELETON_DEBUG_DELAY_MS` constants in `src/components/Skeletons.tsx`.
+- Keeps the user interface 100% production-clean without floating development badges or intrusive overlays.
 
 ---
 
