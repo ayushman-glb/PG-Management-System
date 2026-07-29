@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "pg management",
   "homepage": "https://ayushman-glb.github.io/PG-Management-System/",
   "private": true,
@@ -34,14 +33,5 @@
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vite": "^8.0.0"
-=======
-  "name": "pg-management-system-root",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "npm --prefix \"front end\" run dev",
-    "build": "npm --prefix \"front end\" run build",
-    "preview": "npm --prefix \"front end\" run preview"
->>>>>>> 311d8d63a658d91e68b9c5312048ff17eb9ef093
   }
 }
