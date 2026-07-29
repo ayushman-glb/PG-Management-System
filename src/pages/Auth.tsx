@@ -12,6 +12,7 @@ import gsap from "gsap";
 import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
+import { AnimatedTabs } from "../components/MotionPrimitives";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -207,24 +208,16 @@ export default function Auth({ navigate }: Props) {
                   </div>
 
                   {/* Role toggle */}
-                  <div className={`flex gap-1.5 p-1 rounded-xl mb-6 ${darkMode ? "bg-[#2B2725]" : "bg-[#F8EEE5]"}`}>
-                    {(["owner", "resident"] as const).map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setRole(r)}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${
-                          role === r
-                            ? darkMode
-                              ? "bg-[#332D2B] text-[#F7F3EE] shadow-sm"
-                              : "bg-[#FFFDFB] text-[#3B2A24] shadow-sm"
-                            : darkMode
-                              ? "text-[#C6B9AE]"
-                              : "text-[#6E5A52]"
-                        }`}
-                      >
-                        {r === "owner" ? "🏢 Owner" : "👤 Resident"}
-                      </button>
-                    ))}
+                  <div className="mb-6">
+                    <AnimatedTabs
+                      tabs={[
+                        { id: "owner", label: "🏢 Owner" },
+                        { id: "resident", label: "👤 Resident" },
+                      ]}
+                      activeTab={role}
+                      onChange={(id) => setRole(id as "owner" | "resident")}
+                      layoutId="auth-role-tab"
+                    />
                   </div>
 
                   <div className="space-y-4 mb-5">

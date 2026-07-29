@@ -29,7 +29,7 @@ import {
 } from "recharts";
 import DashboardLayout from "../components/DashboardLayout";
 import { Avatar } from "../components/Avatar";
-import { MotionCard } from "../components/MotionCard";
+import { SpotlightCard } from "../components/MotionPrimitives";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
 
@@ -223,15 +223,12 @@ export default function Dashboard({ navigate }: Props) {
 
         {/* Widget grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-          {widgets.map((w, idx) => {
+          {widgets.map((w) => {
             const Icon = w.icon;
             return (
-              <MotionCard
+              <SpotlightCard
                 key={w.label}
-                delay={idx * 0.05}
-                hoverY={-5}
-                hoverScale={1.02}
-                className={`${darkMode ? "bg-slate-800 border-slate-700" : `bg-white border ${w.bg}`} rounded-2xl p-3.5 border min-w-0 cursor-pointer`}
+                className="p-3.5 min-w-0 cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-2.5">
                   <div
@@ -260,7 +257,7 @@ export default function Dashboard({ navigate }: Props) {
                 >
                   {w.sub}
                 </p>
-              </MotionCard>
+              </SpotlightCard>
             );
           })}
         </div>

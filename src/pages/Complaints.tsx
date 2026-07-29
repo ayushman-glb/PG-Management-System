@@ -3,13 +3,11 @@ import {
   Plus,
   MessageSquare,
   X,
-  AlertTriangle,
-  Zap,
-  Clock,
   CheckCircle,
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { Avatar } from "../components/Avatar";
+import { AnimatedBadge } from "../components/MotionPrimitives";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
 
@@ -137,23 +135,7 @@ const initialComplaints: Record<string, Complaint[]> = {
   ],
 };
 
-const priorityConfig = {
-  High: {
-    color: "bg-red-100 text-red-700",
-    dot: "bg-red-500",
-    icon: AlertTriangle,
-  },
-  Medium: {
-    color: "bg-orange-100 text-orange-700",
-    dot: "bg-orange-500",
-    icon: Zap,
-  },
-  Low: {
-    color: "bg-slate-100 text-slate-600",
-    dot: "bg-slate-400",
-    icon: Clock,
-  },
-};
+
 
 const columns = [
   {
@@ -282,8 +264,6 @@ export default function Complaints({ navigate }: Props) {
               {/* Cards */}
               <div className="p-3 space-y-3 min-h-64">
                 {complaints[col.id].map((complaint) => {
-                  const pConf = priorityConfig[complaint.priority];
-                  const PIcon = pConf.icon;
                   return (
                     <div
                       key={complaint.id}
@@ -319,12 +299,10 @@ export default function Complaints({ navigate }: Props) {
                             {complaint.title}
                           </h4>
                         </div>
-                        <span
-                          className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ${pConf.color}`}
-                        >
-                          <PIcon className="w-3 h-3" />
-                          {complaint.priority}
-                        </span>
+                        <AnimatedBadge
+                          label={complaint.priority}
+                          variant={complaint.priority === "High" ? "danger" : complaint.priority === "Medium" ? "warning" : "neutral"}
+                        />
                       </div>
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-2">
