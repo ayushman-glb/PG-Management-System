@@ -165,6 +165,7 @@ export default function Residents({ navigate }: Props) {
                 Residents
               </h1>
               <button
+                type="button"
                 className="flex items-center gap-1.5 text-xs px-3.5 py-2 luxury-btn-primary font-semibold flex-shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -182,17 +183,21 @@ export default function Residents({ navigate }: Props) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search residents..."
+                aria-label="Search residents"
                 className={`bg-transparent text-sm placeholder:text-slate-400 outline-none flex-1 ${darkMode ? "text-white" : "text-slate-700"}`}
               />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <button
+                type="button"
                 className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
               >
                 <Filter className="w-3 h-3" /> Filter
               </button>
               <button
+                type="button"
                 onClick={() => setShowPalette(!showPalette)}
+                aria-expanded={showPalette}
                 className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors font-medium ${
                   showPalette
                     ? darkMode
@@ -206,6 +211,7 @@ export default function Residents({ navigate }: Props) {
                 🎨 Theme
               </button>
               <button
+                type="button"
                 className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
               >
                 <Download className="w-3 h-3" /> Export

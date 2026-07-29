@@ -350,10 +350,12 @@ export default function Properties({ navigate }: Props) {
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowModal(false)}
-          aria-modal="true"
-          role="dialog"
+          role="presentation"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-property-title"
             className={`rounded-2xl w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -369,13 +371,16 @@ export default function Properties({ navigate }: Props) {
                   />
                 </div>
                 <h3
+                  id="add-property-title"
                   className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
                 >
                   Add New Property
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
+                aria-label="Close add property modal"
                 className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-slate-700 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}
               >
                 <X className="w-4 h-4" />
@@ -427,12 +432,14 @@ export default function Properties({ navigate }: Props) {
               className={`flex gap-3 px-6 py-4 border-t ${darkMode ? "border-slate-700" : "border-slate-100"}`}
             >
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="flex-1 py-2.5 rounded-xl luxury-btn-primary text-sm font-semibold transition-colors"
               >

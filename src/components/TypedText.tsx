@@ -21,6 +21,8 @@ export function TypedText({
   const elRef = useRef<HTMLSpanElement>(null);
   const typedRef = useRef<Typed | null>(null);
 
+  const stringsKey = strings.join("||");
+
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -42,7 +44,7 @@ export function TypedText({
     return () => {
       typedRef.current?.destroy();
     };
-  }, [strings, typeSpeed, backSpeed, backDelay, loop]);
+  }, [stringsKey, typeSpeed, backSpeed, backDelay, loop]);
 
   return <span ref={elRef} className={`inline-block ${className}`} />;
 }

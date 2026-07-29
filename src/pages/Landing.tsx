@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { AnimatePresence, motion } from "framer-motion";
 import { MotionCard } from "../components/MotionCard";
 import { TypedText } from "../components/TypedText";
 import {
@@ -238,48 +239,153 @@ export default function Landing({ navigate }: Props) {
   const [animateStats, setAnimateStats] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
+  const navRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => setAnimateStats(true), 300);
 
     gsap.registerPlugin(ScrollTrigger);
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!prefersReducedMotion) {
-      const ctx = gsap.context(() => {
-        const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.7 } });
-        tl.fromTo(".hero-badge", { opacity: 0, y: -15 }, { opacity: 1, y: 0 })
-          .fromTo(".hero-title", { opacity: 0, y: 25 }, { opacity: 1, y: 0 }, "-=0.4")
-          .fromTo(".hero-sub", { opacity: 0, y: 15 }, { opacity: 1, y: 0 }, "-=0.5")
-          .fromTo(".hero-cta", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1 }, "-=0.4")
-          .fromTo(".hero-stats", { opacity: 0, y: 15 }, { opacity: 1, y: 0 }, "-=0.3")
-          .fromTo(".hero-mockup", { opacity: 0, y: 40, scale: 0.98 }, { opacity: 1, y: 0, scale: 1 }, "-=0.3");
-
-        gsap.utils.toArray<HTMLElement>(".reveal-section").forEach((sec) => {
-          gsap.fromTo(
-            sec,
-            { opacity: 0, y: 35 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.75,
-              ease: "power2.out",
-              scrollTrigger: {
-                trigger: sec,
-                start: "top 85%",
-                toggleActions: "play none none none",
-              },
-            }
-          );
-        });
-      });
-
-      return () => {
-        clearTimeout(timer);
-        ctx.revert();
-      };
+    if (prefersReducedMotion) {
+      return () => clearTimeout(timer);
     }
 
-    return () => clearTimeout(timer);
+    const ctx = gsap.context(() => {
+      // ── Cinematic Hero Entrance Timeline ──────────────────────────────
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.05 });
+      tl.fromTo(".hero-badge",
+          { opacity: 0, y: -18 },
+          { opacity: 1, y: 0, duration: 0.55 })
+        .fromTo(".hero-title",
+          { opacity: 0, y: 32, clipPath: "inset(100% 0 0 0)" },
+          { opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)", duration: 0.75 },
+          "-=0.35")
+        .fromTo(".hero-sub",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.45")
+        .fromTo(".hero-cta",
+          { opacity: 0, y: 16, scale: 0.96 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.5 },
+          "-=0.4")
+        .fromTo(".hero-stats",
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.5, stagger: 0.07 },
+          "-=0.35")
+        .fromTo(".hero-mockup",
+          { opacity: 0, y: 52, scale: 0.97 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: "power2.out" },
+          "-=0.45");
+
+      // ── Navbar hide on scroll-down, show on scroll-up ─────────────────
+      if (navRef.current) {
+        let lastY = 0;
+        let navHidden = false;
+        ScrollTrigger.create({
+          start: "top -90",
+          onUpdate: (self) => {
+            const currentY = self.scroll();
+            const scrollingDown = currentY > lastY;
+            if (scrollingDown && !navHidden && currentY > 140) {
+              gsap.to(navRef.current, { y: "-110%", duration: 0.38, ease: "power2.inOut" });
+              navHidden = true;
+            } else if (!scrollingDown && navHidden) {
+              gsap.to(navRef.current, { y: "0%", duration: 0.42, ease: "power3.out" });
+              navHidden = false;
+            }
+            lastY = currentY;
+          },
+        });
+      }
+
+      // ── Scroll Section Reveals ──────────────────────────────────────────
+      gsap.utils.toArray<HTMLElement>(".reveal-section").forEach((sec) => {
+        gsap.fromTo(
+          sec,
+          { opacity: 0, y: 36 },
+          {
+            opacity: 1, y: 0,
+            duration: 0.75, ease: "power2.out",
+            scrollTrigger: { trigger: sec, start: "top 87%", toggleActions: "play none none none" },
+          }
+        );
+      });
+
+      // ── Feature cards stagger reveal ──────────────────────────────────
+      gsap.utils.toArray<HTMLElement>(".feature-card").forEach((card, i) => {
+        gsap.fromTo(
+          card,
+          { opacity: 0, y: 28, scale: 0.97 },
+          {
+            opacity: 1, y: 0, scale: 1,
+            duration: 0.55, ease: "power2.out",
+            delay: (i % 4) * 0.07,
+            scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
+          }
+        );
+      });
+
+      // ── Testimonial cards stagger ─────────────────────────────────────
+      gsap.utils.toArray<HTMLElement>(".testimonial-card").forEach((card, i) => {
+        gsap.fromTo(
+          card,
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1, y: 0,
+            duration: 0.55, ease: "power2.out",
+            delay: i * 0.1,
+            scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
+          }
+        );
+      });
+
+      // ── Pricing cards reveal ──────────────────────────────────────────
+      gsap.utils.toArray<HTMLElement>(".pricing-card").forEach((card, i) => {
+        gsap.fromTo(
+          card,
+          { opacity: 0, y: 30, scale: 0.97 },
+          {
+            opacity: 1, y: 0, scale: 1,
+            duration: 0.6, ease: "power2.out",
+            delay: i * 0.12,
+            scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none none" },
+          }
+        );
+      });
+
+      // ── Logo ticker parallax ──────────────────────────────────────────
+      const logoSection = document.querySelector(".logo-ticker");
+      if (logoSection) {
+        gsap.to(logoSection, {
+          x: "-25%",
+          ease: "none",
+          scrollTrigger: {
+            trigger: logoSection,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 1.5,
+          },
+        });
+      }
+    });
+
+    // ── Mouse parallax for hero background ──────────────────────────────
+    const heroBg = document.querySelector<HTMLElement>(".hero-bg-parallax");
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!heroBg) return;
+      const x = (e.clientX / window.innerWidth - 0.5) * 22;
+      const y = (e.clientY / window.innerHeight - 0.5) * 14;
+      gsap.to(heroBg, { x, y, duration: 1.4, ease: "power1.out" });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      clearTimeout(timer);
+      ctx.revert();
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
   }, []);
 
   const prices = {
@@ -291,7 +397,7 @@ export default function Landing({ navigate }: Props) {
   return (
     <div className="min-h-screen bg-[#FFF8F2] text-[#3B2A24] font-sans">
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-[#E6D7CA]/60">
+      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 glass border-b border-[#E6D7CA]/60 navbar-animated">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center gap-4 md:gap-8">
           <button
             type="button"
@@ -368,52 +474,62 @@ export default function Landing({ navigate }: Props) {
           </button>
         </div>
 
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3">
-            {["Features", "Pricing"].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-sm font-medium text-slate-700"
-                onClick={() => setMobileMenuOpen(false)}
+        {/* Animated mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              key="mobile-menu"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3"
+            >
+              {["Features", "Pricing"].map((item) => (
+                <a
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  className="text-sm font-medium text-slate-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item}
+                </a>
+              ))}
+              <button
+                onClick={() => { navigate("about"); setMobileMenuOpen(false); }}
+                className="text-left text-sm font-medium text-slate-700"
               >
-                {item}
-              </a>
-            ))}
-            <button
-              onClick={() => {
-                navigate("about");
-                setMobileMenuOpen(false);
-              }}
-              className="text-left text-sm font-medium text-slate-700"
-            >
-              About
-            </button>
-            <button
-              onClick={() => {
-                navigate("blog");
-                setMobileMenuOpen(false);
-              }}
-              className="text-left text-sm font-medium text-slate-700"
-            >
-              Blog
-            </button>
-            <button
-              onClick={() => {
-                navigate("auth");
-                setMobileMenuOpen(false);
-              }}
-              className="w-full text-sm font-semibold text-white bg-blue-600 px-5 py-2.5 rounded-xl mt-2"
-            >
-              Start Free Trial
-            </button>
-          </div>
-        )}
+                About
+              </button>
+              <button
+                onClick={() => { navigate("blog"); setMobileMenuOpen(false); }}
+                className="text-left text-sm font-medium text-slate-700"
+              >
+                Blog
+              </button>
+              <button
+                onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
+                className="w-full text-sm font-semibold text-white luxury-btn-primary px-5 py-2.5 mt-2"
+              >
+                Start Free Trial
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero */}
-      <section className="hero-gradient pt-32 pb-20 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
+      <section ref={heroRef} className="hero-gradient pt-32 pb-20 px-6 overflow-hidden relative">
+        {/* Parallax background glow layer */}
+        <div
+          className="hero-bg-parallax pointer-events-none absolute inset-0 will-change-transform"
+          aria-hidden="true"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(217,168,124,0.12) 0%, transparent 70%)",
+          }}
+        />
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center max-w-4xl mx-auto mb-16">
             <div className="hero-badge inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-6">
               <span className="w-1.5 h-1.5 bg-[#D9A87C] rounded-full animate-pulse" />
@@ -965,7 +1081,7 @@ export default function Landing({ navigate }: Props) {
             {testimonials.map((t) => (
               <div
                 key={t.name}
-                className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm card-hover"
+                className="testimonial-card bg-white rounded-2xl border border-slate-100 p-6 shadow-sm card-hover"
               >
                 <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
@@ -1028,7 +1144,7 @@ export default function Landing({ navigate }: Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             {/* Starter */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 card-hover">
+            <div className="pricing-card bg-white border border-slate-200 rounded-2xl p-8 card-hover">
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-1">
                   Starter
@@ -1069,7 +1185,7 @@ export default function Landing({ navigate }: Props) {
             </div>
 
             {/* Professional (popular) */}
-            <div className="pricing-card-popular rounded-2xl p-8 shadow-2xl shadow-blue-200 -translate-y-4 scale-[1.02]">
+            <div className="pricing-card pricing-card-popular rounded-2xl p-8 shadow-2xl shadow-blue-200 -translate-y-4 scale-[1.02]">
               <div className="absolute top-4 right-4 bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
                 Most Popular
               </div>
@@ -1117,7 +1233,7 @@ export default function Landing({ navigate }: Props) {
             </div>
 
             {/* Enterprise */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 card-hover">
+            <div className="pricing-card bg-white border border-slate-200 rounded-2xl p-8 card-hover">
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-1">
                   Enterprise

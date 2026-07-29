@@ -168,7 +168,9 @@ export default function ResidentPortal({ navigate }: Props) {
       {/* HEADER */}
       <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
         <button
+          type="button"
           onClick={() => navigate("landing")}
+          aria-label="Go to RoomBae homepage"
           className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity text-left"
         >
           <div
@@ -194,9 +196,11 @@ export default function ResidentPortal({ navigate }: Props) {
           <BackButton />
           <ThemeToggle />
           <button
+            type="button"
             onClick={() => navigate("auth")}
             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
             title="Sign Out"
+            aria-label="Sign Out"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Sign Out</span>
@@ -223,7 +227,9 @@ export default function ResidentPortal({ navigate }: Props) {
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => setActiveTab(item.id as Tab)}
+                aria-pressed={isActive}
                 className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all text-left ${
                   isActive
                     ? darkMode

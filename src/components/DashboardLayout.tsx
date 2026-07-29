@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Building2,
@@ -60,13 +60,20 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
 
   return (
     <div className={`flex h-screen overflow-hidden ${mainBg}`}>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Mobile overlay — animated */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            key="mobile-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black/40 z-20 lg:hidden backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside
@@ -105,6 +112,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             )}
           </button>
           <button
+            type="button"
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={`ml-auto hidden lg:flex flex-shrink-0 p-1.5 rounded-lg transition-colors ${
@@ -121,15 +129,20 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1" aria-label="Main navigation">
-          {sidebarItems.map((item) => {
+          {sidebarItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = activePage === item.page;
             return (
               <motion.button
                 key={item.label}
-                whileHover={{ x: collapsed ? 0 : 4 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.04, ease: "easeOut" }}
+                whileHover={{
+                  x: collapsed ? 0 : 5,
+                  transition: { duration: 0.15, ease: "easeOut" },
+                }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   navigate(item.page);
                   setSidebarOpen(false);
@@ -138,7 +151,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                 aria-current={isActive ? "page" : undefined}
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer
-                  focus-visible:outline-none focus-visible:ring-2 relative
+                  focus-visible:outline-none focus-visible:ring-2 relative group
                   ${
                     isActive
                       ? "text-white shadow-md focus-visible:ring-white"
@@ -160,16 +173,22 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                     : {}
                 }
               >
-                <Icon
-                  className={`w-4 h-4 flex-shrink-0 ${
-                    isActive
-                      ? "text-white"
-                      : darkMode
-                        ? "text-[#756A63]"
-                        : "text-[#A8907F]"
-                  }`}
-                  aria-hidden="true"
-                />
+                <motion.span
+                  className="flex-shrink-0"
+                  whileHover={{ rotate: isActive ? 0 : -5, scale: 1.1 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <Icon
+                    className={`w-4 h-4 ${
+                      isActive
+                        ? "text-white"
+                        : darkMode
+                          ? "text-[#756A63] group-hover:text-[#C89A4B]"
+                          : "text-[#A8907F] group-hover:text-[#C58B63]"
+                    }`}
+                    aria-hidden="true"
+                  />
+                </motion.span>
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </motion.button>
             );
@@ -192,8 +211,10 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             )}
             {!collapsed && (
               <button
+                type="button"
                 onClick={() => navigate("landing")}
                 title="Sign out"
+                aria-label="Sign out"
                 className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
                   darkMode
                     ? "text-[#756A63] hover:text-[#D96B5D] hover:bg-[#332D2B]"
@@ -216,13 +237,14 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
         >
           {/* Mobile menu */}
           <button
+            type="button"
             className={`lg:hidden p-2 rounded-xl transition-colors flex-shrink-0 ${
               darkMode
                 ? "text-[#756A63] hover:text-[#F7F3EE] hover:bg-[#332D2B]"
                 : "text-[#A8907F] hover:text-[#3B2A24] hover:bg-[#F8EEE5]"
             }`}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+            aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -239,6 +261,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             <Search className={`w-4 h-4 flex-shrink-0 ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`} />
             <input
               type="text"
+              aria-label="Search residents and rooms"
               placeholder="Search residents, rooms…"
               className={`flex-1 min-w-0 bg-transparent text-sm outline-none font-medium ${
                 darkMode
@@ -253,12 +276,14 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             <BackButton />
             <ThemeToggle />
             <button
+              type="button"
               className={`relative p-2 rounded-xl transition-colors ${
                 darkMode
                   ? "text-[#756A63] bg-[#332D2B] hover:bg-[#3D3632] hover:text-[#C89A4B]"
                   : "text-[#A8907F] bg-[#F8EEE5] hover:bg-[#EDE0D4] hover:text-[#C58B63]"
               }`}
               aria-label="Notifications"
+              onClick={() => navigate("notifications")}
             >
               <Bell className="w-4 h-4" />
               <span

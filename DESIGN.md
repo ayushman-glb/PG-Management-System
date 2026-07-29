@@ -455,3 +455,239 @@ When extending RoomBae with new pages or components, developers **MUST**:
 - ❌ **DO NOT** trigger full-screen branded loading overlays on route navigation.
 - ❌ **DO NOT** use `localStorage` for session-only splash loading screens.
 - ❌ **DO NOT** omit focus rings or ARIA attributes on interactive icons and buttons.
+- ❌ **DO NOT** animate `width`, `height`, `top`, `left`, `margin`, or `padding` — always use `transform` and `opacity`.
+- ❌ **DO NOT** add animations without `prefers-reduced-motion` fallbacks.
+- ❌ **DO NOT** use raw `setTimeout` for animation delays — use GSAP `delay` or Framer Motion `transition.delay`.
+
+---
+
+## 24. Motion Design Philosophy
+
+RoomBae's animation system is built around three core principles:
+
+### 24.1 Purpose Over Decoration
+Every animation **must serve a function**: directing attention, confirming interaction, communicating state change, or providing spatial context for navigation. Gratuitous animations are explicitly banned.
+
+### 24.2 Physics-Driven Motion
+Animations feel **natural and physical**:
+- Spring physics (`type: "spring"`) for element entrances and hover states
+- Exponential easing (`Math.min(1, 1.001 - Math.pow(2, -10 * t))`) for scroll momentum
+- Cubic-bezier curves (`[0.25, 0.1, 0.25, 1]`) for page-level transitions
+
+### 24.3 Performance First
+All animations run exclusively on **GPU-composited properties**:
+- `transform: translateX/Y/Scale/Rotate`
+- `opacity`
+- `filter` (blur only, used sparingly)
+- `clip-path` (entrance reveal only)
+
+Properties that trigger browser layout reflow (`width`, `height`, `top`, `left`) are **strictly forbidden** in animation targets.
+
+---
+
+## 25. Animation Stack Reference
+
+| Library | Version | Role | When to Use |
+| :--- | :--- | :--- | :--- |
+| **GSAP** | `^3.x` | Primary orchestration engine | Complex timelines, scroll triggers, global reveals, mouse parallax |
+| **GSAP ScrollTrigger** | Plugin | Scroll-linked effects | Section reveals, counter animations, parallax, navbar hide/show |
+| **Lenis** | `^1.x` | Premium smooth scroll | Application-wide smooth scroll with momentum easing |
+| **Framer Motion** | `^11.x` | React component animations | Mount/unmount, hover, tap, route transitions, modal open/close |
+| **Typed.js** | `^2.x` | Text typewriter effects | Hero headline rotating keywords |
+
+### Architecture Decision
+
+- **GSAP** owns the **document-level** animation layer: timelines that span multiple elements, scroll-triggered effects, and global utilities.
+- **Framer Motion** owns the **component-level** animation layer: local state transitions, React lifecycle animations, and `AnimatePresence` exit states.
+- **Lenis** owns the **scroll layer**: smooth scroll momentum, synchronized with GSAP ticker via `lenis.on("scroll", ScrollTrigger.update)`.
+
+These layers do **not compete** — they are synchronized at the RAF level via `gsap.ticker`.
+
+---
+
+## 26. Global Animation Guidelines
+
+### 26.1 Duration Scale
+
+| Context | Duration | Use Case |
+| :--- | :--- | :--- |
+| **Micro** | `0.15s` | Hover states, icon transitions, button press |
+| **Short** | `0.25–0.35s` | Dropdown open, badge pop, skeleton fade |
+| **Medium** | `0.5–0.7s` | Card entrance, section reveal, page content fade |
+| **Long** | `0.75–0.9s` | Hero mockup, modal entrance, splash transition |
+| **Lenis scroll** | `1.15s` | Full scroll momentum duration |
+
+### 26.2 Easing Reference
+
+| Name | Value | Use Case |
+| :--- | :--- | :--- |
+| `power3.out` | GSAP ease | Hero entrance, navbar reveal — fast start, smooth settle |
+| `power2.out` | GSAP ease | Scroll reveals, card entrances — gentle ease-out |
+| `power2.inOut` | GSAP ease | Navbar hide/show — symmetric smooth transition |
+| Spring `damping:20 stiffness:110` | Framer Motion | Text reveals, word stagger — natural physical feel |
+| `[0.25, 0.1, 0.25, 1]` | CSS cubic-bezier | Page transitions — neutral, balanced |
+
+### 26.3 Scroll Trigger Thresholds
+
+| Element Type | ScrollTrigger Start |
+| :--- | :--- |
+| Full sections (`.reveal-section`) | `"top 87%"` |
+| Individual cards | `"top 90%"` |
+| Hero counters | `"top 85%"` |
+| Clip-path reveals | `"top 85%"` |
+
+### 26.4 Stagger Values
+
+| Group | Stagger Delay |
+| :--- | :--- |
+| Sidebar nav items | `0.04s` per item |
+| Feature cards (per row) | `0.07s` per card |
+| Testimonial cards | `0.10s` per card |
+| Pricing cards | `0.12s` per card |
+| Hero stats | `0.07s` per stat |
+| Word reveals | `0.07s` per word |
+| Character reveals | `0.025s` per character |
+
+---
+
+## 27. Component-Level Animation Catalog
+
+### 27.1 Hero Section (`Landing.tsx`)
+
+| Element | Class | Animation |
+| :--- | :--- | :--- |
+| Launch badge | `.hero-badge` | Fade in from `y: -18` → GSAP |
+| Main headline | `.hero-title` | Clip-path reveal `inset(100% → 0%)` + fade + y |
+| Subtitle | `.hero-sub` | Fade + y offset → GSAP |
+| CTA buttons | `.hero-cta` | Fade + scale `0.96 → 1` → GSAP |
+| Stat pillars | `.hero-stats` | Stagger fade-up → GSAP |
+| Dashboard mockup | `.hero-mockup` | Fade + y:52 + scale → GSAP |
+| Parallax glow | `.hero-bg-parallax` | Mouse-tracking X/Y translate → GSAP |
+
+### 27.2 Navbar (`Landing.tsx`)
+
+- **Attach**: `navRef` ref attached to `<nav>` element with `navbar-animated` CSS class
+- **Logic**: GSAP ScrollTrigger `onUpdate` monitors scroll direction
+  - Scroll down > 140px → `gsap.to(nav, { y: "-110%" })` — hide
+  - Scroll up → `gsap.to(nav, { y: "0%" })` — reveal
+
+### 27.3 Scroll Reveals
+
+| Class | Target | Effect |
+| :--- | :--- | :--- |
+| `.reveal-section` | Section containers | Fade + `y:36` → `y:0` on scroll |
+| `.feature-card` | Feature grid cards | Scale `0.97→1` + fade per row stagger |
+| `.testimonial-card` | Testimonial cards | Fade + y, stagger 0.1s |
+| `.pricing-card` | Pricing plan cards | Scale `0.97→1` + fade, stagger 0.12s |
+
+### 27.4 Sidebar Navigation (`DashboardLayout.tsx`)
+
+- **Mount stagger**: Each `motion.button` item has `initial={{ opacity:0, x:-12 }}` with `delay: index * 0.04s`
+- **Hover**: `whileHover={{ x: 5 }}` (translation only, no layout change)
+- **Icon hover**: Nested `motion.span` with `whileHover={{ rotate: -5, scale: 1.1 }}`
+- **Mobile overlay**: `AnimatePresence` wraps the backdrop for fade in/out
+
+### 27.5 Page Transitions (`App.tsx`)
+
+- **Direction tracking**: `directionRef` (`1` = forward, `-1` = backward)
+- **Enter**: `x: dir * 22 → 0` + `opacity: 0 → 1`
+- **Exit**: `x: 0 → dir * -16` + `opacity: 1 → 0`
+- **Duration**: `0.3s` cubic-bezier `[0.25, 0.1, 0.25, 1]`
+
+### 27.6 Mobile Menu (`Landing.tsx`)
+
+- `AnimatePresence` wraps the menu drawer
+- Enter: `{ opacity: 0, y: -8 } → { opacity: 1, y: 0 }` in `0.22s`
+- Exit: `{ opacity: 0, y: -8 }` on close
+
+### 27.7 New Motion Primitives (`MotionPrimitives.tsx`)
+
+| Component | Animation |
+| :--- | :--- |
+| `RevealOnScroll` | IntersectionObserver-triggered fade/scale/slide. Variants: `fadeUp`, `fadeLeft`, `fadeRight`, `scale`, `fade` |
+| `StaggerContainer` + `StaggerItem` | Parent-child stagger cascade using Framer Motion variants |
+| `RippleButton` | Click origin ripple: `scale: 0→4`, `opacity: 0.4→0` in `0.55s` |
+| `MorphingIcon` | `AnimatePresence mode="wait"` between two icon states with rotate + scale |
+
+---
+
+## 28. Scroll Animation System
+
+### 28.1 Lenis Configuration (`SmoothScroll.tsx`)
+
+```typescript
+new Lenis({
+  duration: 1.15,               // Full scroll momentum duration
+  easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential
+  smoothWheel: true,
+  touchMultiplier: 1.8,         // Natural mobile feel
+  wheelMultiplier: 0.9,         // Slightly damped luxury feel
+})
+```
+
+Synchronized with GSAP:
+```typescript
+lenis.on("scroll", ScrollTrigger.update);
+gsap.ticker.add(t => lenis.raf(t * 1000));
+gsap.ticker.lagSmoothing(0); // Prevents scroll judder
+```
+
+### 28.2 GSAP Utilities (`GSAPAnimations.tsx`)
+
+All hooks exported from `src/components/GSAPAnimations.tsx`:
+
+| Hook | Signature | Description |
+| :--- | :--- | :--- |
+| `useScrollReveal` | `(ref, config)` | Fade+Y reveal with ScrollTrigger |
+| `useStaggerReveal` | `(ref, opts)` | Stagger children reveal |
+| `useParallax` | `(ref, speed)` | Scroll-driven Y parallax |
+| `useCounterAnimation` | `(ref, target)` | Number counter on scroll entry |
+| `useNavbarHide` | `(navRef)` | Scroll-direction navbar hide/show |
+| `useHeroTimeline` | `(containerRef)` | Cinematic hero entrance timeline |
+| `useClipReveal` | `(ref, opts)` | Clip-path scroll reveal |
+| `useFadeInSection` | `(ref, opts)` | Simple fade+Y on scroll |
+| `useMouseParallax` | `(ref, strength)` | Mouse-tracking X/Y for decorative elements |
+
+### 28.3 CSS Data Attributes for GSAP Targets
+
+Elements can declare their initial hidden state using `data-gsap`:
+
+```html
+<div data-gsap="fade-up">   <!-- opacity:0, y:28 initially -->
+<div data-gsap="clip-reveal"> <!-- clip-path: inset(100%) initially -->
+<div data-gsap="scale-up">  <!-- opacity:0, scale:0.94 initially -->
+```
+
+Under `prefers-reduced-motion`, all `[data-gsap]` elements are immediately visible.
+
+---
+
+## 29. Performance & Accessibility Contract
+
+### 29.1 Performance Rules
+
+1. **60fps target**: Only `transform` and `opacity` animated. Zero layout-triggering properties.
+2. **`will-change`**: Set only on known animated targets (`hero-bg-parallax`, `navbar-animated`, `[data-gsap]`). Never blanket-applied.
+3. **GSAP Context**: All GSAP animations wrapped in `gsap.context()`. Cleaned up with `ctx.revert()` on unmount to prevent memory leaks.
+4. **RAF sync**: Lenis RAF runs inside GSAP ticker — single frame budget per animation frame.
+5. **Lazy ScrollTrigger**: `toggleActions: "play none none none"` prevents re-triggering on scroll-up for permanent reveals.
+
+### 29.2 Accessibility Rules
+
+1. **`prefers-reduced-motion: reduce`**: All GSAP hooks check `window.matchMedia("(prefers-reduced-motion: reduce)")` before creating animations. Reduced-motion sets elements to final visible state immediately.
+2. **CSS fallback**: The `@media (prefers-reduced-motion: reduce)` block in `index.css` kills all CSS animations AND sets `[data-gsap]` elements to fully visible.
+3. **Framer Motion**: All custom `Variants` include a reduced-motion path (`{ opacity: 1 }`, `{ duration: 0 }`).
+4. **Focus**: Animations never interfere with keyboard focus order. Tab order is always logical.
+5. **`aria-hidden`**: All purely decorative animated elements (`.hero-bg-parallax`, ripple rings) have `aria-hidden="true"`.
+6. **ARIA live regions**: Page skeleton transitions do not affect ARIA tree structure.
+
+### 29.3 Mobile Strategy
+
+| Device Type | Strategy |
+| :--- | :--- |
+| Touch devices | Lenis `touchMultiplier: 1.8` for natural inertia |
+| Mobile (<768px) | GSAP mouse parallax disabled (no `mousemove` on touch) |
+| Reduced viewports | Stagger delays preserved, `start: "top 90%"` ensures reveals fire reliably |
+| Foldables | Fluid layout — no animation values depend on fixed pixel viewport |
+
+---

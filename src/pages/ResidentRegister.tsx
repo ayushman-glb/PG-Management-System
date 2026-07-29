@@ -305,7 +305,7 @@ export default function ResidentRegister({ navigate }: Props) {
     <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed top-5 right-5 z-50 animate-bounce bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2">
+        <div role="status" aria-live="polite" className="fixed top-5 right-5 z-50 animate-bounce bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2">
           <FileCheck className="w-4 h-4" /> {toastMsg}
         </div>
       )}
@@ -313,7 +313,9 @@ export default function ResidentRegister({ navigate }: Props) {
       {/* Top Header */}
       <header className={`sticky top-0 z-30 px-6 py-4 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
         <button
+          type="button"
           onClick={() => navigate("landing")}
+          aria-label="Go to RoomBae homepage"
           className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity text-left"
         >
           <div
@@ -353,9 +355,12 @@ export default function ResidentRegister({ navigate }: Props) {
               return (
                 <div key={s.num} className="relative z-10 flex flex-col items-center gap-1.5">
                   <button
+                    type="button"
                     onClick={() => {
                       if (s.num < step) setStep(s.num);
                     }}
+                    aria-label={`Step ${s.num}: ${s.label}`}
+                    aria-current={isCurrent ? "step" : undefined}
                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
                       isDone
                         ? "bg-[#5E9F72] text-white shadow-md"

@@ -312,7 +312,9 @@ export default function ContentPage({ navigate, page }: Props) {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <button
+            type="button"
             onClick={() => navigate("landing")}
+            aria-label="Go to RoomBae home"
             className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
           >
             <span

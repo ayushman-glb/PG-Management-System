@@ -181,7 +181,9 @@ export default function Auth({ navigate }: Props) {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <button
+            type="button"
             onClick={() => navigate("landing")}
+            aria-label="Go to RoomBae homepage"
             className="flex items-center gap-2.5 mb-8 lg:hidden cursor-pointer hover:opacity-90 transition-opacity"
           >
             <div
@@ -227,10 +229,11 @@ export default function Auth({ navigate }: Props) {
                       </div>
                     )}
                     <div>
-                      <label className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
+                      <label htmlFor="auth-email-input" className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
                         {role === "resident" ? "Resident ID or Email" : "Email or Phone"}
                       </label>
                       <input
+                        id="auth-email-input"
                         type="text"
                         placeholder={role === "resident" ? "RES1001 or resident@example.com" : "you@example.com"}
                         defaultValue={role === "resident" ? "RES1001" : "rajesh@example.com"}
@@ -243,10 +246,11 @@ export default function Auth({ navigate }: Props) {
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className={`text-sm font-semibold ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
+                        <label htmlFor="auth-password-input" className={`text-sm font-semibold ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
                           Password
                         </label>
                         <button
+                          type="button"
                           onClick={() => animateSwitch("forgot")}
                           className={`text-xs font-medium hover:underline ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}
                         >
@@ -255,6 +259,7 @@ export default function Auth({ navigate }: Props) {
                       </div>
                       <div className="relative">
                         <input
+                          id="auth-password-input"
                           type={showPass ? "text" : "password"}
                           placeholder="••••••••"
                           defaultValue={role === "resident" ? "Resident@123" : "password123"}
@@ -265,7 +270,9 @@ export default function Auth({ navigate }: Props) {
                           }`}
                         />
                         <button
+                          type="button"
                           onClick={() => setShowPass(!showPass)}
+                          aria-label={showPass ? "Hide password" : "Show password"}
                           className={`absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors ${darkMode ? "text-[#756A63] hover:text-[#C6B9AE]" : "text-[#A8907F] hover:text-[#3B2A24]"}`}
                         >
                           {showPass ? (
@@ -279,6 +286,7 @@ export default function Auth({ navigate }: Props) {
                   </div>
 
                   <button
+                    type="button"
                     onClick={handleSubmit}
                     className="w-full flex items-center justify-center gap-2 luxury-btn-primary py-3.5 text-base font-bold flex-shrink-0 cursor-pointer"
                   >
@@ -296,7 +304,9 @@ export default function Auth({ navigate }: Props) {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <button className={`flex items-center justify-center gap-2 border py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                    <button
+                      type="button"
+                      className={`flex items-center justify-center gap-2 border py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                       darkMode
                         ? "bg-[#2B2725] border-[#4A433F] text-[#F7F3EE] hover:bg-[#3D3632]"
                         : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] hover:bg-[#F8EEE5]"
@@ -309,7 +319,10 @@ export default function Auth({ navigate }: Props) {
                       </svg>
                       Google
                     </button>
-                    <button className={`flex items-center justify-center gap-2 border py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                    <button
+                      type="button"
+                      onClick={() => animateSwitch("otp")}
+                      className={`flex items-center justify-center gap-2 border py-2.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                       darkMode
                         ? "bg-[#2B2725] border-[#4A433F] text-[#F7F3EE] hover:bg-[#3D3632]"
                         : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] hover:bg-[#F8EEE5]"
@@ -322,6 +335,7 @@ export default function Auth({ navigate }: Props) {
                   <p className={`text-center text-sm mt-5 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
                     New to RoomBae?{" "}
                     <button
+                      type="button"
                       onClick={() => {
                         if (role === "resident") {
                           navigate("resident-register");

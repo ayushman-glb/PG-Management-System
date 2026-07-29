@@ -1,4 +1,4 @@
-import { motion, useScroll, useSpring } from "framer-motion";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { useTheme } from "../theme";
 
 export function ScrollProgressBar() {
@@ -8,14 +8,16 @@ export function ScrollProgressBar() {
     damping: 30,
     restDelta: 0.001,
   });
+  const opacity = useTransform(scrollYProgress, [0, 0.008, 0.02], [0, 0, 1]);
   const { darkMode } = useTheme();
 
   return (
     <motion.div
       aria-hidden="true"
-      className="fixed top-0 left-0 right-0 h-1 z-50 origin-left pointer-events-none"
+      className="fixed top-0 left-0 right-0 h-1 z-50 origin-left pointer-events-none transition-opacity duration-300"
       style={{
         scaleX,
+        opacity,
         background: darkMode
           ? "linear-gradient(90deg, #C89A4B, #D8B36A, #E8C98A)"
           : "linear-gradient(90deg, #D9A87C, #C58B63, #E7C4A0)",

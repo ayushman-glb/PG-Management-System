@@ -180,12 +180,16 @@ export default function Billing({ navigate }: Props) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
+              type="button"
               className={`flex items-center gap-2 border text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors ${darkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
             >
               <Send className="w-4 h-4" />
               Send Reminders
             </button>
-            <button className="flex items-center gap-2 luxury-btn-primary text-sm font-semibold px-4 py-2.5 flex-shrink-0">
+            <button
+              type="button"
+              className="flex items-center gap-2 luxury-btn-primary text-sm font-semibold px-4 py-2.5 flex-shrink-0"
+            >
               <Download className="w-4 h-4" />
               Export
             </button>
@@ -268,7 +272,9 @@ export default function Billing({ navigate }: Props) {
               {(["invoices", "transactions"] as const).map((tab) => (
                 <button
                   key={tab}
+                  type="button"
                   onClick={() => setActiveTab(tab)}
+                  aria-pressed={activeTab === tab}
                   className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${
                     activeTab === tab
                       ? darkMode
@@ -297,6 +303,7 @@ export default function Billing({ navigate }: Props) {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search invoices..."
+                    aria-label="Search invoices"
                     className={`bg-transparent text-sm outline-none placeholder:text-slate-400 w-36 ${darkMode ? "text-white" : "text-slate-700"}`}
                   />
                 </div>
@@ -304,7 +311,9 @@ export default function Billing({ navigate }: Props) {
                   {(["all", "paid", "due", "late"] as const).map((f) => (
                     <button
                       key={f}
+                      type="button"
                       onClick={() => setFilter(f)}
+                      aria-pressed={filter === f}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                         filter === f
                           ? "luxury-btn-primary text-white"
@@ -322,7 +331,7 @@ export default function Billing({ navigate }: Props) {
           </div>
 
           {activeTab === "invoices" && (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto mobile-scroll-x">
               <table className="w-full min-w-[700px]">
                 <thead
                   className={darkMode ? "bg-slate-900/50" : "bg-slate-50"}

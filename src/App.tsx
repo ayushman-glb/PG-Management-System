@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
@@ -18,7 +18,7 @@ import { ThemeProvider, useTheme } from "./theme";
 import { NavigationProvider } from "./navigation";
 import { SmoothScroll } from "./components/SmoothScroll";
 import { ScrollProgressBar } from "./components/ScrollProgressBar";
-import loadingImg from "../public/images/loading.png";
+import loadingImg from "./assets/loading.png";
 
 export type Page =
   | "landing"
@@ -64,6 +64,8 @@ export const SESSION_KEY = "loadingShown";
 export default function App() {
   const [page, setPage] = useState<Page>("landing");
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
+  // Track navigation direction for directional slide transitions
+  const directionRef = useRef<1 | -1>(1); // 1 = forward, -1 = backward
 
   // Check sessionStorage on initial load.
   // The custom branded loading screen appears ONLY ONCE per browser session for EXACTLY 2 seconds.
@@ -116,6 +118,7 @@ export default function App() {
 
   const navigate = (p: Page) => {
     if (p === page) return;
+    directionRef.current = 1; // forward navigation
     setPageHistory((previous) => [...previous, page]);
     setPage(p);
 
@@ -134,6 +137,7 @@ export default function App() {
 
   const goBack = () => {
     const previous = pageHistory[pageHistory.length - 1] ?? "landing";
+    directionRef.current = -1; // backward navigation
     setPageHistory((history) => history.slice(0, -1));
     setPage(previous);
 
@@ -175,10 +179,16 @@ export default function App() {
             ) : (
               <motion.div
                 key={page}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+                custom={directionRef.current}
+                variants={{
+                  initial: (dir: number) => ({ opacity: 0, x: dir * 22, y: 0 }),
+                  animate: { opacity: 1, x: 0, y: 0 },
+                  exit: (dir: number) => ({ opacity: 0, x: dir * -16, y: 0 }),
+                }}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
               >
                 {renderPage(page, navigate)}
               </motion.div>

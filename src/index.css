@@ -402,6 +402,75 @@ html.dark-theme .accent-gradient {
 .animate-page-in { animation: slide-in-up 0.45s ease-out both; }
 .animate-luxury-pulse { animation: luxury-pulse 2s ease-in-out infinite; }
 
+/* ─── New Animation Keyframes ────────────────────────── */
+@keyframes clip-reveal {
+  from { clip-path: inset(100% 0 0 0); opacity: 0; }
+  to   { clip-path: inset(0% 0 0 0);   opacity: 1; }
+}
+@keyframes blur-reveal {
+  from { filter: blur(8px); opacity: 0; transform: translateY(8px); }
+  to   { filter: blur(0px); opacity: 1; transform: translateY(0); }
+}
+@keyframes ripple-expand {
+  from { transform: scale(0); opacity: 0.5; }
+  to   { transform: scale(4); opacity: 0; }
+}
+@keyframes slide-from-bottom {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 168, 124, 0.5); }
+  50%       { box-shadow: 0 0 18px 4px rgba(217, 168, 124, 0.3); }
+}
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(-4px); }
+  70%       { transform: translateY(-2px); }
+}
+@keyframes navbar-slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ─── New Animation Utilities ────────────────────────── */
+.animate-clip-reveal { animation: clip-reveal 0.75s cubic-bezier(0.25, 0.1, 0.25, 1) both; }
+.animate-blur-reveal { animation: blur-reveal 0.65s ease-out both; }
+.animate-slide-from-bottom { animation: slide-from-bottom 0.5s ease-out both; }
+.animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+.animate-icon-bounce { animation: icon-bounce 0.5s ease-out; }
+.animate-navbar-reveal { animation: navbar-slide-down 0.4s ease-out both; }
+
+/* ─── GSAP Scroll Reveal Initial States ─────────────── */
+[data-gsap="fade-up"] { opacity: 0; transform: translateY(28px); will-change: transform, opacity; }
+[data-gsap="fade-left"] { opacity: 0; transform: translateX(-24px); will-change: transform, opacity; }
+[data-gsap="fade-right"] { opacity: 0; transform: translateX(24px); will-change: transform, opacity; }
+[data-gsap="clip-reveal"] { opacity: 0; clip-path: inset(100% 0 0 0); will-change: clip-path, opacity; }
+[data-gsap="scale-up"] { opacity: 0; transform: scale(0.94); will-change: transform, opacity; }
+@media (prefers-reduced-motion: reduce) {
+  [data-gsap] { opacity: 1 !important; transform: none !important; clip-path: none !important; filter: none !important; }
+}
+
+/* ─── Hover Glow Utilities ───────────────────────────── */
+.hover-glow { transition: box-shadow 0.25s ease; }
+.hover-glow:hover { box-shadow: 0 0 16px rgba(217, 168, 124, 0.35); }
+html.dark-theme .hover-glow:hover { box-shadow: 0 0 16px rgba(200, 154, 75, 0.4); }
+
+/* ─── Ripple Container ───────────────────────────────── */
+.ripple-container { position: relative; overflow: hidden; }
+.ripple-ring {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  animation: ripple-expand 0.55s ease-out forwards;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+/* ─── Navbar Animation ───────────────────────────────── */
+.navbar-animated { will-change: transform; transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.navbar-hidden { transform: translateY(-110%); }
+
 /* ─── Gradient Text ──────────────────────────────── */
 .gradient-text {
   background: linear-gradient(135deg, #D9A87C 0%, #C58B63 50%, #B5743F 100%);

@@ -18,7 +18,7 @@ import {
   Calendar,
 } from "lucide-react";
 import type { Page } from "../App";
-import { ThemeToggle } from "../theme";
+import { ThemeToggle, useTheme } from "../theme";
 import { Avatar } from "../components/Avatar";
 import { BackButton } from "../navigation";
 
@@ -102,30 +102,47 @@ export default function PGDetails({ navigate }: Props) {
   const [liked, setLiked] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(rooms[0]);
   const [showBooking, setShowBooking] = useState(false);
+  const { darkMode } = useTheme();
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] text-[#3B2A24]">
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
       {/* Top nav */}
-      <div className="bg-[#FFFDFB] border-b border-[#E6D7CA] sticky top-0 z-40 px-4 py-3 md:px-6 md:py-4">
+      <div className={`sticky top-0 z-40 border-b transition-colors px-4 py-3 md:px-6 md:py-4 ${
+        darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"
+      }`}>
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BackButton />
             <button
+              type="button"
               onClick={() => navigate("pg-listing")}
-              className="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors ${
+                darkMode ? "text-[#C6B9AE] hover:text-white" : "text-slate-600 hover:text-slate-900"
+              }`}
             >
               Back to Listings
             </button>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+            <button
+              type="button"
+              aria-label="Share property details"
+              className={`flex items-center gap-2 text-sm font-medium border px-4 py-2 rounded-xl transition-colors ${
+                darkMode ? "border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
+            >
               <Share2 className="w-4 h-4" />
               Share
             </button>
             <button
+              type="button"
               onClick={() => setLiked(!liked)}
-              className="flex items-center gap-2 text-sm font-medium text-slate-600 border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-colors"
+              aria-label={liked ? "Remove from favorites" : "Save to favorites"}
+              aria-pressed={liked}
+              className={`flex items-center gap-2 text-sm font-medium border px-4 py-2 rounded-xl transition-colors ${
+                darkMode ? "border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
             >
               <Heart
                 className={`w-4 h-4 ${liked ? "fill-red-500 text-red-500" : ""}`}
@@ -149,19 +166,23 @@ export default function PGDetails({ navigate }: Props) {
                   className="w-full h-full object-cover"
                 />
                 <button
+                  type="button"
                   onClick={() =>
                     setCurrentImg(
                       (currentImg - 1 + images.length) % images.length,
                     )
                   }
+                  aria-label="Previous image"
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-md"
                 >
                   <ChevronLeft className="w-4 h-4 text-slate-700" />
                 </button>
                 <button
+                  type="button"
                   onClick={() =>
                     setCurrentImg((currentImg + 1) % images.length)
                   }
+                  aria-label="Next image"
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-md"
                 >
                   <ChevronRight className="w-4 h-4 text-slate-700" />
@@ -170,7 +191,9 @@ export default function PGDetails({ navigate }: Props) {
                   {images.map((_, i) => (
                     <button
                       key={i}
+                      type="button"
                       onClick={() => setCurrentImg(i)}
+                      aria-label={`View image ${i + 1}`}
                       className={`w-1.5 h-1.5 rounded-full transition-all ${currentImg === i ? "bg-white w-4" : "bg-white/60"}`}
                     />
                   ))}
@@ -371,15 +394,16 @@ export default function PGDetails({ navigate }: Props) {
               </div>
 
               <div className="space-y-3 mb-5">
-                <div className="border border-slate-200 rounded-xl p-3">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                <div className={`border rounded-xl p-3 ${darkMode ? "border-[#4A443F] bg-[#2B2725]" : "border-slate-200"}`}>
+                  <label htmlFor="move-in-date" className={`block text-xs font-semibold uppercase tracking-wide mb-1 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}>
                     Move-in Date
                   </label>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <Calendar className={`w-4 h-4 ${darkMode ? "text-[#C6B9AE]" : "text-slate-400"}`} />
                     <input
+                      id="move-in-date"
                       type="date"
-                      className="flex-1 text-sm text-slate-700 outline-none bg-transparent"
+                      className={`flex-1 text-sm outline-none bg-transparent ${darkMode ? "text-white" : "text-slate-700"}`}
                       defaultValue="2025-08-01"
                     />
                   </div>
@@ -437,42 +461,51 @@ export default function PGDetails({ navigate }: Props) {
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowBooking(false)}
+          role="presentation"
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl p-8 text-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="visit-booked-title"
+            className={`rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl p-8 text-center ${
+              darkMode ? "bg-[#2B2725] text-white" : "bg-white text-slate-900"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">
+            <h3 id="visit-booked-title" className={`text-xl font-black mb-2 ${darkMode ? "text-white" : "text-slate-900"}`}>
               Visit Booked!
             </h3>
-            <p className="text-slate-500 text-sm mb-6">
+            <p className={`text-sm mb-6 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}>
               Your visit to <strong>Urban Nest Co-living</strong> has been
               scheduled. The owner will call you within 2 hours to confirm.
             </p>
-            <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
+            <div className={`rounded-xl p-4 text-sm text-left space-y-2 mb-6 ${
+              darkMode ? "bg-[#332D2B]" : "bg-slate-50"
+            }`}>
               <div className="flex justify-between">
-                <span className="text-slate-500">Property</span>
-                <span className="font-semibold text-slate-800">
+                <span className={darkMode ? "text-[#C6B9AE]" : "text-slate-500"}>Property</span>
+                <span className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}>
                   Urban Nest Co-living
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Room Type</span>
-                <span className="font-semibold text-slate-800">
+                <span className={darkMode ? "text-[#C6B9AE]" : "text-slate-500"}>Room Type</span>
+                <span className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}>
                   {selectedRoom.type}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Monthly Rent</span>
-                <span className="font-semibold text-slate-800">
+                <span className={darkMode ? "text-[#C6B9AE]" : "text-slate-500"}>Monthly Rent</span>
+                <span className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}>
                   ₹{selectedRoom.price.toLocaleString()}
                 </span>
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setShowBooking(false)}
               className="w-full luxury-btn-primary font-semibold py-3"
             >

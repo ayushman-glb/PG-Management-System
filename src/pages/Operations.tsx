@@ -125,6 +125,7 @@ export default function Operations({ navigate, page }: Props) {
             </div>
           </div>
           <button
+            type="button"
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 luxury-btn-primary flex-shrink-0"
           >
             <Save className="w-4 h-4" />

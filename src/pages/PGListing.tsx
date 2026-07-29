@@ -172,8 +172,9 @@ export default function PGListing({ navigate }: Props) {
             <div className="flex items-center gap-2">
               <BackButton />
               <button
+                type="button"
                 onClick={() => navigate("landing")}
-                className={`hidden sm:flex items-center gap-2 transition-colors text-sm font-medium ${darkMode ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"}`}
+                className={`hidden sm:flex items-center gap-2 transition-colors text-sm font-medium ${darkMode ? "text-[#C6B9AE] hover:text-white" : "text-[#6E5A52] hover:text-[#3B2A24]"}`}
               >
                 <span>Home</span>
               </button>
@@ -189,17 +190,21 @@ export default function PGListing({ navigate }: Props) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by location, name, or amenity..."
+                aria-label="Search properties by location, name, or amenity"
                 className={`flex-1 bg-transparent text-sm outline-none ${darkMode ? "text-[#F7F3EE] placeholder:text-[#756A63]" : "text-[#3B2A24] placeholder:text-[#A8907F]"}`}
               />
             </div>
 
             <ThemeToggle />
             <button
+              type="button"
               onClick={() => setShowFilters(!showFilters)}
+              aria-expanded={showFilters}
+              aria-label="Toggle property filters"
               className={`flex flex-shrink-0 items-center gap-2 border text-sm font-semibold px-3.5 py-2.5 rounded-xl transition-colors ${
                 darkMode
-                  ? "border-[#4A443F] text-slate-300 hover:bg-[#332D2B]"
-                  : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                  ? "border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]"
+                  : "border-[#E6D7CA] text-[#3B2A24] hover:bg-[#F8EEE5]"
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -218,7 +223,9 @@ export default function PGListing({ navigate }: Props) {
                   {(["All", "Men's", "Women's", "Mixed"] as const).map((t) => (
                     <button
                       key={t}
+                      type="button"
                       onClick={() => setPgType(t)}
+                      aria-pressed={pgType === t}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                         pgType === t
                           ? "luxury-btn-primary text-white"
@@ -243,6 +250,7 @@ export default function PGListing({ navigate }: Props) {
                   step={500}
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  aria-label="Maximum monthly price filter"
                   className="w-32 accent-[#D9A87C]"
                 />
               </div>
@@ -263,11 +271,14 @@ export default function PGListing({ navigate }: Props) {
           </div>
           <div className="flex items-center gap-2">
             <Filter className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
-            <select className={`text-sm border rounded-xl px-3 py-2 outline-none ${
-              darkMode
-                ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE] focus:ring-[#C89A4B]"
-                : "bg-white border-slate-200 text-slate-600 focus:ring-[#D9A87C]"
-            }`}>
+            <select
+              aria-label="Sort properties"
+              className={`text-sm border rounded-xl px-3 py-2 outline-none ${
+                darkMode
+                  ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE] focus:ring-[#C89A4B]"
+                  : "bg-white border-slate-200 text-slate-600 focus:ring-[#D9A87C]"
+              }`}
+            >
               <option>Best Match</option>
               <option>Price: Low to High</option>
               <option>Price: High to Low</option>
@@ -306,9 +317,12 @@ export default function PGListing({ navigate }: Props) {
 
                 {/* Like button */}
                 <button
+                  type="button"
                   onClick={() =>
                     setLikes((prev) => ({ ...prev, [pg.id]: !prev[pg.id] }))
                   }
+                  aria-label={likes[pg.id] ? `Remove ${pg.name} from favorites` : `Add ${pg.name} to favorites`}
+                  aria-pressed={likes[pg.id]}
                   className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform ${
                     darkMode ? "bg-[#1D1B1A]/80 backdrop-blur-sm" : "bg-white/90 backdrop-blur-sm"
                   }`}
@@ -384,6 +398,7 @@ export default function PGListing({ navigate }: Props) {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => navigate("pg-details")}
                     className="luxury-btn-primary text-sm font-semibold px-4 py-2.5"
                   >
