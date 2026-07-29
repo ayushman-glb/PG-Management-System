@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   MessageSquare,
@@ -10,6 +10,7 @@ import { Avatar } from "../components/Avatar";
 import { AnimatedBadge } from "../components/MotionPrimitives";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
+import { api } from "../services/api";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -174,9 +175,43 @@ export default function Complaints({ navigate }: Props) {
   } | null>(null);
   const { darkMode } = useTheme();
 
+  useEffect(() => {
+    api.listComplaints().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        const pending: Complaint[] = [];
+        const inProgress: Complaint[] = [];
+        const resolved: Complaint[] = [];
+
+        data.forEach((c: any) => {
+          const item: Complaint = {
+            id: c.id || c.ticketCode,
+            title: c.title,
+            resident: c.resident?.user?.name || "Resident",
+            room: c.resident?.bed?.room?.roomNumber || "101",
+            priority: c.priority === "HIGH" || c.priority === "URGENT" ? "High" : c.priority === "MEDIUM" ? "Medium" : "Low",
+            category: c.category,
+            date: new Date(c.createdAt).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }),
+            avatar: (c.resident?.user?.name || "RS").substring(0, 2).toUpperCase(),
+            desc: c.description
+          };
+          if (c.status === "OPEN") pending.push(item);
+          else if (c.status === "IN_PROGRESS") inProgress.push(item);
+          else resolved.push(item);
+        });
+
+        setComplaints({ pending, inProgress, resolved });
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleDrop = (targetCol: string) => {
     if (!dragging || dragging.from === targetCol) return;
     const { complaint, from } = dragging;
+
+    // Map UI column to backend status enum
+    const backendStatus = targetCol === "pending" ? "OPEN" : targetCol === "inProgress" ? "IN_PROGRESS" : "RESOLVED";
+    api.updateComplaintStatus(complaint.id, backendStatus).catch(() => {});
+
     setComplaints((prev) => {
       const newState = { ...prev };
       newState[from] = newState[from].filter((c) => c.id !== complaint.id);

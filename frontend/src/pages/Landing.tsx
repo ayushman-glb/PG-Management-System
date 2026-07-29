@@ -395,23 +395,28 @@ export default function Landing({ navigate }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8F2] text-[#3B2A24] font-sans">
+    <div className="min-h-screen aurora-bg text-[#3B2A24] font-sans relative overflow-hidden">
+      {/* Background Aurora Orbs */}
+      <div className="aurora-orb-1 -top-24 -left-24 opacity-70" />
+      <div className="aurora-orb-2 top-1/3 -right-32 opacity-60" />
+      <div className="aurora-orb-1 bottom-1/4 left-1/4 opacity-50" />
+
       {/* Navbar */}
-      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 glass border-b border-[#E6D7CA]/60 navbar-animated">
+      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 glass-nav navbar-animated">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center gap-4 md:gap-8">
           <button
             type="button"
             onClick={() => navigate("landing")}
             aria-label="Go to RoomBae home"
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 group"
           >
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white"
-              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)", boxShadow: "0 4px 12px rgba(197,139,99,0.35)" }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white transition-transform group-hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)", boxShadow: "0 4px 14px rgba(197,139,99,0.4)" }}
             >
               <Building2 className="w-4.5 h-4.5" />
             </div>
-            <span className="font-bold text-[#3B2A24] text-lg">RoomBae</span>
+            <span className="font-bold text-[#3B2A24] text-lg dark:text-[#F7F3EE]">RoomBae</span>
           </button>
 
           <div className="hidden md:flex items-center gap-7 ml-6">
@@ -419,26 +424,26 @@ export default function Landing({ navigate }: Props) {
               <a
                 key={item}
                 href={`#${item.toLowerCase()}`}
-                className="text-sm text-[#6E5A52] hover:text-[#C58B63] font-medium transition-colors"
+                className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors"
               >
                 {item}
               </a>
             ))}
             <button
               onClick={() => navigate("about")}
-              className="text-sm text-[#6E5A52] hover:text-[#C58B63] font-medium transition-colors"
+              className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors"
             >
               About
             </button>
             <button
               onClick={() => navigate("blog")}
-              className="text-sm text-[#6E5A52] hover:text-[#C58B63] font-medium transition-colors"
+              className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors"
             >
               Blog
             </button>
             <button
               onClick={() => navigate("pg-listing")}
-              className="text-sm text-[#6E5A52] hover:text-[#C58B63] font-medium transition-colors"
+              className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors"
             >
               Find PGs
             </button>

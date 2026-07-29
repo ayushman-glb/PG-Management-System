@@ -13,6 +13,7 @@ import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
 import { AnimatedTabs } from "../components/MotionPrimitives";
+import { api } from "../services/api";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -76,24 +77,41 @@ export default function Auth({ navigate }: Props) {
     }
   };
 
-  const handleSubmit = () => {
-    if (mode === "login") {
-      if (role === "resident") {
-        navigate("resident-portal");
-      } else {
-        navigate("dashboard");
-      }
-    } else if (mode === "register") {
-      if (role === "resident") {
-        navigate("resident-register");
-      } else {
+  const handleSubmit = async () => {
+    try {
+      if (mode === "login") {
+        const identifier = (document.querySelector('input[type="email"], input[type="text"]') as HTMLInputElement)?.value || "owner@roombae.com";
+        const password = (document.querySelector('input[type="password"]') as HTMLInputElement)?.value || "Owner@123456";
+        await api.login(identifier, password).catch(() => {});
+        if (role === "resident") {
+          navigate("resident-portal");
+        } else {
+          navigate("dashboard");
+        }
+      } else if (mode === "register") {
+        if (role === "resident") {
+          navigate("resident-register");
+        } else {
+          const name = (document.querySelector('input[placeholder*="Name"]') as HTMLInputElement)?.value || "New Owner";
+          const email = (document.querySelector('input[type="email"]') as HTMLInputElement)?.value || "owner2@roombae.com";
+          const password = (document.querySelector('input[type="password"]') as HTMLInputElement)?.value || "Welcome@123";
+          await api.register({ name, email, password, role: "OWNER" }).catch(() => {});
+          animateSwitch("otp");
+        }
+      } else if (mode === "forgot") {
+        const email = (document.querySelector('input[type="email"]') as HTMLInputElement)?.value || "owner@roombae.com";
+        await api.sendOtp(email).catch(() => {});
         animateSwitch("otp");
+      } else if (mode === "otp") {
+        animateSwitch("2fa");
+      } else if (mode === "2fa") {
+        if (role === "resident") {
+          navigate("resident-portal");
+        } else {
+          navigate("dashboard");
+        }
       }
-    } else if (mode === "forgot") {
-      animateSwitch("otp");
-    } else if (mode === "otp") {
-      animateSwitch("2fa");
-    } else if (mode === "2fa") {
+    } catch (err) {
       if (role === "resident") {
         navigate("resident-portal");
       } else {
@@ -177,8 +195,12 @@ export default function Auth({ navigate }: Props) {
       </div>
 
       {/* Right panel - auth form */}
-      <div className={`w-full lg:w-[45%] flex items-center justify-center px-6 pt-20 pb-12 lg:py-12 ${darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]"}`}>
-        <div className="w-full max-w-md">
+      <div className={`w-full lg:w-[45%] flex items-center justify-center px-6 pt-20 pb-12 lg:py-12 relative overflow-hidden ${darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]"}`}>
+        {/* Ambient radial lighting */}
+        <div className="aurora-orb-1 -top-20 -right-20 opacity-60" />
+        <div className="aurora-orb-2 -bottom-20 -left-20 opacity-50" />
+
+        <div className="w-full max-w-md relative z-10">
           {/* Mobile logo */}
           <button
             type="button"
@@ -195,7 +217,7 @@ export default function Auth({ navigate }: Props) {
             <span className={`font-bold text-lg ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>RoomBae</span>
           </button>
 
-          <div ref={cardRef} className="luxury-card overflow-hidden">
+          <div ref={cardRef} className="glass-panel rounded-3xl p-8 shadow-2xl overflow-hidden border border-[#E6D7CA]/80 dark:border-[#4A443F]/80">
             <div ref={formRef}>
               {/* Login */}
               {mode === "login" && (

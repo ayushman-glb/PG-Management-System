@@ -382,28 +382,30 @@ export default function PGDetails({ navigate }: Props) {
 
           {/* Booking sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 sticky top-24 shadow-sm">
+            <div className="apple-sticky-panel p-6 shadow-xl">
               <div className="mb-5">
-                <span className="text-3xl font-black text-slate-900">
+                <span className="text-3xl font-black text-slate-900 dark:text-white">
                   ₹{selectedRoom.price.toLocaleString()}
                 </span>
-                <span className="text-slate-500 text-sm">/month</span>
-                <p className="text-sm text-slate-500 mt-1">
+                <span className="text-slate-500 dark:text-[#C6B9AE] text-sm">/month</span>
+                <p className="text-sm text-slate-500 dark:text-[#C6B9AE] mt-1 font-medium">
                   {selectedRoom.type}
                 </p>
               </div>
 
+              <div className="apple-divider my-4" />
+
               <div className="space-y-3 mb-5">
-                <div className={`border rounded-xl p-3 ${darkMode ? "border-[#4A443F] bg-[#2B2725]" : "border-slate-200"}`}>
-                  <label htmlFor="move-in-date" className={`block text-xs font-semibold uppercase tracking-wide mb-1 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}>
+                <div className={`border rounded-xl p-3 ${darkMode ? "border-[#4A443F] bg-[#2B2725]" : "border-[#E6D7CA] bg-[#FFFDFB]"}`}>
+                  <label htmlFor="move-in-date" className={`block text-xs font-bold uppercase tracking-wide mb-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
                     Move-in Date
                   </label>
                   <div className="flex items-center gap-2">
-                    <Calendar className={`w-4 h-4 ${darkMode ? "text-[#C6B9AE]" : "text-slate-400"}`} />
+                    <Calendar className={`w-4 h-4 ${darkMode ? "text-[#C6B9AE]" : "text-[#A8907F]"}`} />
                     <input
                       id="move-in-date"
                       type="date"
-                      className={`flex-1 text-sm outline-none bg-transparent ${darkMode ? "text-white" : "text-slate-700"}`}
+                      className={`flex-1 text-sm outline-none bg-transparent ${darkMode ? "text-white" : "text-[#3B2A24]"}`}
                       defaultValue="2025-08-01"
                     />
                   </div>
@@ -412,41 +414,41 @@ export default function PGDetails({ navigate }: Props) {
 
               <button
                 onClick={() => setShowBooking(true)}
-                className="w-full luxury-btn-primary font-bold py-3.5 flex-shrink-0 mb-3"
+                className="w-full lux-btn lux-btn-primary font-bold py-3.5 flex-shrink-0 mb-3"
               >
                 Book Visit
               </button>
-              <button className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-2xl transition-colors text-sm">
+              <button className="w-full lux-btn lux-btn-secondary text-sm font-semibold py-3">
                 Schedule Call
               </button>
 
               {/* Owner info */}
-              <div className="mt-5 pt-5 border-t border-slate-100">
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-3">
+              <div className="mt-5 pt-5 border-t border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mb-3">
                   Managed by
                 </p>
                 <div className="flex items-center gap-3">
                   <Avatar name="Rajesh Kumar" initials="RK" size="lg" />
                   <div>
-                    <p className="font-semibold text-slate-900 text-sm">
+                    <p className="font-semibold text-slate-900 dark:text-white text-sm">
                       Rajesh Kumar
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-[#C6B9AE]">
                       PG Owner · 4 properties
                     </p>
                   </div>
                   <a
                     href="tel:+919876543210"
-                    className="ml-auto w-8 h-8 bg-[#F8EEE5] rounded-xl flex items-center justify-center hover:bg-[#EDE0D4] transition-colors"
+                    className="ml-auto w-9 h-9 bg-[#F8EEE5] dark:bg-[#332D2B] rounded-xl flex items-center justify-center hover:bg-[#EDE0D4] dark:hover:bg-[#3D3632] transition-colors"
                   >
-                    <Phone className="w-3.5 h-3.5 text-[#C58B63]" />
+                    <Phone className="w-4 h-4 text-[#C58B63] dark:text-[#C89A4B]" />
                   </a>
                 </div>
               </div>
 
-              <div className="mt-4 bg-slate-50 rounded-xl p-3 text-xs text-slate-500">
-                <p className="flex items-center gap-1.5 font-medium text-slate-700 mb-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+              <div className="mt-4 bg-[#F8EEE5]/60 dark:bg-[#332D2B]/60 rounded-xl p-3.5 text-xs text-slate-500 dark:text-[#C6B9AE] border border-[#E6D7CA]/60 dark:border-[#4A443F]/60">
+                <p className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
                   Free cancellation before move-in
                 </p>
                 <p>No booking fee. Pay rent directly to owner.</p>

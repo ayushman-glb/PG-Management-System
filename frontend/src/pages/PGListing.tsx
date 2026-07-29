@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   MapPin,
@@ -15,6 +15,7 @@ import {
 import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
+import { api } from "../services/api";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -152,9 +153,35 @@ export default function PGListing({ navigate }: Props) {
     Object.fromEntries(pgs.map((p) => [p.id, p.liked])),
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [pgList, setPgList] = useState(pgs);
   const { darkMode } = useTheme();
 
-  const filtered = pgs.filter((pg) => {
+  useEffect(() => {
+    api.getPublicProperties({ city: search || undefined, maxRent: maxPrice }).then(res => {
+      if (res && res.properties && Array.isArray(res.properties) && res.properties.length > 0) {
+        const mappedBackendPgs = res.properties.map((p: any, idx: number) => ({
+          id: p.id || idx + 100,
+          name: p.name,
+          location: p.address,
+          city: p.city,
+          price: p.minRent || 8500,
+          rating: 4.8,
+          reviews: 15,
+          type: "Mixed",
+          amenities: p.amenities && p.amenities.length > 0 ? p.amenities : ["WiFi", "Meals", "Security"],
+          images: p.images && p.images.length > 0 ? p.images : ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&auto=format"],
+          available: p.availableBedsCount || p.totalBeds || 4,
+          badge: "Verified PG",
+          badgeColor: "bg-emerald-500",
+          liked: false
+        }));
+
+        setPgList([...mappedBackendPgs, ...pgs]);
+      }
+    }).catch(() => {});
+  }, [search, maxPrice]);
+
+  const filtered = pgList.filter((pg) => {
     const matchSearch =
       pg.name.toLowerCase().includes(search.toLowerCase()) ||
       pg.location.toLowerCase().includes(search.toLowerCase());
@@ -291,25 +318,25 @@ export default function PGListing({ navigate }: Props) {
           {filtered.map((pg) => (
             <div
               key={pg.id}
-              className={`rounded-2xl border overflow-hidden card-hover group ${
+              className={`bento-card bento-card-interactive border overflow-hidden group ${
                 darkMode
                   ? "bg-[#2B2725] border-[#4A443F]"
-                  : "bg-white border-slate-100"
+                  : "bg-[#FFFDFB] border-[#E6D7CA]"
               }`}
             >
               {/* Image */}
-              <div className="relative h-48 bg-slate-100 overflow-hidden">
+              <div className="relative h-48 bg-slate-100 dark:bg-slate-800 overflow-hidden rounded-t-2xl">
                 <img
                   src={pg.images[0]}
                   alt={pg.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
                 {/* Badge */}
                 {pg.badge && (
                   <div
-                    className={`absolute top-3 left-3 ${pg.badgeColor} text-white text-xs font-bold px-2.5 py-1 rounded-full`}
+                    className={`absolute top-3 left-3 ${pg.badgeColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-md`}
                   >
                     {pg.badge}
                   </div>
@@ -323,8 +350,8 @@ export default function PGListing({ navigate }: Props) {
                   }
                   aria-label={likes[pg.id] ? `Remove ${pg.name} from favorites` : `Add ${pg.name} to favorites`}
                   aria-pressed={likes[pg.id]}
-                  className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform ${
-                    darkMode ? "bg-[#1D1B1A]/80 backdrop-blur-sm" : "bg-white/90 backdrop-blur-sm"
+                  className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform ${
+                    darkMode ? "bg-[#1D1B1A]/80 backdrop-blur-md" : "bg-white/90 backdrop-blur-md"
                   }`}
                 >
                   <Heart
@@ -333,8 +360,8 @@ export default function PGListing({ navigate }: Props) {
                 </button>
 
                 {/* Type badge */}
-                <div className={`absolute bottom-3 left-3 backdrop-blur-sm text-xs font-bold px-2.5 py-1 rounded-full ${
-                  darkMode ? "bg-[#1D1B1A]/80 text-slate-200" : "bg-white/90 text-slate-700"
+                <div className={`absolute bottom-3 left-3 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full border border-white/20 ${
+                  darkMode ? "bg-[#1D1B1A]/80 text-slate-200" : "bg-white/90 text-slate-800"
                 }`}>
                   {pg.type}
                 </div>

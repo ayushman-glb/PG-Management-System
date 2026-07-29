@@ -54,9 +54,9 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
   const [collapsed, setCollapsed] = useState(false);
   const { darkMode } = useTheme();
 
-  const sidebarBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
+  const sidebarBg = darkMode ? "glass-panel border-r border-[#4A443F]" : "glass-panel border-r border-[#E6D7CA]";
   const mainBg = darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]";
-  const headerBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
+  const headerBg = darkMode ? "glass-nav border-b border-[#4A443F]" : "glass-nav border-b border-[#E6D7CA]";
 
   return (
     <div className={`flex h-screen overflow-hidden ${mainBg}`}>
@@ -69,7 +69,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 bg-black/40 z-20 lg:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden backdrop-blur-md"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -83,9 +83,8 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
           ${collapsed ? "w-16" : "w-64"}
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           ${sidebarBg}
-          border-r
         `}
-        style={{ boxShadow: darkMode ? "4px 0 24px rgba(0,0,0,0.25)" : "4px 0 24px rgba(93,55,28,0.08)" }}
+        style={{ boxShadow: darkMode ? "4px 0 30px rgba(0,0,0,0.35)" : "4px 0 30px rgba(93,55,28,0.06)" }}
       >
         {/* Logo */}
         <div

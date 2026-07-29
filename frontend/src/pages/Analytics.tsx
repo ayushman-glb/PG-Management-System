@@ -178,8 +178,8 @@ export default function Analytics({ navigate }: Props) {
               change: "+18%",
               up: true,
               icon: CreditCard,
-              color: "text-[#C58B63]",
-              bg: "bg-[#F8EEE5]",
+              color: "text-[#C58B63] dark:text-[#C89A4B]",
+              bg: "bg-[#D9A87C]/10 border-[#D9A87C]/20",
             },
             {
               label: "Avg Occupancy",
@@ -187,8 +187,8 @@ export default function Analytics({ navigate }: Props) {
               change: "+5.1%",
               up: true,
               icon: Users,
-              color: "text-emerald-600",
-              bg: "bg-emerald-50",
+              color: "text-emerald-600 dark:text-emerald-400",
+              bg: "bg-emerald-500/10 border-emerald-500/20",
             },
             {
               label: "Total Complaints",
@@ -196,8 +196,8 @@ export default function Analytics({ navigate }: Props) {
               change: "-12%",
               up: false,
               icon: AlertTriangle,
-              color: "text-amber-600",
-              bg: "bg-amber-50",
+              color: "text-amber-600 dark:text-amber-400",
+              bg: "bg-amber-500/10 border-amber-500/20",
             },
             {
               label: "Resident Growth",
@@ -205,24 +205,24 @@ export default function Analytics({ navigate }: Props) {
               change: "+34%",
               up: true,
               icon: TrendingUp,
-              color: "text-[#D9A87C]",
-              bg: "bg-[#F8EEE5]",
+              color: "text-[#D9A87C] dark:text-[#C89A4B]",
+              bg: "bg-[#D9A87C]/10 border-[#D9A87C]/20",
             },
           ].map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.label}
-                className={`rounded-2xl border p-5 card-hover ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+                className={`bento-card bento-card-interactive p-5 ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-slate-700" : s.bg}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${s.bg}`}
                   >
-                    <Icon className={`w-4 h-4 ${darkMode ? "text-slate-300" : s.color}`} />
+                    <Icon className={`w-4 h-4 ${s.color}`} />
                   </div>
                   <span
-                    className={`flex items-center gap-1 text-xs font-semibold ${s.up ? "text-green-500" : "text-red-500"}`}
+                    className={`flex items-center gap-1 text-xs font-bold ${s.up ? "text-emerald-500" : "text-rose-500"}`}
                   >
                     {s.up ? (
                       <TrendingUp className="w-3 h-3" />
@@ -238,7 +238,7 @@ export default function Analytics({ navigate }: Props) {
                   {s.value}
                 </p>
                 <p
-                  className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                  className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}
                 >
                   {s.label}
                 </p>

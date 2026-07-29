@@ -203,45 +203,45 @@ export default function Billing({ navigate }: Props) {
               label: "Collected This Month",
               value: `₹${(totalRevenue / 1000).toFixed(1)}K`,
               icon: CheckCircle,
-              color: "text-green-600",
-              bg: "bg-green-50 border-green-100",
+              color: "text-green-600 dark:text-green-400",
+              bg: "bg-green-500/10 border-green-500/20",
             },
             {
               label: "Pending Collection",
               value: `₹${(pending / 1000).toFixed(1)}K`,
               icon: Clock,
-              color: "text-orange-600",
-              bg: "bg-orange-50 border-orange-100",
+              color: "text-amber-600 dark:text-amber-400",
+              bg: "bg-amber-500/10 border-amber-500/20",
             },
             {
               label: "Late Fees Collected",
               value: `₹${lateFees.toLocaleString()}`,
               icon: AlertCircle,
-              color: "text-red-600",
-              bg: "bg-red-50 border-red-100",
+              color: "text-rose-600 dark:text-rose-400",
+              bg: "bg-rose-500/10 border-rose-500/20",
             },
             {
               label: "Total Invoices",
               value: invoices.length.toString(),
               icon: CreditCard,
-              color: "text-[#C58B63]",
-              bg: "bg-[#F8EEE5] border-[#E6D7CA]",
+              color: "text-[#C58B63] dark:text-[#C89A4B]",
+              bg: "bg-[#D9A87C]/10 border-[#D9A87C]/20",
             },
           ].map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.label}
-                className={`rounded-2xl border p-4 md:p-5 card-hover ${darkMode ? "bg-slate-800 border-slate-700" : `bg-white ${s.bg}`}`}
+                className={`glass-panel glass-card-hover rounded-2xl p-4 md:p-5 border ${s.bg}`}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-slate-700" : s.bg.split(" ")[0]}`}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/40 dark:bg-black/20 backdrop-blur-md"
                   >
-                    <Icon className={`w-4 h-4 ${darkMode ? "text-slate-300" : s.color}`} />
+                    <Icon className={`w-4 h-4 ${s.color}`} />
                   </div>
                   <TrendingUp
-                    className={`w-4 h-4 ml-auto ${darkMode ? "text-slate-600" : "text-slate-300"}`}
+                    className={`w-4 h-4 ml-auto ${darkMode ? "text-slate-500" : "text-slate-400"}`}
                   />
                 </div>
                 <p
@@ -250,7 +250,7 @@ export default function Billing({ navigate }: Props) {
                   {s.value}
                 </p>
                 <p
-                  className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                  className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}
                 >
                   {s.label}
                 </p>
@@ -259,9 +259,9 @@ export default function Billing({ navigate }: Props) {
           })}
         </div>
 
-        {/* Tabs */}
+        {/* Tabs & Table */}
         <div
-          className={`rounded-2xl border overflow-hidden ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+          className="glass-panel rounded-2xl overflow-hidden border border-[#E6D7CA]/80 dark:border-[#4A443F]/80 shadow-xl"
         >
           <div
             className={`flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}

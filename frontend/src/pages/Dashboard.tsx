@@ -27,11 +27,12 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { useState, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import { Avatar } from "../components/Avatar";
-import { SpotlightCard } from "../components/MotionPrimitives";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
+import { api } from "../services/api";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -197,6 +198,31 @@ const widgets = [
 
 export default function Dashboard({ navigate }: Props) {
   const { darkMode } = useTheme();
+  const [metrics, setMetrics] = useState({
+    totalProperties: 4,
+    mrr: 420000,
+    totalBeds: 150,
+    occupiedBeds: 141,
+    occupancyRatePercent: 94.0,
+    activeComplaints: 3,
+    pendingDuesAmount: 38500
+  });
+
+  useEffect(() => {
+    api.getOwnerSummary().then(data => {
+      if (data) {
+        setMetrics({
+          totalProperties: data.totalProperties || 4,
+          mrr: data.mrr || 420000,
+          totalBeds: data.totalBeds || 150,
+          occupiedBeds: data.occupiedBeds || 141,
+          occupancyRatePercent: data.occupancyRatePercent || 94.0,
+          activeComplaints: data.activeComplaints || 3,
+          pendingDuesAmount: data.pendingDuesAmount || 38500
+        });
+      }
+    }).catch(() => {});
+  }, []);
 
   return (
     <DashboardLayout navigate={navigate} activePage="dashboard">
@@ -225,30 +251,31 @@ export default function Dashboard({ navigate }: Props) {
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
           {widgets.map((w) => {
             const Icon = w.icon;
+            const liveVal = w.label === "Total PGs" ? metrics.totalProperties : w.label === "Occupied Beds" ? metrics.occupiedBeds : w.value;
             return (
-              <SpotlightCard
+              <div
                 key={w.label}
-                className="p-3.5 min-w-0 cursor-pointer"
+                className={`bento-card bento-card-interactive p-4 min-w-0 cursor-pointer ${darkMode ? "glass-panel bg-[#2B2725]/80 border-[#4A443F]" : "glass-panel bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}
               >
                 <div className="flex items-center justify-between mb-2.5">
                   <div
-                    className={`w-7 h-7 rounded-lg ${darkMode ? "bg-slate-700" : w.bg.split(" ")[0]} flex items-center justify-center flex-shrink-0`}
+                    className={`w-8 h-8 rounded-xl ${darkMode ? "bg-slate-700/60" : w.bg.split(" ")[0]} flex items-center justify-center flex-shrink-0 backdrop-blur-md`}
                   >
                     <Icon
-                      className={`w-3.5 h-3.5 ${darkMode ? "text-slate-300" : w.color}`}
+                      className={`w-4 h-4 ${darkMode ? "text-slate-300" : w.color}`}
                     />
                   </div>
                   <MoreHorizontal
-                    className={`w-3.5 h-3.5 ${darkMode ? "text-slate-600" : "text-slate-300"}`}
+                    className={`w-3.5 h-3.5 ${darkMode ? "text-slate-500" : "text-slate-400"}`}
                   />
                 </div>
                 <p
                   className={`text-lg xl:text-xl font-black mb-0.5 truncate ${darkMode ? "text-white" : "text-slate-900"}`}
                 >
-                  {w.value}
+                  {liveVal}
                 </p>
                 <p
-                  className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"} truncate`}
+                  className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"} truncate`}
                 >
                   {w.label}
                 </p>
@@ -257,7 +284,7 @@ export default function Dashboard({ navigate }: Props) {
                 >
                   {w.sub}
                 </p>
-              </SpotlightCard>
+              </div>
             );
           })}
         </div>

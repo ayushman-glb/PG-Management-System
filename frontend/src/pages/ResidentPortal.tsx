@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Home,
   User,
@@ -21,6 +21,7 @@ import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
 import { Avatar } from "../components/Avatar";
+import { api } from "../services/api";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -49,6 +50,34 @@ export default function ResidentPortal({ navigate }: Props) {
   const [showDocModal, setShowDocModal] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState<any>(null);
   const [skipMeal, setSkipMeal] = useState(false);
+
+  useEffect(() => {
+    api.getPortalMe().then(data => {
+      if (data) {
+        if (data.complaints && Array.isArray(data.complaints)) {
+          setComplaints(data.complaints.map((c: any) => ({
+            id: c.ticketCode || c.id,
+            title: c.title,
+            category: c.category,
+            date: new Date(c.createdAt).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }),
+            status: c.status === "OPEN" ? "Open" : c.status === "IN_PROGRESS" ? "In Progress" : "Resolved",
+            desc: c.description
+          })));
+        }
+        if (data.visitorPasses && Array.isArray(data.visitorPasses)) {
+          setVisitors(data.visitorPasses.map((v: any) => ({
+            id: v.passCode || v.id,
+            name: v.visitorName,
+            mobile: v.visitorMobile,
+            relation: v.relation,
+            date: new Date(v.visitDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }),
+            time: v.timeSlot,
+            status: v.status
+          })));
+        }
+      }
+    }).catch(() => {});
+  }, []);
 
   // State Data
   const [complaints, setComplaints] = useState([
@@ -253,10 +282,10 @@ export default function ResidentPortal({ navigate }: Props) {
           {activeTab === "overview" && (
             <div className="space-y-6 animate-fade-in">
               {/* Rent Due Banner */}
-              <div className={`p-6 rounded-2xl border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${darkMode ? "bg-gradient-to-r from-[#332D2B] to-[#2B2725] border-[#4A433F]" : "bg-gradient-to-r from-[#FFFDFB] to-[#F8EEE5] border-[#E6D7CA]"}`}>
+              <div className={`bento-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${darkMode ? "bg-gradient-to-r from-[#332D2B] to-[#2B2725] border-[#4A443F]" : "bg-gradient-to-r from-[#FFFDFB] to-[#F8EEE5] border-[#E6D7CA]"}`}>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                       Rent Due Soon
                     </span>
                     <span className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>August 2025</span>
@@ -266,7 +295,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 </div>
                 <button
                   onClick={() => setShowPayModal(true)}
-                  className="luxury-btn-primary px-6 py-3 text-sm font-bold flex-shrink-0"
+                  className="lux-btn lux-btn-primary px-6 py-3 text-sm font-bold flex-shrink-0"
                 >
                   Pay Rent Now
                 </button>
@@ -287,7 +316,7 @@ export default function ResidentPortal({ navigate }: Props) {
                       <button
                         key={act.label}
                         onClick={act.action}
-                        className={`luxury-card p-4 flex flex-col items-center justify-center text-center gap-2 hover:scale-[1.03] transition-all cursor-pointer ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}
+                        className={`bento-card bento-card-interactive p-4 flex flex-col items-center justify-center text-center gap-2 cursor-pointer ${darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
