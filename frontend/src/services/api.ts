@@ -34,10 +34,11 @@ class ApiClient {
     } catch (e) {}
   }
 
-  private async request<T = any>(
+  public async request<T = any>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
+
     const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -246,6 +247,101 @@ class ApiClient {
     });
     return res.data;
   }
+
+  // --- Resident & Bed Management APIs ---
+  async updateResidentStatus(residentId: string, status: string, reason?: string) {
+    const res = await this.request("/resident-management/status", {
+      method: "POST",
+      body: JSON.stringify({ residentId, status, reason }),
+    });
+    return res.data;
+  }
+
+  async getResidentStatusHistory(residentId: string) {
+    const res = await this.request(`/resident-management/status/history/${residentId}`);
+    return res.data;
+  }
+
+  async updateBedStatus(bedId: string, status: string, notes?: string) {
+    const res = await this.request("/resident-management/beds/status", {
+      method: "POST",
+      body: JSON.stringify({ bedId, status, notes }),
+    });
+    return res.data;
+  }
+
+  async createBedHold(bedId: string, reason: string, holdStartDate?: string, holdEndDate?: string, notes?: string) {
+    const res = await this.request("/resident-management/beds/hold", {
+      method: "POST",
+      body: JSON.stringify({ bedId, reason, holdStartDate, holdEndDate, notes }),
+    });
+    return res.data;
+  }
+
+  async releaseBedHold(holdId: string) {
+    const res = await this.request(`/resident-management/beds/hold/${holdId}`, {
+      method: "DELETE",
+    });
+    return res.data;
+  }
+
+  async getBedHolds(pgId?: string) {
+    const query = pgId ? `?pgId=${pgId}` : "";
+    const res = await this.request(`/resident-management/beds/holds${query}`);
+    return res.data;
+  }
+
+  async createRoomTransferRequest(data: {
+    residentId: string;
+    pgId: string;
+    currentBedId: string;
+    preferredSharingType?: string;
+    preferredRoomNumber?: string;
+    reason: string;
+    budget?: number;
+    preferredMoveDate?: string;
+    additionalNotes?: string;
+    priority?: string;
+  }) {
+    const res = await this.request("/resident-management/transfers/request", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return res.data;
+  }
+
+  async getRoomTransferRequests(params?: { pgId?: string; residentId?: string }) {
+    const query = new URLSearchParams();
+    if (params?.pgId) query.append("pgId", params.pgId);
+    if (params?.residentId) query.append("residentId", params.residentId);
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    const res = await this.request(`/resident-management/transfers${queryString}`);
+    return res.data;
+  }
+
+  async approveRoomTransfer(requestId: string, targetBedId?: string, scheduledDate?: string, notes?: string) {
+    const res = await this.request(`/resident-management/transfers/${requestId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ targetBedId, scheduledDate, notes }),
+    });
+    return res.data;
+  }
+
+  async rejectRoomTransfer(requestId: string, rejectionReason: string) {
+    const res = await this.request(`/resident-management/transfers/${requestId}/reject`, {
+      method: "POST",
+      body: JSON.stringify({ rejectionReason }),
+    });
+    return res.data;
+  }
+
+  async completeRoomTransfer(requestId: string) {
+    const res = await this.request(`/resident-management/transfers/${requestId}/complete`, {
+      method: "POST",
+    });
+    return res.data;
+  }
 }
 
 export const api = new ApiClient();
+

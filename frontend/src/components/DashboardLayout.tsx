@@ -22,6 +22,10 @@ import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
 import { BackButton } from "../navigation";
 import { Avatar } from "./Avatar";
+import { AuditLogDrawer } from "./AuditLogDrawer";
+import { NotificationCenterDrawer } from "./NotificationCenterDrawer";
+import { ShieldCheck } from "lucide-react";
+
 
 interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -52,7 +56,11 @@ interface Props {
 export default function DashboardLayout({ children, navigate, activePage }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(2);
   const { darkMode } = useTheme();
+
 
   const sidebarBg = darkMode ? "glass-panel border-r border-[#4A443F]" : "glass-panel border-r border-[#E6D7CA]";
   const mainBg = darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]";
@@ -276,19 +284,35 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             <ThemeToggle />
             <button
               type="button"
+              className={`p-2 rounded-xl transition-colors ${
+                darkMode
+                  ? "text-[#756A63] bg-[#332D2B] hover:bg-[#3D3632] hover:text-[#C89A4B]"
+                  : "text-[#A8907F] bg-[#F8EEE5] hover:bg-[#EDE0D4] hover:text-[#C58B63]"
+              }`}
+              aria-label="Audit Logs"
+              title="System Audit Logs"
+              onClick={() => setIsAuditDrawerOpen(true)}
+            >
+              <ShieldCheck className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
               className={`relative p-2 rounded-xl transition-colors ${
                 darkMode
                   ? "text-[#756A63] bg-[#332D2B] hover:bg-[#3D3632] hover:text-[#C89A4B]"
                   : "text-[#A8907F] bg-[#F8EEE5] hover:bg-[#EDE0D4] hover:text-[#C58B63]"
               }`}
               aria-label="Notifications"
-              onClick={() => navigate("notifications")}
+              onClick={() => setIsNotificationDrawerOpen(true)}
             >
               <Bell className="w-4 h-4" />
-              <span
-                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                style={{ background: "#D96B5D", boxShadow: "0 0 0 1.5px #FFFDFB" }}
-              />
+              {unreadNotifCount > 0 && (
+                <span
+                  className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                  style={{ background: "#D96B5D", boxShadow: "0 0 0 1.5px #FFFDFB" }}
+                />
+              )}
             </button>
             <Avatar name="Rajesh Kumar" initials="RK" size="sm" />
           </div>
@@ -301,6 +325,15 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
           {children}
         </main>
       </div>
+
+      {/* Drawers */}
+      <AuditLogDrawer isOpen={isAuditDrawerOpen} onClose={() => setIsAuditDrawerOpen(false)} />
+      <NotificationCenterDrawer
+        isOpen={isNotificationDrawerOpen}
+        onClose={() => setIsNotificationDrawerOpen(false)}
+        onUnreadCountChange={(cnt) => setUnreadNotifCount(cnt)}
+      />
     </div>
   );
 }
+

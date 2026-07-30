@@ -17,6 +17,8 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Avatar, AvatarThemeSelector } from "../components/Avatar";
 import type { Page } from "../App";
 import { useTheme } from "../theme";
+import { api } from "../services/api";
+
 
 interface Props {
   navigate: (p: Page) => void;
@@ -336,6 +338,56 @@ export default function Residents({ navigate }: Props) {
                     KYC: {selected.kyc}
                   </span>
                 </div>
+
+                {/* Owner Resident Status Controls */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                  <span className="text-[11px] font-bold text-white/60 uppercase mr-1">Owner Action:</span>
+                  <button
+                    onClick={() => {
+                      setSelected(prev => ({ ...prev, status: "Active" }));
+                      api.updateResidentStatus(String(selected.id), "ACTIVE", "Owner manual status change");
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/30 text-emerald-200 text-xs font-semibold hover:bg-emerald-500/50 transition-colors"
+                  >
+                    Active 🟢
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelected(prev => ({ ...prev, status: "Home" }));
+                      api.updateResidentStatus(String(selected.id), "HOME", "Owner manual status change");
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-blue-500/30 text-blue-200 text-xs font-semibold hover:bg-blue-500/50 transition-colors"
+                  >
+                    Home 🏠
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelected(prev => ({ ...prev, status: "Leave" }));
+                      api.updateResidentStatus(String(selected.id), "ON_LEAVE", "Owner manual status change");
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-yellow-500/30 text-yellow-200 text-xs font-semibold hover:bg-yellow-500/50 transition-colors"
+                  >
+                    Leave 🟡
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelected(prev => ({ ...prev, status: "Hold" }));
+                      api.updateResidentStatus(String(selected.id), "HOLD", "Owner manual status change");
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/30 text-amber-200 text-xs font-semibold hover:bg-amber-500/50 transition-colors"
+                  >
+                    Hold 🟠
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelected(prev => ({ ...prev, status: "Checked Out" }));
+                      api.updateResidentStatus(String(selected.id), "CHECKED_OUT", "Owner manual status change");
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-purple-500/30 text-purple-200 text-xs font-semibold hover:bg-purple-500/50 transition-colors"
+                  >
+                    Check Out ⚪
+                  </button>
+                </div>
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="text-white/60 text-xs">Monthly Rent</p>
@@ -345,6 +397,7 @@ export default function Residents({ navigate }: Props) {
               </div>
             </div>
           </div>
+
 
           {/* Contact info */}
           <div

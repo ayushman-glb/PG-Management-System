@@ -34,10 +34,89 @@
   --radius: 20px;
 }
 
+:root {
+  --bg-primary: #FFF8F2;
+  --bg-surface: #F8EEE5;
+  --bg-card: #FFFDFB;
+  --bg-nested: #F4E7DA;
+  --text-main: #3B2A24;
+  --text-muted: #6E5A52;
+  --border-main: #E6D7CA;
+  --border-subtle: #F0E2D5;
+  --accent-gold: #D9A87C;
+  --accent-bronze: #C58B63;
+  --shadow-main: 0 4px 20px rgba(93, 55, 28, 0.08);
+  --shadow-hover: 0 10px 30px rgba(93, 55, 28, 0.14);
+}
+
+html.dark-theme {
+  --bg-primary: #1D1B1A;
+  --bg-surface: #2B2725;
+  --bg-card: #332D2B;
+  --bg-nested: #3D3632;
+  --text-main: #F7F3EE;
+  --text-muted: #C6B9AE;
+  --border-main: #4A443F;
+  --border-subtle: #3A3430;
+  --accent-gold: #C89A4B;
+  --accent-bronze: #D8B36A;
+  --shadow-main: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 10px 30px rgba(200, 154, 75, 0.2);
+}
+
+/* Hardcoded dark element overrides when in light mode */
+html:not(.dark-theme) .bg-neutral-900 {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--border-main) !important;
+  color: var(--text-main) !important;
+}
+
+html:not(.dark-theme) .bg-neutral-900\/60,
+html:not(.dark-theme) .bg-neutral-900\/40,
+html:not(.dark-theme) .bg-neutral-900\/80 {
+  background-color: rgba(248, 238, 229, 0.85) !important;
+  border-color: var(--border-main) !important;
+}
+
+html:not(.dark-theme) .bg-neutral-800,
+html:not(.dark-theme) .bg-neutral-800\/60,
+html:not(.dark-theme) .bg-neutral-800\/80,
+html:not(.dark-theme) .bg-neutral-800\/40,
+html:not(.dark-theme) .bg-neutral-800\/90 {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-main) !important;
+  color: var(--text-main) !important;
+}
+
+html:not(.dark-theme) .bg-\[\#1D1B1A\],
+html:not(.dark-theme) .bg-\[\#2B2725\],
+html:not(.dark-theme) .bg-\[\#332D2B\] {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-main) !important;
+}
+
+html:not(.dark-theme) .border-white\/10,
+html:not(.dark-theme) .border-white\/5,
+html:not(.dark-theme) .border-white\/20 {
+  border-color: var(--border-main) !important;
+}
+
+html:not(.dark-theme) .text-neutral-400,
+html:not(.dark-theme) .text-neutral-300,
+html:not(.dark-theme) .text-neutral-500 {
+  color: var(--text-muted) !important;
+}
+
+html:not(.dark-theme) .text-white {
+  color: var(--text-main) !important;
+}
+
 /* ─── Global Reset ───────────────────────────────── */
 * {
   box-sizing: border-box;
 }
+
 
 html {
   font-family: "Poppins", sans-serif;

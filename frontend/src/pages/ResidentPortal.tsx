@@ -23,6 +23,8 @@ import { BackButton } from "../navigation";
 import { api } from "../services/api";
 import { AgreementViewerModal } from "../components/AgreementViewerModal";
 import { DocumentUploadPortal } from "../components/DocumentUploadPortal";
+import { RoomTransferModal } from "../components/RoomTransferModal";
+
 
 interface Props {
   navigate: (p: Page) => void;
@@ -45,9 +47,21 @@ export default function ResidentPortal({ navigate }: Props) {
   const { darkMode } = useTheme();
 
   const [selectedAgreement, setSelectedAgreement] = useState<any>(null);
+  const [residentStatus, setResidentStatus] = useState("ACTIVE");
+  const [isRoomTransferModalOpen, setIsRoomTransferModalOpen] = useState(false);
+
+  const handleStatusChange = async (newStatus: string) => {
+    setResidentStatus(newStatus);
+    try {
+      await api.updateResidentStatus("res-1", newStatus, "Self-service status update from resident portal");
+    } catch (e) {
+      console.warn("Status update API call:", e);
+    }
+  };
 
   // Form states
   const [newComplaint, setNewComplaint] = useState({ title: "", category: "Plumbing", priority: "MEDIUM", description: "" });
+
   const [newVisitor, setNewVisitor] = useState({ visitorName: "", visitorMobile: "", relation: "Friend", visitDate: new Date().toISOString().split("T")[0], timeSlot: "16:00 - 18:00" });
   const [newGatepass, setNewGatepass] = useState({ passType: "DAY_OUTING", destination: "", departureTime: "", returnTime: "", reason: "" });
   const [skippedMeals, setSkippedMeals] = useState<Record<string, boolean>>({});
@@ -305,6 +319,46 @@ export default function ResidentPortal({ navigate }: Props) {
                     className={`px-4 py-2.5 rounded-xl text-xs font-bold border ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
                   >
                     Review Agreement
+                  </button>
+                </div>
+              </div>
+
+              {/* RESIDENT STATUS TOGGLE & ROOM CHANGE ACTION BANNER */}
+              <div className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-4 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">MY STATUS:</span>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      {residentStatus === 'ACTIVE' ? '🟢 Active In Room' : residentStatus === 'HOME' ? '🏠 At Home' : residentStatus === 'ON_LEAVE' ? '🟡 On Leave' : residentStatus}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-neutral-400 font-medium">Quick Status Toggle:</span>
+                  <button
+                    onClick={() => handleStatusChange('ACTIVE')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${residentStatus === 'ACTIVE' ? 'bg-emerald-500 text-black shadow-md' : 'bg-neutral-800 text-neutral-300 hover:text-white'}`}
+                  >
+                    Active 🟢
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange('HOME')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${residentStatus === 'HOME' ? 'bg-blue-500 text-white shadow-md' : 'bg-neutral-800 text-neutral-300 hover:text-white'}`}
+                  >
+                    Home 🏠
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange('ON_LEAVE')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${residentStatus === 'ON_LEAVE' ? 'bg-yellow-500 text-black shadow-md' : 'bg-neutral-800 text-neutral-300 hover:text-white'}`}
+                  >
+                    On Leave 🟡
+                  </button>
+                  <button
+                    onClick={() => setIsRoomTransferModalOpen(true)}
+                    className="ml-2 px-4 py-1.5 rounded-xl bg-amber-500 text-black font-bold text-xs hover:bg-amber-400 transition-all flex items-center gap-1.5 shadow-md"
+                  >
+                    Request Room Change 🛏️
                   </button>
                 </div>
               </div>
@@ -787,6 +841,23 @@ export default function ResidentPortal({ navigate }: Props) {
           onSignComplete={(updated) => setSelectedAgreement(updated)}
         />
       )}
+
+      {/* ROOM CHANGE REQUEST MODAL */}
+      <RoomTransferModal
+        isOpen={isRoomTransferModalOpen}
+        onClose={() => setIsRoomTransferModalOpen(false)}
+        mode="resident-request"
+        residentData={{
+          id: "res-1",
+          name: "Rahul Sharma",
+          pgId: "pg-1",
+          currentBedId: "bed-1",
+          roomNumber: "101",
+          bedNumber: "101-A"
+        }}
+        onSuccess={() => setIsRoomTransferModalOpen(false)}
+      />
     </div>
   );
 }
+

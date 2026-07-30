@@ -1,16 +1,50 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Building, AlertCircle, Clock, LogOut, Phone
+  Users, Bed, RefreshCcw, ArrowRight
 } from 'lucide-react';
 
-export type KanbanBoardType = 'residents' | 'pgs' | 'complaints' | 'holds' | 'leaving';
+import { api } from '../services/api';
+import { useSocketEvent } from '../services/socket';
+import { RoomTransferModal } from './RoomTransferModal';
+import { BedManagementModal } from './BedManagementModal';
+import { useTheme } from '../theme';
+
+
+export type KanbanBoardType = 'residents' | 'transfers' | 'beds' | 'pgs' | 'complaints';
 
 interface KanbanBoardsProps {
   onSelectResident?: (residentId: string) => void;
 }
 
-// 1. Resident Status Board Data
+const RESIDENT_COLUMNS = [
+  { id: 'ACTIVE', label: 'Active', color: 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10', dot: '🟢' },
+  { id: 'HOME', label: 'Home', color: 'border-blue-500/30 text-blue-400 bg-blue-500/10', dot: '🏠' },
+  { id: 'ON_LEAVE', label: 'Leave', color: 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10', dot: '🟡' },
+  { id: 'HOLD', label: 'Hold', color: 'border-amber-500/30 text-amber-400 bg-amber-500/10', dot: '🟠' },
+  { id: 'LEAVING', label: 'Leaving Soon', color: 'border-rose-500/30 text-rose-400 bg-rose-500/10', dot: '🔴' },
+  { id: 'INACTIVE', label: 'Inactive', color: 'border-neutral-500/30 text-neutral-400 bg-neutral-500/10', dot: '⚫' },
+  { id: 'CHECKED_OUT', label: 'Checked Out', color: 'border-purple-500/30 text-purple-400 bg-purple-500/10', dot: '⚪' }
+];
+
+const TRANSFER_COLUMNS = [
+  { id: 'PENDING', label: 'Pending', color: 'border-yellow-500/30 text-yellow-400' },
+  { id: 'REVIEWING', label: 'Reviewing', color: 'border-blue-500/30 text-blue-400' },
+  { id: 'APPROVED', label: 'Approved', color: 'border-emerald-500/30 text-emerald-400' },
+  { id: 'REJECTED', label: 'Rejected', color: 'border-rose-500/30 text-rose-400' },
+  { id: 'SCHEDULED', label: 'Scheduled', color: 'border-purple-500/30 text-purple-400' },
+  { id: 'COMPLETED', label: 'Completed', color: 'border-emerald-600/30 text-emerald-500' }
+];
+
+const BED_COLUMNS = [
+  { id: 'AVAILABLE', label: 'Available', color: 'border-emerald-500/30 text-emerald-400' },
+  { id: 'OCCUPIED', label: 'Occupied', color: 'border-blue-500/30 text-blue-400' },
+  { id: 'RESERVED', label: 'Reserved', color: 'border-purple-500/30 text-purple-400' },
+  { id: 'HOLD', label: 'Hold', color: 'border-amber-500/30 text-amber-400' },
+  { id: 'MAINTENANCE', label: 'Maintenance', color: 'border-rose-500/30 text-rose-400' },
+  { id: 'BLOCKED', label: 'Blocked', color: 'border-neutral-500/30 text-neutral-400' }
+];
+
 const INITIAL_RESIDENTS = [
   { id: 'res-1', name: 'Rahul Sharma', room: '101-A', rent: '₹8,500', phone: '+91 98765 43210', due: '5th Aug', photo: 'https://images.unsplash.com/photo-1534528741775?w=150', status: 'ACTIVE' },
   { id: 'res-2', name: 'Priya Patel', room: '102-B', rent: '₹9,000', phone: '+91 98765 43211', due: '5th Aug', photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', status: 'HOME' },
@@ -20,58 +54,106 @@ const INITIAL_RESIDENTS = [
   { id: 'res-6', name: 'Neha Gupta', room: '302-A', rent: '₹9,000', phone: '+91 98765 43215', due: '5th Aug', photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', status: 'CHECKED_OUT' }
 ];
 
-// 2. PG Status Board Data
-const INITIAL_PGS = [
-  { id: 'pg-1', name: 'RoomBae Indiranagar Luxe', location: 'Indiranagar, Bengaluru', capacity: '72 Beds', occupancy: '92%', status: 'Active' },
-  { id: 'pg-2', name: 'RoomBae Cyber City Executive', location: 'Cyber City, Gurugram', capacity: '96 Beds', occupancy: '88%', status: 'Active' },
-  { id: 'pg-3', name: 'RoomBae Hinjewadi Tech Residency', location: 'Hinjewadi, Pune', capacity: '64 Beds', occupancy: '75%', status: 'Maintenance' },
-  { id: 'pg-4', name: 'RoomBae Gachibowli Heights', location: 'Gachibowli, Hyderabad', capacity: '80 Beds', occupancy: '0%', status: 'Upcoming' }
+const INITIAL_TRANSFERS = [
+  { id: 'tr-1', residentName: 'Rahul Sharma', currentRoom: '101-A', preferredRoom: 'Single AC', reason: 'Need quiet room for exams', budget: '₹10,500', priority: 'HIGH', status: 'PENDING' },
+  { id: 'tr-2', residentName: 'Priya Patel', currentRoom: '102-B', preferredRoom: '2 Sharing', reason: 'Friends shifting to Room 204', budget: '₹9,000', priority: 'MEDIUM', status: 'REVIEWING' },
+  { id: 'tr-3', residentName: 'Vikram Singh', currentRoom: '201-A', preferredRoom: 'Deluxe Suite', reason: 'Upgrading workspace', budget: '₹14,000', priority: 'LOW', status: 'APPROVED' }
 ];
 
-// 3. Complaint Board Data
-const INITIAL_COMPLAINTS = [
-  { id: 'comp-1', ticket: 'TICK-101', title: 'WiFi Latency on 3rd Floor', priority: 'HIGH', resident: 'Rahul Sharma', status: 'Open' },
-  { id: 'comp-2', ticket: 'TICK-102', title: 'AC Cooling Remote Battery', priority: 'MEDIUM', resident: 'Priya Patel', status: 'Assigned' },
-  { id: 'comp-3', ticket: 'TICK-103', title: 'Bathroom Tap Dripping', priority: 'URGENT', resident: 'Vikram Singh', status: 'In Progress' },
-  { id: 'comp-4', ticket: 'TICK-104', title: 'Laundry Collection Delay', priority: 'LOW', resident: 'Neha Gupta', status: 'Resolved' }
-];
-
-// 4. Hold Applications Board Data
-const INITIAL_HOLDS = [
-  { id: 'hold-1', applicant: 'Aditya Verma', pg: 'Indiranagar Luxe', roomType: 'Single AC', advance: '₹5,000', status: 'Pending' },
-  { id: 'hold-2', applicant: 'Sneha Kapoor', pg: 'Cyber City', roomType: 'Double Sharing', advance: '₹5,000', status: 'Waiting Documents' },
-  { id: 'hold-3', applicant: 'Karan Malhotra', pg: 'Hinjewadi Tech', roomType: 'Triple Sharing', advance: '₹5,000', status: 'Approved' }
-];
-
-// 5. Leaving Residents Board Data
-const INITIAL_LEAVING = [
-  { id: 'leave-1', name: 'Siddharth Nair', room: '301-C', depositRefund: '₹15,000', noticeDate: '15th Jul', status: 'Notice Given' },
-  { id: 'leave-2', name: 'Rohan Mehta', room: '202-A', depositRefund: '₹14,500', noticeDate: '10th Jul', status: 'Packing' },
-  { id: 'leave-3', name: 'Kavita Krishnan', room: '105-B', depositRefund: '₹15,000', noticeDate: '1st Jul', status: 'Refund Pending' }
+const INITIAL_BEDS = [
+  { id: 'bed-1', bedNumber: '101-A', roomNumber: 'Room 101', status: 'OCCUPIED', residentName: 'Rahul Sharma' },
+  { id: 'bed-2', bedNumber: '101-B', roomNumber: 'Room 101', status: 'AVAILABLE', residentName: undefined },
+  { id: 'bed-3', bedNumber: '102-A', roomNumber: 'Room 102', status: 'RESERVED', residentName: 'Rohan Mehta' },
+  { id: 'bed-4', bedNumber: '102-B', roomNumber: 'Room 102', status: 'HOLD', residentName: undefined },
+  { id: 'bed-5', bedNumber: '201-A', roomNumber: 'Room 201', status: 'MAINTENANCE', residentName: undefined },
+  { id: 'bed-6', bedNumber: '204-B', roomNumber: 'Room 204', status: 'BLOCKED', residentName: undefined }
 ];
 
 export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) => {
+  const { darkMode } = useTheme();
   const [activeBoard, setActiveBoard] = useState<KanbanBoardType>('residents');
   const [residents, setResidents] = useState(INITIAL_RESIDENTS);
-  const [pgs] = useState(INITIAL_PGS);
-  const [complaints] = useState(INITIAL_COMPLAINTS);
-  const [holds] = useState(INITIAL_HOLDS);
-  const [leaving] = useState(INITIAL_LEAVING);
+  const [transfers, setTransfers] = useState(INITIAL_TRANSFERS);
+  const [beds, setBeds] = useState(INITIAL_BEDS);
 
-  const moveResidentStatus = (id: string, newStatus: string) => {
+  const columnBg = darkMode ? "bg-neutral-900/60 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]";
+  const cardBg = darkMode ? "bg-neutral-800/80 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] shadow-sm";
+  const cardTextPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
+  const cardTextMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
+  const tabBg = darkMode ? "bg-neutral-900/40 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]";
+  
+  // Modals state
+
+  const [selectedTransfer, setSelectedTransfer] = useState<any>(null);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [selectedBed, setSelectedBed] = useState<any>(null);
+  const [isBedModalOpen, setIsBedModalOpen] = useState(false);
+
+  // Listen to real-time Socket.IO events for live state updates
+  useSocketEvent('resident:status_updated', (data) => {
+    setResidents(prev => prev.map(r => r.id === data.residentId ? { ...r, status: data.status } : r));
+  });
+
+  useSocketEvent('bed:status_updated', (data) => {
+    setBeds(prev => prev.map(b => b.id === data.bedId ? { ...b, status: data.status } : b));
+  });
+
+  useSocketEvent('transfer:requested', (data) => {
+    setTransfers(prev => [data, ...prev]);
+  });
+
+  const moveResidentStatus = async (id: string, newStatus: string) => {
     setResidents(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    try {
+      await api.updateResidentStatus(id, newStatus, 'Status changed via Kanban Command Board');
+    } catch (e) {
+      console.warn('API sync warning:', e);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: string, type: 'resident' | 'bed') => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ id, type }));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDropResident = (e: React.DragEvent, targetStatus: string) => {
+    e.preventDefault();
+    const dataStr = e.dataTransfer.getData('text/plain');
+    if (!dataStr) return;
+    try {
+      const { id, type } = JSON.parse(dataStr);
+      if (type === 'resident') {
+        moveResidentStatus(id, targetStatus);
+      }
+    } catch (err) {}
+  };
+
+  const handleDropBed = (e: React.DragEvent, targetStatus: string) => {
+    e.preventDefault();
+    const dataStr = e.dataTransfer.getData('text/plain');
+    if (!dataStr) return;
+    try {
+      const { id, type } = JSON.parse(dataStr);
+      if (type === 'bed') {
+        setBeds(prev => prev.map(b => b.id === id ? { ...b, status: targetStatus } : b));
+        api.updateBedStatus(id, targetStatus);
+      }
+    } catch (err) {}
   };
 
   return (
     <div className="w-full space-y-6">
       {/* Board Selector Tabs */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-neutral-900/40 backdrop-blur-md border border-white/10 w-fit">
+      <div className={`flex flex-wrap items-center gap-2 p-1.5 rounded-2xl backdrop-blur-md border w-fit ${tabBg}`}>
         <button
           onClick={() => setActiveBoard('residents')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
             activeBoard === 'residents'
               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-lg shadow-amber-500/10'
-              : 'text-neutral-400 hover:text-white'
+              : `${cardTextMuted} hover:${cardTextPrimary}`
           }`}
         >
           <Users className="w-4 h-4" />
@@ -79,125 +161,112 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
         </button>
 
         <button
-          onClick={() => setActiveBoard('pgs')}
+          onClick={() => setActiveBoard('transfers')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            activeBoard === 'pgs'
+            activeBoard === 'transfers'
               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-lg shadow-amber-500/10'
-              : 'text-neutral-400 hover:text-white'
+              : `${cardTextMuted} hover:${cardTextPrimary}`
           }`}
         >
-          <Building className="w-4 h-4" />
-          Board 2: PG Status
+          <RefreshCcw className="w-4 h-4" />
+          Board 2: Room Transfers
         </button>
 
         <button
-          onClick={() => setActiveBoard('complaints')}
+          onClick={() => setActiveBoard('beds')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            activeBoard === 'complaints'
+            activeBoard === 'beds'
               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-lg shadow-amber-500/10'
-              : 'text-neutral-400 hover:text-white'
+              : `${cardTextMuted} hover:${cardTextPrimary}`
           }`}
         >
-          <AlertCircle className="w-4 h-4" />
-          Board 3: Complaints
-        </button>
-
-        <button
-          onClick={() => setActiveBoard('holds')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            activeBoard === 'holds'
-              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-lg shadow-amber-500/10'
-              : 'text-neutral-400 hover:text-white'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          Board 4: Holds
-        </button>
-
-        <button
-          onClick={() => setActiveBoard('leaving')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            activeBoard === 'leaving'
-              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-lg shadow-amber-500/10'
-              : 'text-neutral-400 hover:text-white'
-          }`}
-        >
-          <LogOut className="w-4 h-4" />
-          Board 5: Leaving
+          <Bed className="w-4 h-4" />
+          Board 3: Bed Availability
         </button>
       </div>
 
-      {/* Board 1: Resident Status */}
+      {/* Board Content */}
       {activeBoard === 'residents' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 overflow-x-auto pb-4">
-          {[
-            { label: '🟢 Active', code: 'ACTIVE', color: 'border-emerald-500/30 bg-emerald-500/5' },
-            { label: '🏠 Home', code: 'HOME', color: 'border-blue-500/30 bg-blue-500/5' },
-            { label: '🟡 Leave', code: 'ON_LEAVE', color: 'border-amber-500/30 bg-amber-500/5' },
-            { label: '🟠 Hold', code: 'HOLD', color: 'border-orange-500/30 bg-orange-500/5' },
-            { label: '🔴 Leaving Soon', code: 'LEAVING', color: 'border-rose-500/30 bg-rose-500/5' },
-            { label: '⚫ Inactive', code: 'INACTIVE', color: 'border-neutral-500/30 bg-neutral-500/5' },
-            { label: '⚪ Checked Out', code: 'CHECKED_OUT', color: 'border-purple-500/30 bg-purple-500/5' }
-          ].map(col => {
-            const items = residents.filter(r => r.status === col.code);
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+          {RESIDENT_COLUMNS.map(col => {
+            const items = residents.filter(r => r.status === col.id);
             return (
-              <div key={col.code} className={`p-3 rounded-2xl border ${col.color} flex flex-col gap-3 min-w-[220px]`}>
-                <div className="flex justify-between items-center px-1">
-                  <span className="text-xs font-semibold text-neutral-300">{col.label}</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/10 text-white">
+              <div
+                key={col.id}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDropResident(e, col.id)}
+                className={`w-72 flex-shrink-0 flex flex-col rounded-2xl border p-3 min-h-[450px] transition-colors ${columnBg}`}
+              >
+                <div className="flex items-center justify-between px-2 py-1 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span>{col.dot}</span>
+                    <h4 className={`font-semibold text-sm ${cardTextPrimary}`}>{col.label}</h4>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     {items.length}
                   </span>
                 </div>
 
-                <div className="space-y-3">
-                  {items.map(item => (
+                <div className="space-y-3 flex-1">
+                  {items.map(res => (
                     <motion.div
-                      key={item.id}
+                      key={res.id}
                       layout
-                      whileHover={{ y: -3, scale: 1.02 }}
-                      className="p-3.5 rounded-xl bg-neutral-900/80 border border-white/10 shadow-lg backdrop-blur-md space-y-3 cursor-pointer hover:border-amber-500/40 transition-all"
-                      onClick={() => onSelectResident?.(item.id)}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e as any, res.id, 'resident')}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-3.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing space-y-2 group ${cardBg}`}
+                      onClick={() => onSelectResident?.(res.id)}
                     >
+
                       <div className="flex items-center gap-3">
-                        <img src={item.photo} alt={item.name} className="w-10 h-10 rounded-full object-cover border border-amber-500/30" />
+                        <img src={res.photo} alt={res.name} className="w-10 h-10 rounded-full object-cover border border-amber-500/20" />
                         <div>
-                          <p className="text-sm font-semibold text-white leading-tight">{item.name}</p>
-                          <p className="text-xs text-amber-400 font-medium">Room {item.room}</p>
+                          <p className={`font-bold text-sm ${cardTextPrimary} group-hover:text-amber-400 transition-colors`}>{res.name}</p>
+                          <p className="text-xs text-amber-400 font-medium">Room {res.room}</p>
                         </div>
                       </div>
 
-                      <div className="text-xs text-neutral-400 space-y-1">
-                        <div className="flex justify-between">
-                          <span>Rent: <strong className="text-white">{item.rent}</strong></span>
-                          <span className="text-emerald-400 font-medium">Due: {item.due}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-neutral-400">
-                          <Phone className="w-3 h-3 text-amber-400" />
-                          <span>{item.phone}</span>
-                        </div>
+                      <div className={`flex items-center justify-between text-xs pt-1 border-t border-amber-500/10 ${cardTextMuted}`}>
+                        <span>Rent: <strong className={cardTextPrimary}>{res.rent}</strong></span>
+                        <span>Due: <strong className="text-emerald-500">{res.due}</strong></span>
                       </div>
 
-                      {/* Quick Move Action */}
-                      <div className="pt-2 border-t border-white/5 flex gap-1 justify-end">
-                        {col.code !== 'HOME' && (
+                      {/* Quick Status Action Controls */}
+                      <div className="flex flex-wrap items-center gap-1 pt-1">
+                        {col.id !== 'ACTIVE' && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); moveResidentStatus(item.id, 'HOME'); }}
-                            className="px-2 py-1 text-[10px] rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
-                          >
-                            Set Home 🏠
-                          </button>
-                        )}
-                        {col.code !== 'ACTIVE' && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); moveResidentStatus(item.id, 'ACTIVE'); }}
-                            className="px-2 py-1 text-[10px] rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                            onClick={(e) => { e.stopPropagation(); moveResidentStatus(res.id, 'ACTIVE'); }}
+                            className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-500 text-[10px] font-semibold hover:bg-emerald-500/40 cursor-pointer"
                           >
                             Set Active 🟢
                           </button>
                         )}
+                        {col.id !== 'HOME' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); moveResidentStatus(res.id, 'HOME'); }}
+                            className="px-2 py-1 rounded bg-blue-500/20 text-blue-500 text-[10px] font-semibold hover:bg-blue-500/40 cursor-pointer"
+                          >
+                            Set Home 🏠
+                          </button>
+                        )}
+                        {col.id !== 'ON_LEAVE' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); moveResidentStatus(res.id, 'ON_LEAVE'); }}
+                            className="px-2 py-1 rounded bg-amber-500/20 text-amber-500 text-[10px] font-semibold hover:bg-amber-500/40 cursor-pointer"
+                          >
+                            Set Leave 🟡
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   ))}
+                  {items.length === 0 && (
+                    <div className={`h-full flex items-center justify-center p-6 text-xs border border-dashed rounded-xl ${cardTextMuted} border-amber-500/20`}>
+                      No residents in {col.label}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -205,25 +274,48 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
         </div>
       )}
 
-      {/* Board 2: PG Status */}
-      {activeBoard === 'pgs' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {['Active', 'Maintenance', 'Upcoming', 'Archived'].map(colStatus => {
-            const items = pgs.filter(p => p.status === colStatus);
+      {/* Room Transfers Board */}
+      {activeBoard === 'transfers' && (
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+          {TRANSFER_COLUMNS.map(col => {
+            const items = transfers.filter(t => t.status === col.id);
             return (
-              <div key={colStatus} className="p-4 rounded-2xl border border-white/10 bg-neutral-900/40 space-y-3">
-                <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider">{colStatus} PGs ({items.length})</h4>
-                <div className="space-y-3">
-                  {items.map(pg => (
-                    <motion.div key={pg.id} whileHover={{ y: -2 }} className="p-4 rounded-xl bg-neutral-900 border border-white/10 space-y-2">
-                      <p className="text-sm font-semibold text-white">{pg.name}</p>
-                      <p className="text-xs text-neutral-400">{pg.location}</p>
-                      <div className="flex justify-between text-xs pt-2 border-t border-white/5 text-amber-300">
-                        <span>Capacity: {pg.capacity}</span>
-                        <span>Occupancy: {pg.occupancy}</span>
+              <div key={col.id} className={`w-72 flex-shrink-0 flex flex-col rounded-2xl border p-3 min-h-[450px] ${columnBg}`}>
+                <div className="flex items-center justify-between px-2 py-1 mb-3">
+                  <h4 className={`font-semibold text-sm ${cardTextPrimary}`}>{col.label}</h4>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {items.length}
+                  </span>
+                </div>
+
+                <div className="space-y-3 flex-1">
+                  {items.map(t => (
+                    <motion.div
+                      key={t.id}
+                      layout
+                      onClick={() => { setSelectedTransfer(t); setIsTransferModalOpen(true); }}
+                      className={`p-3.5 rounded-xl border cursor-pointer space-y-2 ${cardBg}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className={`font-bold text-sm ${cardTextPrimary}`}>{t.residentName || 'Rahul Sharma'}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          {t.priority}
+                        </span>
+                      </div>
+                      <p className={`text-xs ${cardTextMuted}`}>Current: <span className={`font-medium ${cardTextPrimary}`}>{t.currentRoom}</span></p>
+                      <p className="text-xs text-amber-400 font-medium">Requested: {t.preferredRoom || 'Single AC'}</p>
+                      <p className={`text-xs italic ${cardTextMuted}`}>"{t.reason}"</p>
+                      <div className={`flex justify-between items-center text-[11px] pt-1 border-t border-amber-500/10 ${cardTextMuted}`}>
+                        <span>Budget: {t.budget}</span>
+                        <span className="text-amber-400 flex items-center gap-1 font-semibold">Action <ArrowRight className="w-3 h-3" /></span>
                       </div>
                     </motion.div>
                   ))}
+                  {items.length === 0 && (
+                    <div className={`h-full flex items-center justify-center p-6 text-xs border border-dashed rounded-xl ${cardTextMuted} border-amber-500/20`}>
+                      No transfer requests
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -231,25 +323,57 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
         </div>
       )}
 
-      {/* Board 3: Complaints */}
-      {activeBoard === 'complaints' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {['Open', 'Assigned', 'In Progress', 'Resolved'].map(status => {
-            const items = complaints.filter(c => c.status === status);
+      {/* Bed Board */}
+      {activeBoard === 'beds' && (
+        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+          {BED_COLUMNS.map(col => {
+            const items = beds.filter(b => b.status === col.id);
             return (
-              <div key={status} className="p-4 rounded-2xl border border-white/10 bg-neutral-900/40 space-y-3">
-                <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider">{status} ({items.length})</h4>
-                <div className="space-y-3">
-                  {items.map(c => (
-                    <motion.div key={c.id} whileHover={{ y: -2 }} className="p-4 rounded-xl bg-neutral-900 border border-white/10 space-y-2">
+              <div
+                key={col.id}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDropBed(e, col.id)}
+                className={`w-72 flex-shrink-0 flex flex-col rounded-2xl border p-3 min-h-[450px] transition-colors ${columnBg}`}
+              >
+                <div className="flex items-center justify-between px-2 py-1 mb-3">
+                  <h4 className={`font-semibold text-sm ${cardTextPrimary}`}>{col.label}</h4>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {items.length}
+                  </span>
+                </div>
+
+                <div className="space-y-3 flex-1">
+                  {items.map(bed => (
+                    <motion.div
+                      key={bed.id}
+                      layout
+                      draggable
+                      onDragStart={(e) => handleDragStart(e as any, bed.id, 'bed')}
+                      onClick={() => { setSelectedBed(bed); setIsBedModalOpen(true); }}
+                      className={`p-3.5 rounded-xl border cursor-grab active:cursor-grabbing space-y-2 ${cardBg}`}
+                    >
+
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-amber-400">{c.ticket}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-semibold">{c.priority}</span>
+                        <span className="font-bold text-sm text-amber-400">Bed #{bed.bedNumber}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                          {bed.roomNumber}
+                        </span>
                       </div>
-                      <p className="text-sm font-medium text-white">{c.title}</p>
-                      <p className="text-xs text-neutral-400">Resident: {c.resident}</p>
+                      {bed.residentName ? (
+                        <p className={`text-xs ${cardTextMuted}`}>Resident: <strong className={cardTextPrimary}>{bed.residentName}</strong></p>
+                      ) : (
+                        <p className="text-xs text-emerald-500 italic">Unoccupied / Available</p>
+                      )}
+                      <div className="flex justify-end pt-1">
+                        <span className="text-xs text-amber-400 font-semibold hover:underline">Manage Bed &rarr;</span>
+                      </div>
                     </motion.div>
                   ))}
+                  {items.length === 0 && (
+                    <div className={`h-full flex items-center justify-center p-6 text-xs border border-dashed rounded-xl ${cardTextMuted} border-amber-500/20`}>
+                      No beds in {col.label}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -257,51 +381,26 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
         </div>
       )}
 
-      {/* Board 4: Holds */}
-      {activeBoard === 'holds' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {['Pending', 'Waiting Documents', 'Approved'].map(status => {
-            const items = holds.filter(h => h.status === status);
-            return (
-              <div key={status} className="p-4 rounded-2xl border border-white/10 bg-neutral-900/40 space-y-3">
-                <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider">{status} ({items.length})</h4>
-                <div className="space-y-3">
-                  {items.map(h => (
-                    <motion.div key={h.id} whileHover={{ y: -2 }} className="p-4 rounded-xl bg-neutral-900 border border-white/10 space-y-2">
-                      <p className="text-sm font-semibold text-white">{h.applicant}</p>
-                      <p className="text-xs text-neutral-400">{h.pg} • {h.roomType}</p>
-                      <p className="text-xs text-emerald-400 font-medium">Advance Paid: {h.advance}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* Board 5: Leaving */}
-      {activeBoard === 'leaving' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {['Notice Given', 'Packing', 'Refund Pending'].map(status => {
-            const items = leaving.filter(l => l.status === status);
-            return (
-              <div key={status} className="p-4 rounded-2xl border border-white/10 bg-neutral-900/40 space-y-3">
-                <h4 className="text-xs font-semibold text-rose-400 uppercase tracking-wider">{status} ({items.length})</h4>
-                <div className="space-y-3">
-                  {items.map(l => (
-                    <motion.div key={l.id} whileHover={{ y: -2 }} className="p-4 rounded-xl bg-neutral-900 border border-white/10 space-y-2">
-                      <p className="text-sm font-semibold text-white">{l.name}</p>
-                      <p className="text-xs text-neutral-400">Room: {l.room} • Notice: {l.noticeDate}</p>
-                      <p className="text-xs text-amber-400 font-medium">Refund Amount: {l.depositRefund}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Modals */}
+      <RoomTransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        mode="owner-action"
+        requestData={selectedTransfer}
+        onSuccess={() => {
+          setIsTransferModalOpen(false);
+        }}
+      />
+
+      <BedManagementModal
+        isOpen={isBedModalOpen}
+        onClose={() => setIsBedModalOpen(false)}
+        bedData={selectedBed}
+        onSuccess={() => {
+          setIsBedModalOpen(false);
+        }}
+      />
     </div>
   );
 };
