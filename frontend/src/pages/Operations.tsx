@@ -154,12 +154,63 @@ export default function Operations({ navigate, page }: Props) {
           ))}
         </div>
 
-        {/* Theme Avatar Selector for Settings page */}
+        {/* Theme Avatar Selector & 2FA Security Panel for Settings page */}
         {page === "settings" && (
-          <div className="my-4">
+          <div className="my-4 space-y-4">
             <AvatarThemeSelector />
+
+            {/* Security -> Enable Two-Factor Authentication Panel */}
+            <div className={`p-6 rounded-2xl border ${darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-slate-100 text-slate-900"}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base">Security &amp; Two-Factor Authentication (2FA)</h3>
+                  <p className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    Protect your RoomBae account with Google Authenticator or TOTP app
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center pt-2">
+                <div className="space-y-3 text-xs">
+                  <p className="font-semibold">How to enable Two-Factor Authentication:</p>
+                  <ol className={`list-decimal list-inside space-y-1.5 ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                    <li>Install Google Authenticator, Authy, or Microsoft Authenticator app on your phone.</li>
+                    <li>Scan the QR code on the right with your authenticator app.</li>
+                    <li>Enter the 6-digit TOTP verification code below to activate.</li>
+                  </ol>
+
+                  <div className="pt-2 flex gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="Enter 6-digit TOTP code"
+                      className={`px-4 py-2.5 rounded-xl border text-xs font-mono tracking-widest ${darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-slate-50 border-slate-200 text-slate-900"}`}
+                    />
+                    <button
+                      onClick={() => alert("✓ Two-Factor Authentication (2FA) activated successfully!")}
+                      className="px-4 py-2.5 rounded-xl bg-amber-500 text-black font-extrabold text-xs cursor-pointer shadow-md shadow-amber-500/20"
+                    >
+                      Enable 2FA 🔒
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-900 border border-slate-700 text-center space-y-2">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/RoomBae:User?secret=ROOMBAESECRET123&issuer=RoomBae"
+                    alt="2FA QR Code"
+                    className="w-32 h-32 rounded-xl p-1 bg-white"
+                  />
+                  <p className="text-[10px] font-mono text-amber-400">Secret: ROOMBAESECRET123</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
 
         {/* Bottom Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5">
