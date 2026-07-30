@@ -11,11 +11,9 @@ import {
   TrendingUp,
   Bell,
   Settings,
-  LogOut,
   Search,
   Menu,
   X,
-  ChevronRight,
   DoorOpen,
 } from "lucide-react";
 import type { Page } from "../App";
@@ -24,7 +22,12 @@ import { BackButton } from "../navigation";
 import { Avatar } from "./Avatar";
 import { AuditLogDrawer } from "./AuditLogDrawer";
 import { NotificationCenterDrawer } from "./NotificationCenterDrawer";
-import { ShieldCheck } from "lucide-react";
+import { OwnerOnboardingWizard } from "./OwnerOnboardingWizard";
+import { AdminVerificationQueue } from "./AdminVerificationQueue";
+import { GlobalSearchModal } from "./GlobalSearchModal";
+import { FineManagementModal } from "./FineManagementModal";
+import { AccountDeletionModal } from "./AccountDeletionModal";
+import { ShieldCheck, Plus, Sparkles, AlertCircle, Trash2 } from "lucide-react";
 
 
 interface SidebarItem {
@@ -55,9 +58,14 @@ interface Props {
 
 export default function DashboardLayout({ children, navigate, activePage }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed] = useState(false);
   const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);
   const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isAdminQueueOpen, setIsAdminQueueOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFineModalOpen, setIsFineModalOpen] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(2);
   const { darkMode } = useTheme();
 
@@ -98,55 +106,34 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
         <div
           className={`flex items-center gap-3 px-4 py-5 border-b ${darkMode ? "border-[#4A443F]" : "border-[#E6D7CA]"}`}
         >
-          <button
-            type="button"
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 cursor-pointer"
+            style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
             onClick={() => navigate("landing")}
-            aria-label="Go to home"
-            className="flex min-w-0 items-center gap-3"
           >
-            <div
-              className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)", boxShadow: "0 4px 12px rgba(197,139,99,0.4)" }}
-            >
-              <Building2 className="w-4.5 h-4.5 text-white" />
-            </div>
-            {!collapsed && (
-              <span
-                className={`font-bold text-base truncate tracking-wide ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}
-              >
+            RB
+          </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <span className={`font-black text-base tracking-tight block ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
                 RoomBae
               </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`ml-auto hidden lg:flex flex-shrink-0 p-1.5 rounded-lg transition-colors ${
-              darkMode
-                ? "text-[#756A63] hover:text-[#C89A4B] hover:bg-[#332D2B]"
-                : "text-[#A8907F] hover:text-[#C58B63] hover:bg-[#F8EEE5]"
-            }`}
-          >
-            <ChevronRight
-              className={`w-4 h-4 transition-transform ${collapsed ? "" : "rotate-180"}`}
-            />
-          </button>
+              <span className="text-[10px] font-mono text-amber-500 font-bold block">COMMERCIAL SAAS</span>
+            </div>
+          )}
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1" aria-label="Main navigation">
-          {sidebarItems.map((item, index) => {
+        {/* Navigation Items */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+          {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.page;
             return (
               <motion.button
-                key={item.label}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.04, ease: "easeOut" }}
+                key={item.page}
+                type="button"
                 whileHover={{
-                  x: collapsed ? 0 : 5,
+                  x: collapsed ? 0 : 4,
                   transition: { duration: 0.15, ease: "easeOut" },
                 }}
                 whileTap={{ scale: 0.97 }}
@@ -180,12 +167,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                     : {}
                 }
               >
-                <motion.span
-                  className="flex-shrink-0"
-                  whileHover={{ rotate: isActive ? 0 : -5, scale: 1.1 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  <Icon
+                <Icon
                     className={`w-4 h-4 ${
                       isActive
                         ? "text-white"
@@ -195,15 +177,23 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                     }`}
                     aria-hidden="true"
                   />
-                </motion.span>
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </motion.button>
             );
           })}
         </nav>
 
-        {/* Bottom user area */}
-        <div className={`p-4 border-t ${darkMode ? "border-[#4A443F]" : "border-[#E6D7CA]"}`}>
+        {/* Bottom user area & SaaS triggers */}
+        <div className={`p-4 border-t space-y-3 ${darkMode ? "border-[#4A443F]" : "border-[#E6D7CA]"}`}>
+          {!collapsed && (
+            <button
+              onClick={() => setIsOnboardingOpen(true)}
+              className="w-full py-2 px-3 rounded-xl bg-amber-500 text-black font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add New PG Property
+            </button>
+          )}
+
           <div className="flex items-center gap-3">
             <Avatar name="Rajesh Kumar" initials="RK" size="md" />
             {!collapsed && (
@@ -219,16 +209,12 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             {!collapsed && (
               <button
                 type="button"
-                onClick={() => navigate("landing")}
-                title="Sign out"
-                aria-label="Sign out"
-                className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
-                  darkMode
-                    ? "text-[#756A63] hover:text-[#D96B5D] hover:bg-[#332D2B]"
-                    : "text-[#A8907F] hover:text-[#D96B5D] hover:bg-[#F8EEE5]"
-                }`}
+                onClick={() => setIsDeleteAccountOpen(true)}
+                title="Account Settings & Delete"
+                aria-label="Account Settings & Delete"
+                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -256,30 +242,37 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Search */}
+          {/* Search Trigger */}
           <div
-            className={`flex items-center gap-2.5 flex-1 min-w-0 max-w-sm px-4 py-2 rounded-xl border transition-all ${
+            onClick={() => setIsSearchOpen(true)}
+            className={`flex items-center gap-2.5 flex-1 min-w-0 max-w-sm px-4 py-2 rounded-xl border transition-all cursor-pointer ${
               darkMode
-                ? "bg-[#332D2B] border-[#4A443F] focus-within:border-[#C89A4B]"
-                : "bg-[#F8EEE5] border-[#E6D7CA] focus-within:border-[#D9A87C]"
+                ? "bg-[#332D2B] border-[#4A443F]"
+                : "bg-[#F8EEE5] border-[#E6D7CA]"
             }`}
-            style={{ transition: "border-color 0.2s, box-shadow 0.2s" }}
           >
             <Search className={`w-4 h-4 flex-shrink-0 ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`} />
-            <input
-              type="text"
-              aria-label="Search residents and rooms"
-              placeholder="Search residents, rooms…"
-              className={`flex-1 min-w-0 bg-transparent text-sm outline-none font-medium ${
-                darkMode
-                  ? "text-[#F7F3EE] placeholder:text-[#756A63]"
-                  : "text-[#3B2A24] placeholder:text-[#A8907F]"
-              }`}
-            />
+            <span className={`text-xs font-medium ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`}>
+              Global Search (Ctrl + K)
+            </span>
           </div>
 
           {/* Right actions */}
           <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+            <button
+              onClick={() => setIsAdminQueueOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-500 font-bold text-xs border border-amber-500/30 flex items-center gap-1 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Verification Queue
+            </button>
+
+            <button
+              onClick={() => setIsFineModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-400 font-bold text-xs border border-rose-500/30 flex items-center gap-1 cursor-pointer"
+            >
+              <AlertCircle className="w-3.5 h-3.5" /> Issue Fine
+            </button>
+
             <BackButton />
             <ThemeToggle />
             <button
@@ -326,14 +319,18 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
         </main>
       </div>
 
-      {/* Drawers */}
+      {/* Drawers & SaaS Modals */}
       <AuditLogDrawer isOpen={isAuditDrawerOpen} onClose={() => setIsAuditDrawerOpen(false)} />
       <NotificationCenterDrawer
         isOpen={isNotificationDrawerOpen}
         onClose={() => setIsNotificationDrawerOpen(false)}
         onUnreadCountChange={(cnt) => setUnreadNotifCount(cnt)}
       />
+      <OwnerOnboardingWizard isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
+      <AdminVerificationQueue isOpen={isAdminQueueOpen} onClose={() => setIsAdminQueueOpen(false)} />
+      <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <FineManagementModal isOpen={isFineModalOpen} onClose={() => setIsFineModalOpen(false)} />
+      <AccountDeletionModal isOpen={isDeleteAccountOpen} onClose={() => setIsDeleteAccountOpen(false)} userType="OWNER" />
     </div>
   );
 }
-
