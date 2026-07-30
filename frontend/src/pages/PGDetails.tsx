@@ -1,25 +1,9 @@
 import { useState } from "react";
 import {
-  Star,
-  Heart,
-  Share2,
-  MapPin,
-  Wifi,
-  Coffee,
-  Car,
-  Shield,
-  Zap,
-  BedDouble,
-  Users,
-  Phone,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
+  Heart, MapPin, ChevronLeft, ChevronRight, Utensils, BedDouble
 } from "lucide-react";
 import type { Page } from "../App";
 import { ThemeToggle, useTheme } from "../theme";
-import { Avatar } from "../components/Avatar";
 import { BackButton } from "../navigation";
 
 interface Props {
@@ -30,492 +14,138 @@ const images = [
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&h=700&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&h=700&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1565182999561-18d7dc61c393?w=1200&h=700&fit=crop&auto=format",
-  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&h=700&fit=crop&auto=format",
-  "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=1200&h=700&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&h=700&fit=crop&auto=format"
 ];
 
-const amenities = [
-  { icon: Wifi, label: "High-Speed WiFi", desc: "100 Mbps fiber" },
-  { icon: Coffee, label: "3 Meals / Day", desc: "North & South Indian" },
-  { icon: Car, label: "Free Parking", desc: "Covered 2-wheeler" },
-  { icon: Shield, label: "24/7 Security", desc: "CCTV + Guard" },
-  { icon: Zap, label: "Power Backup", desc: "Full inverter backup" },
-  { icon: BedDouble, label: "Furnished Rooms", desc: "Bed, almirah, table" },
-  { icon: Users, label: "Common Areas", desc: "Lounge, terrace, gym" },
-  { icon: CheckCircle, label: "Housekeeping", desc: "Daily cleaning" },
+const WEEKLY_MEALS = [
+  { day: 'Monday', b: 'Idli Vada, Sambar, Tea/Coffee', l: 'Dal Tadka, Mix Veg, Rice, Roti', s: 'Hot Filter Coffee & Cookies', d: 'Rajma Masala, Jeera Rice, Chapati', cal: 2100 },
+  { day: 'Tuesday', b: 'Masala Dosa, Chutney, Tea/Coffee', l: 'Paneer Butter Masala, Rice, Roti', s: 'Veg Cutlet & Tea', d: 'Egg Curry / Aloo Gobi, Rice, Roti', cal: 2200 },
+  { day: 'Wednesday', b: 'Puri Bhaji, Tea/Coffee', l: 'Chole Bhature, Veg Pulao', s: 'Samosa & Green Chutney', d: 'Kadai Paneer, Rice, Roti, Gulab Jamun', cal: 2300 },
+  { day: 'Thursday', b: 'Poha & Jalebi, Tea/Coffee', l: 'Kadi Pakoda, Rice, Chapati', s: 'Banana Bread & Tea', d: 'Mix Dal, Aloo Bhindi, Rice, Roti', cal: 2050 },
+  { day: 'Friday', b: 'Uttapam, Sambar, Tea/Coffee', l: 'Biryani Delight, Raita, Salad', s: 'Pakoda & Coffee', d: 'Dal Makhani, Jeera Rice, Butter Naan', cal: 2250 },
+  { day: 'Saturday', b: 'Aloo Paratha, Curd, Butter', l: 'Veg Thali Deluxe', s: 'Corn Chaat & Tea', d: 'Paneer Do Pyaza, Rice, Roti', cal: 2150 },
+  { day: 'Sunday (Special)', b: 'Mysore Masala Dosa & Special Filter Coffee', l: 'Chef Special Veg Biryani & Kheer', s: 'Cold Coffee & Pastry', d: 'Special Paneer Tikka Masala, Naan', cal: 2400 }
 ];
 
-const rooms = [
-  {
-    type: "Single Sharing",
-    price: 12000,
-    available: 2,
-    features: ["Attached bathroom", "AC", "Window view"],
-  },
-  {
-    type: "Double Sharing",
-    price: 9000,
-    available: 3,
-    features: ["Common bathroom", "Fan", "Balcony access"],
-  },
-  {
-    type: "Triple Sharing",
-    price: 7500,
-    available: 1,
-    features: ["Common bathroom", "Fan", "Ground floor"],
-  },
-];
-
-const reviews = [
-  {
-    name: "Priya Sharma",
-    rating: 5,
-    date: "June 2025",
-    avatar: "PS",
-    text: "Absolutely love staying here. The food is amazing and the WiFi is super fast. Staff is very helpful.",
-  },
-  {
-    name: "Vikram Nair",
-    rating: 5,
-    date: "May 2025",
-    avatar: "VN",
-    text: "Clean, secure, and very well maintained. The location is perfect for my office commute.",
-  },
-  {
-    name: "Ananya Iyer",
-    rating: 4,
-    date: "April 2025",
-    avatar: "AI",
-    text: "Great place overall. Meals could be better but everything else is excellent.",
-  },
-];
-
-const nearbyPlaces = [
-  { name: "Koramangala Market", dist: "0.3 km", type: "🛒" },
-  { name: "BMTC Bus Stop", dist: "0.1 km", type: "🚌" },
-  { name: "Apollo Hospital", dist: "1.2 km", type: "🏥" },
-  { name: "Forum Mall", dist: "2.0 km", type: "🏬" },
+const roomMatrix = [
+  { room: '101', type: 'Single Sharing', rent: '₹12,000', ac: 'AC', washroom: 'Attached', beds: [{ b: '101-A', occ: true }, { b: '101-B', occ: false }] },
+  { room: '102', type: 'Double Sharing', rent: '₹9,500', ac: 'Non-AC', washroom: 'Attached', beds: [{ b: '102-A', occ: true }, { b: '102-B', occ: true }] },
+  { room: '201', type: 'Triple Sharing', rent: '₹8,500', ac: 'AC', washroom: 'Common', beds: [{ b: '201-A', occ: true }, { b: '201-B', occ: false }, { b: '201-C', occ: false }] }
 ];
 
 export default function PGDetails({ navigate }: Props) {
   const [currentImg, setCurrentImg] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState(rooms[0]);
-  const [showBooking, setShowBooking] = useState(false);
   const { darkMode } = useTheme();
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-      {/* Top nav */}
-      <div className={`sticky top-0 z-40 border-b transition-colors px-4 py-3 md:px-6 md:py-4 ${
-        darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"
-      }`}>
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1B1816] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
+      {/* Top Navbar */}
+      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-neutral-900/80 border-white/10" : "bg-white/80 border-slate-200"}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <BackButton />
-            <button
-              type="button"
-              onClick={() => navigate("pg-listing")}
-              className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors ${
-                darkMode ? "text-[#C6B9AE] hover:text-white" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Back to Listings
+            <button onClick={() => navigate("pg-listing")} className="text-sm font-semibold text-neutral-400 hover:text-white">
+              Back to PG Directory
             </button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <button
-              type="button"
-              aria-label="Share property details"
-              className={`flex items-center gap-2 text-sm font-medium border px-4 py-2 rounded-xl transition-colors ${
-                darkMode ? "border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]" : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Share2 className="w-4 h-4" />
-              Share
-            </button>
-            <button
-              type="button"
-              onClick={() => setLiked(!liked)}
-              aria-label={liked ? "Remove from favorites" : "Save to favorites"}
-              aria-pressed={liked}
-              className={`flex items-center gap-2 text-sm font-medium border px-4 py-2 rounded-xl transition-colors ${
-                darkMode ? "border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]" : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <Heart
-                className={`w-4 h-4 ${liked ? "fill-red-500 text-red-500" : ""}`}
-              />
-              {liked ? "Saved" : "Save"}
+            <button onClick={() => setLiked(!liked)} className="px-4 py-2 rounded-xl border border-white/10 text-xs font-bold flex items-center gap-2 hover:border-amber-500/40">
+              <Heart className={`w-4 h-4 ${liked ? "fill-rose-500 text-rose-500" : ""}`} /> {liked ? "Saved" : "Save PG"}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Gallery */}
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Gallery Carousel */}
+        <div className="relative rounded-3xl overflow-hidden h-80 md:h-[450px] bg-neutral-900 border border-white/10 shadow-2xl">
+          <img src={images[currentImg]} alt="PG Gallery" className="w-full h-full object-cover" />
+          <button onClick={() => setCurrentImg((currentImg - 1 + images.length) % images.length)} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 text-white hover:bg-black/80">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button onClick={() => setCurrentImg((currentImg + 1) % images.length)} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 text-white hover:bg-black/80">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Title Header & Occupancy Status */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 p-6 rounded-3xl bg-neutral-900/60 border border-white/10 backdrop-blur-md">
+          <div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              Co-Living Executive Luxe
+            </span>
+            <h1 className="text-3xl font-extrabold text-white mt-2">RoomBae Indiranagar Co-Living</h1>
+            <p className="text-xs text-neutral-400 flex items-center gap-1.5 mt-1">
+              <MapPin className="w-4 h-4 text-amber-400" /> Indiranagar 100ft Road, Bengaluru (Near MG Road Metro)
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-right">
             <div>
-              <div className="relative rounded-2xl overflow-hidden h-80 md:h-96 bg-slate-200">
-                <img
-                  src={images[currentImg]}
-                  alt="PG"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentImg(
-                      (currentImg - 1 + images.length) % images.length,
-                    )
-                  }
-                  aria-label="Previous image"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-md"
-                >
-                  <ChevronLeft className="w-4 h-4 text-slate-700" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentImg((currentImg + 1) % images.length)
-                  }
-                  aria-label="Next image"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-md"
-                >
-                  <ChevronRight className="w-4 h-4 text-slate-700" />
-                </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {images.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setCurrentImg(i)}
-                      aria-label={`View image ${i + 1}`}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${currentImg === i ? "bg-white w-4" : "bg-white/60"}`}
-                    />
+              <p className="text-2xl font-black text-amber-400">92% Occupied</p>
+              <p className="text-xs text-neutral-400">66 Occupied • 6 Beds Vacant</p>
+            </div>
+            <button onClick={() => navigate("pg-listing")} className="px-6 py-3 rounded-2xl bg-amber-500 text-neutral-950 font-bold hover:bg-amber-400 shadow-xl shadow-amber-500/20">
+              Book Bed Now
+            </button>
+          </div>
+        </div>
+
+        {/* 7-Day Mess Meal Schedule */}
+        <div className="p-6 rounded-3xl bg-neutral-900/60 border border-white/10 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Utensils className="w-5 h-5 text-amber-400" /> 7-Day Weekly Mess Menu & Nutrition
+            </h3>
+            <span className="text-xs text-amber-400 font-semibold">Average Food Rating: 4.8 ★</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {WEEKLY_MEALS.map(m => (
+              <div key={m.day} className={`p-4 rounded-2xl border ${m.day.includes('Sunday') ? 'border-amber-500/40 bg-amber-500/5' : 'border-white/10 bg-neutral-900'}`}>
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-bold text-amber-400">{m.day}</h4>
+                  <span className="text-[10px] text-neutral-400">{m.cal} kcal</span>
+                </div>
+                <div className="space-y-1.5 text-xs text-neutral-300">
+                  <p><strong className="text-neutral-500">Breakfast:</strong> {m.b}</p>
+                  <p><strong className="text-neutral-500">Lunch:</strong> {m.l}</p>
+                  <p><strong className="text-neutral-500">Snacks:</strong> {m.s}</p>
+                  <p><strong className="text-neutral-500">Dinner:</strong> {m.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Room & Bed Matrix Grid */}
+        <div className="p-6 rounded-3xl bg-neutral-900/60 border border-white/10 space-y-4">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <BedDouble className="w-5 h-5 text-amber-400" /> Room & Bed Inventory Matrix
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {roomMatrix.map(r => (
+              <div key={r.room} className="p-4 rounded-2xl bg-neutral-900 border border-white/10 space-y-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-base font-bold text-white">Room {r.room}</h4>
+                  <span className="text-xs font-bold text-amber-400">{r.rent}/mo</span>
+                </div>
+                <p className="text-xs text-neutral-400">{r.type} • {r.ac} • {r.washroom}</p>
+
+                <div className="flex gap-2 pt-2 border-t border-white/5">
+                  {r.beds.map(b => (
+                    <span key={b.b} className={`px-3 py-1 rounded-xl text-xs font-bold border ${b.occ ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
+                      {b.b} ({b.occ ? 'Occupied' : 'Vacant'})
+                    </span>
                   ))}
                 </div>
               </div>
-              <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentImg(i)}
-                    className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${currentImg === i ? "border-[#D9A87C]" : "border-transparent"}`}
-                  >
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Title */}
-            <div>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <span className="text-xs font-bold text-white px-3 py-1 rounded-full mb-3 inline-block shadow-sm" style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}>
-                    Boutique Luxury
-                  </span>
-                  <h1 className="text-2xl font-black text-slate-900 mb-2">
-                    Urban Nest Co-living
-                  </h1>
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">
-                      Indiranagar 100ft Road, Bengaluru — 2 beds available
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                    <span className="text-xl font-black text-slate-900">
-                      4.8
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-500">214 reviews</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Amenities */}
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 mb-4">
-                Amenities
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {amenities.map((a) => {
-                  const Icon = a.icon;
-                  return (
-                    <div
-                      key={a.label}
-                      className="bg-white border border-slate-100 rounded-xl p-4 card-hover"
-                    >
-                      <Icon className="w-5 h-5 text-[#C58B63] mb-2" />
-                      <p className="font-semibold text-slate-900 text-sm">
-                        {a.label}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">{a.desc}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Rooms */}
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 mb-4">
-                Room Options
-              </h2>
-              <div className="space-y-3">
-                {rooms.map((room) => (
-                  <button
-                    key={room.type}
-                    onClick={() => setSelectedRoom(room)}
-                    className={`w-full flex items-center justify-between p-5 rounded-2xl border-2 text-left transition-all ${selectedRoom.type === room.type ? "border-[#D9A87C] bg-[#F8EEE5]" : "border-slate-100 bg-white hover:border-slate-200"}`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-bold text-slate-900">
-                          {room.type}
-                        </h3>
-                        <span className="text-xs bg-green-100 text-green-700 font-medium px-2 py-0.5 rounded-full">
-                          {room.available} available
-                        </span>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {room.features.map((f) => (
-                          <span
-                            key={f}
-                            className="text-xs text-slate-500 flex items-center gap-1"
-                          >
-                            <CheckCircle className="w-3 h-3 text-teal-500" />{" "}
-                            {f}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-right ml-4">
-                      <span className="text-xl font-black text-slate-900">
-                        ₹{room.price.toLocaleString()}
-                      </span>
-                      <span className="text-xs text-slate-500 block">
-                        /month
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Reviews */}
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 mb-4">
-                Reviews
-                <span className="text-base font-normal text-slate-500 ml-2">
-                  ({reviews.length} recent)
-                </span>
-              </h2>
-              <div className="space-y-4">
-                {reviews.map((r) => (
-                  <div
-                    key={r.name}
-                    className="bg-white border border-slate-100 rounded-2xl p-5"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={r.name} initials={r.avatar} size="md" />
-                        <div>
-                          <p className="font-semibold text-slate-900 text-sm">
-                            {r.name}
-                          </p>
-                          <p className="text-xs text-slate-400">{r.date}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: r.rating }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                      {r.text}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Nearby */}
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 mb-4">
-                Nearby Places
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {nearbyPlaces.map((p) => (
-                  <div
-                    key={p.name}
-                    className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl p-4"
-                  >
-                    <span className="text-xl">{p.type}</span>
-                    <div>
-                      <p className="font-medium text-slate-800 text-sm">
-                        {p.name}
-                      </p>
-                      <p className="text-xs text-slate-400">{p.dist}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Booking sidebar */}
-          <div className="lg:col-span-1">
-            <div className="apple-sticky-panel p-6 shadow-xl">
-              <div className="mb-5">
-                <span className="text-3xl font-black text-slate-900 dark:text-white">
-                  ₹{selectedRoom.price.toLocaleString()}
-                </span>
-                <span className="text-slate-500 dark:text-[#C6B9AE] text-sm">/month</span>
-                <p className="text-sm text-slate-500 dark:text-[#C6B9AE] mt-1 font-medium">
-                  {selectedRoom.type}
-                </p>
-              </div>
-
-              <div className="apple-divider my-4" />
-
-              <div className="space-y-3 mb-5">
-                <div className={`border rounded-xl p-3 ${darkMode ? "border-[#4A443F] bg-[#2B2725]" : "border-[#E6D7CA] bg-[#FFFDFB]"}`}>
-                  <label htmlFor="move-in-date" className={`block text-xs font-bold uppercase tracking-wide mb-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
-                    Move-in Date
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Calendar className={`w-4 h-4 ${darkMode ? "text-[#C6B9AE]" : "text-[#A8907F]"}`} />
-                    <input
-                      id="move-in-date"
-                      type="date"
-                      className={`flex-1 text-sm outline-none bg-transparent ${darkMode ? "text-white" : "text-[#3B2A24]"}`}
-                      defaultValue="2025-08-01"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowBooking(true)}
-                className="w-full lux-btn lux-btn-primary font-bold py-3.5 flex-shrink-0 mb-3"
-              >
-                Book Visit
-              </button>
-              <button className="w-full lux-btn lux-btn-secondary text-sm font-semibold py-3">
-                Schedule Call
-              </button>
-
-              {/* Owner info */}
-              <div className="mt-5 pt-5 border-t border-slate-200 dark:border-slate-800">
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wide mb-3">
-                  Managed by
-                </p>
-                <div className="flex items-center gap-3">
-                  <Avatar name="Rajesh Kumar" initials="RK" size="lg" />
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-white text-sm">
-                      Rajesh Kumar
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-[#C6B9AE]">
-                      PG Owner · 4 properties
-                    </p>
-                  </div>
-                  <a
-                    href="tel:+919876543210"
-                    className="ml-auto w-9 h-9 bg-[#F8EEE5] dark:bg-[#332D2B] rounded-xl flex items-center justify-center hover:bg-[#EDE0D4] dark:hover:bg-[#3D3632] transition-colors"
-                  >
-                    <Phone className="w-4 h-4 text-[#C58B63] dark:text-[#C89A4B]" />
-                  </a>
-                </div>
-              </div>
-
-              <div className="mt-4 bg-[#F8EEE5]/60 dark:bg-[#332D2B]/60 rounded-xl p-3.5 text-xs text-slate-500 dark:text-[#C6B9AE] border border-[#E6D7CA]/60 dark:border-[#4A443F]/60">
-                <p className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  Free cancellation before move-in
-                </p>
-                <p>No booking fee. Pay rent directly to owner.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
-
-      {/* Booking confirmation modal */}
-      {showBooking && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={() => setShowBooking(false)}
-          role="presentation"
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="visit-booked-title"
-            className={`rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl p-8 text-center ${
-              darkMode ? "bg-[#2B2725] text-white" : "bg-white text-slate-900"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-            </div>
-            <h3 id="visit-booked-title" className={`text-xl font-black mb-2 ${darkMode ? "text-white" : "text-slate-900"}`}>
-              Visit Booked!
-            </h3>
-            <p className={`text-sm mb-6 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}>
-              Your visit to <strong>Urban Nest Co-living</strong> has been
-              scheduled. The owner will call you within 2 hours to confirm.
-            </p>
-            <div className={`rounded-xl p-4 text-sm text-left space-y-2 mb-6 ${
-              darkMode ? "bg-[#332D2B]" : "bg-slate-50"
-            }`}>
-              <div className="flex justify-between">
-                <span className={darkMode ? "text-[#C6B9AE]" : "text-slate-500"}>Property</span>
-                <span className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}>
-                  Urban Nest Co-living
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className={darkMode ? "text-[#C6B9AE]" : "text-slate-500"}>Room Type</span>
-                <span className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}>
-                  {selectedRoom.type}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className={darkMode ? "text-[#C6B9AE]" : "text-slate-500"}>Monthly Rent</span>
-                <span className={`font-semibold ${darkMode ? "text-white" : "text-slate-800"}`}>
-                  ₹{selectedRoom.price.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowBooking(false)}
-              className="w-full luxury-btn-primary font-semibold py-3"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

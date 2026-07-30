@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roombae-backend-deployment
+  namespace: roombae-production
+  labels:
+    app: roombae-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: roombae-backend
+  template:
+    metadata:
+      labels:
+        app: roombae-backend
+    spec:
+      containers:
+      - name: roombae-backend
+        image: roombae/backend:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "5000"
+        - name: CLUSTER_MODE
+          value: "true"
+        envFrom:
+        - secretRef:
+            name: roombae-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: roombae-backend-service
+  namespace: roombae-production
+spec:
+  type: ClusterIP
+  selector:
+    app: roombae-backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+    name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: roombae-backend-hpa
+  namespace: roombae-production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: roombae-backend-deployment
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -121,18 +121,8 @@ export default function App() {
     directionRef.current = 1; // forward navigation
     setPageHistory((previous) => [...previous, page]);
     setPage(p);
-
-    // Never trigger showOneTimeLoading on navigation!
-    if (ENABLE_SKELETON_DEBUG_DELAY) {
-      setSkeletonLoading(true);
-      window.setTimeout(() => {
-        setSkeletonLoading(false);
-      }, SKELETON_DEBUG_DELAY_MS);
-    } else {
-      setSkeletonLoading(false);
-    }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setSkeletonLoading(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const goBack = () => {
@@ -140,18 +130,8 @@ export default function App() {
     directionRef.current = -1; // backward navigation
     setPageHistory((history) => history.slice(0, -1));
     setPage(previous);
-
-    // Never trigger showOneTimeLoading on goBack!
-    if (ENABLE_SKELETON_DEBUG_DELAY) {
-      setSkeletonLoading(true);
-      window.setTimeout(() => {
-        setSkeletonLoading(false);
-      }, SKELETON_DEBUG_DELAY_MS);
-    } else {
-      setSkeletonLoading(false);
-    }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setSkeletonLoading(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   return (
@@ -164,15 +144,15 @@ export default function App() {
             {showOneTimeLoading && <LoadingOverlay key="branded-overlay" />}
           </AnimatePresence>
 
-          {/* 2. Skeleton & Main Content Rendering */}
-          <AnimatePresence mode="wait">
+          {/* 2. Instant Page Rendering with Smooth Motion */}
+          <AnimatePresence mode="popLayout">
             {skeletonLoading ? (
               <motion.div
                 key="skeleton"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.15 }}
               >
                 <PageSkeleton page={page} />
               </motion.div>
@@ -181,14 +161,14 @@ export default function App() {
                 key={page}
                 custom={directionRef.current}
                 variants={{
-                  initial: (dir: number) => ({ opacity: 0, x: dir * 22, y: 0 }),
-                  animate: { opacity: 1, x: 0, y: 0 },
-                  exit: (dir: number) => ({ opacity: 0, x: dir * -16, y: 0 }),
+                  initial: { opacity: 0, y: 8 },
+                  animate: { opacity: 1, y: 0 },
+                  exit: { opacity: 0, y: -8 },
                 }}
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
               >
                 {renderPage(page, navigate)}
               </motion.div>

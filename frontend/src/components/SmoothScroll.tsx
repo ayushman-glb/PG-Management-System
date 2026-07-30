@@ -15,14 +15,18 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     if (prefersReducedMotion) return;
 
     const lenis = new Lenis({
-      // Premium exponential easing — matches Apple/Stripe scroll feel
-      duration: 1.15,
+      duration: 1.0,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      // Touch multiplier for natural mobile feel
-      touchMultiplier: 1.8,
-      // Wheel multiplier — slightly damped for luxury feel
-      wheelMultiplier: 0.9,
+      touchMultiplier: 1.5,
+      wheelMultiplier: 1.0,
+      prevent: (node: HTMLElement) => {
+        // Prevent Lenis smooth scroll hijacking inside modals and scrollable elements
+        return (
+          node.hasAttribute("data-lenis-prevent") ||
+          !!node.closest("[data-lenis-prevent]")
+        );
+      },
     });
 
     // Synchronize Lenis scroll events with GSAP ScrollTrigger
@@ -34,10 +38,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     };
 
     gsap.ticker.add(updateLenis);
-    // Disable lag smoothing to prevent scroll judder
     gsap.ticker.lagSmoothing(0);
 
-    // Expose lenis globally for external scroll control if needed
+    // Expose lenis globally for modal scroll lock/unlock control
     (window as unknown as Record<string, unknown>).__lenis = lenis;
 
     return () => {

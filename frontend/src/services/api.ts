@@ -1,9 +1,10 @@
 /**
  * RoomBae Enterprise API Client
  * Connects frontend React components seamlessly to the Express REST API (/api/v1)
+ * Set VITE_API_URL in your .env.local to override the default localhost URL.
  */
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api/v1';
 
 export interface ApiResponse<T = any> {
   success: boolean;

@@ -5,10 +5,9 @@ import { useTheme } from "../theme";
 // ============================================================================
 // SKELETON DEBUG CONFIGURATION
 // ============================================================================
-// For development and testing: Set to true with 1000ms delay to verify skeleton UI.
-// Set to false before production deployment to disable artificial delay.
-export const ENABLE_SKELETON_DEBUG_DELAY = true;
-export const SKELETON_DEBUG_DELAY_MS = 1000;
+// For development and production: Set to false so pages render instantly without artificial delays.
+export const ENABLE_SKELETON_DEBUG_DELAY = false;
+export const SKELETON_DEBUG_DELAY_MS = 0;
 
 // Base primitive block
 export function SkeletonBlock({
