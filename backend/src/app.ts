@@ -153,6 +153,25 @@ app.get("/live", (req, res) => {
     .json({ status: "ALIVE", timestamp: new Date().toISOString() });
 });
 
+app.get("/", (req, res) => {
+  const packageJson = require("../package.json") as {
+    version?: string;
+  };
+
+  res.status(200).json({
+    success: true,
+    name: "RoomBae Enterprise Backend",
+    description: "Production API for the RoomBae PG Management System",
+    status: "Running",
+    environment: process.env.NODE_ENV || "production",
+    version: packageJson.version || "1.0.0",
+    timestamp: new Date().toISOString(),
+    documentation: "/api/v1",
+    graphql: "/graphql",
+    health: "/health",
+  });
+});
+
 // REST API v1 Routes
 app.use(env.API_PREFIX, apiRouter);
 
