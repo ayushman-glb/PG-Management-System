@@ -42,8 +42,6 @@ export class SocketServer {
           "https://ayushman-glb.github.io/PG-Management-System",
           "https://ayushman-glb.github.io/PG-Management-System/",
           "https://pg-management-system-boxb.onrender.com",
-          "http://localhost:5173",
-          "http://127.0.0.1:5173",
         ],
         credentials: true,
       },

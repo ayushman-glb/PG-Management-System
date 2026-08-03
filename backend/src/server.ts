@@ -84,15 +84,19 @@ async function bootstrap() {
         const address = httpServer!.address() as AddressInfo;
         const actualPort = address ? address.port : port;
 
+        const apiUrl = `${env.API_BASE_URL.replace(/\/$/, "")}${env.API_PREFIX}`;
+        const graphqlUrl = `${env.API_BASE_URL.replace(/\/$/, "")}${env.GRAPHQL_PATH}`;
+        const swaggerUrl = `${env.API_BASE_URL.replace(/\/$/, "")}/api/docs`;
+
         const banner = [
           "",
           `🚀 RoomBae Enterprise Backend (PID ${process.pid})`,
           "────────────────────────────────────────────────────────",
           `✅ MongoDB Atlas Connected    : ${mongoStatus}`,
           `✅ Authentication Module Ready: Active`,
-          `✅ REST APIs Loaded           : http://localhost:${actualPort}${env.API_PREFIX}`,
-          `✅ GraphQL Loaded             : http://localhost:${actualPort}/graphql`,
-          `✅ Swagger Loaded             : http://localhost:${actualPort}/api/docs`,
+          `✅ REST APIs Loaded           : ${apiUrl}`,
+          `✅ GraphQL Loaded             : ${graphqlUrl}`,
+          `✅ Swagger Loaded             : ${swaggerUrl}`,
           `✅ OTP Service Running        : Phone & Email OTP Active`,
           `✅ Email Service Running      : Transactional Dispatch Active`,
           `✅ Owner Module Ready         : 10-Step Onboarding Active`,

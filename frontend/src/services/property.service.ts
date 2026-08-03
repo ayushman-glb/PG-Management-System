@@ -10,7 +10,10 @@ export class PropertyService {
     }
   }
 
-  private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  private async request<T = any>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<ApiResponse<T>> {
     const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -34,12 +37,21 @@ export class PropertyService {
     return data;
   }
 
-  async getPublicProperties(params?: { city?: string; minRent?: number; maxRent?: number; roomType?: string }) {
+  async getPublicProperties(params?: {
+    city?: string;
+    minRent?: number;
+    maxRent?: number;
+    roomType?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const query = new URLSearchParams();
     if (params?.city) query.append("city", params.city);
     if (params?.minRent) query.append("minRent", params.minRent.toString());
     if (params?.maxRent) query.append("maxRent", params.maxRent.toString());
     if (params?.roomType) query.append("roomType", params.roomType);
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.limit) query.append("limit", params.limit.toString());
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
     const res = await this.request(`/properties/public${queryString}`);

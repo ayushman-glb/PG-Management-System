@@ -1,333 +1,343 @@
-import swaggerJSDoc from 'swagger-jsdoc';
-import { env } from './env';
+import swaggerJSDoc from "swagger-jsdoc";
+import { env } from "./env";
 
 const options: swaggerJSDoc.Options = {
   definition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: 'RoomBae Zero-Trust Enterprise PG Management API',
-      version: '1.0.0',
-      description: 'Production-ready REST & GraphQL API specifications for RoomBae PG Management System.',
+      title: "RoomBae Zero-Trust Enterprise PG Management API",
+      version: "1.0.0",
+      description:
+        "Production-ready REST & GraphQL API specifications for RoomBae PG Management System.",
       contact: {
-        name: 'RoomBae Engineering',
-        email: 'engineering@roombae.com'
-      }
+        name: "RoomBae Engineering",
+        email: "engineering@roombae.com",
+      },
     },
     servers: [
       {
-        url: `http://localhost:${env.PORT}${env.API_PREFIX}`,
-        description: 'Local Development Server'
-      }
+        url: `${env.API_BASE_URL.replace(/\/$/, "")}${env.API_PREFIX}`,
+        description: "Production API Server",
+      },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
       },
       schemas: {
         ApiResponse: {
-          type: 'object',
+          type: "object",
           properties: {
-            success: { type: 'boolean' },
-            data: { type: 'object' },
-            message: { type: 'string' }
-          }
+            success: { type: "boolean" },
+            data: { type: "object" },
+            message: { type: "string" },
+          },
         },
         ErrorResponse: {
-          type: 'object',
+          type: "object",
           properties: {
-            success: { type: 'boolean', example: false },
+            success: { type: "boolean", example: false },
             error: {
-              type: 'object',
+              type: "object",
               properties: {
-                message: { type: 'string' },
-                code: { type: 'string' }
-              }
-            }
-          }
+                message: { type: "string" },
+                code: { type: "string" },
+              },
+            },
+          },
         },
         HealthCheckResponse: {
-          type: 'object',
+          type: "object",
           properties: {
-            success: { type: 'boolean' },
-            status: { type: 'string', example: 'UP' },
-            timestamp: { type: 'string' },
-            uptimeSeconds: { type: 'number' },
-            environment: { type: 'string' },
-            memoryUsage: { type: 'object' },
+            success: { type: "boolean" },
+            status: { type: "string", example: "UP" },
+            timestamp: { type: "string" },
+            uptimeSeconds: { type: "number" },
+            environment: { type: "string" },
+            memoryUsage: { type: "object" },
             database: {
-              type: 'object',
+              type: "object",
               properties: {
-                status: { type: 'string' },
-                provider: { type: 'string' },
-                latencyMs: { type: 'number' }
-              }
+                status: { type: "string" },
+                provider: { type: "string" },
+                latencyMs: { type: "number" },
+              },
             },
             services: {
-              type: 'object',
+              type: "object",
               properties: {
-                graphql: { type: 'string' },
-                rest: { type: 'string' },
-                soap: { type: 'string' },
-                redis: { type: 'string' }
-              }
-            }
-          }
-        }
-      }
+                graphql: { type: "string" },
+                rest: { type: "string" },
+                soap: { type: "string" },
+                redis: { type: "string" },
+              },
+            },
+          },
+        },
+      },
     },
     paths: {
-      '/health': {
+      "/health": {
         get: {
-          summary: 'Detailed System Health Metrics',
-          description: 'Returns real-time status of database, memory, services, and uptime.',
-          tags: ['Health'],
+          summary: "Detailed System Health Metrics",
+          description:
+            "Returns real-time status of database, memory, services, and uptime.",
+          tags: ["Health"],
           responses: {
-            '200': {
-              description: 'System operational',
+            "200": {
+              description: "System operational",
               content: {
-                'application/json': {
-                  schema: { $ref: '#/components/schemas/HealthCheckResponse' }
-                }
-              }
-            }
-          }
-        }
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/HealthCheckResponse" },
+                },
+              },
+            },
+          },
+        },
       },
-      '/ready': {
+      "/ready": {
         get: {
-          summary: 'Service Readiness Probe',
-          description: 'Used by load balancers and orchestrators to check if backend is ready for traffic.',
-          tags: ['Health'],
+          summary: "Service Readiness Probe",
+          description:
+            "Used by load balancers and orchestrators to check if backend is ready for traffic.",
+          tags: ["Health"],
           responses: {
-            '200': { description: 'Backend is ready' },
-            '503': { description: 'Backend is starting or database unreachable' }
-          }
-        }
+            "200": { description: "Backend is ready" },
+            "503": {
+              description: "Backend is starting or database unreachable",
+            },
+          },
+        },
       },
-      '/live': {
+      "/live": {
         get: {
-          summary: 'Liveness Probe',
-          description: 'Basic liveness check verifying the HTTP process is alive.',
-          tags: ['Health'],
+          summary: "Liveness Probe",
+          description:
+            "Basic liveness check verifying the HTTP process is alive.",
+          tags: ["Health"],
           responses: {
-            '200': { description: 'Process alive' }
-          }
-        }
+            "200": { description: "Process alive" },
+          },
+        },
       },
-      '/auth/login': {
+      "/auth/login": {
         post: {
-          summary: 'User Authentication / Login',
-          tags: ['Authentication'],
+          summary: "User Authentication / Login",
+          tags: ["Authentication"],
           requestBody: {
             required: true,
             content: {
-              'application/json': {
+              "application/json": {
                 schema: {
-                  type: 'object',
-                  required: ['email', 'password'],
+                  type: "object",
+                  required: ["email", "password"],
                   properties: {
-                    email: { type: 'string', example: 'admin@roombae.com' },
-                    password: { type: 'string', example: 'AdminPass123!' }
-                  }
-                }
-              }
-            }
+                    email: { type: "string", example: "admin@roombae.com" },
+                    password: { type: "string", example: "AdminPass123!" },
+                  },
+                },
+              },
+            },
           },
           responses: {
-            '200': { description: 'Authenticated successfully' },
-            '401': { description: 'Invalid credentials' }
-          }
-        }
+            "200": { description: "Authenticated successfully" },
+            "401": { description: "Invalid credentials" },
+          },
+        },
       },
-      '/auth/register': {
+      "/auth/register": {
         post: {
-          summary: 'User Registration (Unified Wizard)',
-          tags: ['Authentication'],
+          summary: "User Registration (Unified Wizard)",
+          tags: ["Authentication"],
           requestBody: {
             required: true,
             content: {
-              'application/json': {
+              "application/json": {
                 schema: {
-                  type: 'object',
-                  required: ['email', 'password', 'name', 'role'],
+                  type: "object",
+                  required: ["email", "password", "name", "role"],
                   properties: {
-                    name: { type: 'string', example: 'Rajesh Kumar' },
-                    email: { type: 'string', example: 'rajesh@roombae.com' },
-                    password: { type: 'string', example: 'Password123!' },
-                    phone: { type: 'string', example: '+91 98765 43210' },
-                    role: { type: 'string', enum: ['OWNER', 'RESIDENT'], example: 'OWNER' }
-                  }
-                }
-              }
-            }
+                    name: { type: "string", example: "Rajesh Kumar" },
+                    email: { type: "string", example: "rajesh@roombae.com" },
+                    password: { type: "string", example: "Password123!" },
+                    phone: { type: "string", example: "+91 98765 43210" },
+                    role: {
+                      type: "string",
+                      enum: ["OWNER", "RESIDENT"],
+                      example: "OWNER",
+                    },
+                  },
+                },
+              },
+            },
           },
           responses: {
-            '201': { description: 'User account created successfully' },
-            '400': { description: 'Validation or duplication error' }
-          }
-        }
+            "201": { description: "User account created successfully" },
+            "400": { description: "Validation or duplication error" },
+          },
+        },
       },
-      '/auth/send-phone-otp': {
+      "/auth/send-phone-otp": {
         post: {
-          summary: 'Request Phone OTP',
-          tags: ['Authentication'],
+          summary: "Request Phone OTP",
+          tags: ["Authentication"],
           requestBody: {
             required: true,
             content: {
-              'application/json': {
+              "application/json": {
                 schema: {
-                  type: 'object',
-                  required: ['phone'],
+                  type: "object",
+                  required: ["phone"],
                   properties: {
-                    phone: { type: 'string', example: '+91 98765 43210' }
-                  }
-                }
-              }
-            }
+                    phone: { type: "string", example: "+91 98765 43210" },
+                  },
+                },
+              },
+            },
           },
           responses: {
-            '200': { description: 'OTP sent with countdown timer duration' }
-          }
-        }
+            "200": { description: "OTP sent with countdown timer duration" },
+          },
+        },
       },
-      '/auth/verify-phone-otp': {
+      "/auth/verify-phone-otp": {
         post: {
-          summary: 'Verify Phone OTP Code',
-          tags: ['Authentication'],
+          summary: "Verify Phone OTP Code",
+          tags: ["Authentication"],
           requestBody: {
             required: true,
             content: {
-              'application/json': {
+              "application/json": {
                 schema: {
-                  type: 'object',
-                  required: ['phone', 'otp'],
+                  type: "object",
+                  required: ["phone", "otp"],
                   properties: {
-                    phone: { type: 'string', example: '+91 98765 43210' },
-                    otp: { type: 'string', example: '123456' }
-                  }
-                }
-              }
-            }
+                    phone: { type: "string", example: "+91 98765 43210" },
+                    otp: { type: "string", example: "123456" },
+                  },
+                },
+              },
+            },
           },
           responses: {
-            '200': { description: 'Phone verified successfully' }
-          }
-        }
+            "200": { description: "Phone verified successfully" },
+          },
+        },
       },
-      '/auth/enable-2fa': {
+      "/auth/enable-2fa": {
         post: {
-          summary: 'Generate 2FA QR Code & Secret (Settings -> Security)',
+          summary: "Generate 2FA QR Code & Secret (Settings -> Security)",
           security: [{ bearerAuth: [] }],
-          tags: ['Authentication'],
+          tags: ["Authentication"],
           responses: {
-            '200': { description: 'TOTP Secret & QR Code URL generated' }
-          }
-        }
+            "200": { description: "TOTP Secret & QR Code URL generated" },
+          },
+        },
       },
-      '/auth/verify-2fa': {
+      "/auth/verify-2fa": {
         post: {
-          summary: 'Verify TOTP Code to Activate 2FA',
+          summary: "Verify TOTP Code to Activate 2FA",
           security: [{ bearerAuth: [] }],
-          tags: ['Authentication'],
+          tags: ["Authentication"],
           requestBody: {
             required: true,
             content: {
-              'application/json': {
+              "application/json": {
                 schema: {
-                  type: 'object',
-                  required: ['token'],
+                  type: "object",
+                  required: ["token"],
                   properties: {
-                    token: { type: 'string', example: '123456' }
-                  }
-                }
-              }
-            }
+                    token: { type: "string", example: "123456" },
+                  },
+                },
+              },
+            },
           },
           responses: {
-            '200': { description: '2FA activated successfully' }
-          }
-        }
+            "200": { description: "2FA activated successfully" },
+          },
+        },
       },
-      '/auth/refresh-token': {
+      "/auth/refresh-token": {
         post: {
-          summary: 'Refresh Access Token',
-          tags: ['Authentication'],
+          summary: "Refresh Access Token",
+          tags: ["Authentication"],
           responses: {
-            '200': { description: 'New JWT access token issued' }
-          }
-        }
+            "200": { description: "New JWT access token issued" },
+          },
+        },
       },
-      '/auth/me': {
+      "/auth/me": {
         get: {
-          summary: 'Get Current Authenticated User Profile',
+          summary: "Get Current Authenticated User Profile",
           security: [{ bearerAuth: [] }],
-          tags: ['Authentication'],
+          tags: ["Authentication"],
           responses: {
-            '200': { description: 'User account details' }
-          }
-        }
+            "200": { description: "User account details" },
+          },
+        },
       },
 
-      '/properties': {
+      "/properties": {
         get: {
-          summary: 'List Public PG Listings',
-          tags: ['Properties'],
+          summary: "List Public PG Listings",
+          tags: ["Properties"],
           parameters: [
-            { name: 'city', in: 'query', schema: { type: 'string' } },
-            { name: 'status', in: 'query', schema: { type: 'string' } }
+            { name: "city", in: "query", schema: { type: "string" } },
+            { name: "status", in: "query", schema: { type: "string" } },
           ],
           responses: {
-            '200': { description: 'List of properties' }
-          }
-        }
+            "200": { description: "List of properties" },
+          },
+        },
       },
-      '/residents': {
+      "/residents": {
         get: {
-          summary: 'List Resident Directory',
+          summary: "List Resident Directory",
           security: [{ bearerAuth: [] }],
-          tags: ['Residents'],
+          tags: ["Residents"],
           responses: {
-            '200': { description: 'Resident list' }
-          }
-        }
+            "200": { description: "Resident list" },
+          },
+        },
       },
-      '/agreements': {
+      "/agreements": {
         get: {
-          summary: 'List Rental Agreements',
+          summary: "List Rental Agreements",
           security: [{ bearerAuth: [] }],
-          tags: ['Agreements'],
+          tags: ["Agreements"],
           responses: {
-            '200': { description: 'Agreements list' }
-          }
-        }
+            "200": { description: "Agreements list" },
+          },
+        },
       },
-      '/complaints': {
+      "/complaints": {
         get: {
-          summary: 'List Support Tickets & Complaints',
+          summary: "List Support Tickets & Complaints",
           security: [{ bearerAuth: [] }],
-          tags: ['Complaints'],
+          tags: ["Complaints"],
           responses: {
-            '200': { description: 'Complaints list' }
-          }
-        }
+            "200": { description: "Complaints list" },
+          },
+        },
       },
-      '/billing/invoices': {
+      "/billing/invoices": {
         get: {
-          summary: 'List Billing Invoices',
+          summary: "List Billing Invoices",
           security: [{ bearerAuth: [] }],
-          tags: ['Billing'],
+          tags: ["Billing"],
           responses: {
-            '200': { description: 'Invoices list' }
-          }
-        }
-      }
-    }
+            "200": { description: "Invoices list" },
+          },
+        },
+      },
+    },
   },
-  apis: ['./src/routes/*.ts']
+  apis: ["./src/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);

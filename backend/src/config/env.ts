@@ -18,9 +18,11 @@ const envSchema = z.object({
     .string()
     .default("https://pg-management-system-boxb.onrender.com"),
   API_PREFIX: z.string().default("/api/v1"),
+  REST_PREFIX: z.string().default("/api/v1"),
+  GRAPHQL_PATH: z.string().default("/graphql"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   MONGODB_URI: z.string().optional(),
-  REDIS_URL: z.string().default("redis://127.0.0.1:6379"),
+  REDIS_URL: z.string().default("redis://redis:6379"),
   JWT_SECRET: z
     .string()
     .default("roombae_default_jwt_secret_key_32bytes_long!!"),

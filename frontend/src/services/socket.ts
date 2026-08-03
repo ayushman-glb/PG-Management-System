@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { env } from "../config/env";
 
-const SOCKET_URL = env.SOCKET_URL || "http://localhost:5000";
+const SOCKET_URL = env.SOCKET_URL;
 
 let socket: Socket | null = null;
 
