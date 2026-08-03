@@ -27,11 +27,13 @@ app.use(
 );
 const allowedOrigins = [
   env.CLIENT_URL,
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  env.FRONTEND_URL,
   "https://ayushman-glb.github.io",
   "https://ayushman-glb.github.io/PG-Management-System",
   "https://ayushman-glb.github.io/PG-Management-System/",
+  "https://pg-management-system-boxb.onrender.com",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
 ].filter(Boolean);
 
 app.use(
@@ -135,19 +137,15 @@ app.get("/health", async (req, res) => {
 
 app.get("/ready", async (req, res) => {
   try {
-    res
-      .status(200)
-      .json({
-        status: "READY",
-        message: "Backend is accepting incoming traffic.",
-      });
+    res.status(200).json({
+      status: "READY",
+      message: "Backend is accepting incoming traffic.",
+    });
   } catch (e) {
-    res
-      .status(503)
-      .json({
-        status: "NOT_READY",
-        message: "Backend dependencies initializing.",
-      });
+    res.status(503).json({
+      status: "NOT_READY",
+      message: "Backend dependencies initializing.",
+    });
   }
 });
 

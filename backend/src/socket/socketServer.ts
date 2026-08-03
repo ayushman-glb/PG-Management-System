@@ -1,23 +1,25 @@
-import { Server as HttpServer } from 'http';
-import { Server as SocketIOServer, Socket } from 'socket.io';
-import { logger } from '../utils/logger';
-import { env } from '../config/env';
-import { JwtTokenService } from '../infrastructure/crypto/JwtTokenService';
+import { Server as HttpServer } from "http";
+import { Server as SocketIOServer, Socket } from "socket.io";
+import { logger } from "../utils/logger";
+import { env } from "../config/env";
+import { JwtTokenService } from "../infrastructure/crypto/JwtTokenService";
 
-import { registerAuthSocketHandlers } from '../modules/auth';
-import { registerOwnerSocketHandlers } from '../modules/owners';
-import { registerPropertySocketHandlers } from '../modules/properties';
-import { registerRoomSocketHandlers } from '../modules/rooms';
-import { registerBedSocketHandlers } from '../modules/beds';
-import { registerResidentSocketHandlers } from '../modules/residents';
-import { registerBillingSocketHandlers } from '../modules/billing';
-import { registerComplaintSocketHandlers } from '../modules/complaints';
-import { registerAgreementSocketHandlers } from '../modules/agreements';
-import { registerNotificationSocketHandlers } from '../modules/notifications';
+import { registerAuthSocketHandlers } from "../modules/auth";
+import { registerOwnerSocketHandlers } from "../modules/owners";
+import { registerPropertySocketHandlers } from "../modules/properties";
+import { registerRoomSocketHandlers } from "../modules/rooms";
+import { registerBedSocketHandlers } from "../modules/beds";
+import { registerResidentSocketHandlers } from "../modules/residents";
+import { registerBillingSocketHandlers } from "../modules/billing";
+import { registerComplaintSocketHandlers } from "../modules/complaints";
+import { registerAgreementSocketHandlers } from "../modules/agreements";
+import { registerNotificationSocketHandlers } from "../modules/notifications";
 
 const tokenService = new JwtTokenService();
 
-function extractSocketUser(socket: Socket): { id: string; userId: string; role: string } | null {
+function extractSocketUser(
+  socket: Socket,
+): { id: string; userId: string; role: string } | null {
   try {
     const token = socket.handshake.auth?.token as string | undefined;
     if (!token) return null;
@@ -33,12 +35,21 @@ export class SocketServer {
   public static init(server: HttpServer): SocketIOServer {
     SocketServer.io = new SocketIOServer(server, {
       cors: {
-        origin: [env.CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
-        credentials: true
-      }
+        origin: [
+          env.CLIENT_URL,
+          env.FRONTEND_URL,
+          "https://ayushman-glb.github.io",
+          "https://ayushman-glb.github.io/PG-Management-System",
+          "https://ayushman-glb.github.io/PG-Management-System/",
+          "https://pg-management-system-boxb.onrender.com",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+        ],
+        credentials: true,
+      },
     });
 
-    SocketServer.io.on('connection', (socket: Socket) => {
+    SocketServer.io.on("connection", (socket: Socket) => {
       logger.info(`🔌 Socket connected: ${socket.id}`);
 
       // Register feature module socket handlers
@@ -53,56 +64,64 @@ export class SocketServer {
       registerAgreementSocketHandlers(socket);
       registerNotificationSocketHandlers(socket);
 
-      socket.on('join_pg', (pgId: string) => {
+      socket.on("join_pg", (pgId: string) => {
         const user = extractSocketUser(socket);
         if (!user) {
-          socket.emit('error', { message: 'Authentication required to join PG room' });
+          socket.emit("error", {
+            message: "Authentication required to join PG room",
+          });
           return;
         }
         socket.join(`pg_${pgId}`);
-        logger.info(`Socket ${socket.id} (user=${user.id}) joined room pg_${pgId}`);
+        logger.info(
+          `Socket ${socket.id} (user=${user.id}) joined room pg_${pgId}`,
+        );
       });
 
-      socket.on('join_owner', (ownerId: string) => {
+      socket.on("join_owner", (ownerId: string) => {
         const user = extractSocketUser(socket);
         if (!user) {
-          socket.emit('error', { message: 'Authentication required' });
+          socket.emit("error", { message: "Authentication required" });
           return;
         }
-        if (user.role !== 'ADMIN' && user.id !== ownerId) {
-          socket.emit('error', { message: 'Unauthorized: cannot join another owner\'s room' });
+        if (user.role !== "ADMIN" && user.id !== ownerId) {
+          socket.emit("error", {
+            message: "Unauthorized: cannot join another owner's room",
+          });
           return;
         }
         socket.join(`owner_${ownerId}`);
         logger.info(`Socket ${socket.id} joined room owner_${ownerId}`);
       });
 
-      socket.on('join_resident', (residentId: string) => {
+      socket.on("join_resident", (residentId: string) => {
         const user = extractSocketUser(socket);
         if (!user) {
-          socket.emit('error', { message: 'Authentication required' });
+          socket.emit("error", { message: "Authentication required" });
           return;
         }
-        if (user.role === 'RESIDENT' && user.id !== residentId) {
-          socket.emit('error', { message: 'Unauthorized: cannot join another resident\'s room' });
+        if (user.role === "RESIDENT" && user.id !== residentId) {
+          socket.emit("error", {
+            message: "Unauthorized: cannot join another resident's room",
+          });
           return;
         }
         socket.join(`resident_${residentId}`);
         logger.info(`Socket ${socket.id} joined room resident_${residentId}`);
       });
 
-      socket.on('disconnect', () => {
+      socket.on("disconnect", () => {
         logger.info(`⚡ Socket disconnected: ${socket.id}`);
       });
     });
 
-    logger.info('✅ Socket.IO real-time engine initialized');
+    logger.info("✅ Socket.IO real-time engine initialized");
     return SocketServer.io;
   }
 
   public static getIO(): SocketIOServer {
     if (!SocketServer.io) {
-      throw new Error('Socket.IO server has not been initialized');
+      throw new Error("Socket.IO server has not been initialized");
     }
     return SocketServer.io;
   }
@@ -119,7 +138,11 @@ export class SocketServer {
     }
   }
 
-  public static emitToResident(residentId: string, event: string, payload: any) {
+  public static emitToResident(
+    residentId: string,
+    event: string,
+    payload: any,
+  ) {
     if (SocketServer.io) {
       SocketServer.io.to(`resident_${residentId}`).emit(event, payload);
     }

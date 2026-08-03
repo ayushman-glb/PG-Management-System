@@ -9,10 +9,14 @@ dotenv.config({ path: envFilePath });
 
 const envSchema = z.object({
   PORT: z.string().default("5000"),
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
-  CLIENT_URL: z.string().default("http://localhost:5173"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("production"),
+  CLIENT_URL: z.string().default("https://ayushman-glb.github.io"),
+  FRONTEND_URL: z
+    .string()
+    .default("https://ayushman-glb.github.io/PG-Management-System/"),
+  API_BASE_URL: z
+    .string()
+    .default("https://pg-management-system-boxb.onrender.com"),
   API_PREFIX: z.string().default("/api/v1"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   MONGODB_URI: z.string().optional(),
@@ -37,7 +41,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALLBACK_URL: z
     .string()
-    .default("http://localhost:5000/api/v1/auth/google/callback"),
+    .default(
+      "https://pg-management-system-boxb.onrender.com/api/v1/auth/google/callback",
+    ),
   SMTP_HOST: z.string().default("smtp.gmail.com"),
   SMTP_PORT: z.string().default("587"),
   SMTP_USER: z.string().default("noreply@roombae.com"),
