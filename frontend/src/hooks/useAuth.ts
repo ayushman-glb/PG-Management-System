@@ -7,11 +7,12 @@ export function useAuth() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
     if (token) {
       authService
         .getCurrentUser()
-        .then((res) => setUser(res.user || null))
+        .then((res) => setUser(res.user || res || null))
         .catch(() => setUser(null))
         .finally(() => setLoading(false));
     } else {
@@ -21,14 +22,17 @@ export function useAuth() {
 
   const login = async (credentials: any) => {
     const res = await authService.login(credentials);
-    if (res.user && res.token) {
-      localStorage.setItem("token", res.token);
+    const token = res?.accessToken || res?.token;
+    if (res?.user && token) {
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("token", token);
       setUser(res.user);
     }
     return res;
   };
 
   const logout = () => {
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("token");
     setUser(null);
   };

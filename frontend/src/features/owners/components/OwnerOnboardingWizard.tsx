@@ -1,10 +1,18 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShieldCheck, MapPin, CheckCircle2, ArrowRight, ArrowLeft,
-  Camera, X
+  ShieldCheck,
+  MapPin,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Camera,
+  X,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "../../../theme";
+import { ownerService } from "@services/owner.service";
+import { authService } from "@services/auth.service";
 
 interface OwnerOnboardingWizardProps {
   isOpen: boolean;
@@ -15,7 +23,7 @@ interface OwnerOnboardingWizardProps {
 export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
   const { darkMode } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
@@ -23,7 +31,8 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
 
   const [personal, setPersonal] = useState({
     fullName: "Rajesh Kumar",
-    photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+    photoUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
     dob: "1988-06-15",
     gender: "MALE",
     phone: "+91 98765 43210",
@@ -36,7 +45,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     pincode: "560038",
     emergencyContact: "+91 98765 00000",
     isPhoneVerified: true,
-    isEmailVerified: true
+    isEmailVerified: true,
   });
 
   const [kyc, setKyc] = useState({
@@ -44,9 +53,10 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     panNumber: "ABCDE1234F",
     passportNumber: "N1234567",
     drivingLicenseNo: "KA0120200012345",
-    ownerSelfieUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
+    ownerSelfieUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
     liveFaceCheckPassed: true,
-    signatureSvg: ""
+    signatureSvg: "",
   });
 
   const [business, setBusiness] = useState({
@@ -58,7 +68,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     businessEmail: "contact@luxestays.in",
     businessPhone: "+91 80 4123 4567",
     registrationNumber: "LLPIN-AAA-1234",
-    tradeLicenseDocUrl: "#"
+    tradeLicenseDocUrl: "#",
   });
 
   const [bank, setBank] = useState({
@@ -69,7 +79,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     ifscCode: "HDFC0001234",
     branch: "Indiranagar Main Branch",
     cancelledChequeUrl: "#",
-    upiId: "luxestays@hdfcbank"
+    upiId: "luxestays@hdfcbank",
   });
 
   const [property, setProperty] = useState({
@@ -80,7 +90,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     landlordLeaseAgreementUrl: "",
     nocDocumentUrl: "",
     rentStartingFrom: 8500,
-    securityDeposit: 17000
+    securityDeposit: 17000,
   });
 
   const [location] = useState({
@@ -90,7 +100,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     landmark: "Near Indiranagar Metro Station",
     area: "Indiranagar",
     city: "Bengaluru",
-    pincode: "560038"
+    pincode: "560038",
   });
 
   const [building, setBuilding] = useState({
@@ -98,7 +108,17 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     floorsCount: 3,
     caretakerName: "Santhosh Kumar",
     caretakerPhone: "+91 99887 76655",
-    amenities: ["WiFi", "Laundry", "CCTV", "Power Backup", "Lift", "Mess", "RO Water", "Geyser", "Security"]
+    amenities: [
+      "WiFi",
+      "Laundry",
+      "CCTV",
+      "Power Backup",
+      "Lift",
+      "Mess",
+      "RO Water",
+      "Geyser",
+      "Security",
+    ],
   });
 
   const [roomConfig, setRoomConfig] = useState({
@@ -106,21 +126,29 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     roomsPerFloor: 4,
     roomType: "DOUBLE",
     customCapacity: 2,
-    rentAmount: 8500
+    rentAmount: 8500,
   });
 
   const [_photos, _setPhotos] = useState({
-    roomPhotos: ["https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800"],
-    buildingPhotos: ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800"],
+    roomPhotos: [
+      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+    ],
+    buildingPhotos: [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+    ],
     fireSafetyCert: "#",
     tradeLicense: "#",
-    propertyTaxReceipt: "#"
+    propertyTaxReceipt: "#",
   });
 
   const [subscription, setSubscription] = useState({
     planType: "PROFESSIONAL",
-    paymentTxnId: "TXN_SUB_891238"
+    paymentTxnId: "TXN_SUB_891238",
   });
+  const [submitState, setSubmitState] = useState<
+    "idle" | "submitting" | "done" | "error"
+  >("idle");
+  const [submitError, setSubmitError] = useState("");
 
   const calculateAge = (dobString: string) => {
     if (!dobString) return 0;
@@ -145,18 +173,62 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmitAll = async () => {
+  const resolveOwnerId = async (): Promise<string> => {
+    const storageKey = "roombaeOwnerId";
+    const storedId = localStorage.getItem(storageKey);
+    if (storedId) return storedId;
+
     try {
+      const currentUser: any = await authService.getCurrentUser();
+      const user = currentUser?.user || currentUser || {};
+      if (user.id) {
+        localStorage.setItem(storageKey, user.id);
+        return user.id;
+      }
+    } catch {}
+
+    return "650000000000000000000001";
+  };
+
+  const handleSubmitAll = async () => {
+    setSubmitState("submitting");
+    setSubmitError("");
+    try {
+      const ownerId = await resolveOwnerId();
+      await ownerService.runFullOnboarding({
+        ownerId,
+        personal,
+        kyc,
+        business,
+        bank,
+        property,
+        location,
+        building: { ...building, amenitiesList: building.amenities },
+        roomConfig,
+        subscription,
+      });
+      setSubmitState("done");
       onSuccess?.();
-      onClose();
-    } catch (e) {
-      console.error(e);
+      setTimeout(() => onClose(), 800);
+    } catch (e: any) {
+      setSubmitState("error");
+      setSubmitError(
+        e?.message ||
+          "Onboarding submission failed. Please check your connection and try again.",
+      );
+      console.error("Onboarding submission error:", e);
     }
   };
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const cardBg = darkMode ? "bg-neutral-950/80 border-white/10 text-white" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
-  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
+  const modalBg = darkMode
+    ? "bg-neutral-900 border-white/10 text-white"
+    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
+  const cardBg = darkMode
+    ? "bg-neutral-950/80 border-white/10 text-white"
+    : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
+  const inputBg = darkMode
+    ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500"
+    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
   const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
 
   const stepTitles = [
@@ -169,29 +241,42 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     "Building & Amenities",
     "Floor & Room Config",
     "Photos & Legal Docs",
-    "Subscription Plan"
+    "Subscription Plan",
   ];
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" data-lenis-prevent>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+        data-lenis-prevent
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className={`w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-3xl border flex flex-col shadow-2xl ${modalBg}`}
         >
-          <div className={`p-6 border-b flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+          <div
+            className={`p-6 border-b flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}
+          >
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
                   Step {currentStep} of {totalSteps}
                 </span>
-                <h2 className="text-lg md:text-xl font-black">{stepTitles[currentStep - 1]}</h2>
+                <h2 className="text-lg md:text-xl font-black">
+                  {stepTitles[currentStep - 1]}
+                </h2>
               </div>
-              <p className={`text-xs ${textMuted} mt-1`}>Complete commercial PG onboarding wizard for instant listing verification</p>
+              <p className={`text-xs ${textMuted} mt-1`}>
+                Complete commercial PG onboarding wizard for instant listing
+                verification
+              </p>
             </div>
-            <button onClick={onClose} className={`p-2 rounded-full cursor-pointer ${darkMode ? "bg-white/10 text-neutral-400 hover:text-white" : "bg-[#E6D7CA] text-[#6E5A52] hover:text-[#3B2A24]"}`}>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-full cursor-pointer ${darkMode ? "bg-white/10 text-neutral-400 hover:text-white" : "bg-[#E6D7CA] text-[#6E5A52] hover:text-[#3B2A24]"}`}
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -203,7 +288,10 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             />
           </div>
 
-          <div className="p-6 overflow-y-auto flex-1 space-y-6 text-xs" data-lenis-prevent>
+          <div
+            className="p-6 overflow-y-auto flex-1 space-y-6 text-xs"
+            data-lenis-prevent
+          >
             {currentStep === 1 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -212,17 +300,23 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     <input
                       type="text"
                       value={personal.fullName}
-                      onChange={(e) => setPersonal({ ...personal, fullName: e.target.value })}
+                      onChange={(e) =>
+                        setPersonal({ ...personal, fullName: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">DATE OF BIRTH &amp; AGE</label>
+                    <label className="block font-bold mb-1">
+                      DATE OF BIRTH &amp; AGE
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="date"
                         value={personal.dob}
-                        onChange={(e) => setPersonal({ ...personal, dob: e.target.value })}
+                        onChange={(e) =>
+                          setPersonal({ ...personal, dob: e.target.value })
+                        }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
                       <span className="px-3 py-3 rounded-xl bg-amber-500/20 text-amber-500 font-bold flex items-center whitespace-nowrap">
@@ -231,12 +325,16 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">CONTACT PHONE (OTP VERIFIED)</label>
+                    <label className="block font-bold mb-1">
+                      CONTACT PHONE (OTP VERIFIED)
+                    </label>
                     <div className="relative">
                       <input
                         type="text"
                         value={personal.phone}
-                        onChange={(e) => setPersonal({ ...personal, phone: e.target.value })}
+                        onChange={(e) =>
+                          setPersonal({ ...personal, phone: e.target.value })
+                        }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
                       <span className="absolute right-3 top-3 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
@@ -245,12 +343,16 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">EMAIL ADDRESS (VERIFIED)</label>
+                    <label className="block font-bold mb-1">
+                      EMAIL ADDRESS (VERIFIED)
+                    </label>
                     <div className="relative">
                       <input
                         type="email"
                         value={personal.email}
-                        onChange={(e) => setPersonal({ ...personal, email: e.target.value })}
+                        onChange={(e) =>
+                          setPersonal({ ...personal, email: e.target.value })
+                        }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
                       <span className="absolute right-3 top-3 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
@@ -259,11 +361,15 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     </div>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block font-bold mb-1">RESIDENTIAL ADDRESS</label>
+                    <label className="block font-bold mb-1">
+                      RESIDENTIAL ADDRESS
+                    </label>
                     <input
                       type="text"
                       value={personal.address}
-                      onChange={(e) => setPersonal({ ...personal, address: e.target.value })}
+                      onChange={(e) =>
+                        setPersonal({ ...personal, address: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
@@ -273,41 +379,59 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
 
             {currentStep === 2 && (
               <div className="space-y-4 animate-fade-in">
-                <div className={`p-4 rounded-2xl border flex items-center gap-3 ${darkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-[#F8EEE5] border-[#D9A87C] text-[#3B2A24]"}`}>
+                <div
+                  className={`p-4 rounded-2xl border flex items-center gap-3 ${darkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-[#F8EEE5] border-[#D9A87C] text-[#3B2A24]"}`}
+                >
                   <ShieldCheck className="w-6 h-6 flex-shrink-0" />
                   <div>
-                    <p className="font-bold">Govt Identity &amp; Biometric Live Verification</p>
-                    <p className="text-[11px] opacity-80">Upload Aadhaar, PAN, and complete instant face check</p>
+                    <p className="font-bold">
+                      Govt Identity &amp; Biometric Live Verification
+                    </p>
+                    <p className="text-[11px] opacity-80">
+                      Upload Aadhaar, PAN, and complete instant face check
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-bold mb-1">AADHAAR NUMBER</label>
+                    <label className="block font-bold mb-1">
+                      AADHAAR NUMBER
+                    </label>
                     <input
                       type="text"
                       value={kyc.aadhaarNumber}
-                      onChange={(e) => setKyc({ ...kyc, aadhaarNumber: e.target.value })}
+                      onChange={(e) =>
+                        setKyc({ ...kyc, aadhaarNumber: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">PAN CARD NUMBER</label>
+                    <label className="block font-bold mb-1">
+                      PAN CARD NUMBER
+                    </label>
                     <input
                       type="text"
                       value={kyc.panNumber}
-                      onChange={(e) => setKyc({ ...kyc, panNumber: e.target.value })}
+                      onChange={(e) =>
+                        setKyc({ ...kyc, panNumber: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                 </div>
 
-                <div className={`p-5 rounded-2xl border flex items-center justify-between ${cardBg}`}>
+                <div
+                  className={`p-5 rounded-2xl border flex items-center justify-between ${cardBg}`}
+                >
                   <div className="flex items-center gap-3">
                     <Camera className="w-6 h-6 text-amber-500" />
                     <div>
                       <p className="font-bold">Live AI Face Verification</p>
-                      <p className={`text-[11px] ${textMuted}`}>Matches owner selfie against uploaded Aadhaar card</p>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Matches owner selfie against uploaded Aadhaar card
+                      </p>
                     </div>
                   </div>
                   <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-500 font-bold border border-emerald-500/30 flex items-center gap-1">
@@ -321,43 +445,74 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-bold mb-1">BUSINESS NAME</label>
+                    <label className="block font-bold mb-1">
+                      BUSINESS NAME
+                    </label>
                     <input
                       type="text"
                       value={business.businessName}
-                      onChange={(e) => setBusiness({ ...business, businessName: e.target.value })}
+                      onChange={(e) =>
+                        setBusiness({
+                          ...business,
+                          businessName: e.target.value,
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">BUSINESS ENTITY TYPE</label>
+                    <label className="block font-bold mb-1">
+                      BUSINESS ENTITY TYPE
+                    </label>
                     <select
                       value={business.businessType}
-                      onChange={(e) => setBusiness({ ...business, businessType: e.target.value })}
+                      onChange={(e) =>
+                        setBusiness({
+                          ...business,
+                          businessType: e.target.value,
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     >
-                      <option value="INDIVIDUAL">Individual / Sole Proprietorship</option>
+                      <option value="INDIVIDUAL">
+                        Individual / Sole Proprietorship
+                      </option>
                       <option value="PARTNERSHIP">Partnership Firm</option>
-                      <option value="LLP">Limited Liability Partnership (LLP)</option>
-                      <option value="PVT_LIMITED">Private Limited (Pvt Ltd)</option>
+                      <option value="LLP">
+                        Limited Liability Partnership (LLP)
+                      </option>
+                      <option value="PVT_LIMITED">
+                        Private Limited (Pvt Ltd)
+                      </option>
                       <option value="TRUST">Trust / Society</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">GSTIN NUMBER (VALIDATED)</label>
+                    <label className="block font-bold mb-1">
+                      GSTIN NUMBER (VALIDATED)
+                    </label>
                     <input
                       type="text"
                       value={business.gstin}
-                      onChange={(e) => setBusiness({ ...business, gstin: e.target.value })}
+                      onChange={(e) =>
+                        setBusiness({ ...business, gstin: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">TRADE LICENSE NUMBER</label>
+                    <label className="block font-bold mb-1">
+                      TRADE LICENSE NUMBER
+                    </label>
                     <input
                       type="text"
                       value={business.registrationNumber}
-                      onChange={(e) => setBusiness({ ...business, registrationNumber: e.target.value })}
+                      onChange={(e) =>
+                        setBusiness({
+                          ...business,
+                          registrationNumber: e.target.value,
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
@@ -373,52 +528,77 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     <input
                       type="text"
                       value={bank.bankName}
-                      onChange={(e) => setBank({ ...bank, bankName: e.target.value })}
+                      onChange={(e) =>
+                        setBank({ ...bank, bankName: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">ACCOUNT HOLDER NAME</label>
+                    <label className="block font-bold mb-1">
+                      ACCOUNT HOLDER NAME
+                    </label>
                     <input
                       type="text"
                       value={bank.accountHolderName}
-                      onChange={(e) => setBank({ ...bank, accountHolderName: e.target.value })}
+                      onChange={(e) =>
+                        setBank({ ...bank, accountHolderName: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">ACCOUNT NUMBER</label>
+                    <label className="block font-bold mb-1">
+                      ACCOUNT NUMBER
+                    </label>
                     <input
                       type="password"
                       value={bank.accountNumber}
-                      onChange={(e) => setBank({ ...bank, accountNumber: e.target.value })}
+                      onChange={(e) =>
+                        setBank({ ...bank, accountNumber: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">CONFIRM ACCOUNT NUMBER</label>
+                    <label className="block font-bold mb-1">
+                      CONFIRM ACCOUNT NUMBER
+                    </label>
                     <input
                       type="text"
                       value={bank.confirmAccountNumber}
-                      onChange={(e) => setBank({ ...bank, confirmAccountNumber: e.target.value })}
+                      onChange={(e) =>
+                        setBank({
+                          ...bank,
+                          confirmAccountNumber: e.target.value,
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">IFSC CODE (VALIDATED)</label>
+                    <label className="block font-bold mb-1">
+                      IFSC CODE (VALIDATED)
+                    </label>
                     <input
                       type="text"
                       value={bank.ifscCode}
-                      onChange={(e) => setBank({ ...bank, ifscCode: e.target.value })}
+                      onChange={(e) =>
+                        setBank({ ...bank, ifscCode: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">UPI ID FOR INSTANT PAYOUTS</label>
+                    <label className="block font-bold mb-1">
+                      UPI ID FOR INSTANT PAYOUTS
+                    </label>
                     <input
                       type="text"
                       value={bank.upiId}
-                      onChange={(e) => setBank({ ...bank, upiId: e.target.value })}
+                      onChange={(e) =>
+                        setBank({ ...bank, upiId: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
@@ -430,19 +610,30 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-bold mb-1">PG / PROPERTY NAME</label>
+                    <label className="block font-bold mb-1">
+                      PG / PROPERTY NAME
+                    </label>
                     <input
                       type="text"
                       value={property.pgName}
-                      onChange={(e) => setProperty({ ...property, pgName: e.target.value })}
+                      onChange={(e) =>
+                        setProperty({ ...property, pgName: e.target.value })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">PROPERTY TYPE</label>
+                    <label className="block font-bold mb-1">
+                      PROPERTY TYPE
+                    </label>
                     <select
                       value={property.propertyType}
-                      onChange={(e) => setProperty({ ...property, propertyType: e.target.value })}
+                      onChange={(e) =>
+                        setProperty({
+                          ...property,
+                          propertyType: e.target.value,
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     >
                       <option value="PG">Hostel / Executive PG</option>
@@ -452,20 +643,34 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">RENT STARTING FROM (₹/MO)</label>
+                    <label className="block font-bold mb-1">
+                      RENT STARTING FROM (₹/MO)
+                    </label>
                     <input
                       type="number"
                       value={property.rentStartingFrom}
-                      onChange={(e) => setProperty({ ...property, rentStartingFrom: parseFloat(e.target.value) })}
+                      onChange={(e) =>
+                        setProperty({
+                          ...property,
+                          rentStartingFrom: parseFloat(e.target.value),
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">REFUNDABLE SECURITY DEPOSIT (₹)</label>
+                    <label className="block font-bold mb-1">
+                      REFUNDABLE SECURITY DEPOSIT (₹)
+                    </label>
                     <input
                       type="number"
                       value={property.securityDeposit}
-                      onChange={(e) => setProperty({ ...property, securityDeposit: parseFloat(e.target.value) })}
+                      onChange={(e) =>
+                        setProperty({
+                          ...property,
+                          securityDeposit: parseFloat(e.target.value),
+                        })
+                      }
                       className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                     />
                   </div>
@@ -475,12 +680,16 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
 
             {currentStep === 6 && (
               <div className="space-y-4 animate-fade-in">
-                <div className={`p-4 rounded-2xl border flex items-center justify-between ${cardBg}`}>
+                <div
+                  className={`p-4 rounded-2xl border flex items-center justify-between ${cardBg}`}
+                >
                   <div className="flex items-center gap-3">
                     <MapPin className="w-6 h-6 text-amber-500" />
                     <div>
                       <p className="font-bold">Google Maps Geolocation Pin</p>
-                      <p className={`text-[11px] ${textMuted}`}>Lat: {location.latitude}, Lng: {location.longitude}</p>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        Lat: {location.latitude}, Lng: {location.longitude}
+                      </p>
                     </div>
                   </div>
                   <button className="px-4 py-2 rounded-xl bg-amber-500 text-black font-bold text-xs">
@@ -496,7 +705,20 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             {currentStep === 7 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {["WiFi", "AC", "Mess Food", "Laundry", "CCTV", "Power Backup", "Lift", "RO Water", "Geyser", "Gym", "Parking", "Security Guard"].map((amenity) => (
+                  {[
+                    "WiFi",
+                    "AC",
+                    "Mess Food",
+                    "Laundry",
+                    "CCTV",
+                    "Power Backup",
+                    "Lift",
+                    "RO Water",
+                    "Geyser",
+                    "Gym",
+                    "Parking",
+                    "Security Guard",
+                  ].map((amenity) => (
                     <button
                       key={amenity}
                       onClick={() => {
@@ -505,7 +727,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                           ...building,
                           amenities: exists
                             ? building.amenities.filter((a) => a !== amenity)
-                            : [...building.amenities, amenity]
+                            : [...building.amenities, amenity],
                         });
                       }}
                       className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
@@ -524,42 +746,73 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             {currentStep === 8 && (
               <div className="space-y-4 animate-fade-in">
                 <div className={`p-5 rounded-2xl border space-y-3 ${cardBg}`}>
-                  <h4 className="font-bold uppercase text-amber-500">Automated Room &amp; Bed Generator</h4>
+                  <h4 className="font-bold uppercase text-amber-500">
+                    Automated Room &amp; Bed Generator
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block font-bold mb-1">TOTAL FLOORS</label>
+                      <label className="block font-bold mb-1">
+                        TOTAL FLOORS
+                      </label>
                       <input
                         type="number"
                         value={roomConfig.floorsCount}
-                        onChange={(e) => setRoomConfig({ ...roomConfig, floorsCount: parseInt(e.target.value) })}
+                        onChange={(e) =>
+                          setRoomConfig({
+                            ...roomConfig,
+                            floorsCount: parseInt(e.target.value),
+                          })
+                        }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
                     </div>
                     <div>
-                      <label className="block font-bold mb-1">ROOMS PER FLOOR</label>
+                      <label className="block font-bold mb-1">
+                        ROOMS PER FLOOR
+                      </label>
                       <input
                         type="number"
                         value={roomConfig.roomsPerFloor}
-                        onChange={(e) => setRoomConfig({ ...roomConfig, roomsPerFloor: parseInt(e.target.value) })}
+                        onChange={(e) =>
+                          setRoomConfig({
+                            ...roomConfig,
+                            roomsPerFloor: parseInt(e.target.value),
+                          })
+                        }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
                     </div>
                     <div>
-                      <label className="block font-bold mb-1">DEFAULT SHARING</label>
+                      <label className="block font-bold mb-1">
+                        DEFAULT SHARING
+                      </label>
                       <select
                         value={roomConfig.roomType}
-                        onChange={(e) => setRoomConfig({ ...roomConfig, roomType: e.target.value as any })}
+                        onChange={(e) =>
+                          setRoomConfig({
+                            ...roomConfig,
+                            roomType: e.target.value as any,
+                          })
+                        }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       >
                         <option value="SINGLE">Single Sharing (1 Bed)</option>
                         <option value="DOUBLE">Double Sharing (2 Beds)</option>
                         <option value="TRIPLE">Triple Sharing (3 Beds)</option>
-                        <option value="FOUR_SHARING">Four Sharing (4 Beds)</option>
+                        <option value="FOUR_SHARING">
+                          Four Sharing (4 Beds)
+                        </option>
                       </select>
                     </div>
                   </div>
                   <p className="text-[11px] text-emerald-500 font-semibold pt-2">
-                    ⚡ Will generate {roomConfig.floorsCount * roomConfig.roomsPerFloor} Rooms and {roomConfig.floorsCount * roomConfig.roomsPerFloor * (roomConfig.roomType === "SINGLE" ? 1 : 2)} Beds in real time.
+                    ⚡ Will generate{" "}
+                    {roomConfig.floorsCount * roomConfig.roomsPerFloor} Rooms
+                    and{" "}
+                    {roomConfig.floorsCount *
+                      roomConfig.roomsPerFloor *
+                      (roomConfig.roomType === "SINGLE" ? 1 : 2)}{" "}
+                    Beds in real time.
                   </p>
                 </div>
               </div>
@@ -570,14 +823,18 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`p-4 rounded-2xl border space-y-2 ${cardBg}`}>
                     <p className="font-bold">Property Ownership Proof</p>
-                    <p className={`text-[11px] ${textMuted}`}>Upload Property Tax Receipt / Ownership Deed</p>
+                    <p className={`text-[11px] ${textMuted}`}>
+                      Upload Property Tax Receipt / Ownership Deed
+                    </p>
                     <button className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-bold">
                       Upload Document 📂
                     </button>
                   </div>
                   <div className={`p-4 rounded-2xl border space-y-2 ${cardBg}`}>
                     <p className="font-bold">Fire Safety &amp; Municipal NOC</p>
-                    <p className={`text-[11px] ${textMuted}`}>Required for commercial PG licensing</p>
+                    <p className={`text-[11px] ${textMuted}`}>
+                      Required for commercial PG licensing
+                    </p>
                     <button className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-bold">
                       Upload NOC 📂
                     </button>
@@ -590,14 +847,39 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {[
-                    { type: "STARTER", price: "₹999/mo", cap: "Up to 30 Residents", props: "1 Property" },
-                    { type: "PROFESSIONAL", price: "₹2,499/mo", cap: "Up to 100 Residents", props: "3 Properties" },
-                    { type: "BUSINESS", price: "₹4,999/mo", cap: "Up to 300 Residents", props: "10 Properties" },
-                    { type: "ENTERPRISE", price: "₹9,999/mo", cap: "Unlimited Residents", props: "Unlimited Properties" }
+                    {
+                      type: "STARTER",
+                      price: "₹999/mo",
+                      cap: "Up to 30 Residents",
+                      props: "1 Property",
+                    },
+                    {
+                      type: "PROFESSIONAL",
+                      price: "₹2,499/mo",
+                      cap: "Up to 100 Residents",
+                      props: "3 Properties",
+                    },
+                    {
+                      type: "BUSINESS",
+                      price: "₹4,999/mo",
+                      cap: "Up to 300 Residents",
+                      props: "10 Properties",
+                    },
+                    {
+                      type: "ENTERPRISE",
+                      price: "₹9,999/mo",
+                      cap: "Unlimited Residents",
+                      props: "Unlimited Properties",
+                    },
                   ].map((plan) => (
                     <button
                       key={plan.type}
-                      onClick={() => setSubscription({ ...subscription, planType: plan.type })}
+                      onClick={() =>
+                        setSubscription({
+                          ...subscription,
+                          planType: plan.type,
+                        })
+                      }
                       className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
                         subscription.planType === plan.type
                           ? "bg-amber-500/20 border-amber-500 text-amber-500 shadow-xl font-bold"
@@ -605,7 +887,9 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                       }`}
                     >
                       <h4 className="font-black text-sm">{plan.type}</h4>
-                      <p className="text-lg font-black text-emerald-500 my-1">{plan.price}</p>
+                      <p className="text-lg font-black text-emerald-500 my-1">
+                        {plan.price}
+                      </p>
                       <p className="text-[10px]">{plan.cap}</p>
                       <p className="text-[10px]">{plan.props}</p>
                     </button>
@@ -615,7 +899,9 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             )}
           </div>
 
-          <div className={`p-4 border-t flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+          <div
+            className={`p-4 border-t flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}
+          >
             <button
               onClick={prevStep}
               disabled={currentStep === 1}
@@ -634,10 +920,24 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             ) : (
               <button
                 onClick={handleSubmitAll}
-                className="px-8 py-2.5 rounded-xl bg-emerald-500 text-black font-extrabold text-xs flex items-center gap-1 cursor-pointer shadow-lg shadow-emerald-500/20"
+                disabled={submitState === "submitting"}
+                className="px-8 py-2.5 rounded-xl bg-emerald-500 text-black font-extrabold text-xs flex items-center gap-1 cursor-pointer shadow-lg shadow-emerald-500/20 disabled:opacity-60"
               >
-                Submit for Verification &amp; Publish Listing 🚀
+                {submitState === "submitting" ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Submitting...
+                  </>
+                ) : submitState === "done" ? (
+                  "✓ Submitted & Published!"
+                ) : (
+                  "Submit for Verification & Publish Listing 🚀"
+                )}
               </button>
+            )}
+            {submitError && (
+              <p className="text-[11px] font-bold text-rose-400 w-full text-center pt-1">
+                {submitError}
+              </p>
             )}
           </div>
         </motion.div>

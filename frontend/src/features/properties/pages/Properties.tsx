@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Building2, Plus, MapPin, BedDouble, X, Star } from "lucide-react";
+import {
+  Building2,
+  Plus,
+  MapPin,
+  BedDouble,
+  X,
+  Star,
+  Loader2,
+} from "lucide-react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
 import type { Page } from "../../../App";
 import { useTheme } from "../../../theme";
@@ -30,7 +38,49 @@ export default function Properties({ navigate }: Props) {
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [beds, setBeds] = useState(emptyBedGrid);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState("");
   const { darkMode } = useTheme();
+
+  // Add Property form state
+  const [form, setForm] = useState({
+    name: "",
+    address: "",
+    city: "",
+    pincode: "",
+    buildingName: "Main Block",
+    floorsCount: 3,
+    roomsPerFloor: 4,
+    sharingType: "DOUBLE",
+    rentAmount: 8500,
+    totalBeds: 24,
+  });
+
+  const updateForm = (key: string, value: any) => {
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (
+        key === "floorsCount" ||
+        key === "roomsPerFloor" ||
+        key === "sharingType"
+      ) {
+        const bedsPerRoom =
+          next.sharingType === "SINGLE"
+            ? 1
+            : next.sharingType === "TRIPLE"
+              ? 3
+              : next.sharingType === "FOUR_SHARING"
+                ? 4
+                : 2;
+        next.totalBeds =
+          (Number(next.floorsCount) || 0) *
+          (Number(next.roomsPerFloor) || 0) *
+          bedsPerRoom;
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -384,45 +434,169 @@ export default function Properties({ navigate }: Props) {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {[
-                {
-                  label: "Property Name",
-                  placeholder: "e.g. Sunrise PG Homes",
-                },
-                { label: "Address", placeholder: "Full address" },
-                { label: "City", placeholder: "e.g. Bengaluru" },
-              ].map((f) => (
-                <div key={f.label}>
+              {saveError && (
+                <div className="p-3 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold">
+                  {saveError}
+                </div>
+              )}
+              {saveSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
+                  {saveSuccess}
+                </div>
+              )}
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                >
+                  Property Name *
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => updateForm("name", e.target.value)}
+                  placeholder="e.g. Sunrise PG Homes"
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                >
+                  Address *
+                </label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={(e) => updateForm("address", e.target.value)}
+                  placeholder="Full address"
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label
                     className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
                   >
-                    {f.label}
+                    City *
                   </label>
                   <input
                     type="text"
-                    placeholder={f.placeholder}
+                    value={form.city}
+                    onChange={(e) => updateForm("city", e.target.value)}
+                    placeholder="e.g. Bengaluru"
                     className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                   />
                 </div>
-              ))}
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
+                    PIN Code
+                  </label>
+                  <input
+                    type="text"
+                    value={form.pincode}
+                    onChange={(e) => updateForm("pincode", e.target.value)}
+                    placeholder="560038"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                >
+                  Building Name
+                </label>
+                <input
+                  type="text"
+                  value={form.buildingName}
+                  onChange={(e) => updateForm("buildingName", e.target.value)}
+                  placeholder="e.g. Main Block"
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "Total Beds", placeholder: "e.g. 40" },
-                  { label: "Total Floors", placeholder: "e.g. 3" },
-                ].map((f) => (
-                  <div key={f.label}>
-                    <label
-                      className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
-                    >
-                      {f.label}
-                    </label>
-                    <input
-                      type="number"
-                      placeholder={f.placeholder}
-                      className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
-                    />
-                  </div>
-                ))}
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
+                    Floors Count *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.floorsCount}
+                    onChange={(e) =>
+                      updateForm("floorsCount", parseInt(e.target.value) || 0)
+                    }
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
+                    Rooms per Floor *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={form.roomsPerFloor}
+                    onChange={(e) =>
+                      updateForm("roomsPerFloor", parseInt(e.target.value) || 0)
+                    }
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
+                    Sharing Type *
+                  </label>
+                  <select
+                    value={form.sharingType}
+                    onChange={(e) => updateForm("sharingType", e.target.value)}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                  >
+                    <option value="SINGLE">Single Sharing</option>
+                    <option value="DOUBLE">Double Sharing (2)</option>
+                    <option value="TRIPLE">Triple Sharing (3)</option>
+                    <option value="FOUR_SHARING">Four Sharing (4)</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-1.5 ${darkMode ? "text-slate-300" : "text-slate-700"}`}
+                  >
+                    Rent / Month (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.rentAmount}
+                    onChange={(e) =>
+                      updateForm("rentAmount", parseFloat(e.target.value) || 0)
+                    }
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A87C] dark:focus:ring-[#C89A4B] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                  />
+                </div>
+              </div>
+
+              <div
+                className={`p-3 rounded-xl text-center text-sm font-bold ${darkMode ? "bg-slate-700 text-[#C89A4B]" : "bg-slate-50 text-[#C58B63]"}`}
+              >
+                ⏱ Will generate {form.floorsCount * form.roomsPerFloor} Rooms &{" "}
+                {form.totalBeds} Beds
               </div>
             </div>
             <div
@@ -437,30 +611,101 @@ export default function Properties({ navigate }: Props) {
               </button>
               <button
                 type="button"
+                disabled={saving}
                 onClick={async () => {
+                  setSaving(true);
+                  setSaveError("");
+                  setSaveSuccess("");
                   try {
-                    await api
-                      .createProperty({
-                        name: "Sunrise PG Haven",
-                        address: "100 Feet Road, Indiranagar",
-                        city: "Bengaluru",
-                        pincode: "560038",
-                        latitude: 12.9716,
-                        longitude: 77.5946,
-                        totalRooms: 10,
-                        totalBeds: 20,
-                        amenities: ["WiFi", "Meals", "Security"],
-                        images: [
-                          "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=220&fit=crop&auto=format",
-                        ],
-                      })
-                      .catch(() => {});
-                  } catch (e) {}
-                  setShowModal(false);
+                    if (
+                      !form.name ||
+                      !form.address ||
+                      !form.city ||
+                      form.floorsCount <= 0 ||
+                      form.roomsPerFloor <= 0
+                    ) {
+                      setSaveError(
+                        "Please fill all required fields (name, address, city, floors, rooms).",
+                      );
+                      setSaving(false);
+                      return;
+                    }
+                    const bedsPerRoom =
+                      form.sharingType === "SINGLE"
+                        ? 1
+                        : form.sharingType === "TRIPLE"
+                          ? 3
+                          : form.sharingType === "FOUR_SHARING"
+                            ? 4
+                            : 2;
+                    const totalBeds =
+                      form.floorsCount * form.roomsPerFloor * bedsPerRoom;
+
+                    // Create the PG property
+                    const created = await api.createProperty({
+                      name: form.name,
+                      address: form.address,
+                      city: form.city,
+                      pincode: form.pincode || "560038",
+                      latitude: 12.9716,
+                      longitude: 77.5946,
+                      totalRooms: form.floorsCount * form.roomsPerFloor,
+                      totalBeds,
+                      rentStartingFrom: form.rentAmount,
+                      amenities: ["WiFi", "Meals", "Security"],
+                      images: [
+                        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=220&fit=crop&auto=format",
+                      ],
+                    });
+                    const pgId = created?.id || created?.data?.id;
+
+                    // Configure building + floors + rooms + beds in bulk
+                    if (pgId) {
+                      await api.post(`/owners/property/${pgId}/building`, {
+                        buildingName: form.buildingName,
+                        floorsCount: form.floorsCount,
+                        amenitiesList: ["WiFi", "CCTV", "Security"],
+                        caretakerName: "",
+                        caretakerPhone: "",
+                      });
+                      await api.post(`/owners/property/${pgId}/rooms/batch`, {
+                        floorsCount: form.floorsCount,
+                        roomsPerFloor: form.roomsPerFloor,
+                        roomType: form.sharingType,
+                        customCapacity: bedsPerRoom,
+                        rentAmount: form.rentAmount,
+                      });
+                    }
+
+                    setSaveSuccess(
+                      "✅ Property created successfully! Rooms & beds generated.",
+                    );
+                    setShowModal(false);
+                    // Refresh list
+                    const res = await api.getPublicProperties({ limit: 10 });
+                    const list = Array.isArray(res?.properties)
+                      ? res.properties
+                      : [];
+                    setProperties(list);
+                    if (list.length > 0) setSelectedProperty(list[0]);
+                  } catch (e: any) {
+                    setSaveError(
+                      e?.message ||
+                        "Failed to create property. Please check the backend connection.",
+                    );
+                  } finally {
+                    setSaving(false);
+                  }
                 }}
-                className="flex-1 py-2.5 rounded-xl luxury-btn-primary text-sm font-semibold transition-colors"
+                className="flex-1 py-2.5 rounded-xl luxury-btn-primary text-sm font-semibold transition-colors flex items-center justify-center gap-2"
               >
-                Add Property
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Add Property"
+                )}
               </button>
             </div>
           </div>

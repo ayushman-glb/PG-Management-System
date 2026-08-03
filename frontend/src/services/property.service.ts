@@ -72,7 +72,7 @@ export class PropertyService {
   }
 
   async getOwnerSummary() {
-    const res = await this.request("/properties/owner/summary");
+    const res = await this.request("/properties/owner-summary");
     return res.data;
   }
 }

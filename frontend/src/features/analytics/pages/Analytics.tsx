@@ -130,6 +130,7 @@ const heatmapData = [
 export default function Analytics({ navigate }: Props) {
   const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "1y">("30d");
   const [revenueData, setRevenueData] = useState<any[]>(fallbackRevenueData);
+  const [summary, setSummary] = useState<any>(null);
   const { darkMode } = useTheme();
 
   useEffect(() => {
@@ -138,10 +139,17 @@ export default function Analytics({ navigate }: Props) {
       .then((response) => {
         const payload = Array.isArray(response)
           ? response
-          : Array.isArray((response as any)?.data)
-            ? (response as any).data
-            : null;
-        if (payload) setRevenueData(payload);
+          : (response as any)?.data || (response as any)?.revenueData || null;
+        const summaryData =
+          (response as any)?.summary ||
+          (response as any)?.data?.summary ||
+          null;
+        if (Array.isArray(payload)) {
+          setRevenueData(payload);
+        } else if (Array.isArray(payload?.revenueData)) {
+          setRevenueData(payload.revenueData);
+        }
+        if (summaryData) setSummary(summaryData);
       })
       .catch(() => {
         setRevenueData(fallbackRevenueData);
@@ -156,9 +164,11 @@ export default function Analytics({ navigate }: Props) {
   const firstValue = revenueData[0]?.revenue ?? 0;
   const growthPct =
     firstValue > 0 ? ((lastValue - firstValue) / firstValue) * 100 : 0;
-  const occupancyValue = revenueData.length
-    ? `${Math.min(100, Math.max(60, Math.round((lastValue / Math.max(1, totalRevenue / revenueData.length)) * 16 + 70)))}%`
-    : "0%";
+  const occupancyValue = summary
+    ? `${summary.occupancyRatePercent ?? 0}%`
+    : revenueData.length
+      ? `${Math.min(100, Math.max(60, Math.round((lastValue / Math.max(1, totalRevenue / revenueData.length)) * 16 + 70)))}%`
+      : "0%";
 
   return (
     <DashboardLayout navigate={navigate} activePage="analytics">

@@ -2,7 +2,7 @@ import { api } from "./api";
 
 export class AnalyticsService {
   async getDashboardOverview() {
-    return api.get("/analytics/dashboard");
+    return api.get("/analytics/revenue");
   }
 
   async getRevenueStats(period: string = "monthly") {
@@ -10,7 +10,11 @@ export class AnalyticsService {
   }
 
   async getOccupancyStats() {
-    return api.get("/analytics/occupancy");
+    return api.get("/analytics/revenue");
+  }
+
+  async getByPg(pgId: string) {
+    return api.get(`/analytics/pg/${pgId}`);
   }
 }
 
