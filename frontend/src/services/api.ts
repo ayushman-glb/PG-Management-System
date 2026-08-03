@@ -1,10 +1,13 @@
-/**
- * RoomBae Enterprise API Client
- * Connects frontend React components seamlessly to the Express REST API (/api/v1)
- * Set VITE_API_URL in your .env.local to override the default localhost URL.
- */
-
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api/v1';
+import { API_CONFIG } from "@config/api";
+import { authService } from "./auth.service";
+import { propertyService } from "./property.service";
+import { residentService } from "./resident.service";
+import { billingService } from "./billing.service";
+import { complaintService } from "./complaint.service";
+import { roomService } from "./room.service";
+import { bedService } from "./bed.service";
+import { visitorService } from "./visitor.service";
+import { agreementService } from "./agreement.service";
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -14,34 +17,9 @@ export interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  private getToken(): string | null {
-    try {
-      return localStorage.getItem("accessToken");
-    } catch {
-      return null;
-    }
-  }
-
-  public setToken(token: string) {
-    try {
-      localStorage.setItem("accessToken", token);
-    } catch (e) {}
-  }
-
-  public clearToken() {
-    try {
-      localStorage.removeItem("accessToken");
-    } catch (e) {}
-  }
-
-  public async request<T = any>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-
-    const token = this.getToken();
+  public async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const token = typeof localStorage !== "undefined" ? (localStorage.getItem("accessToken") || localStorage.getItem("token")) : null;
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
 
@@ -49,299 +27,91 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    try {
-      const response = await fetch(`${API_BASE}${endpoint}`, {
-        ...options,
-        headers,
-        credentials: "include",
-      });
+    const res = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "An API request error occurred");
-      }
-
-      return data;
-    } catch (error: any) {
-      console.warn(`[API] Endpoint ${endpoint} request failed:`, error.message);
-      throw error;
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP Error ${res.status}`);
     }
+
+    return res.json();
   }
 
-  // --- Auth APIs ---
-  async login(identifier: string, password: string) {
-    const res = await this.request("/auth/login", {
+  public get<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: "GET" });
+  }
+
+  public post<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+    const body = isFormData ? data : JSON.stringify(data);
+    const headers: Record<string, string> = isFormData ? {} : { "Content-Type": "application/json" };
+    return this.request<T>(endpoint, {
+      ...options,
       method: "POST",
-      body: JSON.stringify({ identifier, password }),
+      body,
+      headers: { ...headers, ...(options?.headers as Record<string, string>) },
     });
-    if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
-    }
-    return res.data;
   }
 
-  async register(data: { name: string; email: string; password: string; role?: string; phone?: string }) {
-    const res = await this.request("/auth/register", {
-      method: "POST",
+  public put<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: "PUT",
       body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json", ...(options?.headers as Record<string, string>) },
     });
-    if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
-    }
-    return res.data;
   }
 
-  async sendOtp(email: string) {
-    const res = await this.request("/auth/send-otp", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-    return res.data;
+  public delete<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
 
-  async verifyOtp(email: string, otp: string) {
-    const res = await this.request("/auth/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ email, otp }),
-    });
-    if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
-    }
-    return res.data;
-  }
+  public login = authService.login.bind(authService);
+  public register = authService.register.bind(authService);
+  public sendOtp = authService.sendOtp.bind(authService);
+  public verifyOtp = authService.verifyOtp.bind(authService);
+  public logout = authService.logout.bind(authService);
 
-  async logout() {
-    try {
-      await this.request("/auth/logout", { method: "POST" });
-    } finally {
-      this.clearToken();
-    }
-  }
+  public getPublicProperties = propertyService.getPublicProperties.bind(propertyService);
+  public getPropertyById = propertyService.getPropertyById.bind(propertyService);
+  public createProperty = propertyService.createProperty.bind(propertyService);
+  public getOwnerSummary = propertyService.getOwnerSummary.bind(propertyService);
 
-  // --- Properties APIs ---
-  async getPublicProperties(params?: { city?: string; minRent?: number; maxRent?: number; roomType?: string }) {
-    const query = new URLSearchParams();
-    if (params?.city) query.append("city", params.city);
-    if (params?.minRent) query.append("minRent", params.minRent.toString());
-    if (params?.maxRent) query.append("maxRent", params.maxRent.toString());
-    if (params?.roomType) query.append("roomType", params.roomType);
+  public onboardResident = residentService.onboardResident.bind(residentService);
+  public getResidentDirectory = residentService.getResidentDirectory.bind(residentService);
+  public getPortalMe = residentService.getPortalMe.bind(residentService);
+  public updateResidentStatus = residentService.updateResidentStatus.bind(residentService);
+  public getResidentStatusHistory = residentService.getResidentStatusHistory.bind(residentService);
 
-    const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/properties/public${queryString}`);
-    return res.data;
-  }
+  public createVisitorPass = visitorService.createVisitorPass.bind(visitorService);
+  public createGatePass = visitorService.createGatePass.bind(visitorService);
 
-  async getPropertyById(id: string) {
-    const res = await this.request(`/properties/${id}`);
-    return res.data;
-  }
+  public createBillingOrder = billingService.createBillingOrder.bind(billingService);
+  public verifyPayment = billingService.verifyPayment.bind(billingService);
+  public getInvoicePdfUrl = billingService.getInvoicePdfUrl.bind(billingService);
 
-  async createProperty(propertyData: any) {
-    const res = await this.request("/properties", {
-      method: "POST",
-      body: JSON.stringify(propertyData),
-    });
-    return res.data;
-  }
+  public listComplaints = complaintService.listComplaints.bind(complaintService);
+  public createComplaint = complaintService.createComplaint.bind(complaintService);
+  public updateComplaintStatus = complaintService.updateComplaintStatus.bind(complaintService);
 
-  async getOwnerSummary() {
-    const res = await this.request("/properties/owner/summary");
-    return res.data;
-  }
+  public updateBedStatus = bedService.updateBedStatus.bind(bedService);
+  public createBedHold = bedService.createBedHold.bind(bedService);
+  public releaseBedHold = bedService.releaseBedHold.bind(bedService);
+  public getBedHolds = bedService.getBedHolds.bind(bedService);
 
-  // --- Residents & Portal APIs ---
-  async onboardResident(kycData: any) {
-    const res = await this.request("/residents/onboard", {
-      method: "POST",
-      body: JSON.stringify(kycData),
-    });
-    return res.data;
-  }
+  public createRoomTransferRequest = roomService.createRoomTransferRequest.bind(roomService);
+  public getRoomTransferRequests = roomService.getRoomTransferRequests.bind(roomService);
+  public approveRoomTransfer = roomService.approveRoomTransfer.bind(roomService);
+  public rejectRoomTransfer = roomService.rejectRoomTransfer.bind(roomService);
+  public completeRoomTransfer = roomService.completeRoomTransfer.bind(roomService);
 
-  async getResidentDirectory(params?: { propertyId?: string; search?: string; status?: string }) {
-    const query = new URLSearchParams();
-    if (params?.propertyId) query.append("propertyId", params.propertyId);
-    if (params?.search) query.append("search", params.search);
-    if (params?.status) query.append("status", params.status);
-
-    const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/residents/directory${queryString}`);
-    return res.data;
-  }
-
-  async getPortalMe() {
-    const res = await this.request("/residents/portal/me");
-    return res.data;
-  }
-
-  async createVisitorPass(data: any) {
-    const res = await this.request("/residents/portal/visitor-pass", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  }
-
-  async createGatePass(data: any) {
-    const res = await this.request("/residents/portal/gate-pass", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  }
-
-  async toggleMealSkip(date: string, mealType: string) {
-    const res = await this.request("/residents/portal/meal-skip", {
-      method: "POST",
-      body: JSON.stringify({ date, mealType }),
-    });
-    return res.data;
-  }
-
-  // --- Billing APIs ---
-  async createBillingOrder(residentId: string, baseAmount: number) {
-    const res = await this.request("/billing/create-order", {
-      method: "POST",
-      body: JSON.stringify({ residentId, baseAmount }),
-    });
-    return res.data;
-  }
-
-  async verifyPayment(paymentId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
-    const res = await this.request("/billing/verify-payment", {
-      method: "POST",
-      body: JSON.stringify({ paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature }),
-    });
-    return res.data;
-  }
-
-  getInvoicePdfUrl(paymentId: string) {
-    return `${API_BASE}/billing/invoices/${paymentId}/download`;
-  }
-
-  // --- Complaints APIs ---
-  async listComplaints(params?: { propertyId?: string; priority?: string; status?: string }) {
-    const query = new URLSearchParams();
-    if (params?.propertyId) query.append("propertyId", params.propertyId);
-    if (params?.priority) query.append("priority", params.priority);
-    if (params?.status) query.append("status", params.status);
-
-    const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/complaints${queryString}`);
-    return res.data;
-  }
-
-  async createComplaint(data: { category: string; title: string; description: string; priority?: string }) {
-    const res = await this.request("/complaints", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  }
-
-  async updateComplaintStatus(id: string, status: string) {
-    const res = await this.request(`/complaints/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
-    return res.data;
-  }
-
-  // --- Resident & Bed Management APIs ---
-  async updateResidentStatus(residentId: string, status: string, reason?: string) {
-    const res = await this.request("/resident-management/status", {
-      method: "POST",
-      body: JSON.stringify({ residentId, status, reason }),
-    });
-    return res.data;
-  }
-
-  async getResidentStatusHistory(residentId: string) {
-    const res = await this.request(`/resident-management/status/history/${residentId}`);
-    return res.data;
-  }
-
-  async updateBedStatus(bedId: string, status: string, notes?: string) {
-    const res = await this.request("/resident-management/beds/status", {
-      method: "POST",
-      body: JSON.stringify({ bedId, status, notes }),
-    });
-    return res.data;
-  }
-
-  async createBedHold(bedId: string, reason: string, holdStartDate?: string, holdEndDate?: string, notes?: string) {
-    const res = await this.request("/resident-management/beds/hold", {
-      method: "POST",
-      body: JSON.stringify({ bedId, reason, holdStartDate, holdEndDate, notes }),
-    });
-    return res.data;
-  }
-
-  async releaseBedHold(holdId: string) {
-    const res = await this.request(`/resident-management/beds/hold/${holdId}`, {
-      method: "DELETE",
-    });
-    return res.data;
-  }
-
-  async getBedHolds(pgId?: string) {
-    const query = pgId ? `?pgId=${pgId}` : "";
-    const res = await this.request(`/resident-management/beds/holds${query}`);
-    return res.data;
-  }
-
-  async createRoomTransferRequest(data: {
-    residentId: string;
-    pgId: string;
-    currentBedId: string;
-    preferredSharingType?: string;
-    preferredRoomNumber?: string;
-    reason: string;
-    budget?: number;
-    preferredMoveDate?: string;
-    additionalNotes?: string;
-    priority?: string;
-  }) {
-    const res = await this.request("/resident-management/transfers/request", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return res.data;
-  }
-
-  async getRoomTransferRequests(params?: { pgId?: string; residentId?: string }) {
-    const query = new URLSearchParams();
-    if (params?.pgId) query.append("pgId", params.pgId);
-    if (params?.residentId) query.append("residentId", params.residentId);
-    const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/resident-management/transfers${queryString}`);
-    return res.data;
-  }
-
-  async approveRoomTransfer(requestId: string, targetBedId?: string, scheduledDate?: string, notes?: string) {
-    const res = await this.request(`/resident-management/transfers/${requestId}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ targetBedId, scheduledDate, notes }),
-    });
-    return res.data;
-  }
-
-  async rejectRoomTransfer(requestId: string, rejectionReason: string) {
-    const res = await this.request(`/resident-management/transfers/${requestId}/reject`, {
-      method: "POST",
-      body: JSON.stringify({ rejectionReason }),
-    });
-    return res.data;
-  }
-
-  async completeRoomTransfer(requestId: string) {
-    const res = await this.request(`/resident-management/transfers/${requestId}/complete`, {
-      method: "POST",
-    });
-    return res.data;
-  }
+  public getResidentAgreements = agreementService.getResidentAgreements.bind(agreementService);
+  public getAgreementById = agreementService.getAgreementById.bind(agreementService);
+  public signAgreement = agreementService.signAgreement.bind(agreementService);
+  public verifyAgreement = agreementService.verifyAgreement.bind(agreementService);
 }
 
 export const api = new ApiClient();
-

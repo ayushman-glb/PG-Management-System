@@ -1,0 +1,28 @@
+export const RESIDENT_STATUS = {
+  ACTIVE: "ACTIVE",
+  PENDING_KYC: "PENDING_KYC",
+  INACTIVE: "INACTIVE",
+  NOTICE_PERIOD: "NOTICE_PERIOD",
+} as const;
+
+export const BED_STATUS = {
+  VACANT: "VACANT",
+  OCCUPIED: "OCCUPIED",
+  RESERVED: "RESERVED",
+  MAINTENANCE: "MAINTENANCE",
+  HOLD: "HOLD",
+} as const;
+
+export const COMPLAINT_STATUS = {
+  OPEN: "OPEN",
+  IN_PROGRESS: "IN_PROGRESS",
+  RESOLVED: "RESOLVED",
+  CLOSED: "CLOSED",
+} as const;
+
+export const PAYMENT_STATUS = {
+  PENDING: "PENDING",
+  PAID: "PAID",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+} as const;

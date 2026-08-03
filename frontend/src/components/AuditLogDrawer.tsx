@@ -18,7 +18,7 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const data = await api.request('/resident-management/audit-logs');
+      const data = await (api as any).request('/resident-management/audit-logs');
       setLogs(data.data || []);
     } catch {
       // Fallback mock audit logs if backend DB connection is not initialized
@@ -85,7 +85,7 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className={`w-full max-w-lg h-full border-l p-6 shadow-2xl flex flex-col overflow-hidden ${drawerBg}`}
+          className={`w-full max-w-full sm:max-w-md md:max-w-lg h-full border-l p-4 sm:p-6 shadow-2xl flex flex-col overflow-hidden ${drawerBg}`}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-4">

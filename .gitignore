@@ -30,5 +30,3 @@ tsconfig.tsbuildinfo
 *.sln
 *.sw?
 
-# Excluded folders
-backend/

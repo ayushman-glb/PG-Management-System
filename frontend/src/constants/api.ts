@@ -1,0 +1,45 @@
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: "/auth/login",
+    REGISTER: "/auth/register",
+    SEND_OTP: "/auth/send-otp",
+    VERIFY_OTP: "/auth/verify-otp",
+    LOGOUT: "/auth/logout",
+  },
+  PROPERTIES: {
+    PUBLIC: "/properties/public",
+    BY_ID: (id: string) => `/properties/${id}`,
+    CREATE: "/properties",
+    SUMMARY: "/properties/owner/summary",
+  },
+  RESIDENTS: {
+    ONBOARD: "/residents/onboard",
+    DIRECTORY: "/residents/directory",
+    PORTAL_ME: "/residents/portal/me",
+    VISITOR_PASS: "/residents/portal/visitor-pass",
+    GATE_PASS: "/residents/portal/gate-pass",
+    MEAL_SKIP: "/residents/portal/meal-skip",
+  },
+  BILLING: {
+    CREATE_ORDER: "/billing/create-order",
+    VERIFY_PAYMENT: "/billing/verify-payment",
+    INVOICE_DOWNLOAD: (id: string) => `/billing/invoices/${id}/download`,
+  },
+  COMPLAINTS: {
+    BASE: "/complaints",
+    STATUS: (id: string) => `/complaints/${id}/status`,
+  },
+  RESIDENT_MANAGEMENT: {
+    STATUS: "/resident-management/status",
+    STATUS_HISTORY: (id: string) => `/resident-management/status/history/${id}`,
+    BED_STATUS: "/resident-management/beds/status",
+    BED_HOLD: "/resident-management/beds/hold",
+    BED_HOLD_RELEASE: (id: string) => `/resident-management/beds/hold/${id}`,
+    BED_HOLDS: "/resident-management/beds/holds",
+    TRANSFERS_REQUEST: "/resident-management/transfers/request",
+    TRANSFERS: "/resident-management/transfers",
+    TRANSFER_APPROVE: (id: string) => `/resident-management/transfers/${id}/approve`,
+    TRANSFER_REJECT: (id: string) => `/resident-management/transfers/${id}/reject`,
+    TRANSFER_COMPLETE: (id: string) => `/resident-management/transfers/${id}/complete`,
+  },
+} as const;

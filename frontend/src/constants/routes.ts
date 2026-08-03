@@ -1,0 +1,15 @@
+export const ROUTES = {
+  LANDING: "/",
+  DASHBOARD: "/dashboard",
+  PROPERTIES: "/properties",
+  RESIDENTS: "/residents",
+  RESIDENT_PORTAL: "/resident-portal",
+  RESIDENT_REGISTER: "/resident-register",
+  BILLING: "/billing",
+  COMPLAINTS: "/complaints",
+  ANALYTICS: "/analytics",
+  OPERATIONS: "/operations",
+  AUTH: "/auth",
+  PG_LISTING: "/pg-listing",
+  PG_DETAILS: "/pg-details",
+} as const;

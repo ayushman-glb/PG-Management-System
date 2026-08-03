@@ -29,7 +29,7 @@ export const DocumentUploadPortal: React.FC = () => {
     { id: '106', name: 'Cancelled Cheque / Bank Details', type: 'BANK', status: 'VERIFIED', fileUrl: '#' }
   ]);
 
-  const handleUploadMock = (id: string, role: 'resident' | 'owner') => {
+  const handleDocumentUpload = async (id: string, role: 'resident' | 'owner') => {
     if (role === 'resident') {
       setResidentDocs(prev => prev.map(d => d.id === id ? { ...d, status: 'VERIFIED' } : d));
     } else {
@@ -117,7 +117,7 @@ export const DocumentUploadPortal: React.FC = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => handleUploadMock(doc.id, activeRoleTab)}
+                  onClick={() => handleDocumentUpload(doc.id, activeRoleTab)}
                   className="w-full py-2 rounded-xl bg-amber-500 text-neutral-950 text-xs font-bold hover:bg-amber-400 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 cursor-pointer"
                 >
                   <Upload className="w-4 h-4" /> Upload Document
