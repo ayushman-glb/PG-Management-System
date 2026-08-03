@@ -1,18 +1,18 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import compression from 'compression';
-import swaggerUi from 'swagger-ui-express';
-import { env } from './config/env';
-import { prisma } from './config/prisma';
-import { swaggerSpec } from './config/swagger';
-import apiRouter from './routes/apiRouter';
-import { globalErrorHandler } from './middleware/errorMiddleware';
-import { generalLimiter } from './middleware/rateLimiter';
-import { correlationIdMiddleware } from './middleware/correlationMiddleware';
-import { setupGraphQLServer } from './graphql/apolloServer';
-import { setupSoapServer } from './services/soapService';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import compression from "compression";
+import swaggerUi from "swagger-ui-express";
+import { env } from "./config/env";
+import { prisma } from "./config/prisma";
+import { swaggerSpec } from "./config/swagger";
+import apiRouter from "./routes/apiRouter";
+import { globalErrorHandler } from "./middleware/errorMiddleware";
+import { generalLimiter } from "./middleware/rateLimiter";
+import { correlationIdMiddleware } from "./middleware/correlationMiddleware";
+import { setupGraphQLServer } from "./graphql/apolloServer";
+import { setupSoapServer } from "./services/soapService";
 
 export const app = express();
 
@@ -20,73 +20,93 @@ export const app = express();
 app.use(correlationIdMiddleware);
 
 // Security & Optimization Middlewares
-app.use(helmet({
-  contentSecurityPolicy: false // Allows Apollo GraphQL Studio and Swagger UI in dev
-}));
-app.use(cors({
-  origin: [env.CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
-  credentials: true
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Allows Apollo GraphQL Studio and Swagger UI in dev
+  }),
+);
+const allowedOrigins = [
+  env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://ayushman-glb.github.io",
+  "https://ayushman-glb.github.io/PG-Management-System",
+  "https://ayushman-glb.github.io/PG-Management-System/",
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+  }),
+);
 app.use(compression());
 app.use(cookieParser());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
 
 // Swagger Documentation Endpoints
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get('/api/docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api/docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
   res.send(swaggerSpec);
 });
 
 // Phase 15 - System Health, Readiness, Liveness, & Prometheus Metrics Probes
-app.get('/metrics', (req, res) => {
+app.get("/metrics", (req, res) => {
   const mem = process.memoryUsage();
   const metrics = [
-    '# HELP node_memory_rss_bytes Resident Set Size in bytes',
-    '# TYPE node_memory_rss_bytes gauge',
+    "# HELP node_memory_rss_bytes Resident Set Size in bytes",
+    "# TYPE node_memory_rss_bytes gauge",
     `node_memory_rss_bytes ${mem.rss}`,
-    '# HELP node_memory_heap_used_bytes Heap used in bytes',
-    '# TYPE node_memory_heap_used_bytes gauge',
+    "# HELP node_memory_heap_used_bytes Heap used in bytes",
+    "# TYPE node_memory_heap_used_bytes gauge",
     `node_memory_heap_used_bytes ${mem.heapUsed}`,
-    '# HELP node_uptime_seconds Process uptime in seconds',
-    '# TYPE node_uptime_seconds counter',
+    "# HELP node_uptime_seconds Process uptime in seconds",
+    "# TYPE node_uptime_seconds counter",
     `node_uptime_seconds ${Math.floor(process.uptime())}`,
-    '# HELP roombae_active_workers Number of active worker process instances',
-    '# TYPE roombae_active_workers gauge',
-    `roombae_active_workers 1`
-  ].join('\n');
+    "# HELP roombae_active_workers Number of active worker process instances",
+    "# TYPE roombae_active_workers gauge",
+    `roombae_active_workers 1`,
+  ].join("\n");
 
-  res.setHeader('Content-Type', 'text/plain; version=0.0.4');
+  res.setHeader("Content-Type", "text/plain; version=0.0.4");
   res.send(metrics);
 });
 
-app.get('/health', async (req, res) => {
+app.get("/health", async (req, res) => {
   const startTime = Date.now();
-  let dbStatus = 'CONNECTED';
+  let dbStatus = "CONNECTED";
   let dbLatency = 0;
 
   try {
     const dbStart = Date.now();
     const pingPromise = prisma.$runCommandRaw({ ping: 1 });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('DB Ping Timeout')), 500)
+      setTimeout(() => reject(new Error("DB Ping Timeout")), 500),
     );
     await Promise.race([pingPromise, timeoutPromise]);
     dbLatency = Date.now() - dbStart;
   } catch (error) {
-    dbStatus = 'DISCONNECTED_OR_MOCK_FALLBACK';
+    dbStatus = "DISCONNECTED_OR_MOCK_FALLBACK";
   }
 
   const memoryUsage = process.memoryUsage();
 
   res.status(200).json({
     success: true,
-    status: 'UP',
-    version: '1.0.0',
+    status: "UP",
+    version: "1.0.0",
     environment: env.NODE_ENV,
     correlationId: req.correlationId,
     timestamp: new Date().toISOString(),
@@ -95,34 +115,46 @@ app.get('/health', async (req, res) => {
     memory: {
       rssMB: (memoryUsage.rss / 1024 / 1024).toFixed(2),
       heapTotalMB: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
-      heapUsedMB: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2)
+      heapUsedMB: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
     },
     database: {
-      provider: 'mongodb',
+      provider: "mongodb",
       status: dbStatus,
-      latencyMs: dbLatency
+      latencyMs: dbLatency,
     },
     services: {
-      restApi: 'READY',
-      graphQL: 'READY',
-      soapERP: 'READY',
-      webSocket: 'READY',
-      swaggerDocs: 'READY',
-      prometheusMetrics: 'READY'
-    }
+      restApi: "READY",
+      graphQL: "READY",
+      soapERP: "READY",
+      webSocket: "READY",
+      swaggerDocs: "READY",
+      prometheusMetrics: "READY",
+    },
   });
 });
 
-app.get('/ready', async (req, res) => {
+app.get("/ready", async (req, res) => {
   try {
-    res.status(200).json({ status: 'READY', message: 'Backend is accepting incoming traffic.' });
+    res
+      .status(200)
+      .json({
+        status: "READY",
+        message: "Backend is accepting incoming traffic.",
+      });
   } catch (e) {
-    res.status(503).json({ status: 'NOT_READY', message: 'Backend dependencies initializing.' });
+    res
+      .status(503)
+      .json({
+        status: "NOT_READY",
+        message: "Backend dependencies initializing.",
+      });
   }
 });
 
-app.get('/live', (req, res) => {
-  res.status(200).json({ status: 'ALIVE', timestamp: new Date().toISOString() });
+app.get("/live", (req, res) => {
+  res
+    .status(200)
+    .json({ status: "ALIVE", timestamp: new Date().toISOString() });
 });
 
 // REST API v1 Routes

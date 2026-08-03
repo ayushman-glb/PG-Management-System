@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect } from "react";
+import { io, Socket } from "socket.io-client";
+import { env } from "../config/env";
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = env.SOCKET_URL || "http://localhost:5000";
 
 let socket: Socket | null = null;
 
@@ -9,13 +10,16 @@ export const getSocket = (): Socket => {
   if (!socket) {
     socket = io(SOCKET_URL, {
       autoConnect: true,
-      withCredentials: true
+      withCredentials: true,
     });
   }
   return socket;
 };
 
-export function useSocketEvent<T = any>(eventName: string, handler: (data: T) => void) {
+export function useSocketEvent<T = any>(
+  eventName: string,
+  handler: (data: T) => void,
+) {
   useEffect(() => {
     const s = getSocket();
     s.on(eventName, handler);
@@ -25,7 +29,10 @@ export function useSocketEvent<T = any>(eventName: string, handler: (data: T) =>
   }, [eventName, handler]);
 }
 
-export function useSocketRoom(roomType: 'pg' | 'owner' | 'resident', id: string | null) {
+export function useSocketRoom(
+  roomType: "pg" | "owner" | "resident",
+  id: string | null,
+) {
   useEffect(() => {
     if (!id) return;
     const s = getSocket();
