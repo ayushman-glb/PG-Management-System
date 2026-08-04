@@ -37,13 +37,14 @@ export class BillingController {
 
   getInvoicePdf = catchAsync(async (req: Request, res: Response) => {
     const { paymentId } = req.params;
+    const dispositionType = req.query.disposition === "inline" ? "inline" : "attachment";
     const pdfStream =
       await this.billingService.generateInvoicePdfStream(paymentId);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=Invoice_${paymentId}.pdf`,
+      `${dispositionType}; filename=Invoice_${paymentId}.pdf`,
     );
 
     pdfStream.pipe(res);
