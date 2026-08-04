@@ -718,7 +718,7 @@ export default function Auth({ navigate }: Props) {
                           className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                             selectedRole === "RESIDENT"
                               ? "bg-amber-500/15 border-amber-500 shadow-xl"
-                              : "border-slate-200 dark:border-slate-800 opacity-70 hover:opacity-100"
+                              : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
                           }`}
                         >
                           <div className="flex justify-between items-start">
@@ -730,14 +730,14 @@ export default function Auth({ navigate }: Props) {
                               name="role-select"
                               checked={selectedRole === "RESIDENT"}
                               onChange={() => setSelectedRole("RESIDENT")}
-                              className="w-5 h-5 accent-amber-500"
+                              className="w-5 h-5 accent-amber-500 cursor-pointer"
                             />
                           </div>
                           <div>
                             <h3 className="text-base font-black text-slate-900 dark:text-white">
                               🏠 Resident
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
                               Live in a PG. Pay rent, log complaints &amp; view digital agreements.
                             </p>
                           </div>
@@ -748,7 +748,7 @@ export default function Auth({ navigate }: Props) {
                           className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                             selectedRole === "OWNER"
                               ? "bg-amber-500/15 border-amber-500 shadow-xl"
-                              : "border-slate-200 dark:border-slate-800 opacity-70 hover:opacity-100"
+                              : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
                           }`}
                         >
                           <div className="flex justify-between items-start">
@@ -760,14 +760,14 @@ export default function Auth({ navigate }: Props) {
                               name="role-select"
                               checked={selectedRole === "OWNER"}
                               onChange={() => setSelectedRole("OWNER")}
-                              className="w-5 h-5 accent-amber-500"
+                              className="w-5 h-5 accent-amber-500 cursor-pointer"
                             />
                           </div>
                           <div>
                             <h3 className="text-base font-black text-slate-900 dark:text-white">
                               🏢 PG Owner
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
                               Manage PG properties, track occupancy &amp; collect rent seamlessly.
                             </p>
                           </div>

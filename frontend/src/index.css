@@ -65,47 +65,63 @@ html.dark-theme {
 }
 
 /* Hardcoded dark element overrides when in light mode */
-html:not(.dark-theme) .bg-neutral-900 {
-  background-color: var(--bg-surface) !important;
+html:not(.dark-theme) .bg-neutral-900,
+html:not(.dark-theme) .bg-slate-900,
+html:not(.dark-theme) .bg-slate-800 {
+  background-color: #FFFFFF !important;
   border-color: var(--border-main) !important;
   color: var(--text-main) !important;
 }
 
 html:not(.dark-theme) .bg-neutral-900\/60,
 html:not(.dark-theme) .bg-neutral-900\/40,
-html:not(.dark-theme) .bg-neutral-900\/80 {
-  background-color: rgba(248, 238, 229, 0.85) !important;
-  border-color: var(--border-main) !important;
-}
-
-html:not(.dark-theme) .bg-neutral-800,
-html:not(.dark-theme) .bg-neutral-800\/60,
-html:not(.dark-theme) .bg-neutral-800\/80,
-html:not(.dark-theme) .bg-neutral-800\/40,
-html:not(.dark-theme) .bg-neutral-800\/90 {
-  background-color: var(--bg-card) !important;
+html:not(.dark-theme) .bg-neutral-900\/80,
+html:not(.dark-theme) .bg-slate-900\/50,
+html:not(.dark-theme) .bg-slate-900\/40,
+html:not(.dark-theme) .bg-slate-50\/50,
+html:not(.dark-theme) .bg-slate-100 {
+  background-color: #FFFFFF !important;
   border-color: var(--border-main) !important;
   color: var(--text-main) !important;
+}
+
+html:not(.dark-theme) input,
+html:not(.dark-theme) select,
+html:not(.dark-theme) textarea {
+  background-color: #FFFFFF !important;
+  border-color: #D4D4D8 !important;
+  color: #18181B !important;
+}
+
+html:not(.dark-theme) input::placeholder,
+html:not(.dark-theme) textarea::placeholder {
+  color: #71717A !important;
+}
+
+html:not(.dark-theme) .text-slate-900,
+html:not(.dark-theme) .text-slate-800,
+html:not(.dark-theme) .text-slate-700 {
+  color: #18181B !important;
+}
+
+html:not(.dark-theme) .text-slate-600,
+html:not(.dark-theme) .text-slate-500,
+html:not(.dark-theme) .text-slate-400 {
+  color: #52525B !important;
 }
 
 html:not(.dark-theme) .bg-\[\#1D1B1A\],
 html:not(.dark-theme) .bg-\[\#2B2725\],
 html:not(.dark-theme) .bg-\[\#332D2B\] {
-  background-color: var(--bg-card) !important;
-  color: var(--text-main) !important;
-  border-color: var(--border-main) !important;
+  background-color: #FFFFFF !important;
+  color: #18181B !important;
+  border-color: #E4E4E7 !important;
 }
 
 html:not(.dark-theme) .border-white\/10,
 html:not(.dark-theme) .border-white\/5,
 html:not(.dark-theme) .border-white\/20 {
-  border-color: var(--border-main) !important;
-}
-
-html:not(.dark-theme) .text-neutral-400,
-html:not(.dark-theme) .text-neutral-300,
-html:not(.dark-theme) .text-neutral-500 {
-  color: var(--text-muted) !important;
+  border-color: #E4E4E7 !important;
 }
 
 /* Fluid Typography Clamps */

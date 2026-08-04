@@ -28,6 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark-theme", darkMode);
+    document.documentElement.classList.toggle("dark", darkMode);
     localStorage.setItem("pg-manager-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
