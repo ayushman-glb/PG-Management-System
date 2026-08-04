@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {
   IAuthService,
   IAuthUserResult,
@@ -401,7 +402,7 @@ export class AuthService implements IAuthService {
   async enableTwoFactor(
     userId: string,
   ): Promise<{ secret: string; qrCodeUrl: string }> {
-    const secret = "ROOMBAE_TOTP_SECRET_XYZ_" + Date.now().toString(36);
+    const secret = crypto.randomBytes(16).toString("hex").toUpperCase();
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/RoomBae:${userId}?secret=${secret}&issuer=RoomBae`;
     return { secret, qrCodeUrl };
   }

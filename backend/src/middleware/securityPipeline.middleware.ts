@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
-const pdfParse = require('pdf-parse');
 import { cloudinaryService } from '../services/cloudinary.service';
 import { computeSHA256Checksum } from '../utils/crypto';
 
@@ -90,6 +89,7 @@ export async function processSecurityPipeline(req: Request, res: Response, next:
 
       finalBufferOrPath = optimizedBuffer;
     } else if (mimeType === 'application/pdf') {
+      const pdfParse = require('pdf-parse');
       const pdfBuffer = fs.readFileSync(filePath);
       try {
         await pdfParse(pdfBuffer);

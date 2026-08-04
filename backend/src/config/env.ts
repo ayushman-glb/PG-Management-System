@@ -74,16 +74,16 @@ const envSchema = z.object({
 
   SMTP_HOST: z.string().default("smtp-relay.brevo.com"),
   SMTP_PORT: z.string().default("587"),
-  SMTP_USER: z.string().default("b439ea001@smtp-brevo.com"),
+  SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
-  EMAIL_FROM: z.string().default("RoomBae Enterprise <b439ea001@smtp-brevo.com>"),
+  EMAIL_FROM: z.string().default("RoomBae Enterprise <noreply@roombae.com>"),
 
-  CLOUDINARY_CLOUD_NAME: z.string().default("vmivgp12"),
-  CLOUDINARY_API_KEY: z.string().default("499297858997516"),
-  CLOUDINARY_API_SECRET: z.string().default("aJn-dyMV-XIO5L5TbVdGgSLoYk0"),
+  CLOUDINARY_CLOUD_NAME: z.string().default(""),
+  CLOUDINARY_API_KEY: z.string().default(""),
+  CLOUDINARY_API_SECRET: z.string().default(""),
   CLOUDINARY_URL: z.string().optional(),
 
-  FIREBASE_PROJECT_ID: z.string().default("roombae-cff13"),
+  FIREBASE_PROJECT_ID: z.string().default("roombae-app"),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
 

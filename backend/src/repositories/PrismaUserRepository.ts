@@ -5,7 +5,7 @@ import {
 } from "../interfaces/repositories/IUserRepository";
 
 export class PrismaUserRepository implements IUserRepository {
-  constructor(private readonly db: PrismaClient) {}
+  constructor(private readonly db: PrismaClient) { }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
     try {
@@ -37,7 +37,7 @@ export class PrismaUserRepository implements IUserRepository {
 
   async findByGoogleSubId(googleSubId: string): Promise<User | null> {
     try {
-      return await this.db.user.findUnique({ where: { googleSubId } });
+      return await this.db.user.findFirst({ where: { googleSubId } });
     } catch (e) {
       return null;
     }
@@ -50,7 +50,7 @@ export class PrismaUserRepository implements IUserRepository {
     avatarUrl?: string;
     role?: Role;
   }): Promise<User> {
-    const existing = await this.db.user.findUnique({
+    const existing = await this.db.user.findFirst({
       where: { googleSubId: data.googleSubId },
     });
     if (existing) {

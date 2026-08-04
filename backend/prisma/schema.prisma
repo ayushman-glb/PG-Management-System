@@ -22,14 +22,14 @@ enum Role {
 }
 
 enum ResidentStatus {
-  ACTIVE       // 🟢
-  INACTIVE     // ⚫
-  HOME         // 🏠
-  ON_LEAVE     // 🟡
-  HOLD         // 🟠
-  LEAVING      // 🔴
-  CHECKED_OUT  // ⚪
-  WAITING      // 🔵
+  ACTIVE // 🟢
+  INACTIVE // ⚫
+  HOME // 🏠
+  ON_LEAVE // 🟡
+  HOLD // 🟠
+  LEAVING // 🔴
+  CHECKED_OUT // ⚪
+  WAITING // 🔵
 }
 
 enum PGStatus {
@@ -78,7 +78,6 @@ enum RoomType {
   CUSTOM
 }
 
-
 enum WashroomType {
   ATTACHED
   COMMON
@@ -100,7 +99,6 @@ enum BedStatus {
   INACTIVE
   LOCKED_FOR_BOOKING
 }
-
 
 enum RoomTransferStatus {
   PENDING
@@ -226,20 +224,19 @@ enum DraftStatus {
   REJECTED
 }
 
-
 // ==========================================
 // RBAC & ADMIN MODELS
 // ==========================================
 
 model Admin {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   name         String
-  email        String       @unique
+  email        String   @unique
   passwordHash String
-  roleId       String       @db.ObjectId
-  role         RbacRole     @relation(fields: [roleId], references: [id])
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  roleId       String   @db.ObjectId
+  role         RbacRole @relation(fields: [roleId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model RbacRole {
@@ -253,12 +250,12 @@ model RbacRole {
 }
 
 model Permission {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  action      String     // e.g. "create:pg", "read:resident"
-  resource    String
-  roleIds     String[]   @db.ObjectId
-  roles       RbacRole[] @relation(fields: [roleIds], references: [id])
-  createdAt   DateTime   @default(now())
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  action    String // e.g. "create:pg", "read:resident"
+  resource  String
+  roleIds   String[]   @db.ObjectId
+  roles     RbacRole[] @relation(fields: [roleIds], references: [id])
+  createdAt DateTime   @default(now())
 }
 
 // ==========================================
@@ -266,39 +263,39 @@ model Permission {
 // ==========================================
 
 model User {
-  id                String          @id @default(auto()) @map("_id") @db.ObjectId
-  email             String          @unique
-  passwordHash      String?
-  name              String
-  residentCode      String?
-  googleSubId       String?
-  avatarUrl         String?
-  role              Role            @default(PUBLIC)
-  phone             String?
-  phoneVerified     Boolean         @default(false)
-  emailVerified     Boolean         @default(false)
-  twoFactorEnabled  Boolean         @default(false)
-  twoFactorMethod   String?         @default("NONE")
-  authProvider      String?         @default("LOCAL")
-  termsAccepted     Boolean         @default(true)
-  accountStatus     String          @default("ACTIVE")
-  verificationStatus String         @default("VERIFIED")
-  lastLogin         DateTime?
-  phoneOtp          String?
-  phoneOtpExpiresAt DateTime?
-  emailOtp          String?
-  emailOtpExpiresAt DateTime?
-  twoFactorSecret   String?
-  is2FAEnabled      Boolean         @default(false)
-  otpSecret         String?
-  otpExpiresAt      DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  ownerProfile      Owner?
-  residentProfile   Resident?
-  loginHistories    LoginHistory[]
-  deviceHistories   DeviceHistory[]
-  auditLogs         ActivityLog[]
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  email              String          @unique
+  passwordHash       String?
+  name               String
+  residentCode       String?
+  googleSubId        String?         
+  avatarUrl          String?
+  role               Role            @default(PUBLIC)
+  phone              String?
+  phoneVerified      Boolean         @default(false)
+  emailVerified      Boolean         @default(false)
+  twoFactorEnabled   Boolean         @default(false)
+  twoFactorMethod    String?         @default("NONE")
+  authProvider       String?         @default("LOCAL")
+  termsAccepted      Boolean         @default(true)
+  accountStatus      String          @default("ACTIVE")
+  verificationStatus String          @default("VERIFIED")
+  lastLogin          DateTime?
+  phoneOtp           String?
+  phoneOtpExpiresAt  DateTime?
+  emailOtp           String?
+  emailOtpExpiresAt  DateTime?
+  twoFactorSecret    String?
+  is2FAEnabled       Boolean         @default(false)
+  otpSecret          String?
+  otpExpiresAt       DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  ownerProfile       Owner?
+  residentProfile    Resident?
+  loginHistories     LoginHistory[]
+  deviceHistories    DeviceHistory[]
+  auditLogs          ActivityLog[]
 }
 
 model OtpToken {
@@ -306,7 +303,7 @@ model OtpToken {
   phone     String?
   email     String?
   otp       String
-  purpose   String   // PHONE_VERIFICATION, EMAIL_VERIFICATION, PASSWORD_RESET, 2FA
+  purpose   String // PHONE_VERIFICATION, EMAIL_VERIFICATION, PASSWORD_RESET, 2FA
   attempts  Int      @default(0)
   verified  Boolean  @default(false)
   expiresAt DateTime
@@ -319,7 +316,7 @@ model LoginHistory {
   user      User     @relation(fields: [userId], references: [id])
   ipAddress String
   userAgent String
-  status    String   // SUCCESS, FAILED
+  status    String // SUCCESS, FAILED
   createdAt DateTime @default(now())
 }
 
@@ -333,8 +330,6 @@ model DeviceHistory {
   lastActive DateTime @default(now())
   createdAt  DateTime @default(now())
 }
-
-
 
 model Owner {
   id               String        @id @default(auto()) @map("_id") @db.ObjectId
@@ -421,77 +416,76 @@ model Subscription {
   updatedAt          DateTime             @updatedAt
 }
 
-
 // ==========================================
 // PROPERTY & ROOM STRUCTURE MODELS
 // ==========================================
 
 model PG {
-  id                String            @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId           String            @db.ObjectId
-  owner             Owner             @relation(fields: [ownerId], references: [id])
-  name              String
-  slug              String            @unique
-  logo              String
-  galleryImages     String[]
-  description       String
-  amenities         String[]          // WiFi, Laundry, Parking, CCTV, Power Backup, Lift, Mess, Security
-  rules             String[]
-  rentStartingFrom  Float
-  securityDeposit   Float
-  latitude          Float
-  longitude         Float
-  address           String
-  city              String
-  pincode           String
-  nearbyColleges    String[]
-  nearbyCompanies   String[]
-  nearbyMetro       String[]
-  capacity          Int
-  currentOccupancy  Int               @default(0)
-  availableBeds     Int
-  status            PGStatus          @default(ACTIVE)
-  draftStatus       DraftStatus       @default(DRAFT)
-  propertyType      PropertyType      @default(PG)
-  ownershipType     PropertyOwnershipType @default(OWNED)
-  landlordName      String?
+  id                        String                @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId                   String                @db.ObjectId
+  owner                     Owner                 @relation(fields: [ownerId], references: [id])
+  name                      String
+  slug                      String                @unique
+  logo                      String
+  galleryImages             String[]
+  description               String
+  amenities                 String[] // WiFi, Laundry, Parking, CCTV, Power Backup, Lift, Mess, Security
+  rules                     String[]
+  rentStartingFrom          Float
+  securityDeposit           Float
+  latitude                  Float
+  longitude                 Float
+  address                   String
+  city                      String
+  pincode                   String
+  nearbyColleges            String[]
+  nearbyCompanies           String[]
+  nearbyMetro               String[]
+  capacity                  Int
+  currentOccupancy          Int                   @default(0)
+  availableBeds             Int
+  status                    PGStatus              @default(ACTIVE)
+  draftStatus               DraftStatus           @default(DRAFT)
+  propertyType              PropertyType          @default(PG)
+  ownershipType             PropertyOwnershipType @default(OWNED)
+  landlordName              String?
   landlordLeaseAgreementUrl String?
-  nocDocumentUrl    String?
-  caretakerName     String?
-  caretakerPhone    String?
-  buildingCount     Int               @default(1)
-  floorCount        Int               @default(1)
-  totalRoomsCount   Int               @default(0)
-  totalBedsCount    Int               @default(0)
-  buildings         Building[]
-  residents         Resident[]
-  agreements        Agreement[]
-  transferRequests  RoomTransferRequest[]
-  mealPlans         MealPlan[]
-  mealSchedules     MealSchedule[]
-  complaints        Complaint[]
-  maintenances      Maintenance[]
-  visitors          Visitor[]
-  checkIns          CheckIn[]
-  checkOuts         CheckOut[]
-  leaveApplications LeaveApplication[]
-  holdApplications  HoldApplication[]
-  payments          Payment[]
-  invoices          Invoice[]
-  attendances       Attendance[]
-  kanbanBoards      KanbanBoard[]
-  analytics         Analytics[]
-  propertyDocuments PropertyDocument[]
-  fineRules         FineRule[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  nocDocumentUrl            String?
+  caretakerName             String?
+  caretakerPhone            String?
+  buildingCount             Int                   @default(1)
+  floorCount                Int                   @default(1)
+  totalRoomsCount           Int                   @default(0)
+  totalBedsCount            Int                   @default(0)
+  buildings                 Building[]
+  residents                 Resident[]
+  agreements                Agreement[]
+  transferRequests          RoomTransferRequest[]
+  mealPlans                 MealPlan[]
+  mealSchedules             MealSchedule[]
+  complaints                Complaint[]
+  maintenances              Maintenance[]
+  visitors                  Visitor[]
+  checkIns                  CheckIn[]
+  checkOuts                 CheckOut[]
+  leaveApplications         LeaveApplication[]
+  holdApplications          HoldApplication[]
+  payments                  Payment[]
+  invoices                  Invoice[]
+  attendances               Attendance[]
+  kanbanBoards              KanbanBoard[]
+  analytics                 Analytics[]
+  propertyDocuments         PropertyDocument[]
+  fineRules                 FineRule[]
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
 }
 
 model PropertyDocument {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   pgId           String   @db.ObjectId
   pg             PG       @relation(fields: [pgId], references: [id])
-  documentType   String   // PROPERTY_TAX, OWNERSHIP_PROOF, LEASE_AGREEMENT, FIRE_SAFETY, MUNICIPAL_LICENSE, TRADE_LICENSE, GST_CERT
+  documentType   String // PROPERTY_TAX, OWNERSHIP_PROOF, LEASE_AGREEMENT, FIRE_SAFETY, MUNICIPAL_LICENSE, TRADE_LICENSE, GST_CERT
   documentNumber String?
   fileUrl        String
   isApproved     Boolean  @default(false)
@@ -517,29 +511,28 @@ model FineRule {
 }
 
 model Fine {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  residentId  String     @db.ObjectId
-  resident    Resident   @relation(fields: [residentId], references: [id])
-  ruleId      String?    @db.ObjectId
-  rule        FineRule?  @relation(fields: [ruleId], references: [id])
-  fineType    FineType
-  amount      Float
-  reason      String
-  dueDate     DateTime
-  status      FineStatus @default(UNPAID)
-  waivedBy    String?
-  waivedAt    DateTime?
-  paidAt      DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  residentId String     @db.ObjectId
+  resident   Resident   @relation(fields: [residentId], references: [id])
+  ruleId     String?    @db.ObjectId
+  rule       FineRule?  @relation(fields: [ruleId], references: [id])
+  fineType   FineType
+  amount     Float
+  reason     String
+  dueDate    DateTime
+  status     FineStatus @default(UNPAID)
+  waivedBy   String?
+  waivedAt   DateTime?
+  paidAt     DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
-
 
 model Building {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   pgId        String   @db.ObjectId
   pg          PG       @relation(fields: [pgId], references: [id])
-  name        String   // e.g. "Block A", "Main Tower"
+  name        String // e.g. "Block A", "Main Tower"
   floorsCount Int
   floors      Floor[]
   createdAt   DateTime @default(now())
@@ -571,7 +564,7 @@ model Bed {
   id            String                @id @default(auto()) @map("_id") @db.ObjectId
   roomId        String                @db.ObjectId
   room          Room                  @relation(fields: [roomId], references: [id])
-  bedNumber     String                // e.g. "101-A"
+  bedNumber     String // e.g. "101-A"
   status        BedStatus             @default(AVAILABLE)
   isOccupied    Boolean               @default(false)
   lockExpiresAt DateTime?
@@ -588,13 +581,13 @@ model Bed {
 // ==========================================
 
 model Resident {
-  id                String            @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String            @unique @db.ObjectId
-  user              User              @relation(fields: [userId], references: [id])
-  pgId              String            @db.ObjectId
-  pg                PG                @relation(fields: [pgId], references: [id])
-  bedId             String            @unique @db.ObjectId
-  bed               Bed               @relation(fields: [bedId], references: [id])
+  id                String                  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String                  @unique @db.ObjectId
+  user              User                    @relation(fields: [userId], references: [id])
+  pgId              String                  @db.ObjectId
+  pg                PG                      @relation(fields: [pgId], references: [id])
+  bedId             String                  @unique @db.ObjectId
+  bed               Bed                     @relation(fields: [bedId], references: [id])
   profilePicture    String
   name              String
   gender            String
@@ -606,12 +599,12 @@ model Resident {
   company           String?
   occupation        String
   bloodGroup        String
-  foodPreference    FoodPreference    @default(VEG)
+  foodPreference    FoodPreference          @default(VEG)
   medicalConditions String?
   moveInDate        DateTime
   expectedMoveOut   DateTime?
   rentDueDate       DateTime
-  status            ResidentStatus    @default(ACTIVE)
+  status            ResidentStatus          @default(ACTIVE)
   guardian          Guardian?
   emergencyContact  EmergencyContact?
   documents         Document[]
@@ -629,10 +622,9 @@ model Resident {
   statusHistories   ResidentStatusHistory[]
   transferRequests  RoomTransferRequest[]
   fines             Fine[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 }
-
 
 model Guardian {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -660,7 +652,7 @@ model Document {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   residentId     String   @db.ObjectId
   resident       Resident @relation(fields: [residentId], references: [id])
-  documentType   String   // AADHAAR, PAN, PASSPORT, DRIVING_LICENSE, COLLEGE_ID, OFFICE_ID, PROPERTY_PAPERS
+  documentType   String // AADHAAR, PAN, PASSPORT, DRIVING_LICENSE, COLLEGE_ID, OFFICE_ID, PROPERTY_PAPERS
   documentNumber String
   fileUrl        String
   isVerified     Boolean  @default(true)
@@ -672,62 +664,62 @@ model Document {
 // ==========================================
 
 model Agreement {
-  id                     String             @id @default(auto()) @map("_id") @db.ObjectId
-  agreementNumber        String             @unique
-  residentId             String             @db.ObjectId
-  resident               Resident           @relation(fields: [residentId], references: [id])
-  ownerId                String             @db.ObjectId
-  owner                  Owner              @relation(fields: [ownerId], references: [id])
-  pgId                   String             @db.ObjectId
-  pg                     PG                 @relation(fields: [pgId], references: [id])
-  roomNumber             String
-  bedNumber              String
-  rentAmount             Float
-  securityDeposit        Float
-  maintenanceCharges     Float              @default(500)
-  electricityCharges     String             @default("As per Sub-Meter Reading")
-  wifiCharges            String             @default("Complimentary High-Speed WiFi")
-  foodCharges            String             @default("Included in Monthly Rent")
-  noticePeriodDays       Int                @default(30)
-  refundPolicy           String             @default("Security deposit refundable within 7 days post checkout deduction.")
-  houseRules             String[]
-  visitorPolicy          String             @default("Visitors allowed in common areas till 8 PM.")
-  curfewTime             String             @default("10:30 PM Gate Locking Time")
-  damagePolicy           String             @default("Resident liable for physical property damage repairs.")
-  prohibitedActivities   String[]           // Smoking, Alcohol, Illegal Substances, Noise
-  cleanlinessTerms       String             @default("Daily housekeeping provided. Resident must maintain room hygiene.")
-  terminationClause       String             @default("Agreement terminable by either party with 30-day prior written notice.")
-  privacyClause          String             @default("Resident data protected under IT Act & DPDP Act 2023.")
-  disputeJurisdiction    String             @default("City Courts Jurisdiction")
-  witnessName            String?
-  witnessPhone           String?
-  startDate              DateTime
-  endDate                DateTime
-  status                 AgreementStatus    @default(PENDING)
-  contractPdfUrl         String?
-  qrVerificationPayload  String?
-  signatures             Signature[]
-  versions               AgreementVersion[]
-  verifications          Verification[]
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
+  id                    String             @id @default(auto()) @map("_id") @db.ObjectId
+  agreementNumber       String             @unique
+  residentId            String             @db.ObjectId
+  resident              Resident           @relation(fields: [residentId], references: [id])
+  ownerId               String             @db.ObjectId
+  owner                 Owner              @relation(fields: [ownerId], references: [id])
+  pgId                  String             @db.ObjectId
+  pg                    PG                 @relation(fields: [pgId], references: [id])
+  roomNumber            String
+  bedNumber             String
+  rentAmount            Float
+  securityDeposit       Float
+  maintenanceCharges    Float              @default(500)
+  electricityCharges    String             @default("As per Sub-Meter Reading")
+  wifiCharges           String             @default("Complimentary High-Speed WiFi")
+  foodCharges           String             @default("Included in Monthly Rent")
+  noticePeriodDays      Int                @default(30)
+  refundPolicy          String             @default("Security deposit refundable within 7 days post checkout deduction.")
+  houseRules            String[]
+  visitorPolicy         String             @default("Visitors allowed in common areas till 8 PM.")
+  curfewTime            String             @default("10:30 PM Gate Locking Time")
+  damagePolicy          String             @default("Resident liable for physical property damage repairs.")
+  prohibitedActivities  String[] // Smoking, Alcohol, Illegal Substances, Noise
+  cleanlinessTerms      String             @default("Daily housekeeping provided. Resident must maintain room hygiene.")
+  terminationClause     String             @default("Agreement terminable by either party with 30-day prior written notice.")
+  privacyClause         String             @default("Resident data protected under IT Act & DPDP Act 2023.")
+  disputeJurisdiction   String             @default("City Courts Jurisdiction")
+  witnessName           String?
+  witnessPhone          String?
+  startDate             DateTime
+  endDate               DateTime
+  status                AgreementStatus    @default(PENDING)
+  contractPdfUrl        String?
+  qrVerificationPayload String?
+  signatures            Signature[]
+  versions              AgreementVersion[]
+  verifications         Verification[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
 }
 
 model AgreementVersion {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
-  agreementId    String    @db.ObjectId
-  agreement      Agreement @relation(fields: [agreementId], references: [id])
-  versionNumber  Int
-  contractHtml   String
-  changeReason   String?
-  createdAt      DateTime  @default(now())
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  agreementId   String    @db.ObjectId
+  agreement     Agreement @relation(fields: [agreementId], references: [id])
+  versionNumber Int
+  contractHtml  String
+  changeReason  String?
+  createdAt     DateTime  @default(now())
 }
 
 model Signature {
   id               String    @id @default(auto()) @map("_id") @db.ObjectId
   agreementId      String    @db.ObjectId
   agreement        Agreement @relation(fields: [agreementId], references: [id])
-  signerType       String    // RESIDENT, OWNER, WITNESS
+  signerType       String // RESIDENT, OWNER, WITNESS
   signerName       String
   signatureDataSvg String
   ipAddress        String
@@ -754,7 +746,7 @@ model LeaveApplication {
   resident       Resident    @relation(fields: [residentId], references: [id])
   pgId           String      @db.ObjectId
   pg             PG          @relation(fields: [pgId], references: [id])
-  leaveType      String      // HOME_VISIT, VACATION, MEDICAL
+  leaveType      String // HOME_VISIT, VACATION, MEDICAL
   startDate      DateTime
   expectedReturn DateTime
   actualReturn   DateTime?
@@ -765,18 +757,18 @@ model LeaveApplication {
 }
 
 model HoldApplication {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  residentId     String     @db.ObjectId
-  resident       Resident   @relation(fields: [residentId], references: [id])
-  pgId           String     @db.ObjectId
-  pg             PG         @relation(fields: [pgId], references: [id])
-  reason         String
-  holdStartDate  DateTime
-  holdEndDate    DateTime
-  advanceAmount  Float
-  status         HoldStatus @default(PENDING)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  residentId    String     @db.ObjectId
+  resident      Resident   @relation(fields: [residentId], references: [id])
+  pgId          String     @db.ObjectId
+  pg            PG         @relation(fields: [pgId], references: [id])
+  reason        String
+  holdStartDate DateTime
+  holdEndDate   DateTime
+  advanceAmount Float
+  status        HoldStatus @default(PENDING)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 }
 
 // ==========================================
@@ -848,15 +840,15 @@ model ComplaintReply {
 }
 
 model Maintenance {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  pgId        String   @db.ObjectId
-  pg          PG       @relation(fields: [pgId], references: [id])
-  title       String
-  vendorName  String
-  cost        Float
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  pgId         String   @db.ObjectId
+  pg           PG       @relation(fields: [pgId], references: [id])
+  title        String
+  vendorName   String
+  cost         Float
   scheduleDate DateTime
-  status      String
-  createdAt   DateTime @default(now())
+  status       String
+  createdAt    DateTime @default(now())
 }
 
 // ==========================================
@@ -890,28 +882,28 @@ model CheckIn {
 }
 
 model CheckOut {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  residentId         String   @db.ObjectId
-  resident           Resident @relation(fields: [residentId], references: [id])
-  pgId               String   @db.ObjectId
-  pg                 PG       @relation(fields: [pgId], references: [id])
-  checkOutDate       DateTime
-  noticePeriodDays   Int      @default(30)
-  exitInterviewNotes String?
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  residentId            String   @db.ObjectId
+  resident              Resident @relation(fields: [residentId], references: [id])
+  pgId                  String   @db.ObjectId
+  pg                    PG       @relation(fields: [pgId], references: [id])
+  checkOutDate          DateTime
+  noticePeriodDays      Int      @default(30)
+  exitInterviewNotes    String?
   securityDepositRefund Float
-  isRefundProcessed  Boolean  @default(true)
-  checklistCompleted Boolean  @default(true)
-  createdAt          DateTime @default(now())
+  isRefundProcessed     Boolean  @default(true)
+  checklistCompleted    Boolean  @default(true)
+  createdAt             DateTime @default(now())
 }
 
 model Attendance {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  residentId   String   @db.ObjectId
-  resident     Resident @relation(fields: [residentId], references: [id])
-  pgId         String   @db.ObjectId
-  pg           PG       @relation(fields: [pgId], references: [id])
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  residentId   String    @db.ObjectId
+  resident     Resident  @relation(fields: [residentId], references: [id])
+  pgId         String    @db.ObjectId
+  pg           PG        @relation(fields: [pgId], references: [id])
   date         DateTime
-  isPresent    Boolean  @default(true)
+  isPresent    Boolean   @default(true)
   checkInTime  DateTime?
   checkOutTime DateTime?
 }
@@ -1001,7 +993,7 @@ model Notification {
   userId    String   @db.ObjectId
   title     String
   message   String
-  type      String   // AGREEMENT, COMPLAINT, PAYMENT, LEAVE, SYSTEM
+  type      String // AGREEMENT, COMPLAINT, PAYMENT, LEAVE, SYSTEM
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
@@ -1026,16 +1018,16 @@ model Images {
 }
 
 model Analytics {
-  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
-  pgId                  String   @db.ObjectId
-  pg                    PG       @relation(fields: [pgId], references: [id])
-  month                 String
-  mrr                   Float
-  occupancyRatePercent  Float
-  totalRevenue          Float
-  pendingDues           Float
-  resolvedComplaints    Int
-  createdAt             DateTime @default(now())
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  pgId                 String   @db.ObjectId
+  pg                   PG       @relation(fields: [pgId], references: [id])
+  month                String
+  mrr                  Float
+  occupancyRatePercent Float
+  totalRevenue         Float
+  pendingDues          Float
+  resolvedComplaints   Int
+  createdAt            DateTime @default(now())
 }
 
 // ==========================================
@@ -1043,13 +1035,13 @@ model Analytics {
 // ==========================================
 
 model ResidentStatusHistory {
-  id          String         @id @default(auto()) @map("_id") @db.ObjectId
-  residentId  String         @db.ObjectId
-  resident    Resident       @relation(fields: [residentId], references: [id])
-  status      ResidentStatus
-  reason      String?
-  updatedBy   String?
-  createdAt   DateTime       @default(now())
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  residentId String         @db.ObjectId
+  resident   Resident       @relation(fields: [residentId], references: [id])
+  status     ResidentStatus
+  reason     String?
+  updatedBy  String?
+  createdAt  DateTime       @default(now())
 }
 
 model BedHold {
@@ -1079,39 +1071,39 @@ model BedHistory {
 }
 
 model RoomTransferRequest {
-  id                   String              @id @default(auto()) @map("_id") @db.ObjectId
-  residentId           String              @db.ObjectId
-  resident             Resident            @relation(fields: [residentId], references: [id])
-  pgId                 String              @db.ObjectId
-  pg                   PG                  @relation(fields: [pgId], references: [id])
-  currentBedId         String              @db.ObjectId
-  currentBed           Bed                 @relation("FromBed", fields: [currentBedId], references: [id])
-  targetBedId          String?             @db.ObjectId
-  targetBed            Bed?                @relation("ToBed", fields: [targetBedId], references: [id])
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  residentId           String    @db.ObjectId
+  resident             Resident  @relation(fields: [residentId], references: [id])
+  pgId                 String    @db.ObjectId
+  pg                   PG        @relation(fields: [pgId], references: [id])
+  currentBedId         String    @db.ObjectId
+  currentBed           Bed       @relation("FromBed", fields: [currentBedId], references: [id])
+  targetBedId          String?   @db.ObjectId
+  targetBed            Bed?      @relation("ToBed", fields: [targetBedId], references: [id])
   preferredRoomType    RoomType?
   preferredSharingType String?
   preferredRoomNumber  String?
-  hasAC                Boolean?            @default(false)
-  hasBalcony           Boolean?            @default(false)
-  isSilentRoom         Boolean?            @default(false)
-  nearLift             Boolean?            @default(false)
-  higherFloor          Boolean?            @default(false)
+  hasAC                Boolean?  @default(false)
+  hasBalcony           Boolean?  @default(false)
+  isSilentRoom         Boolean?  @default(false)
+  nearLift             Boolean?  @default(false)
+  higherFloor          Boolean?  @default(false)
   roommatePreference   String?
   genderPreference     String?
   reason               String
 
-  budget               Float?
-  preferredMoveDate    DateTime?
-  additionalNotes      String?
-  priority             Priority            @default(MEDIUM)
-  status               RoomTransferStatus  @default(PENDING)
-  attachments          String[]
-  rejectionReason      String?
-  scheduledDate        DateTime?
-  completedAt          DateTime?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  histories            RoomTransferHistory[]
+  budget            Float?
+  preferredMoveDate DateTime?
+  additionalNotes   String?
+  priority          Priority              @default(MEDIUM)
+  status            RoomTransferStatus    @default(PENDING)
+  attachments       String[]
+  rejectionReason   String?
+  scheduledDate     DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  histories         RoomTransferHistory[]
 }
 
 model RoomTransferHistory {

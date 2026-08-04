@@ -5,7 +5,7 @@ import {
 } from "../../interfaces/repositories/IUserRepository";
 
 export class AuthRepository implements IUserRepository {
-  constructor(private readonly db: PrismaClient) {}
+  constructor(private readonly db: PrismaClient) { }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
     try {
@@ -37,7 +37,7 @@ export class AuthRepository implements IUserRepository {
 
   async findByGoogleSubId(googleSubId: string): Promise<User | null> {
     try {
-      return await this.db.user.findUnique({ where: { googleSubId } });
+      return await this.db.user.findFirst({ where: { googleSubId } });
     } catch {
       return null;
     }
