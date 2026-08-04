@@ -9,7 +9,10 @@ export class ComplaintController {
   constructor(private readonly complaintService: IComplaintService) {}
 
   create = catchAsync(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id || '650000000000000000000002';
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
     const complaint = await this.complaintService.createComplaint(userId, req.body);
     return ApiResponse.success(res, 'Complaint ticket submitted', complaint, undefined, 201);
   });

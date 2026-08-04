@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { Container } from '../../container';
+import { authenticate } from '../../middleware/authMiddleware';
 
 const router = Router();
+
+router.use(authenticate);
 
 router.post('/orders', (req, res, next) => Container.billingController.createOrder(req, res, next));
 router.post('/create-order', (req, res, next) => Container.billingController.createOrder(req, res, next));

@@ -1,67 +1,80 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Oswald:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
-/* ─── Design Tokens ─────────────────────────────── */
+/* ─── Aether Design System Tokens ─────────────────────────────── */
 @theme {
-  --font-sans: "Poppins", sans-serif;
+  --font-display: "Inter", sans-serif;
+  --font-body: "Oswald", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", sans-serif;
+
+  /* Aether Dark Theme Core Tokens */
+  --color-aether-primary: #B08D6A;
+  --color-aether-secondary: #000000;
+  --color-aether-accent: #8E7B68;
+  --color-aether-bg: #000000;
+  --color-aether-surface: #B08D6A;
+  --color-aether-text: #FFFFFF;
+  --color-aether-text-muted: #A1A1AA;
+  --color-aether-border: #27272A;
 
   /* Light luxury palette */
   --color-lux-bg: #FFF8F2;
   --color-lux-surface: #F8EEE5;
   --color-lux-card: #FFFDFB;
-  --color-lux-accent: #D9A87C;
-  --color-lux-accent2: #C58B63;
+  --color-lux-accent: #B08D6A;
+  --color-lux-accent2: #8E7B68;
   --color-lux-highlight: #E7C4A0;
-  --color-lux-text: #3B2A24;
-  --color-lux-text2: #6E5A52;
-  --color-lux-border: #E6D7CA;
+  --color-lux-text: #18181B;
+  --color-lux-text2: #52525B;
+  --color-lux-border: #E4E4E7;
   --color-lux-success: #5E9F72;
   --color-lux-warning: #D9A441;
   --color-lux-danger: #D96B5D;
 
   /* Dark luxury palette */
-  --color-dark-bg: #1D1B1A;
-  --color-dark-surface: #2B2725;
-  --color-dark-card: #332D2B;
-  --color-dark-accent: #C89A4B;
-  --color-dark-accent2: #D8B36A;
-  --color-dark-highlight: #E8C98A;
-  --color-dark-text: #F7F3EE;
-  --color-dark-text2: #C6B9AE;
-  --color-dark-border: #4A443F;
-  --color-dark-muted: #756A63;
+  --color-dark-bg: #000000;
+  --color-dark-surface: #121212;
+  --color-dark-card: #18181B;
+  --color-dark-accent: #B08D6A;
+  --color-dark-accent2: #8E7B68;
+  --color-dark-highlight: #C5A07A;
+  --color-dark-text: #FFFFFF;
+  --color-dark-text2: #A1A1AA;
+  --color-dark-border: #27272A;
+  --color-dark-muted: #71717A;
 
-  --radius: 20px;
+  --radius: 11px;
 }
 
 :root {
-  --bg-primary: #FFF8F2;
-  --bg-surface: #F8EEE5;
-  --bg-card: #FFFDFB;
-  --bg-nested: #F4E7DA;
-  --text-main: #3B2A24;
-  --text-muted: #6E5A52;
-  --border-main: #E6D7CA;
-  --border-subtle: #F0E2D5;
-  --accent-gold: #D9A87C;
-  --accent-bronze: #C58B63;
-  --shadow-main: 0 4px 20px rgba(93, 55, 28, 0.08);
-  --shadow-hover: 0 10px 30px rgba(93, 55, 28, 0.14);
+  --bg-primary: #FAF9F6;
+  --bg-surface: #F4F1EA;
+  --bg-card: #FFFFFF;
+  --bg-nested: #EFEBE4;
+  --text-main: #18181B;
+  --text-muted: #52525B;
+  --border-main: #E4E4E7;
+  --border-subtle: #F4F4F5;
+  --accent-gold: #B08D6A;
+  --accent-bronze: #8E7B68;
+  --shadow-main: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 10px 30px rgba(176, 141, 106, 0.15);
 }
 
 html.dark-theme {
-  --bg-primary: #1D1B1A;
-  --bg-surface: #2B2725;
-  --bg-card: #332D2B;
-  --bg-nested: #3D3632;
-  --text-main: #F7F3EE;
-  --text-muted: #C6B9AE;
-  --border-main: #4A443F;
-  --border-subtle: #3A3430;
-  --accent-gold: #C89A4B;
-  --accent-bronze: #D8B36A;
-  --shadow-main: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --shadow-hover: 0 10px 30px rgba(200, 154, 75, 0.2);
+  --bg-primary: #000000;
+  --bg-surface: #121212;
+  --bg-card: #18181B;
+  --bg-nested: #27272A;
+  --text-main: #FFFFFF;
+  --text-muted: #A1A1AA;
+  --border-main: #27272A;
+  --border-subtle: #18181B;
+  --accent-gold: #B08D6A;
+  --accent-bronze: #8E7B68;
+  --shadow-main: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --shadow-hover: 0 10px 30px rgba(176, 141, 106, 0.25);
 }
 
 /* Hardcoded dark element overrides when in light mode */
