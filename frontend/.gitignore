@@ -15,6 +15,7 @@ node_modules
 dist
 dist-ssr
 .env*
+!.env.example
 *.local
 
 # TypeScript build info
