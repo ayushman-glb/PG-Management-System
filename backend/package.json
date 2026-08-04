@@ -21,6 +21,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/pdf-parse": "^1.1.5",
     "@types/sharp": "^0.31.1",
+    "@types/bcryptjs": "^2.4.6",
     "argon2": "^0.45.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.10.0",
@@ -58,7 +59,6 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.7.5",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
