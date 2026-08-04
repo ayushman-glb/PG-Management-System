@@ -1,12 +1,13 @@
 import { ICryptoService } from '../../interfaces/infrastructure/ICryptoService';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { env } from '../../config/env';
 
 export class BcryptCryptoService implements ICryptoService {
   private readonly encryptionKey: string;
 
   constructor(encryptionKey?: string) {
-    const key = encryptionKey || process.env.KYC_ENCRYPTION_KEY;
+    const key = encryptionKey || env.KYC_ENCRYPTION_KEY || env.ENCRYPTION_KEY;
     if (!key) {
       throw new Error(
         'FATAL: KYC_ENCRYPTION_KEY environment variable is required but not set. ' +

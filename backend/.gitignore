@@ -8,7 +8,10 @@ tsc_out.txt
 
 # Environment files
 .env
+.env.development
+.env.production
 .env*.local
+!.env.example
 
 # Logs
 logs/

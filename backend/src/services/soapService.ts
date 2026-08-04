@@ -2,6 +2,7 @@ import * as soap from "soap";
 import { Express } from "express";
 import { Container } from "../container";
 import { logger } from "../utils/logger";
+import { env } from "../config/env";
 
 const wsdlXml = `<?xml version="1.0" encoding="UTF-8"?>
 <definitions name="BillingService"
@@ -38,7 +39,7 @@ const wsdlXml = `<?xml version="1.0" encoding="UTF-8"?>
 
    <service name="BillingService">
       <port name="BillingPort" binding="tns:BillingBinding">
-         <soap:address location="https://pg-management-system-boxb.onrender.com/soap/billing"/>
+         <soap:address location="${env.API_BASE_URL.replace(/\/$/, "")}/soap/billing"/>
       </port>
    </service>
 </definitions>`;

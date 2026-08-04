@@ -1,10 +1,11 @@
 import cluster from 'cluster';
 import os from 'os';
 import { logger } from './utils/logger';
+import { env } from './config/env';
 
 export function runInCluster(startServerFn: () => void) {
   // Respect CLUSTER_MODE env flag (defaults to single process mode in development for stability)
-  const isClusterEnabled = process.env.CLUSTER_MODE === 'true';
+  const isClusterEnabled = env.CLUSTER_MODE === 'true';
   const numCPUs = Math.min(os.cpus().length, 8); // Max 8 cluster workers
 
   if (isClusterEnabled && cluster.isPrimary) {

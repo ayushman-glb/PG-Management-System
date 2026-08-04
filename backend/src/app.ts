@@ -14,8 +14,14 @@ import { correlationIdMiddleware } from "./middleware/correlationMiddleware";
 import { setupGraphQLServer } from "./graphql/apolloServer";
 import { setupSoapServer } from "./services/soapService";
 import { APP_INFO, PathResolver } from "./utils/pathResolver";
+import passport from "./config/passport";
 
 export const app = express();
+
+// Trust proxy setting when deployed behind Render / Cloudflare reverse proxies
+if (env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 // Correlation ID & Distributed Tracing
 app.use(correlationIdMiddleware);
@@ -33,14 +39,24 @@ const allowedOrigins = [
   "https://ayushman-glb.github.io/PG-Management-System",
   "https://ayushman-glb.github.io/PG-Management-System/",
   "https://pg-management-system-boxb.onrender.com",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:5000",
+  "http://127.0.0.1:5173",
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/$/, "");
+      const isAllowed = allowedOrigins.some((o) => o && o.replace(/\/$/, "") === cleanOrigin);
+      if (
+        isAllowed ||
+        (env.NODE_ENV === "development" &&
+          (origin.includes("localhost") || origin.includes("127.0.0.1")))
+      ) {
+        return callback(null, true);
       }
 
       callback(new Error(`Origin ${origin} not allowed by CORS`));
@@ -52,6 +68,7 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(passport.initialize());
 
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
@@ -160,7 +177,7 @@ app.get("/", (req, res) => {
     name: APP_INFO.name,
     description: APP_INFO.description,
     status: "Running",
-    environment: process.env.NODE_ENV || "production",
+    environment: env.NODE_ENV,
     version: APP_INFO.version,
     timestamp: new Date().toISOString(),
     documentation: "/api/v1",

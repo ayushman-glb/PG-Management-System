@@ -9,6 +9,7 @@ import { ITokenService } from "../../interfaces/infrastructure/ITokenService";
 import { IOtpService } from "../../interfaces/infrastructure/IOtpService";
 import { AppError } from "../../utils/appError";
 import { Role } from "@prisma/client";
+import { env } from "../../config/env";
 
 export class AuthService implements IAuthService {
   constructor(
@@ -19,9 +20,9 @@ export class AuthService implements IAuthService {
   ) {}
 
   async googleAuth(code: string, role?: Role): Promise<IAuthUserResult> {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_CALLBACK_URL;
+    const clientId = env.GOOGLE_CLIENT_ID;
+    const clientSecret = env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = env.GOOGLE_CALLBACK_URL;
 
     if (!clientId || !clientSecret) {
       throw new AppError("Google OAuth is not configured on the server.", 500);

@@ -3,6 +3,7 @@ import { IAgreementService } from '../interfaces/IAgreementService';
 import { IAgreementRepository } from '../interfaces/IAgreementRepository';
 import { IPdfAgreementService } from '../interfaces/IPdfAgreementService';
 import { SocketServer } from '../socket/socketServer';
+import { env } from '../config/env';
 
 export class AgreementService implements IAgreementService {
   constructor(
@@ -44,7 +45,7 @@ export class AgreementService implements IAgreementService {
     }
 
     // Generate cryptographic HMAC hash of signature
-    const hmacSecret = process.env.JWT_SECRET;
+    const hmacSecret = env.JWT_SECRET;
     if (!hmacSecret) {
       throw new Error('FATAL: JWT_SECRET not set — cannot generate signature hash');
     }

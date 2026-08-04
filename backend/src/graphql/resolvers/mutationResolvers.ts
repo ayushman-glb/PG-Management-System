@@ -1,6 +1,7 @@
 import { GraphQLContext } from "../context";
 import crypto from "crypto";
 import { Container } from "../../container";
+import { env } from "../../config/env";
 
 export const mutationResolvers = {
   signAgreement: async (
@@ -15,7 +16,7 @@ export const mutationResolvers = {
       throw new Error("Agreement not found");
     }
 
-    const hmacSecret = process.env.JWT_SECRET;
+    const hmacSecret = env.JWT_SECRET;
     if (!hmacSecret) {
       throw new Error(
         "FATAL: JWT_SECRET not set — cannot generate agreement signature hash",

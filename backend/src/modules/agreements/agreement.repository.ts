@@ -1,10 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { IAgreementRepository } from "../../interfaces/IAgreementRepository";
+import { env } from "../../config/env";
 
 export class AgreementRepository implements IAgreementRepository {
   constructor(private prisma: PrismaClient) {}
 
   async createAgreement(data: any): Promise<any> {
+    const generatedAgreementNumber =
+      data.agreementNumber || `RMB-AGR-${Date.now().toString().slice(-6)}`;
+
     return this.prisma.agreement.create({
       data: {
         agreementNumber:
@@ -59,7 +63,7 @@ export class AgreementRepository implements IAgreementRepository {
           data.endDate || Date.now() + 365 * 24 * 60 * 60 * 1000,
         ),
         status: data.status || "PENDING",
-        qrVerificationPayload: `https://roombae.com/verify-agreement/${data.agreementNumber || "RMB-AGR-001"}`,
+        qrVerificationPayload: `${env.FRONTEND_URL.replace(/\/$/, '')}/verify-agreement/${data.agreementNumber || "RMB-AGR-001"}`,
       },
       include: {
         resident: true,

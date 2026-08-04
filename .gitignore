@@ -14,7 +14,11 @@ node_modules
 # Production build outputs
 dist
 dist-ssr
-.env*
+.env
+.env.development
+.env.production
+.env*.local
+!.env.example
 *.local
 
 # TypeScript build info

@@ -23,7 +23,8 @@ router.post('/firebase-login', authLimiter, authController.firebaseLogin);
 router.post('/test-email', authController.testEmail);
 router.get('/me', authController.me);
 
-router.get('/google', authController.googleCallback);
+router.get('/google', (req, res, next) => authController.googleLogin(req, res, next));
+router.get('/google/callback', (req, res, next) => authController.googleCallback(req, res, next));
 router.post('/logout', authController.logout);
 
 export default router;

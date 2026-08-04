@@ -1,3 +1,5 @@
+import { env } from "../../config/env";
+
 export class Logger {
   static info(message: string, meta?: any) {
     console.log(`[INFO] [${new Date().toISOString()}] ${message}`, meta ? JSON.stringify(meta) : "");
@@ -12,7 +14,7 @@ export class Logger {
   }
 
   static debug(message: string, meta?: any) {
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.debug(`[DEBUG] [${new Date().toISOString()}] ${message}`, meta ? JSON.stringify(meta) : "");
     }
   }

@@ -1,13 +1,14 @@
 import { ITokenService, ITokenPayload } from '../../interfaces/infrastructure/ITokenService';
 import jwt from 'jsonwebtoken';
+import { env } from '../../config/env';
 
 export class JwtTokenService implements ITokenService {
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
 
   constructor(jwtSecret?: string, jwtRefreshSecret?: string) {
-    const accessSecret = jwtSecret || process.env.JWT_SECRET;
-    const refreshSecret = jwtRefreshSecret || process.env.JWT_REFRESH_SECRET;
+    const accessSecret = jwtSecret || env.JWT_SECRET;
+    const refreshSecret = jwtRefreshSecret || env.JWT_REFRESH_SECRET;
 
     if (!accessSecret) {
       throw new Error(

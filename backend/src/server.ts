@@ -13,6 +13,7 @@ import { prisma } from "./config/prisma";
 import { logger } from "./utils/logger";
 import { SocketServer } from "./socket/socketServer";
 import { runInCluster } from "./cluster";
+import { ensureSparseIndexes } from "./scripts/ensureSparseIndexes";
 
 async function bootstrap() {
   try {
@@ -24,9 +25,9 @@ async function bootstrap() {
     let mongoHost = "Unknown";
     let dbName = "roombae-db";
 
-    if (process.env.DATABASE_URL) {
+    if (env.DATABASE_URL) {
       try {
-        const urlMatch = process.env.DATABASE_URL.match(/@([^/]+)\/([^?]+)/);
+        const urlMatch = env.DATABASE_URL.match(/@([^/]+)\/([^?]+)/);
         if (urlMatch) {
           mongoHost = urlMatch[1];
           dbName = urlMatch[2];
@@ -42,6 +43,8 @@ async function bootstrap() {
       logger.info(
         `✓ MongoDB Connected | Host: ${mongoHost} | Database: ${dbName} | Latency: ${connectionTimeMs}ms`,
       );
+      // Initialize MongoDB partial/sparse unique indexes for optional fields
+      await ensureSparseIndexes();
     } catch (e: any) {
       mongoStatus = "Connection Pending / In-Memory Seed Fallback";
       logger.warn(

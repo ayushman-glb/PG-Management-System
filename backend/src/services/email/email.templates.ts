@@ -1,3 +1,5 @@
+import { env } from '../../config/env';
+
 export interface EmailTemplateData {
   title?: string;
   name?: string;
@@ -65,7 +67,7 @@ export const emailTemplates = {
           <p>We are thrilled to welcome you to the RoomBae Enterprise Ecosystem! Your account is fully verified and ready for use.</p>
           <p>You can now manage your stay, pay rent digitally, log complaints, and view your rental agreement seamlessly.</p>
           <div style="text-align: center;">
-            <a href="https://ayushman-glb.github.io/PG-Management-System/" class="btn">Explore RoomBae Portal</a>
+            <a href="${env.FRONTEND_URL}" class="btn">Explore RoomBae Portal</a>
           </div>
         </div>
         <div class="footer">

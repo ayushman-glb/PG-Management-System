@@ -1,4 +1,7 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import passport from "passport";
+import { Container } from "../../container";
+import { env } from "../../config/env";
 import { IAuthService } from "../../interfaces/services/IAuthService";
 import { catchAsync } from "../../utils/appError";
 import { ApiResponse } from "../../utils/apiResponse";
@@ -21,7 +24,7 @@ export class AuthController {
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -44,7 +47,7 @@ export class AuthController {
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -72,7 +75,7 @@ export class AuthController {
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -91,7 +94,7 @@ export class AuthController {
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -179,70 +182,120 @@ export class AuthController {
     return ApiResponse.success(res, "Current user details", result);
   });
 
-  googleLogin = catchAsync(async (req: Request, res: Response) => {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const redirectUri = process.env.GOOGLE_CALLBACK_URL;
-
-    if (!clientId) {
-      return res.redirect(
-        `${process.env.FRONTEND_URL || "https://ayushman-glb.github.io/PG-Management-System/"}?error=google_not_configured`,
-      );
-    }
-
+  googleLogin = (req: Request, res: Response, next: NextFunction) => {
     const roleParam = req.query.role ? String(req.query.role) : "OWNER";
-    const scope = "openid email profile";
-    const responseType = "code";
-    const state = Math.random().toString(36).substring(2, 15);
+    const referer = req.headers.referer || req.headers.origin || "";
+    let frontendUrl =
+      env.FRONTEND_URL ||
+      env.CLIENT_URL ||
+      (env.NODE_ENV === "production"
+        ? "https://ayushman-glb.github.io/PG-Management-System"
+        : "http://localhost:5173");
 
-    const authUrl =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri || "")}` +
-      `&response_type=${responseType}` +
-      `&scope=${encodeURIComponent(scope)}` +
-      `&state=${encodeURIComponent(state)}` +
-      `&access_type=offline` +
-      `&prompt=consent` +
-      `&role=${encodeURIComponent(roleParam)}`;
+    if (referer) {
+      try {
+        const parsed = new URL(String(referer));
+        frontendUrl = `${parsed.protocol}//${parsed.host}${parsed.pathname.replace(/\/$/, "")}`;
+      } catch {
+        // keep fallback
+      }
+    }
 
-    return res.redirect(authUrl);
-  });
-
-  googleCallback = catchAsync(async (req: Request, res: Response) => {
-    const { code, error, role } = req.query;
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      "https://ayushman-glb.github.io/PG-Management-System/";
-
-    if (error || !code) {
+    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+      const baseUrl = frontendUrl.replace(/\/$/, "");
       return res.redirect(
-        `${frontendUrl}?error=${encodeURIComponent(String(error || "google_auth_failed"))}`,
+        `${baseUrl}?error=${encodeURIComponent("Google OAuth credentials are not configured on the server.")}`
       );
     }
 
-    try {
-      const result = await this.authService.googleAuth(
-        String(code),
-        role as any,
-      );
+    const stateObj = { role: roleParam, frontendUrl };
+    const state = Buffer.from(JSON.stringify(stateObj)).toString("base64");
 
-      res.cookie("refreshToken", result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+    passport.authenticate("google", {
+      scope: ["openid", "email", "profile"],
+      accessType: "offline",
+      prompt: "consent",
+      state,
+      session: false,
+    })(req, res, next);
+  };
 
-      const redirectParams = new URLSearchParams({
-        token: result.accessToken,
-        user: JSON.stringify(result.user),
-        role: result.user.role,
-      });
-      return res.redirect(`${frontendUrl}?${redirectParams.toString()}`);
-    } catch (err: any) {
-      return res.redirect(
-        `${frontendUrl}?error=${encodeURIComponent(err?.message || "google_auth_failed")}`,
-      );
-    }
-  });
+  googleCallback = (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate(
+      "google",
+      { session: false },
+      async (err: any, user: any, info: any) => {
+        let frontendUrl =
+          env.FRONTEND_URL ||
+          env.CLIENT_URL ||
+          (env.NODE_ENV === "production"
+            ? "https://ayushman-glb.github.io/PG-Management-System"
+            : "http://localhost:5173");
+
+        if (req.query?.state) {
+          try {
+            const stateObj = JSON.parse(
+              Buffer.from(req.query.state as string, "base64").toString("utf-8")
+            );
+            if (stateObj?.frontendUrl) {
+              frontendUrl = stateObj.frontendUrl;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        const baseUrl = frontendUrl.replace(/\/$/, "");
+
+        if (err || !user) {
+          console.error("Google OAuth authentication error:", err || info);
+          const errorMsg = encodeURIComponent(
+            err?.message || info?.message || "google_auth_failed"
+          );
+          return res.redirect(`${baseUrl}?error=${errorMsg}`);
+        }
+
+        try {
+          const payload = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            residentCode: user.residentCode || undefined,
+          };
+
+          const accessToken = Container.tokenService.generateAccessToken(payload);
+          const refreshToken = Container.tokenService.generateRefreshToken(payload);
+
+          res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+          });
+
+          const userDto = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            residentCode: user.residentCode || undefined,
+            avatarUrl: user.avatarUrl,
+          };
+
+          const redirectParams = new URLSearchParams({
+            token: accessToken,
+            user: JSON.stringify(userDto),
+            role: user.role,
+          });
+
+          return res.redirect(`${baseUrl}?${redirectParams.toString()}`);
+        } catch (error: any) {
+          console.error("Error generating tokens in googleCallback:", error);
+          return res.redirect(
+            `${baseUrl}?error=${encodeURIComponent(error?.message || "token_generation_failed")}`
+          );
+        }
+      }
+    )(req, res, next);
+  };
 }

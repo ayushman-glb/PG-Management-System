@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/appError';
 import { ApiResponse } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
 
 export const globalErrorHandler = (
   err: any,
@@ -34,7 +35,7 @@ export const globalErrorHandler = (
 
   return ApiResponse.error(
     res,
-    process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
     [],
     err.statusCode
   );

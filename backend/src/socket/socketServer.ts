@@ -35,14 +35,36 @@ export class SocketServer {
   public static init(server: HttpServer): SocketIOServer {
     SocketServer.io = new SocketIOServer(server, {
       cors: {
-        origin: [
-          env.CLIENT_URL,
-          env.FRONTEND_URL,
-          "https://ayushman-glb.github.io",
-          "https://ayushman-glb.github.io/PG-Management-System",
-          "https://ayushman-glb.github.io/PG-Management-System/",
-          "https://pg-management-system-boxb.onrender.com",
-        ],
+        origin: (
+          origin: string | undefined,
+          callback: (err: Error | null, allow?: boolean) => void,
+        ) => {
+          if (!origin) return callback(null, true);
+          const cleanOrigin = origin.replace(/\/$/, "");
+          const allowedOrigins = [
+            env.CLIENT_URL,
+            env.FRONTEND_URL,
+            "https://ayushman-glb.github.io",
+            "https://ayushman-glb.github.io/PG-Management-System",
+            "https://ayushman-glb.github.io/PG-Management-System/",
+            "https://pg-management-system-boxb.onrender.com",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://localhost:5000",
+            "http://127.0.0.1:5173",
+          ].filter(Boolean);
+          const isAllowed = allowedOrigins.some(
+            (o) => o && o.replace(/\/$/, "") === cleanOrigin,
+          );
+          if (
+            isAllowed ||
+            (env.NODE_ENV === "development" &&
+              (origin.includes("localhost") || origin.includes("127.0.0.1")))
+          ) {
+            return callback(null, true);
+          }
+          return callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
         credentials: true,
       },
     });
