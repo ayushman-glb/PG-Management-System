@@ -1,5 +1,6 @@
 import swaggerJSDoc from "swagger-jsdoc";
 import { env } from "./env";
+import { PathResolver } from "../utils/pathResolver";
 
 const options: swaggerJSDoc.Options = {
   definition: {
@@ -337,7 +338,12 @@ const options: swaggerJSDoc.Options = {
       },
     },
   },
-  apis: ["./src/routes/*.ts"],
+  apis: [
+    PathResolver.resolveFromRoot("src", "routes", "*.ts"),
+    PathResolver.resolveFromRoot("src", "modules", "**", "*.ts"),
+    PathResolver.resolveFromRoot("dist", "src", "routes", "*.js"),
+    PathResolver.resolveFromRoot("dist", "src", "modules", "**", "*.js"),
+  ],
 };
 
 export const swaggerSpec = swaggerJSDoc(options);

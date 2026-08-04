@@ -13,6 +13,7 @@ import { generalLimiter } from "./middleware/rateLimiter";
 import { correlationIdMiddleware } from "./middleware/correlationMiddleware";
 import { setupGraphQLServer } from "./graphql/apolloServer";
 import { setupSoapServer } from "./services/soapService";
+import { APP_INFO, PathResolver } from "./utils/pathResolver";
 
 export const app = express();
 
@@ -154,17 +155,13 @@ app.get("/live", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  const packageJson = require("../package.json") as {
-    version?: string;
-  };
-
   res.status(200).json({
     success: true,
-    name: "RoomBae Enterprise Backend",
-    description: "Production API for the RoomBae PG Management System",
+    name: APP_INFO.name,
+    description: APP_INFO.description,
     status: "Running",
     environment: process.env.NODE_ENV || "production",
-    version: packageJson.version || "1.0.0",
+    version: APP_INFO.version,
     timestamp: new Date().toISOString(),
     documentation: "/api/v1",
     graphql: "/graphql",
