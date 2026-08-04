@@ -68,9 +68,9 @@ const envSchema = z.object({
   RAZORPAY_KEY_SECRET: z.string().default("mock_razorpay_secret"),
   RAZORPAY_WEBHOOK_SECRET: z.string().default("mock_webhook_secret"),
 
-  GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required for Google OAuth"),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required for Google OAuth"),
-  GOOGLE_CALLBACK_URL: z.string().min(1, "GOOGLE_CALLBACK_URL is required for Google OAuth"),
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GOOGLE_CALLBACK_URL: z.string().default("http://localhost:5000/api/v1/auth/google/callback"),
 
   SMTP_HOST: z.string().default("smtp-relay.brevo.com"),
   SMTP_PORT: z.string().default("587"),
