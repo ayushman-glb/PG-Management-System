@@ -85,6 +85,30 @@ export class AuthController {
     return ApiResponse.success(res, "Logout successful");
   });
 
+  firebaseLogin = catchAsync(async (req: Request, res: Response) => {
+    const { idToken } = req.body;
+    const result = await this.authService.firebaseLogin(idToken);
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return ApiResponse.success(res, "Firebase authentication verified", result);
+  });
+
+  testEmail = catchAsync(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    const { emailService } = await import("../../services/email");
+    const success = await emailService.sendOTPEmail(email || "test@roombae.com", "998877", "Test User");
+    if (success) {
+      return ApiResponse.success(res, "Test email sent successfully via Brevo SMTP", { email });
+    }
+    return res.status(500).json({ success: false, message: "Failed to send test email via Brevo SMTP" });
+  });
+
   sendPhoneOtp = catchAsync(async (req: Request, res: Response) => {
     const { phone } = req.body;
     const result = await this.authService.sendPhoneOtp(phone);
@@ -155,9 +179,70 @@ export class AuthController {
     return ApiResponse.success(res, "Current user details", result);
   });
 
+  googleLogin = catchAsync(async (req: Request, res: Response) => {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const redirectUri = process.env.GOOGLE_CALLBACK_URL;
+
+    if (!clientId) {
+      return res.redirect(
+        `${process.env.FRONTEND_URL || "https://ayushman-glb.github.io/PG-Management-System/"}?error=google_not_configured`,
+      );
+    }
+
+    const roleParam = req.query.role ? String(req.query.role) : "OWNER";
+    const scope = "openid email profile";
+    const responseType = "code";
+    const state = Math.random().toString(36).substring(2, 15);
+
+    const authUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri || "")}` +
+      `&response_type=${responseType}` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&state=${encodeURIComponent(state)}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&role=${encodeURIComponent(roleParam)}`;
+
+    return res.redirect(authUrl);
+  });
+
   googleCallback = catchAsync(async (req: Request, res: Response) => {
-    return ApiResponse.success(res, "Google OAuth callback handler", {
-      message: "Google authentication verified",
-    });
+    const { code, error, role } = req.query;
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      "https://ayushman-glb.github.io/PG-Management-System/";
+
+    if (error || !code) {
+      return res.redirect(
+        `${frontendUrl}?error=${encodeURIComponent(String(error || "google_auth_failed"))}`,
+      );
+    }
+
+    try {
+      const result = await this.authService.googleAuth(
+        String(code),
+        role as any,
+      );
+
+      res.cookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      const redirectParams = new URLSearchParams({
+        token: result.accessToken,
+        user: JSON.stringify(result.user),
+        role: result.user.role,
+      });
+      return res.redirect(`${frontendUrl}?${redirectParams.toString()}`);
+    } catch (err: any) {
+      return res.redirect(
+        `${frontendUrl}?error=${encodeURIComponent(err?.message || "google_auth_failed")}`,
+      );
+    }
   });
 }

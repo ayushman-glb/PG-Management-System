@@ -1,5 +1,8 @@
-import { PrismaClient, User } from '@prisma/client';
-import { IUserRepository, ICreateUserData } from '../interfaces/repositories/IUserRepository';
+import { PrismaClient, User, Role } from "@prisma/client";
+import {
+  IUserRepository,
+  ICreateUserData,
+} from "../interfaces/repositories/IUserRepository";
 
 export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly db: PrismaClient) {}
@@ -8,11 +11,8 @@ export class PrismaUserRepository implements IUserRepository {
     try {
       return await this.db.user.findFirst({
         where: {
-          OR: [
-            { email: identifier },
-            { residentCode: identifier }
-          ]
-        }
+          OR: [{ email: identifier }, { residentCode: identifier }],
+        },
       });
     } catch (e) {
       return null;
@@ -35,6 +35,54 @@ export class PrismaUserRepository implements IUserRepository {
     }
   }
 
+  async findByGoogleSubId(googleSubId: string): Promise<User | null> {
+    try {
+      return await this.db.user.findUnique({ where: { googleSubId } });
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async findOrCreateGoogleUser(data: {
+    googleSubId: string;
+    email: string;
+    name: string;
+    avatarUrl?: string;
+    role?: Role;
+  }): Promise<User> {
+    const existing = await this.db.user.findUnique({
+      where: { googleSubId: data.googleSubId },
+    });
+    if (existing) {
+      return existing;
+    }
+
+    const byEmail = await this.db.user.findUnique({
+      where: { email: data.email },
+    });
+    if (byEmail) {
+      return this.db.user.update({
+        where: { id: byEmail.id },
+        data: {
+          googleSubId: data.googleSubId,
+          avatarUrl: data.avatarUrl || byEmail.avatarUrl,
+        },
+      });
+    }
+
+    return this.db.user.create({
+      data: {
+        googleSubId: data.googleSubId,
+        email: data.email,
+        name: data.name,
+        avatarUrl: data.avatarUrl,
+        role: data.role || Role.OWNER,
+        emailVerified: true,
+        authProvider: "GOOGLE",
+      },
+    });
+  }
+
   async create(data: ICreateUserData): Promise<User> {
     return this.db.user.create({
       data: {
@@ -43,15 +91,19 @@ export class PrismaUserRepository implements IUserRepository {
         passwordHash: data.passwordHash,
         phone: data.phone,
         role: data.role,
-        residentCode: data.residentCode
-      }
+        residentCode: data.residentCode,
+      },
     });
   }
 
-  async updateOtp(id: string, otpSecret: string | null, otpExpiresAt: Date | null): Promise<User> {
+  async updateOtp(
+    id: string,
+    otpSecret: string | null,
+    otpExpiresAt: Date | null,
+  ): Promise<User> {
     return this.db.user.update({
       where: { id },
-      data: { otpSecret, otpExpiresAt }
+      data: { otpSecret, otpExpiresAt },
     });
   }
 }

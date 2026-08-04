@@ -36,6 +36,11 @@ const envSchema = z.object({
     .default(
       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     ),
+  ENCRYPTION_KEY: z
+    .string()
+    .default(
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    ),
   RAZORPAY_KEY_ID: z.string().default("rzp_test_mock_key"),
   RAZORPAY_KEY_SECRET: z.string().default("mock_razorpay_secret"),
   RAZORPAY_WEBHOOK_SECRET: z.string().default("mock_webhook_secret"),
@@ -46,11 +51,21 @@ const envSchema = z.object({
     .default(
       "https://pg-management-system-boxb.onrender.com/api/v1/auth/google/callback",
     ),
-  SMTP_HOST: z.string().default("smtp.gmail.com"),
+  SMTP_HOST: z.string().default("smtp-relay.brevo.com"),
   SMTP_PORT: z.string().default("587"),
-  SMTP_USER: z.string().default("noreply@roombae.com"),
-  SMTP_PASS: z.string().default("mock_password"),
-  EMAIL_FROM: z.string().default("RoomBae Security <noreply@roombae.com>"),
+  SMTP_USER: z.string().default("b439ea001@smtp-brevo.com"),
+  SMTP_PASS: z.string().default(process.env.SMTP_PASS || ""),
+  EMAIL_FROM: z.string().default("RoomBae Enterprise <b439ea001@smtp-brevo.com>"),
+  CLOUDINARY_CLOUD_NAME: z.string().default("vmivgp12"),
+  CLOUDINARY_API_KEY: z.string().default("499297858997516"),
+  CLOUDINARY_API_SECRET: z.string().default("aJn-dyMV-XIO5L5TbVdGgSLoYk0"),
+  CLOUDINARY_URL: z.string().optional(),
+  FIREBASE_PROJECT_ID: z.string().default("roombae-cff13"),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
+  CLAMAV_HOST: z.string().default("localhost"),
+  CLAMAV_PORT: z.string().default("3310"),
+  UPLOAD_MAX_SIZE: z.string().default("10485760"),
   SMS_API_KEY: z.string().default("mock_sms_api_key"),
   NOMINATIM_USER_AGENT: z.string().default("RoomBae-PG-Management/1.0"),
 });

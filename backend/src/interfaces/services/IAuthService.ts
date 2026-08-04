@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role } from "@prisma/client";
 
 export interface IAuthUserResult {
   user: {
@@ -33,19 +33,36 @@ export interface IRegisterData {
 export interface IAuthService {
   login(identifier: string, password: string): Promise<IAuthUserResult>;
   register(data: IRegisterData): Promise<IAuthUserResult>;
+  googleAuth(code: string, role?: Role): Promise<IAuthUserResult>;
   sendOtp(email: string): Promise<{ message: string }>;
   verifyOtp(email: string, otp: string): Promise<IAuthUserResult>;
-  sendPhoneOtp(phone: string): Promise<{ success: boolean; message: string; timerSeconds: number }>;
-  verifyPhoneOtp(phone: string, otp: string): Promise<{ success: boolean; message: string }>;
-  sendEmailVerification(email: string): Promise<{ success: boolean; message: string }>;
-  verifyEmail(email: string, code: string): Promise<{ success: boolean; message: string }>;
-  enableTwoFactor(userId: string): Promise<{ secret: string; qrCodeUrl: string }>;
-  verifyTwoFactor(userId: string, token: string): Promise<{ success: boolean; message: string }>;
-  disableTwoFactor(userId: string): Promise<{ success: boolean; message: string }>;
+  sendPhoneOtp(
+    phone: string,
+  ): Promise<{ success: boolean; message: string; timerSeconds: number }>;
+  verifyPhoneOtp(
+    phone: string,
+    otp: string,
+  ): Promise<{ success: boolean; message: string }>;
+  sendEmailVerification(
+    email: string,
+  ): Promise<{ success: boolean; message: string }>;
+  verifyEmail(
+    email: string,
+    code: string,
+  ): Promise<{ success: boolean; message: string }>;
+  enableTwoFactor(
+    userId: string,
+  ): Promise<{ secret: string; qrCodeUrl: string }>;
+  verifyTwoFactor(
+    userId: string,
+    token: string,
+  ): Promise<{ success: boolean; message: string }>;
+  disableTwoFactor(
+    userId: string,
+  ): Promise<{ success: boolean; message: string }>;
   refreshToken(token: string): Promise<{ accessToken: string }>;
+  firebaseLogin(idToken: string): Promise<IAuthUserResult>;
   me(userId: string): Promise<any>;
   ownerProfile(userId: string): Promise<any>;
   residentProfile(userId: string): Promise<any>;
 }
-
-

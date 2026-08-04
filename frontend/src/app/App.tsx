@@ -62,6 +62,39 @@ export default function App() {
 
   const [skeletonLoading, setSkeletonLoading] = useState<boolean>(false);
 
+  // Handle Google OAuth callback query params (token, user, role, error)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userJson = params.get("user");
+    const role = params.get("role");
+    const error = params.get("error");
+
+    if (error) {
+      console.warn("Google OAuth error:", error);
+      // Clean the URL without reloading
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+
+    if (token) {
+      try {
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("token", token);
+        if (userJson) {
+          localStorage.setItem("user", decodeURIComponent(userJson));
+        }
+        const targetPage: Page =
+          role === "RESIDENT" ? "resident-portal" : "dashboard";
+        setPage(targetPage);
+        // Clean the URL without reloading
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch (e) {
+        console.error("Failed to process OAuth callback:", e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let timer: number;
     let debugTimer: number;
@@ -171,7 +204,11 @@ function LoadingOverlay() {
       }`}
     >
       <div className="flex flex-col items-center gap-6">
-        <img src={loadingImg} alt="RoomBae" className="w-52 md:w-60 animate-pulse filter drop-shadow-md" />
+        <img
+          src={loadingImg}
+          alt="RoomBae"
+          className="w-52 md:w-60 animate-pulse filter drop-shadow-md"
+        />
 
         <div className="flex gap-2.5 items-center">
           <span
@@ -194,4 +231,3 @@ function LoadingOverlay() {
     </motion.div>
   );
 }
-

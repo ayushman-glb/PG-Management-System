@@ -3,6 +3,8 @@ node_modules/
 
 # Build outputs
 dist/
+temp_uploads/
+tsc_out.txt
 
 # Environment files
 .env

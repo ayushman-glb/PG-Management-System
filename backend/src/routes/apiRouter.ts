@@ -15,12 +15,14 @@ import { notificationRoutes } from '../modules/notifications';
 import { settingsRoutes } from '../modules/settings';
 import residentManagementRoutes from './residentManagementRoutes';
 import saasManagementRoutes from './saasManagementRoutes';
+import uploadRoutes from './upload.routes';
 
 const apiRouter = Router();
 
 apiRouter.use(tenantMiddleware);
 
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/onboarding', ownerRoutes);
 apiRouter.use('/owners', ownerRoutes);
 apiRouter.use('/properties', propertyRoutes);

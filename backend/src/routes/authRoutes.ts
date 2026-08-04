@@ -19,6 +19,8 @@ router.post('/enable-2fa', authLimiter, authController.enableTwoFactor);
 router.post('/verify-2fa', authLimiter, authController.verifyTwoFactor);
 router.post('/disable-2fa', authLimiter, authController.disableTwoFactor);
 router.post('/refresh-token', authLimiter, authController.refreshToken);
+router.post('/firebase-login', authLimiter, authController.firebaseLogin);
+router.post('/test-email', authController.testEmail);
 router.get('/me', authController.me);
 
 router.get('/google', authController.googleCallback);

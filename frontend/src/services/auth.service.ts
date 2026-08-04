@@ -95,6 +95,33 @@ export class AuthService {
     return res.data || res;
   }
 
+  async firebaseLogin(idToken: string) {
+    const res = await this.request("/auth/firebase-login", {
+      method: "POST",
+      body: JSON.stringify({ idToken }),
+    });
+    if (res.data?.accessToken) {
+      this.setToken(res.data.accessToken);
+    }
+    return res.data || res;
+  }
+
+  async sendEmailVerification(email: string) {
+    const res = await this.request("/auth/send-email-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    return res.data || res;
+  }
+
+  async verifyEmail(email: string, code: string) {
+    const res = await this.request("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    });
+    return res.data || res;
+  }
+
   async logout() {
     try {
       await this.request("/auth/logout", { method: "POST" });
