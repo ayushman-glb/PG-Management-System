@@ -118,7 +118,7 @@ export class BillingService implements IBillingService {
   /**
    * Stream Official GST Tax Invoice PDF using PDFKit
    */
-  async generateInvoicePdfStream(paymentId: string): Promise<PDFKit.PDFDocument> {
+  async generateInvoicePdfStream(paymentId: string): Promise<InstanceType<typeof PDFDocument>> {
     const payment = await this.billingRepository.findPaymentWithDetails(paymentId);
 
     if (!payment) {

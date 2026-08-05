@@ -6,6 +6,7 @@ import { IPdfGeneratorService } from '../../interfaces/infrastructure/IPdfGenera
 import { AppError } from '../../utils/appError';
 import { PaymentStatus } from '@prisma/client';
 import crypto from 'crypto';
+import PDFDocument from 'pdfkit';
 import { env } from '../../config/env';
 
 export class BillingService implements IBillingService {
@@ -104,7 +105,7 @@ export class BillingService implements IBillingService {
     return updated;
   }
 
-  async generateInvoicePdfStream(paymentId: string): Promise<PDFKit.PDFDocument> {
+  async generateInvoicePdfStream(paymentId: string): Promise<InstanceType<typeof PDFDocument>> {
     const payment = await this.billingRepository.findPaymentWithDetails(paymentId);
 
     if (!payment) {

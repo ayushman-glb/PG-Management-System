@@ -8,7 +8,7 @@ export class PdfKitInvoiceService implements IPdfGeneratorService {
   /**
    * Generates readable PDFKit Document stream for Express HTTP streaming responses
    */
-  async generateInvoicePdf(payment: any): Promise<PDFKit.PDFDocument> {
+  async generateInvoicePdf(payment: any): Promise<InstanceType<typeof PDFDocument>> {
     const doc = new PDFDocument({ margin: 50, size: "A4" });
     await this.buildInvoiceDocument(doc, payment);
     doc.end();
@@ -24,7 +24,7 @@ export class PdfKitInvoiceService implements IPdfGeneratorService {
         const doc = new PDFDocument({ margin: 50, size: "A4" });
         const buffers: Buffer[] = [];
 
-        doc.on("data", (chunk) => buffers.push(chunk));
+        doc.on("data", (chunk: Buffer) => buffers.push(chunk));
         doc.on("end", () => resolve(Buffer.concat(buffers)));
 
         await this.buildInvoiceDocument(doc, payment);

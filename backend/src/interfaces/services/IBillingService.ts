@@ -11,5 +11,5 @@ export interface IVerifyPaymentData {
 export interface IBillingService {
   createPaymentOrder(residentId: string, baseAmount: number, isInterstate?: boolean): Promise<any>;
   verifyPayment(data: IVerifyPaymentData): Promise<any>;
-  generateInvoicePdfStream(paymentId: string): Promise<PDFKit.PDFDocument>;
+  generateInvoicePdfStream(paymentId: string): Promise<InstanceType<typeof PDFDocument>>;
 }

@@ -99,11 +99,11 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-passport.serializeUser((user: any, done) => {
-  done(null, user.id);
+passport.serializeUser((user: Express.User, done: (err: any, id?: unknown) => void) => {
+  done(null, (user as any).id);
 });
 
-passport.deserializeUser(async (id: string, done) => {
+passport.deserializeUser(async (id: string, done: (err: any, user?: Express.User | null | false) => void) => {
   try {
     const user = await Container.userRepository.findById(id);
     done(null, user as Express.User | null);
@@ -111,5 +111,6 @@ passport.deserializeUser(async (id: string, done) => {
     done(err, null);
   }
 });
+
 
 export default passport;
