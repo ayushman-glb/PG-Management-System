@@ -1,5 +1,9 @@
-# Logs
-logs
+# ============================================================
+# RoomBae — Root .gitignore
+# ============================================================
+
+# ── Logs ────────────────────────────────────────────────────
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,45 +11,62 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
-node_modules
-.pnpm-store
+# ── Dependencies ─────────────────────────────────────────────
+node_modules/
+.pnpm-store/
 
-# Production build outputs
-dist
-dist-ssr
+# ── Build Outputs ─────────────────────────────────────────────
+dist/
+dist-ssr/
+coverage/
+
+# ── Environment / Secrets ─────────────────────────────────────
+# Block ALL .env* files by default across the whole repo
 .env
+.env.local
 .env.development
 .env.production
-.env*.local
+.env.staging
+.env.test
+.env.*.local
+**/.env
+**/.env.local
+**/.env.development
+**/.env.production
+**/.env.staging
+**/.env.test
+**/.env.*.local
+
+# Allow ONLY the placeholder example templates
 !.env.example
 !**/.env.example
-*.local
-.env*
-!*.env.example
+
+# Private keys, certificates, service accounts
 *.pem
 *.key
 *.crt
+*.p12
+*.pfx
 serviceAccountKey*.json
 service-account*.json
 firebase-admin*.json
-coverage
-uploads
-temp_uploads
 
+# Uploads and temp files
+uploads/
+temp_uploads/
+*.local
 
-
-# TypeScript build info
+# ── TypeScript ─────────────────────────────────────────────────
 tsconfig.tsbuildinfo
 
-# Editor & OS files
+# ── Editor & OS files ──────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
