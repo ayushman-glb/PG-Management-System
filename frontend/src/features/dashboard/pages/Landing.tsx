@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { AnimatePresence, motion } from "framer-motion";
 import { MotionCard } from "@components/animations/MotionCard";
@@ -241,46 +242,30 @@ export default function Landing({ navigate }: Props) {
   const [animateStats, setAnimateStats] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const heroBgRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setAnimateStats(true), 300);
+  useGSAP(() => {
+    const scope = containerRef.current;
+    if (!scope || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     gsap.registerPlugin(ScrollTrigger);
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (prefersReducedMotion) {
-      return () => clearTimeout(timer);
-    }
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.05 });
+    
+    const animateIfPresent = (selector: string, from: any, to: any, pos?: string) => {
+        if (scope.querySelector(selector)) tl.fromTo(selector, from, to, pos);
+    };
 
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.05 });
-      tl.fromTo(".hero-badge",
-          { opacity: 0, y: -18 },
-          { opacity: 1, y: 0, duration: 0.55 })
-        .fromTo(".hero-title",
-          { opacity: 0, y: 32, clipPath: "inset(100% 0 0 0)" },
-          { opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)", duration: 0.75 },
-          "-=0.35")
-        .fromTo(".hero-sub",
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.6 },
-          "-=0.45")
-        .fromTo(".hero-cta",
-          { opacity: 0, y: 16, scale: 0.96 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.5 },
-          "-=0.4")
-        .fromTo(".hero-stats",
-          { opacity: 0, y: 18 },
-          { opacity: 1, y: 0, duration: 0.5, stagger: 0.07 },
-          "-=0.35")
-        .fromTo(".hero-mockup",
-          { opacity: 0, y: 52, scale: 0.97 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: "power2.out" },
-          "-=0.45");
+    animateIfPresent(".hero-badge", { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.55 });
+    animateIfPresent(".hero-title", { opacity: 0, y: 32, clipPath: "inset(100% 0 0 0)" }, { opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)", duration: 0.75 }, "-=0.35");
+    animateIfPresent(".hero-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.45");
+    animateIfPresent(".hero-cta", { opacity: 0, y: 16, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, "-=0.4");
+    animateIfPresent(".hero-mockup", { opacity: 0, y: 52, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: "power2.out" }, "-=0.45");
 
-      if (navRef.current) {
+    if (navRef.current) {
         let lastY = 0;
         let navHidden = false;
         ScrollTrigger.create({
@@ -298,86 +283,66 @@ export default function Landing({ navigate }: Props) {
             lastY = currentY;
           },
         });
-      }
+    }
 
-      gsap.utils.toArray<HTMLElement>(".reveal-section").forEach((sec) => {
-        gsap.fromTo(
-          sec,
-          { opacity: 0, y: 36 },
-          {
-            opacity: 1, y: 0,
-            duration: 0.75, ease: "power2.out",
-            scrollTrigger: { trigger: sec, start: "top 87%", toggleActions: "play none none none" },
-          }
-        );
+    gsap.utils.toArray<HTMLElement>(".reveal-section", scope).forEach((sec) => {
+      gsap.fromTo(sec, { opacity: 0, y: 36 }, {
+        opacity: 1, y: 0,
+        duration: 0.75, ease: "power2.out",
+        scrollTrigger: { trigger: sec, start: "top 87%", toggleActions: "play none none none" },
       });
-
-      gsap.utils.toArray<HTMLElement>(".feature-card").forEach((card, i) => {
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 28, scale: 0.97 },
-          {
-            opacity: 1, y: 0, scale: 1,
-            duration: 0.55, ease: "power2.out",
-            delay: (i % 4) * 0.07,
-            scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
-          }
-        );
-      });
-
-      gsap.utils.toArray<HTMLElement>(".testimonial-card").forEach((card, i) => {
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 24 },
-          {
-            opacity: 1, y: 0,
-            duration: 0.55, ease: "power2.out",
-            delay: i * 0.1,
-            scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
-          }
-        );
-      });
-
-      gsap.utils.toArray<HTMLElement>(".pricing-card").forEach((card, i) => {
-        gsap.fromTo(
-          card,
-          { opacity: 0, y: 30, scale: 0.97 },
-          {
-            opacity: 1, y: 0, scale: 1,
-            duration: 0.6, ease: "power2.out",
-            delay: i * 0.12,
-            scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none none" },
-          }
-        );
-      });
-
-      const logoSection = document.querySelector(".logo-ticker");
-      if (logoSection) {
-        gsap.to(logoSection, {
-          x: "-25%",
-          ease: "none",
-          scrollTrigger: {
-            trigger: logoSection,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1.5,
-          },
-        });
-      }
     });
 
-    const heroBg = document.querySelector<HTMLElement>(".hero-bg-parallax");
+    gsap.utils.toArray<HTMLElement>(".feature-card", scope).forEach((card, i) => {
+      gsap.fromTo(card, { opacity: 0, y: 28, scale: 0.97 }, {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.55, ease: "power2.out",
+        delay: (i % 4) * 0.07,
+        scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
+      });
+    });
+
+    gsap.utils.toArray<HTMLElement>(".testimonial-card", scope).forEach((card, i) => {
+      gsap.fromTo(card, { opacity: 0, y: 24 }, {
+        opacity: 1, y: 0,
+        duration: 0.55, ease: "power2.out",
+        delay: i * 0.1,
+        scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
+      });
+    });
+
+    gsap.utils.toArray<HTMLElement>(".pricing-card", scope).forEach((card, i) => {
+      gsap.fromTo(card, { opacity: 0, y: 30, scale: 0.97 }, {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.6, ease: "power2.out",
+        delay: i * 0.12,
+        scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none none" },
+      });
+    });
+
+    const logoSection = scope.querySelector(".logo-ticker");
+    if (logoSection) {
+      gsap.to(logoSection, {
+        x: "-25%",
+        ease: "none",
+        scrollTrigger: { trigger: logoSection, start: "top bottom", end: "bottom top", scrub: 1.5 },
+      });
+    }
+  }, { scope: containerRef });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimateStats(true), 300);
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (!heroBg) return;
+      if (!heroBgRef.current) return;
       const x = (e.clientX / window.innerWidth - 0.5) * 22;
       const y = (e.clientY / window.innerHeight - 0.5) * 14;
-      gsap.to(heroBg, { x, y, duration: 1.4, ease: "power1.out" });
+      gsap.to(heroBgRef.current, { x, y, duration: 1.4, ease: "power1.out" });
     };
     window.addEventListener("mousemove", handleMouseMove);
 
     return () => {
       clearTimeout(timer);
-      ctx.revert();
       window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
@@ -389,7 +354,7 @@ export default function Landing({ navigate }: Props) {
   };
 
   return (
-    <div className="min-h-screen aurora-bg text-[#3B2A24] font-sans relative overflow-hidden">
+    <div ref={containerRef} className="min-h-screen aurora-bg text-[#3B2A24] font-sans relative overflow-hidden">
       <div className="aurora-orb-1 -top-24 -left-24 opacity-70" />
       <div className="aurora-orb-2 top-1/3 -right-32 opacity-60" />
       <div className="aurora-orb-1 bottom-1/4 left-1/4 opacity-50" />
@@ -521,6 +486,7 @@ export default function Landing({ navigate }: Props) {
 
       <section ref={heroRef} className="hero-gradient pt-32 pb-20 px-6 overflow-hidden relative">
         <div
+          ref={heroBgRef}
           className="hero-bg-parallax pointer-events-none absolute inset-0 will-change-transform"
           aria-hidden="true"
           style={{

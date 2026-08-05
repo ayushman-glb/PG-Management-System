@@ -275,67 +275,58 @@ export function useHeroTimeline(containerRef: React.RefObject<Element | null>) {
   useEffect(() => {
     if (!containerRef.current) return;
     if (prefersReducedMotion()) {
-      // Just ensure everything is visible
-      gsap.set(
-        [
-          ".hero-badge",
-          ".hero-title",
-          ".hero-sub",
-          ".hero-cta",
-          ".hero-stats",
-          ".hero-mockup",
-        ],
-        { opacity: 1, y: 0, x: 0, scale: 1, clipPath: "none" }
-      );
+      const scope = containerRef.current;
+      [
+        ".hero-badge",
+        ".hero-title",
+        ".hero-sub",
+        ".hero-cta",
+        ".hero-stats",
+        ".hero-mockup",
+      ].forEach((sel) => {
+        if (scope.querySelector(sel)) {
+          gsap.set(sel, { opacity: 1, y: 0, x: 0, scale: 1, clipPath: "none" });
+        }
+      });
       return;
     }
 
     const ctx = gsap.context(() => {
+      const scope = containerRef.current;
+      if (!scope) return;
+
       const tl = gsap.timeline({
         defaults: { ease: "power3.out" },
         delay: 0.1,
       });
 
-      tl.fromTo(".hero-badge", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.55 })
-        .fromTo(
-          ".hero-title",
-          {
-            opacity: 0,
-            y: 30,
-            clipPath: "inset(100% 0 0 0)",
-          },
-          {
-            opacity: 1,
-            y: 0,
-            clipPath: "inset(0% 0 0 0)",
-            duration: 0.75,
-          },
-          "-=0.35"
-        )
-        .fromTo(
-          ".hero-sub",
-          { opacity: 0, y: 18 },
-          { opacity: 1, y: 0, duration: 0.6 },
-          "-=0.45"
-        )
-        .fromTo(
-          ".hero-cta",
-          { opacity: 0, y: 14, scale: 0.96 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.5 },
-          "-=0.4"
-        )
-        .fromTo(
-          ".hero-stats",
-          { opacity: 0, y: 16 },
-          { opacity: 1, y: 0, duration: 0.55, stagger: 0.08 },
-          "-=0.35"
-        )
-        .fromTo(
-          ".hero-mockup",
-          { opacity: 0, y: 50, scale: 0.97 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: "power2.out" },
-          "-=0.5"
-        );
+      const addStep = (
+        selector: string,
+        fromVars: gsap.TweenVars,
+        toVars: gsap.TweenVars,
+        position?: string
+      ) => {
+        if (scope.querySelector(selector)) {
+          tl.fromTo(selector, fromVars, toVars, position);
+        }
+      };
+
+      addStep(".hero-badge", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.55 });
+      addStep(
+        ".hero-title",
+        { opacity: 0, y: 30, clipPath: "inset(100% 0 0 0)" },
+        { opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)", duration: 0.75 },
+        "-=0.35"
+      );
+      addStep(".hero-sub", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.45");
+      addStep(".hero-cta", { opacity: 0, y: 14, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, "-=0.4");
+      addStep(".hero-stats", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.08 }, "-=0.35");
+      addStep(
+        ".hero-mockup",
+        { opacity: 0, y: 50, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: "power2.out" },
+        "-=0.5"
+      );
     }, containerRef);
 
     return () => ctx.revert();
