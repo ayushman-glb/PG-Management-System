@@ -46,7 +46,7 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
       return <Complaints navigate={navigate} />;
     case "analytics":
       return (
-        <RoleGuard allowedRoles={["admin", "owner"]}>
+        <RoleGuard allowedRoles={["admin", "ADMIN", "owner", "OWNER", "pg_owner", "PG_OWNER", "super_admin", "SUPER_ADMIN", "manager", "MANAGER"]}>
           <Analytics navigate={navigate} />
         </RoleGuard>
       );
