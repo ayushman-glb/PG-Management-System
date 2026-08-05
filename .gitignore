@@ -21,6 +21,19 @@ dist-ssr
 !.env.example
 !**/.env.example
 *.local
+.env*
+!*.env.example
+*.pem
+*.key
+*.crt
+serviceAccountKey*.json
+service-account*.json
+firebase-admin*.json
+coverage
+uploads
+temp_uploads
+
+
 
 # TypeScript build info
 tsconfig.tsbuildinfo

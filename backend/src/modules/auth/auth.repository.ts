@@ -43,6 +43,14 @@ export class AuthRepository implements IUserRepository {
     }
   }
 
+  async findByPhone(phone: string): Promise<User | null> {
+    try {
+      return await this.db.user.findFirst({ where: { phone } });
+    } catch {
+      return null;
+    }
+  }
+
   async findOrCreateGoogleUser(data: {
     googleSubId: string;
     email: string;
@@ -78,6 +86,55 @@ export class AuthRepository implements IUserRepository {
         role: data.role || Role.OWNER,
         emailVerified: true,
         authProvider: "GOOGLE",
+      },
+    });
+  }
+
+  async findOrCreatePhoneUser(data: {
+    phone: string;
+    name?: string;
+    role?: Role;
+  }): Promise<User> {
+    const existing = await this.db.user.findFirst({
+      where: { phone: data.phone },
+    });
+
+    if (existing) {
+      return this.db.user.update({
+        where: { id: existing.id },
+        data: {
+          phoneVerified: true,
+          authProvider: existing.authProvider || "PHONE",
+        },
+      });
+    }
+
+    const cleanPhoneDigits = data.phone.replace(/\D/g, "");
+    const generatedEmail = `phone_${cleanPhoneDigits}@roombae.user`;
+
+    const byEmail = await this.db.user.findUnique({
+      where: { email: generatedEmail },
+    });
+
+    if (byEmail) {
+      return this.db.user.update({
+        where: { id: byEmail.id },
+        data: {
+          phone: data.phone,
+          phoneVerified: true,
+          authProvider: "PHONE",
+        },
+      });
+    }
+
+    return this.db.user.create({
+      data: {
+        name: data.name || `User ${cleanPhoneDigits.slice(-4)}`,
+        email: generatedEmail,
+        phone: data.phone,
+        phoneVerified: true,
+        role: data.role || Role.RESIDENT,
+        authProvider: "PHONE",
       },
     });
   }

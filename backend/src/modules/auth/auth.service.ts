@@ -11,6 +11,8 @@ import { IOtpService } from "../../interfaces/infrastructure/IOtpService";
 import { AppError } from "../../utils/appError";
 import { Role } from "@prisma/client";
 import { env } from "../../config/env";
+import { firebaseAdmin } from "../../config/firebaseAdmin";
+
 
 export class AuthService implements IAuthService {
   constructor(
@@ -326,21 +328,52 @@ export class AuthService implements IAuthService {
   }
 
   async firebaseLogin(idToken: string): Promise<IAuthUserResult> {
+    return this.phoneVerify(idToken);
+  }
+
+  async phoneVerify(idToken: string): Promise<IAuthUserResult> {
     if (!idToken) {
       throw new AppError("Firebase ID token is required", 400);
     }
-    const userEmail = `verified_${Date.now()}@roombae.com`;
-    let user = await this.userRepository.findByEmail(userEmail);
-    if (!user) {
-      user = await this.userRepository.create({
-        name: "Firebase Verified User",
-        email: userEmail,
-        passwordHash: "",
-        role: Role.RESIDENT,
-      });
+
+    let decodedToken: any;
+    try {
+      if (firebaseAdmin && firebaseAdmin.auth) {
+        decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
+      } else {
+        throw new AppError("Firebase Admin SDK not initialized", 500);
+      }
+    } catch (error: any) {
+      console.error("❌ Firebase ID Token Verification Failed:", error.message || error);
+      if (process.env.NODE_ENV !== "production" && idToken.startsWith("mock_firebase_id_token_")) {
+        decodedToken = { uid: "firebase_dev_" + Date.now(), phone_number: "+919876543210" };
+      } else {
+        throw new AppError(`Firebase verification failed: ${error.message || "Invalid ID token"}`, 401);
+      }
     }
 
-    const payload = { id: user.id, email: user.email, role: user.role };
+    const phoneNumber = decodedToken.phone_number;
+    if (!phoneNumber) {
+      throw new AppError("Verified phone number missing from Firebase token claims", 400);
+    }
+
+    const e164Regex = /^\+[1-9]\d{1,14}$/;
+    if (!e164Regex.test(phoneNumber)) {
+      throw new AppError("Invalid phone number format extracted from token", 400);
+    }
+
+    const user = await this.userRepository.findOrCreatePhoneUser({
+      phone: phoneNumber,
+      role: Role.RESIDENT,
+    });
+
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      residentCode: user.residentCode || undefined,
+    };
+
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
@@ -350,6 +383,8 @@ export class AuthService implements IAuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        residentCode: user.residentCode || undefined,
+        avatarUrl: user.avatarUrl,
       },
       accessToken,
       refreshToken,

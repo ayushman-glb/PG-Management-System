@@ -14,11 +14,17 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
   findByGoogleSubId(googleSubId: string): Promise<User | null>;
+  findByPhone(phone: string): Promise<User | null>;
   findOrCreateGoogleUser(data: {
     googleSubId: string;
     email: string;
     name: string;
     avatarUrl?: string;
+    role?: Role;
+  }): Promise<User>;
+  findOrCreatePhoneUser(data: {
+    phone: string;
+    name?: string;
     role?: Role;
   }): Promise<User>;
   create(data: ICreateUserData): Promise<User>;

@@ -7,11 +7,16 @@ temp_uploads/
 tsc_out.txt
 
 # Environment files
-.env
-.env.development
-.env.production
-.env*.local
+.env*
 !.env.example
+*.pem
+*.key
+*.crt
+serviceAccountKey*.json
+service-account*.json
+firebase-admin*.json
+
+
 
 # Logs
 logs/

@@ -106,6 +106,17 @@ export class AuthService {
     return res.data || res;
   }
 
+  async phoneVerify(idToken: string) {
+    const res = await this.request("/auth/phone-verify", {
+      method: "POST",
+      body: JSON.stringify({ idToken }),
+    });
+    if (res.data?.accessToken) {
+      this.setToken(res.data.accessToken);
+    }
+    return res.data || res;
+  }
+
   async sendEmailVerification(email: string) {
     const res = await this.request("/auth/send-email-verification", {
       method: "POST",

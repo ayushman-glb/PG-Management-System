@@ -26,6 +26,8 @@ import { env } from "@config/env";
 import { usePhoneAuth } from "../../../hooks/usePhoneAuth";
 import { OTPInput } from "../../../components/OTPInput";
 import { UploadCard } from "../../../components/UploadCard";
+import { PhoneAuthModal } from "../../../components/PhoneAuthModal";
+
 
 interface Props {
   navigate: (p: Page) => void;
@@ -71,6 +73,8 @@ export default function Auth({ navigate }: Props) {
   const [phoneOtp, setPhoneOtp] = useState("");
   const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+
 
   // Email Verification State
   const [emailOtp, setEmailOtp] = useState("");
@@ -1408,6 +1412,23 @@ export default function Auth({ navigate }: Props) {
           </div>
         </div>
       </div>
+      <PhoneAuthModal
+        isOpen={isPhoneModalOpen}
+        onClose={() => setIsPhoneModalOpen(false)}
+        initialPhone={phone}
+        onSuccess={(data) => {
+          setIsPhoneVerified(true);
+          setAuthSuccessMsg("Phone number verified successfully!");
+          if (data.accessToken) {
+            authService.setToken(data.accessToken);
+          }
+          if (loginRole === "owner") {
+            navigate("dashboard");
+          } else {
+            navigate("resident-portal");
+          }
+        }}
+      />
     </div>
   );
 }

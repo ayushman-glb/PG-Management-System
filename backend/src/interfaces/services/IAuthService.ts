@@ -62,6 +62,7 @@ export interface IAuthService {
   ): Promise<{ success: boolean; message: string }>;
   refreshToken(token: string): Promise<{ accessToken: string }>;
   firebaseLogin(idToken: string): Promise<IAuthUserResult>;
+  phoneVerify(idToken: string): Promise<IAuthUserResult>;
   me(userId: string): Promise<any>;
   ownerProfile(userId: string): Promise<any>;
   residentProfile(userId: string): Promise<any>;

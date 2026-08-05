@@ -307,6 +307,13 @@ export class AuthService implements IAuthService {
    * Firebase Phone Auth verification server-side
    */
   async firebaseLogin(idToken: string): Promise<IAuthUserResult> {
+    return this.phoneVerify(idToken);
+  }
+
+  /**
+   * Production-grade Firebase Phone Number verification endpoint
+   */
+  async phoneVerify(idToken: string): Promise<IAuthUserResult> {
     if (!idToken) {
       throw new AppError("Firebase ID token is required", 400);
     }
@@ -316,28 +323,33 @@ export class AuthService implements IAuthService {
       if (firebaseAdmin && firebaseAdmin.auth) {
         decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
       } else {
-        // Fallback for mock/test token
-        decodedToken = { uid: "firebase_" + Date.now(), phone_number: "+919876543210", email: "verified@roombae.com" };
+        throw new AppError("Firebase Admin SDK not initialized", 500);
       }
     } catch (error: any) {
-      console.warn("⚠️ Firebase Admin verification notice (falling back to mock payload if dev):", error.message);
-      decodedToken = { uid: "firebase_dev_" + Date.now(), phone_number: "+919876543210", email: "user@roombae.com" };
+      console.error("❌ Firebase ID Token Verification Failed:", error.message || error);
+      // Fallback for development/testing if mock token passed in dev mode
+      if (process.env.NODE_ENV !== "production" && idToken.startsWith("mock_firebase_id_token_")) {
+        decodedToken = { uid: "firebase_dev_" + Date.now(), phone_number: "+919876543210" };
+      } else {
+        throw new AppError(`Firebase verification failed: ${error.message || "Invalid ID token"}`, 401);
+      }
     }
 
-    const uid = decodedToken.uid;
-    const phone = decodedToken.phone_number || "";
-    const userEmail = decodedToken.email || `${uid}@phone.roombae.com`;
-
-    let user = await this.userRepository.findByEmail(userEmail);
-    if (!user) {
-      user = await this.userRepository.create({
-        name: phone ? `User ${phone.slice(-4)}` : "Verified Resident",
-        email: userEmail,
-        passwordHash: "",
-        phone: phone,
-        role: Role.RESIDENT,
-      });
+    const phoneNumber = decodedToken.phone_number;
+    if (!phoneNumber) {
+      throw new AppError("Verified phone number missing from Firebase token claims", 400);
     }
+
+    // Defense in depth: validate E.164 phone number format
+    const e164Regex = /^\+[1-9]\d{1,14}$/;
+    if (!e164Regex.test(phoneNumber)) {
+      throw new AppError("Invalid phone number format extracted from token", 400);
+    }
+
+    const user = await this.userRepository.findOrCreatePhoneUser({
+      phone: phoneNumber,
+      role: Role.RESIDENT,
+    });
 
     const payload = {
       id: user.id,

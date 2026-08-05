@@ -2,6 +2,26 @@ import { useState, useEffect, useRef } from 'react';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 
+function mapFirebaseError(code?: string, defaultMsg?: string): string {
+  if (!code) return defaultMsg || 'An unknown authentication error occurred.';
+  switch (code) {
+    case 'auth/too-many-requests':
+      return 'Too many requests. Please wait a few minutes before trying again.';
+    case 'auth/invalid-phone-number':
+      return 'Invalid phone number. Please check the country code and number format.';
+    case 'auth/code-expired':
+      return 'Verification code has expired. Please click "Resend OTP".';
+    case 'auth/invalid-verification-code':
+      return 'Incorrect verification code. Please check the 6 digits and try again.';
+    case 'auth/quota-exceeded':
+      return 'SMS quota exceeded for today. Please try again later.';
+    case 'auth/captcha-check-failed':
+      return 'reCAPTCHA verification failed. Please refresh and try again.';
+    default:
+      return defaultMsg || 'Authentication failed. Please try again.';
+  }
+}
+
 export function usePhoneAuth() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,16 +38,18 @@ export function usePhoneAuth() {
   }, [countdown]);
 
   const initRecaptcha = (containerId: string = 'recaptcha-container') => {
-    if (recaptchaVerifierRef.current) return recaptchaVerifierRef.current;
-
     const element = document.getElementById(containerId);
     if (!element) return null;
+
+    if (recaptchaVerifierRef.current) {
+      return recaptchaVerifierRef.current;
+    }
 
     try {
       recaptchaVerifierRef.current = new RecaptchaVerifier(auth, containerId, {
         size: 'invisible',
         callback: () => {
-          // reCAPTCHA solved
+          // reCAPTCHA solved automatically
         },
         'expired-callback': () => {
           setError('reCAPTCHA expired. Please try sending OTP again.');
@@ -44,18 +66,20 @@ export function usePhoneAuth() {
     setLoading(true);
     setError(null);
 
-    // Format Indian Phone Number (+91)
-    let formattedPhone = phoneNumber.trim().replace(/\D/g, '');
-    if (formattedPhone.length === 10) {
-      formattedPhone = `+91${formattedPhone}`;
-    } else if (!formattedPhone.startsWith('+')) {
-      formattedPhone = `+${formattedPhone}`;
+    let formattedPhone = phoneNumber.trim();
+    if (!formattedPhone.startsWith('+')) {
+      const clean = formattedPhone.replace(/\D/g, '');
+      if (clean.length === 10) {
+        formattedPhone = `+91${clean}`;
+      } else {
+        formattedPhone = `+${clean}`;
+      }
     }
 
     try {
       const verifier = initRecaptcha(containerId);
       if (!verifier) {
-        throw new Error('reCAPTCHA container not found in DOM');
+        throw new Error('reCAPTCHA container not ready in DOM');
       }
 
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, verifier);
@@ -65,8 +89,16 @@ export function usePhoneAuth() {
       return true;
     } catch (err: any) {
       console.error('❌ Firebase Send OTP Error:', err);
-      // Fallback for development / mock test numbers
-      setError(err?.message || 'Failed to send OTP via Firebase');
+      // Reset reCAPTCHA widget on error so next attempt re-initializes
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (e) {}
+        recaptchaVerifierRef.current = null;
+      }
+
+      const userMsg = mapFirebaseError(err?.code, err?.message || 'Failed to send OTP via Firebase');
+      setError(userMsg);
       setLoading(false);
       return false;
     }
@@ -82,7 +114,7 @@ export function usePhoneAuth() {
         setLoading(false);
         return idToken;
       }
-      // If dev mock code entered
+      // Development mock code fallback
       if (code === '123456' || code.length === 6) {
         setLoading(false);
         return 'mock_firebase_id_token_' + Date.now();
@@ -90,10 +122,17 @@ export function usePhoneAuth() {
       throw new Error('No active OTP session. Please click Send OTP.');
     } catch (err: any) {
       console.error('❌ Firebase Verify OTP Error:', err);
-      setError(err?.message || 'Invalid or expired verification code');
+      const userMsg = mapFirebaseError(err?.code, err?.message || 'Invalid or expired verification code');
+      setError(userMsg);
       setLoading(false);
       return null;
     }
+  };
+
+  const resetState = () => {
+    setConfirmationResult(null);
+    setError(null);
+    setLoading(false);
   };
 
   return {
@@ -104,5 +143,6 @@ export function usePhoneAuth() {
     error,
     countdown,
     setError,
+    resetState,
   };
 }

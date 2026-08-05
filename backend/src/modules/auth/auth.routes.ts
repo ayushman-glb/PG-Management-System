@@ -12,6 +12,8 @@ import { authenticate } from "../../middleware/authMiddleware";
 
 const router = Router();
 
+import { phoneVerifyLimiter } from "../../middleware/rateLimiter";
+
 router.post("/login", validate(LoginSchema), (req, res, next) =>
   Container.authController.login(req, res, next),
 );
@@ -30,8 +32,11 @@ router.post("/logout", (req, res, next) =>
 router.post("/refresh-token", (req, res, next) =>
   Container.authController.refreshToken(req, res, next),
 );
-router.post("/firebase-login", (req, res, next) =>
+router.post("/firebase-login", phoneVerifyLimiter, (req, res, next) =>
   Container.authController.firebaseLogin(req, res, next),
+);
+router.post("/phone-verify", phoneVerifyLimiter, (req, res, next) =>
+  Container.authController.phoneVerify(req, res, next),
 );
 router.post("/test-email", (req, res, next) =>
   Container.authController.testEmail(req, res, next),

@@ -21,3 +21,15 @@ export const authLimiter = rateLimit({
     message: 'Too many authentication attempts, please try again after 15 minutes.'
   }
 });
+
+export const phoneVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Max 5 verification attempts per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many phone verification attempts. Please try again after 15 minutes.'
+  }
+});
+
