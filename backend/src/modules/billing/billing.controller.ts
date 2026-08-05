@@ -49,4 +49,37 @@ export class BillingController {
 
     pdfStream.pipe(res);
   });
+
+  getReceiptPdf = catchAsync(async (req: Request, res: Response) => {
+    const { paymentId } = req.params;
+    const dispositionType = req.query.disposition === "inline" ? "inline" : "attachment";
+    const pdfStream =
+      await this.billingService.generateReceiptPdfStream(paymentId);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `${dispositionType}; filename=Receipt_${paymentId}.pdf`,
+    );
+
+    pdfStream.pipe(res);
+  });
+
+  processRefund = catchAsync(async (req: Request, res: Response) => {
+    const { paymentId, amount, reason } = req.body;
+    const result = await this.billingService.processRefund(paymentId, amount, reason);
+    return ApiResponse.success(res, "Refund processed successfully", result);
+  });
+
+  handleWebhook = catchAsync(async (req: Request, res: Response) => {
+    const signature = (req.headers["x-razorpay-signature"] as string) || "";
+    const result = await this.billingService.handleWebhook(req.body, signature);
+    return ApiResponse.success(res, "Webhook processed", result);
+  });
+
+  getAnalytics = catchAsync(async (req: Request, res: Response) => {
+    const ownerId = req.query.ownerId as string | undefined;
+    const analytics = await this.billingService.getPaymentAnalytics(ownerId);
+    return ApiResponse.success(res, "Payment analytics retrieved", analytics);
+  });
 }

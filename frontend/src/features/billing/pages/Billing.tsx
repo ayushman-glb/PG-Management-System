@@ -1,17 +1,21 @@
 import { useState } from "react";
 import {
   Search,
-  Download,
   Send,
   AlertCircle,
   CheckCircle,
   Clock,
   TrendingUp,
   CreditCard,
+  Zap,
 } from "lucide-react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
+import { FintechCardCarousel } from "../components/FintechCardCarousel";
+import { PayRentModal } from "../components/PayRentModal";
+import { SpendBreakdownChart } from "../components/SpendBreakdownChart";
+import { TransactionTimeline } from "../components/TransactionTimeline";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -64,84 +68,13 @@ const invoices = [
     pg: "City Heights",
     lateFee: 500,
   },
-  {
-    id: "INV-2025-006",
-    resident: "Divya Reddy",
-    room: "308B",
-    amount: 14000,
-    due: "5 Jul 2025",
-    status: "Paid",
-    pg: "Urban Nest",
-  },
-  {
-    id: "INV-2025-007",
-    resident: "Kiran Rao",
-    room: "412A",
-    amount: 11500,
-    due: "5 Jul 2025",
-    status: "Due",
-    pg: "Sunrise PG",
-  },
-  {
-    id: "INV-2025-008",
-    resident: "Priya Sharma",
-    room: "106C",
-    amount: 10000,
-    due: "5 Jul 2025",
-    status: "Paid",
-    pg: "Green Valley",
-  },
-];
-
-const transactions = [
-  {
-    id: "TXN-8821",
-    resident: "Ankit Joshi",
-    amount: 12000,
-    method: "UPI",
-    date: "2 Jul 2025",
-    status: "Success",
-  },
-  {
-    id: "TXN-8820",
-    resident: "Divya Reddy",
-    amount: 14000,
-    method: "Card",
-    date: "2 Jul 2025",
-    status: "Success",
-  },
-  {
-    id: "TXN-8819",
-    resident: "Priya Sharma",
-    amount: 10000,
-    method: "NetBanking",
-    date: "1 Jul 2025",
-    status: "Success",
-  },
-  {
-    id: "TXN-8818",
-    resident: "Kavya Nair",
-    amount: 13500,
-    method: "UPI",
-    date: "1 Jul 2025",
-    status: "Success",
-  },
-  {
-    id: "TXN-8817",
-    resident: "Meera Pillai",
-    amount: 10500,
-    method: "UPI",
-    date: "30 Jun 2025",
-    status: "Success",
-  },
 ];
 
 export default function Billing({ navigate }: Props) {
-  const [activeTab, setActiveTab] = useState<"invoices" | "transactions">(
-    "invoices",
-  );
+  const [activeTab, setActiveTab] = useState<"overview" | "invoices" | "transactions">("overview");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "paid" | "due" | "late">("all");
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const { darkMode } = useTheme();
 
   const filtered = invoices.filter((inv) => {
@@ -164,38 +97,41 @@ export default function Billing({ navigate }: Props) {
 
   return (
     <DashboardLayout navigate={navigate} activePage="billing">
-      <div className="p-4 md:p-6 space-y-5">
+      <div className="p-4 md:p-6 space-y-6">
+        {/* Header Bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1
               className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
             >
-              Billing &amp; Payments
+              Banking &amp; Payments Hub
             </h1>
             <p
               className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
             >
-              Manage invoices, reminders, and transaction history
+              Enterprise Razorpay payment portal, virtual cards &amp; automated rent collection
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className={`flex items-center gap-2 border text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors ${darkMode ? "border-slate-600 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
+              onClick={() => setIsPayModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black text-xs shadow-lg shadow-amber-500/20 hover:scale-105 transition-all cursor-pointer"
             >
-              <Send className="w-4 h-4" />
-              Send Reminders
+              <Zap className="w-4 h-4 fill-current" />
+              1-Tap Pay Rent (Razorpay)
             </button>
             <button
               type="button"
-              className="flex items-center gap-2 luxury-btn-primary text-sm font-semibold px-4 py-2.5 flex-shrink-0"
+              className={`flex items-center gap-2 border text-xs font-bold px-4 py-2.5 rounded-2xl transition-colors ${darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
             >
-              <Download className="w-4 h-4" />
-              Export
+              <Send className="w-3.5 h-3.5" />
+              Send Reminders
             </button>
           </div>
         </div>
 
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
@@ -231,7 +167,7 @@ export default function Billing({ navigate }: Props) {
             return (
               <div
                 key={s.label}
-                className={`glass-panel glass-card-hover rounded-2xl p-4 md:p-5 border ${s.bg}`}
+                className={`glass-panel rounded-2xl p-4 md:p-5 border ${s.bg}`}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div
@@ -258,26 +194,31 @@ export default function Billing({ navigate }: Props) {
           })}
         </div>
 
-        <div
-          className="glass-panel rounded-2xl overflow-hidden border border-[#E6D7CA]/80 dark:border-[#4A443F]/80 shadow-xl"
-        >
+        {/* Mockup Fintech Layout Section (Cards + Spend Chart) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <FintechCardCarousel onPayClick={() => setIsPayModalOpen(true)} />
+          <SpendBreakdownChart />
+        </div>
+
+        {/* Main Tabbed Data Panel */}
+        <div className="glass-panel rounded-3xl overflow-hidden border border-[#E6D7CA]/80 dark:border-[#4A443F]/80 shadow-xl">
           <div
-            className={`flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}
+            className={`flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 border-b ${darkMode ? "border-slate-800" : "border-slate-100"}`}
           >
             <div
-              className={`flex gap-1 p-1 rounded-xl ${darkMode ? "bg-slate-900/50" : "bg-slate-100"}`}
+              className={`flex gap-1 p-1 rounded-2xl ${darkMode ? "bg-slate-900/60" : "bg-slate-100"}`}
             >
-              {(["invoices", "transactions"] as const).map((tab) => (
+              {(["overview", "invoices", "transactions"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
                   aria-pressed={activeTab === tab}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
                     activeTab === tab
                       ? darkMode
-                        ? "bg-slate-700 text-white shadow-sm"
-                        : "bg-white shadow-sm text-slate-900"
+                        ? "bg-[#332D2B] text-white shadow-md border border-[#4A443F]"
+                        : "bg-white shadow-md text-slate-900"
                       : darkMode
                         ? "text-slate-400"
                         : "text-slate-500"
@@ -291,7 +232,7 @@ export default function Billing({ navigate }: Props) {
             {activeTab === "invoices" && (
               <div className="flex flex-wrap items-center gap-2">
                 <div
-                  className={`flex items-center gap-2 rounded-xl px-3 py-2 ${darkMode ? "bg-slate-700" : "bg-slate-100"}`}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-1.5 ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}
                 >
                   <Search
                     className={`w-3.5 h-3.5 ${darkMode ? "text-slate-400" : "text-slate-400"}`}
@@ -302,10 +243,10 @@ export default function Billing({ navigate }: Props) {
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search invoices..."
                     aria-label="Search invoices"
-                    className={`bg-transparent text-sm outline-none placeholder:text-slate-400 w-36 ${darkMode ? "text-white" : "text-slate-700"}`}
+                    className={`bg-transparent text-xs outline-none placeholder:text-slate-400 w-36 ${darkMode ? "text-white" : "text-slate-700"}`}
                   />
                 </div>
-                <div className="mobile-scroll-x flex max-w-full gap-1.5">
+                <div className="flex gap-1.5">
                   {(["all", "paid", "due", "late"] as const).map((f) => (
                     <button
                       key={f}
@@ -314,9 +255,9 @@ export default function Billing({ navigate }: Props) {
                       aria-pressed={filter === f}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                         filter === f
-                          ? "luxury-btn-primary text-white"
+                          ? "bg-amber-500 text-black font-bold"
                           : darkMode
-                            ? "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                            ? "bg-slate-800 text-slate-400 hover:bg-slate-700"
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
@@ -328,15 +269,17 @@ export default function Billing({ navigate }: Props) {
             )}
           </div>
 
+          {activeTab === "overview" && (
+            <div className="p-4 md:p-6">
+              <TransactionTimeline onPayRetry={() => setIsPayModalOpen(true)} />
+            </div>
+          )}
+
           {activeTab === "invoices" && (
-            <div className="overflow-x-auto mobile-scroll-x">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-[700px]">
-                <thead
-                  className={darkMode ? "bg-slate-900/50" : "bg-slate-50"}
-                >
-                  <tr
-                    className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-400"}`}
-                  >
+                <thead className={darkMode ? "bg-slate-900/50" : "bg-slate-50"}>
+                  <tr className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-400"}`}>
                     <th className="text-left px-6 py-3">Invoice</th>
                     <th className="text-left px-6 py-3">Resident</th>
                     <th className="text-left px-6 py-3">Property</th>
@@ -347,14 +290,9 @@ export default function Billing({ navigate }: Props) {
                     <th className="text-left px-6 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody
-                  className={`divide-y ${darkMode ? "divide-slate-700" : "divide-slate-50"}`}
-                >
+                <tbody className={`divide-y ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
                   {filtered.map((inv) => (
-                    <tr
-                      key={inv.id}
-                      className={`transition-colors ${darkMode ? "hover:bg-slate-700/50" : "hover:bg-slate-50"}`}
-                    >
+                    <tr key={inv.id} className={`transition-colors ${darkMode ? "hover:bg-slate-800/50" : "hover:bg-slate-50"}`}>
                       <td className={`px-6 py-3.5 text-sm font-mono ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}>
                         {inv.id}
                       </td>
@@ -364,32 +302,21 @@ export default function Billing({ navigate }: Props) {
                             className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                             style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
                           >
-                            {inv.resident
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+                            {inv.resident.split(" ").map((n) => n[0]).join("")}
                           </div>
-                          <span
-                            className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}
-                          >
+                          <span className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
                             {inv.resident}
                           </span>
                         </div>
                       </td>
-                      <td
-                        className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}
-                      >
+                      <td className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                         {inv.pg}
                       </td>
-                      <td
-                        className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}
-                      >
+                      <td className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
                         {inv.room}
                       </td>
                       <td className="px-6 py-3.5">
-                        <span
-                          className={`text-sm font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
-                        >
+                        <span className={`text-sm font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
                           ₹{inv.amount.toLocaleString()}
                         </span>
                         {inv.lateFee && (
@@ -398,9 +325,7 @@ export default function Billing({ navigate }: Props) {
                           </span>
                         )}
                       </td>
-                      <td
-                        className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}
-                      >
+                      <td className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
                         {inv.due}
                       </td>
                       <td className="px-6 py-3.5">
@@ -409,8 +334,8 @@ export default function Billing({ navigate }: Props) {
                             inv.status === "Paid"
                               ? "bg-green-100 text-green-700"
                               : inv.status === "Due"
-                                ? "bg-orange-100 text-orange-700"
-                                : "bg-red-100 text-red-700"
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-red-100 text-red-700"
                           }`}
                         >
                           {inv.status}
@@ -418,16 +343,13 @@ export default function Billing({ navigate }: Props) {
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-2">
-                          <button className={`text-xs hover:underline font-medium ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}>
-                            View
+                          <button
+                            type="button"
+                            onClick={() => window.open(`https://pg-management-system-boxb.onrender.com/api/v1/billing/invoices/${inv.id}/pdf`, "_blank")}
+                            className={`text-xs hover:underline font-medium ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}
+                          >
+                            PDF Invoice
                           </button>
-                          {inv.status !== "Paid" && (
-                            <button
-                              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${darkMode ? "bg-[#332D2B] text-[#C89A4B] hover:bg-[#3E3735]" : "bg-[#F8EEE5] text-[#C58B63] hover:bg-[#EAE0D5]"}`}
-                            >
-                              Send Reminder
-                            </button>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -438,70 +360,18 @@ export default function Billing({ navigate }: Props) {
           )}
 
           {activeTab === "transactions" && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[580px]">
-                <thead
-                  className={darkMode ? "bg-slate-900/50" : "bg-slate-50"}
-                >
-                  <tr
-                    className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-400"}`}
-                  >
-                    <th className="text-left px-6 py-3">Transaction ID</th>
-                    <th className="text-left px-6 py-3">Resident</th>
-                    <th className="text-left px-6 py-3">Amount</th>
-                    <th className="text-left px-6 py-3">Method</th>
-                    <th className="text-left px-6 py-3">Date</th>
-                    <th className="text-left px-6 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y ${darkMode ? "divide-slate-700" : "divide-slate-50"}`}
-                >
-                  {transactions.map((t) => (
-                    <tr
-                      key={t.id}
-                      className={`transition-colors ${darkMode ? "hover:bg-slate-700/50" : "hover:bg-slate-50"}`}
-                    >
-                      <td className={`px-6 py-3.5 text-sm font-mono ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}>
-                        {t.id}
-                      </td>
-                      <td
-                        className={`px-6 py-3.5 text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}
-                      >
-                        {t.resident}
-                      </td>
-                      <td
-                        className={`px-6 py-3.5 text-sm font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
-                      >
-                        ₹{t.amount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <span
-                          className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                            darkMode ? "bg-[#332D2B] text-[#C89A4B]" : "bg-[#F8EEE5] text-[#C58B63]"
-                          }`}
-                        >
-                          {t.method}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}
-                      >
-                        {t.date}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
-                          {t.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="p-4 md:p-6">
+              <TransactionTimeline onPayRetry={() => setIsPayModalOpen(true)} />
             </div>
           )}
         </div>
       </div>
+
+      <PayRentModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        onSuccess={() => setActiveTab("overview")}
+      />
     </DashboardLayout>
   );
 }

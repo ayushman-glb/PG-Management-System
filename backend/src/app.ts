@@ -39,9 +39,12 @@ const allowedOrigins = [
   "https://ayushman-glb.github.io/PG-Management-System",
   "https://ayushman-glb.github.io/PG-Management-System/",
   "https://pg-management-system-boxb.onrender.com",
+  "http://localhost:8443",
   "http://localhost:5173",
+  "http://localhost:4173",
   "http://localhost:3000",
   "http://localhost:5000",
+  "http://127.0.0.1:8443",
   "http://127.0.0.1:5173",
 ].filter(Boolean);
 
@@ -53,8 +56,8 @@ app.use(
       const isAllowed = allowedOrigins.some((o) => o && o.replace(/\/$/, "") === cleanOrigin);
       if (
         isAllowed ||
-        (env.NODE_ENV === "development" &&
-          (origin.includes("localhost") || origin.includes("127.0.0.1")))
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1")
       ) {
         return callback(null, true);
       }

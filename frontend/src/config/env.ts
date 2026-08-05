@@ -1,20 +1,21 @@
 const isDev = import.meta.env.DEV ?? import.meta.env.MODE === "development";
+const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
 export const env = {
   API_URL:
     import.meta.env.VITE_API_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    (isDev
+    (isLocalhost || isDev
       ? "http://localhost:5000/api/v1"
       : "https://pg-management-system-boxb.onrender.com/api/v1"),
   GRAPHQL_URL:
     import.meta.env.VITE_GRAPHQL_URL ||
-    (isDev
+    (isLocalhost || isDev
       ? "http://localhost:5000/graphql"
       : "https://pg-management-system-boxb.onrender.com/graphql"),
   SOCKET_URL:
     import.meta.env.VITE_SOCKET_URL ||
-    (isDev
+    (isLocalhost || isDev
       ? "http://localhost:5000"
       : "https://pg-management-system-boxb.onrender.com"),
   MODE: import.meta.env.MODE ?? (isDev ? "development" : "production"),

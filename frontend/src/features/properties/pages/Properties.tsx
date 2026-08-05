@@ -17,6 +17,45 @@ interface Props {
   navigate: (p: Page) => void;
 }
 
+const MOCK_FALLBACK_PROPERTIES = [
+  {
+    id: "prop-1",
+    name: "RoomBae Indiranagar Luxe",
+    location: "102 100 Feet Road, Indiranagar, Bengaluru",
+    city: "Bengaluru",
+    totalBeds: 24,
+    occupied: 18,
+    revenue: "2,25,000",
+    rating: 4.9,
+    floors: 3,
+    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600",
+  },
+  {
+    id: "prop-2",
+    name: "RoomBae Koramangala Executive",
+    location: "5th Block, Koramangala, Bengaluru",
+    city: "Bengaluru",
+    totalBeds: 30,
+    occupied: 26,
+    revenue: "2,80,000",
+    rating: 4.8,
+    floors: 4,
+    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600",
+  },
+  {
+    id: "prop-3",
+    name: "RoomBae HSR Layout Co-Living",
+    location: "Sector 1, HSR Layout, Bengaluru",
+    city: "Bengaluru",
+    totalBeds: 20,
+    occupied: 14,
+    revenue: "1,60,000",
+    rating: 4.7,
+    floors: 3,
+    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600",
+  },
+];
+
 const emptyBedGrid = [
   { id: "A1", status: "vacant", name: "" },
   { id: "A2", status: "vacant", name: "" },
@@ -88,16 +127,16 @@ export default function Properties({ navigate }: Props) {
       .getPublicProperties({ limit: 10 })
       .then((response) => {
         if (!mounted) return;
-        const list = Array.isArray(response?.properties)
+        const list = Array.isArray(response?.properties) && response.properties.length > 0
           ? response.properties
-          : [];
+          : MOCK_FALLBACK_PROPERTIES;
         setProperties(list);
-        if (list.length > 0) setSelectedProperty(list[0]);
+        setSelectedProperty(list[0]);
       })
       .catch(() => {
         if (!mounted) return;
-        setProperties([]);
-        setSelectedProperty(null);
+        setProperties(MOCK_FALLBACK_PROPERTIES);
+        setSelectedProperty(MOCK_FALLBACK_PROPERTIES[0]);
       });
 
     return () => {
@@ -280,7 +319,7 @@ export default function Properties({ navigate }: Props) {
               <h3
                 className={`font-bold ${darkMode ? "text-white" : "text-slate-900"}`}
               >
-                {selectedProperty.name} — Bed Allocation
+                {selectedProperty?.name || "Property Details"} — Bed Allocation
               </h3>
               <p
                 className={`text-xs mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}

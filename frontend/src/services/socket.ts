@@ -11,6 +11,14 @@ export const getSocket = (): Socket => {
     socket = io(SOCKET_URL, {
       autoConnect: true,
       withCredentials: true,
+      reconnectionAttempts: 3,
+      timeout: 5000,
+      transports: ["websocket", "polling"],
+    });
+
+    socket.on("connect_error", (err) => {
+      // Quietly handle connection errors without breaking React UI
+      console.warn("Socket connection unavailable:", err.message);
     });
   }
   return socket;
@@ -36,6 +44,8 @@ export function useSocketRoom(
   useEffect(() => {
     if (!id) return;
     const s = getSocket();
-    s.emit(`join_${roomType}`, id);
+    if (s.connected) {
+      s.emit(`join_${roomType}`, id);
+    }
   }, [roomType, id]);
 }
