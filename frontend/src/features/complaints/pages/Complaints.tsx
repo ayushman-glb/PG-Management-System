@@ -11,6 +11,7 @@ import { AnimatedBadge } from "@components/animations/MotionPrimitives";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 import { api } from "@services/api";
+import { useRecaptcha } from "../../../hooks/useRecaptcha";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -164,6 +165,7 @@ const columns = [
 ];
 
 export default function Complaints({ navigate }: Props) {
+  const recaptcha = useRecaptcha();
   const [complaints, setComplaints] = useState(initialComplaints);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Complaint | null>(null);
@@ -172,6 +174,16 @@ export default function Complaints({ navigate }: Props) {
     from: string;
   } | null>(null);
   const { darkMode } = useTheme();
+
+  const handleCreateComplaint = async (title: string, category: string, description: string, priority: string) => {
+    try {
+      const recaptchaToken = await recaptcha.execute("complaint");
+      await api.createComplaint({ title, category, description, priority, recaptchaToken });
+      setShowModal(false);
+    } catch {
+      setShowModal(false);
+    }
+  };
 
   useEffect(() => {
     api.listComplaints().then(data => {
@@ -600,10 +612,10 @@ export default function Complaints({ navigate }: Props) {
                 Cancel
               </button>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => handleCreateComplaint("General Issue", "Maintenance", "Detailed complaint description", "High")}
                 className="flex-1 py-2.5 luxury-btn-primary text-sm font-semibold flex-shrink-0"
               >
-                Submit
+                Submit Ticket
               </button>
             </div>
           </div>

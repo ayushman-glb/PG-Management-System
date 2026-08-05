@@ -20,6 +20,9 @@ export const env = {
   MODE: import.meta.env.MODE ?? (isDev ? "development" : "production"),
   IS_DEV: isDev,
   IS_PROD: !isDev,
+  RECAPTCHA_SITE_KEY:
+    import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
+    "6LfgNnYtAAAAAABdvCLaqfA6ucDLdBKTxy8sLCwfn",
 };
 
 export const getApiUrl = (path = "") =>

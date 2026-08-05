@@ -19,6 +19,7 @@ export class OwnerService {
    */
   async runFullOnboarding(input: {
     ownerId: string;
+    recaptchaToken?: string;
     personal: any;
     kyc: any;
     business: any;

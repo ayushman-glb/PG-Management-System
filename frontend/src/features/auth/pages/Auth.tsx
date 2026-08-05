@@ -24,6 +24,7 @@ import { AnimatedTabs } from "../../../components/MotionPrimitives";
 import { authService } from "@services/auth.service";
 import { env } from "@config/env";
 import { usePhoneAuth } from "../../../hooks/usePhoneAuth";
+import { useRecaptcha } from "../../../hooks/useRecaptcha";
 import { OTPInput } from "../../../components/OTPInput";
 import { UploadCard } from "../../../components/UploadCard";
 import { PhoneAuthModal } from "../../../components/PhoneAuthModal";
@@ -36,6 +37,7 @@ interface Props {
 type AuthMode = "login" | "register" | "forgot" | "otp";
 
 export default function Auth({ navigate }: Props) {
+  const recaptcha = useRecaptcha();
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPass, setShowPass] = useState(false);
   const [loginRole, setLoginRole] = useState<"owner" | "resident">("owner");
@@ -384,6 +386,7 @@ export default function Auth({ navigate }: Props) {
     setAuthError("");
     setIsSubmitting(true);
     try {
+      const recaptchaToken = await recaptcha.execute('login');
       const emailEl = document.querySelector(
         'input[placeholder*="you@example.com"], input[placeholder*="RES1001"]',
       ) as HTMLInputElement | null;
@@ -392,7 +395,7 @@ export default function Auth({ navigate }: Props) {
       const identifier = emailEl?.value || (loginRole === "resident" ? "RES1001" : "owner1@roombae.com");
       const passwordVal = passEl?.value || "Password123!";
 
-      await authService.login({ identifier, password: passwordVal });
+      await authService.login({ identifier, password: passwordVal }, undefined, recaptchaToken);
     } catch (err: any) {
       setAuthError(err?.message || "Login failed. Please check your credentials.");
     } finally {

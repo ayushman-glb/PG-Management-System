@@ -13,17 +13,18 @@ import { authenticate } from "../../middleware/authMiddleware";
 const router = Router();
 
 import { phoneVerifyLimiter } from "../../middleware/rateLimiter";
+import { verifyRecaptcha } from "../../middleware/recaptcha.middleware";
 
-router.post("/login", validate(LoginSchema), (req, res, next) =>
+router.post("/login", verifyRecaptcha("login"), validate(LoginSchema), (req, res, next) =>
   Container.authController.login(req, res, next),
 );
-router.post("/register", validate(RegisterSchema), (req, res, next) =>
+router.post("/register", verifyRecaptcha("signup"), validate(RegisterSchema), (req, res, next) =>
   Container.authController.register(req, res, next),
 );
-router.post("/send-otp", (req, res, next) =>
+router.post("/send-otp", verifyRecaptcha("send_otp"), (req, res, next) =>
   Container.authController.sendOtp(req, res, next),
 );
-router.post("/verify-otp", (req, res, next) =>
+router.post("/verify-otp", verifyRecaptcha("verify_otp"), (req, res, next) =>
   Container.authController.verifyOtp(req, res, next),
 );
 router.post("/logout", (req, res, next) =>
@@ -32,10 +33,10 @@ router.post("/logout", (req, res, next) =>
 router.post("/refresh-token", (req, res, next) =>
   Container.authController.refreshToken(req, res, next),
 );
-router.post("/firebase-login", phoneVerifyLimiter, (req, res, next) =>
+router.post("/firebase-login", phoneVerifyLimiter, verifyRecaptcha("verify_otp"), (req, res, next) =>
   Container.authController.firebaseLogin(req, res, next),
 );
-router.post("/phone-verify", phoneVerifyLimiter, (req, res, next) =>
+router.post("/phone-verify", phoneVerifyLimiter, verifyRecaptcha("verify_otp"), (req, res, next) =>
   Container.authController.phoneVerify(req, res, next),
 );
 router.post("/test-email", (req, res, next) =>
