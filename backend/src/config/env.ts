@@ -36,6 +36,12 @@ if (!process.env.FRONTEND_URL && process.env.CLIENT_URL) {
 if (!process.env.CLIENT_URL && process.env.FRONTEND_URL) {
   process.env.CLIENT_URL = process.env.FRONTEND_URL;
 }
+if (process.env.FRONTEND_URL && process.env.FRONTEND_URL.includes("ayushman-glb.github.io") && !process.env.FRONTEND_URL.includes("PG-Management-System")) {
+  process.env.FRONTEND_URL = `${process.env.FRONTEND_URL.replace(/\/$/, "")}/PG-Management-System`;
+}
+if (process.env.CLIENT_URL && process.env.CLIENT_URL.includes("ayushman-glb.github.io") && !process.env.CLIENT_URL.includes("PG-Management-System")) {
+  process.env.CLIENT_URL = `${process.env.CLIENT_URL.replace(/\/$/, "")}/PG-Management-System`;
+}
 if (!process.env.JWT_REFRESH_SECRET && process.env.JWT_SECRET) {
   process.env.JWT_REFRESH_SECRET = process.env.JWT_SECRET;
 }

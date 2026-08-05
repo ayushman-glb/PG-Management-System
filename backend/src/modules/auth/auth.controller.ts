@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { Container } from "../../container";
 import { env } from "../../config/env";
+import { resolveFrontendUrl, normalizeFrontendUrl } from "../../config/frontendUrl";
+import { logger } from "../../utils/logger";
 import { IAuthService } from "../../interfaces/services/IAuthService";
 import { catchAsync } from "../../utils/appError";
 import { ApiResponse } from "../../utils/apiResponse";
@@ -182,11 +184,10 @@ export class AuthController {
   me = catchAsync(async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     if (!userId) {
-      // Demo-friendly fallback: return a default owner profile when no token is present.
-      return ApiResponse.success(res, "Current user details (demo)", {
-        id: "650000000000000000000001",
-        name: "Rajesh Kumar",
-        email: "owner1@roombae.com",
+      return ApiResponse.success(res, "Guest Session", {
+        id: "guest",
+        name: "Guest User",
+        email: "guest@roombae.com",
         role: "OWNER",
         residentCode: undefined,
         avatarUrl: undefined,
@@ -198,31 +199,23 @@ export class AuthController {
 
   googleLogin = (req: Request, res: Response, next: NextFunction) => {
     const roleParam = req.query.role ? String(req.query.role) : "OWNER";
-    const referer = req.headers.referer || req.headers.origin || "";
-    let frontendUrl =
-      env.FRONTEND_URL ||
-      env.CLIENT_URL ||
-      (env.NODE_ENV === "production"
-        ? "https://ayushman-glb.github.io/PG-Management-System"
-        : "http://localhost:5173");
+    const targetFrontendUrl = resolveFrontendUrl(req);
 
-    if (referer) {
-      try {
-        const parsed = new URL(String(referer));
-        frontendUrl = `${parsed.protocol}//${parsed.host}${parsed.pathname.replace(/\/$/, "")}`;
-      } catch {
-        // keep fallback
-      }
-    }
+    logger.info("🔑 Initiating Google OAuth Flow", {
+      role: roleParam,
+      referer: req.headers.referer,
+      origin: req.headers.origin,
+      targetFrontendUrl,
+    });
 
     if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-      const baseUrl = frontendUrl.replace(/\/$/, "");
+      logger.error("❌ Google OAuth failed: Credentials missing in server configuration.");
       return res.redirect(
-        `${baseUrl}?error=${encodeURIComponent("Google OAuth credentials are not configured on the server.")}`
+        `${targetFrontendUrl}?error=${encodeURIComponent("Google OAuth credentials are not configured on the server.")}`
       );
     }
 
-    const stateObj = { role: roleParam, frontendUrl };
+    const stateObj = { role: roleParam, frontendUrl: targetFrontendUrl };
     const state = Buffer.from(JSON.stringify(stateObj)).toString("base64");
 
     passport.authenticate("google", {
@@ -239,12 +232,7 @@ export class AuthController {
       "google",
       { session: false },
       async (err: any, user: any, info: any) => {
-        let frontendUrl =
-          env.FRONTEND_URL ||
-          env.CLIENT_URL ||
-          (env.NODE_ENV === "production"
-            ? "https://ayushman-glb.github.io/PG-Management-System"
-            : "http://localhost:5173");
+        let targetFrontendUrl = resolveFrontendUrl(req);
 
         if (req.query?.state) {
           try {
@@ -252,21 +240,28 @@ export class AuthController {
               Buffer.from(req.query.state as string, "base64").toString("utf-8")
             );
             if (stateObj?.frontendUrl) {
-              frontendUrl = stateObj.frontendUrl;
+              targetFrontendUrl = normalizeFrontendUrl(stateObj.frontendUrl);
             }
           } catch {
-            // ignore
+            // keep resolved fallback
           }
         }
 
-        const baseUrl = frontendUrl.replace(/\/$/, "");
+        logger.info("📥 Google OAuth Callback Received", {
+          hasUser: !!user,
+          hasError: !!err,
+          targetFrontendUrl,
+        });
 
         if (err || !user) {
-          console.error("Google OAuth authentication error:", err || info);
+          logger.error("❌ Google OAuth Authentication Error", {
+            error: err?.message || info?.message || "google_auth_failed",
+            targetFrontendUrl,
+          });
           const errorMsg = encodeURIComponent(
             err?.message || info?.message || "google_auth_failed"
           );
-          return res.redirect(`${baseUrl}?error=${errorMsg}`);
+          return res.redirect(`${targetFrontendUrl}?error=${errorMsg}`);
         }
 
         try {
@@ -302,11 +297,23 @@ export class AuthController {
             role: user.role,
           });
 
-          return res.redirect(`${baseUrl}?${redirectParams.toString()}`);
+          const finalRedirectUrl = `${targetFrontendUrl}?${redirectParams.toString()}`;
+
+          logger.info("✅ Google OAuth Success -> Executing Frontend Redirect", {
+            userId: user.id,
+            email: user.email,
+            targetFrontendUrl,
+            finalRedirectUrl: `${targetFrontendUrl}?token=[REDACTED]`,
+          });
+
+          return res.redirect(finalRedirectUrl);
         } catch (error: any) {
-          console.error("Error generating tokens in googleCallback:", error);
+          logger.error("❌ Error generating JWT tokens in googleCallback", {
+            error: error?.message,
+            targetFrontendUrl,
+          });
           return res.redirect(
-            `${baseUrl}?error=${encodeURIComponent(error?.message || "token_generation_failed")}`
+            `${targetFrontendUrl}?error=${encodeURIComponent(error?.message || "token_generation_failed")}`
           );
         }
       }
