@@ -70,6 +70,7 @@ export default function Auth({ navigate }: Props) {
     error: phoneAuthError,
     countdown: phoneCountdown,
     setError: setPhoneAuthError,
+    resetFlow: resetPhoneAuth,
   } = usePhoneAuth();
 
   const [phoneOtp, setPhoneOtp] = useState("");
@@ -77,13 +78,32 @@ export default function Auth({ navigate }: Props) {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
 
-
   // Email Verification State
   const [emailOtp, setEmailOtp] = useState("");
   const [isEmailOtpSent, setIsEmailOtpSent] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
+
+  const handlePhoneInputChange = (newVal: string) => {
+    const clean = newVal.replace(/\D/g, "").slice(0, 10);
+    setPhone(clean);
+    if (isPhoneVerified || isPhoneOtpSent) {
+      setIsPhoneVerified(false);
+      setIsPhoneOtpSent(false);
+      setPhoneOtp("");
+      resetPhoneAuth();
+    }
+  };
+
+  const handleEmailInputChange = (newVal: string) => {
+    setEmail(newVal);
+    if (isEmailVerified || isEmailOtpSent) {
+      setIsEmailVerified(false);
+      setIsEmailOtpSent(false);
+      setEmailOtp("");
+    }
+  };
 
   // Security & Password
   const [password, setPassword] = useState("");
@@ -892,7 +912,7 @@ export default function Auth({ navigate }: Props) {
                             placeholder="9876543210 (10 Digits)"
                             maxLength={10}
                             value={phone}
-                            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                            onChange={(e) => handlePhoneInputChange(e.target.value)}
                             className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs font-mono"
                           />
                           <button
@@ -944,7 +964,7 @@ export default function Auth({ navigate }: Props) {
                             type="email"
                             placeholder="you@example.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => handleEmailInputChange(e.target.value)}
                             className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
                           />
                           <button

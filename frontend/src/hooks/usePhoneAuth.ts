@@ -129,10 +129,28 @@ export function usePhoneAuth() {
     }
   };
 
-  const resetState = () => {
+  useEffect(() => {
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (e) {}
+        recaptchaVerifierRef.current = null;
+      }
+    };
+  }, []);
+
+  const resetFlow = () => {
+    if (recaptchaVerifierRef.current) {
+      try {
+        recaptchaVerifierRef.current.clear();
+      } catch (e) {}
+      recaptchaVerifierRef.current = null;
+    }
     setConfirmationResult(null);
     setError(null);
     setLoading(false);
+    setCountdown(0);
   };
 
   return {
@@ -143,6 +161,7 @@ export function usePhoneAuth() {
     error,
     countdown,
     setError,
-    resetState,
+    resetState: resetFlow,
+    resetFlow,
   };
 }

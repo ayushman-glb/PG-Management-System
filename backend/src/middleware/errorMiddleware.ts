@@ -33,6 +33,10 @@ export const globalErrorHandler = (
     return ApiResponse.error(res, 'Authentication token has expired.', [], 401);
   }
 
+  if (err.name === 'MulterError') {
+    return ApiResponse.error(res, `File upload error: ${err.message}`, [], 400);
+  }
+
   return ApiResponse.error(
     res,
     env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
