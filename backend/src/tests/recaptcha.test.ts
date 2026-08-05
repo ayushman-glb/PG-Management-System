@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { recaptchaService } from '../services/recaptcha.service';
 import { verifyRecaptcha } from '../middleware/recaptcha.middleware';
 import { Request, Response, NextFunction } from 'express';
@@ -61,10 +62,10 @@ describe('Google reCAPTCHA Enterprise Integration Test Suite', () => {
         socket: { remoteAddress: '127.0.0.1' } as any,
       };
       mockRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
+        status: jest.fn().mockReturnThis() as any,
+        json: jest.fn() as any,
       };
-      nextFunction = jest.fn();
+      nextFunction = jest.fn() as any;
     });
 
     it('should reject requests missing recaptchaToken with HTTP 422', async () => {
