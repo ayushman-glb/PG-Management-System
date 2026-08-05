@@ -114,12 +114,12 @@ export function usePhoneAuth() {
         setLoading(false);
         return idToken;
       }
-      // Development mock code fallback
-      if (code === '123456' || code.length === 6) {
+      // Development mock code fallback: only "123456" is accepted
+      if (code === '123456') {
         setLoading(false);
         return 'mock_firebase_id_token_' + Date.now();
       }
-      throw new Error('No active OTP session. Please click Send OTP.');
+      throw { code: 'auth/invalid-verification-code', message: 'Incorrect verification code. Please check the 6 digits and try again.' };
     } catch (err: any) {
       console.error('❌ Firebase Verify OTP Error:', err);
       const userMsg = mapFirebaseError(err?.code, err?.message || 'Invalid or expired verification code');

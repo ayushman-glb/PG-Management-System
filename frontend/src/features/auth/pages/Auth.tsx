@@ -337,13 +337,11 @@ export default function Auth({ navigate }: Props) {
       setPhoneAuthError("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
-    const success = await sendFirebaseOTP(phone);
-    if (success) {
-      setIsPhoneOtpSent(true);
-    } else {
-      // Fallback mode for seamless demo UX
-      setIsPhoneOtpSent(true);
-    }
+    setPhoneAuthError(null);
+    setPhoneOtp("");
+    setIsPhoneVerified(false);
+    setIsPhoneOtpSent(true);
+    await sendFirebaseOTP(phone);
   };
 
   // Handle Firebase Phone OTP Verify
@@ -360,9 +358,9 @@ export default function Auth({ navigate }: Props) {
         await authService.firebaseLogin(idToken);
       } catch (err) {}
       setIsPhoneVerified(true);
+      setPhoneAuthError(null);
     } else {
-      // Allow demo verify fallback
-      setIsPhoneVerified(true);
+      setIsPhoneVerified(false);
     }
   };
 
@@ -377,8 +375,10 @@ export default function Auth({ navigate }: Props) {
     try {
       await authService.sendEmailVerification(email);
       setIsEmailOtpSent(true);
+      setIsEmailVerified(false);
     } catch (err: any) {
       setIsEmailOtpSent(true);
+      setIsEmailVerified(false);
     } finally {
       setIsEmailLoading(false);
     }
@@ -395,8 +395,10 @@ export default function Auth({ navigate }: Props) {
     try {
       await authService.verifyEmail(email, code);
       setIsEmailVerified(true);
+      setEmailError("");
     } catch (err: any) {
-      setIsEmailVerified(true);
+      setEmailError(err?.message || "Invalid or expired email verification code.");
+      setIsEmailVerified(false);
     } finally {
       setIsEmailLoading(false);
     }
@@ -927,7 +929,18 @@ export default function Auth({ navigate }: Props) {
 
                         {isPhoneOtpSent && !isPhoneVerified && (
                           <div className="space-y-2 pt-2">
-                            <p className="text-[11px] text-amber-400 font-semibold">Enter 6-Digit OTP sent to +91 {phone}:</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[11px] text-amber-400 font-semibold">Enter 6-Digit OTP sent to +91 {phone}:</p>
+                              {phoneCountdown === 0 && (
+                                <button
+                                  type="button"
+                                  onClick={handleSendPhoneOtp}
+                                  className="text-[11px] text-amber-400 underline font-bold hover:text-amber-300 cursor-pointer"
+                                >
+                                  Resend OTP
+                                </button>
+                              )}
+                            </div>
                             <OTPInput
                               length={6}
                               value={phoneOtp}
