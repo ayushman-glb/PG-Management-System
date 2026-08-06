@@ -12,7 +12,9 @@ const Analytics = lazy(() => import("@features/analytics/pages/Analytics"));
 const PGListing = lazy(() => import("@features/properties/pages/PGListing"));
 const PGDetails = lazy(() => import("@features/properties/pages/PGDetails"));
 const Auth = lazy(() => import("@features/auth/pages/Auth"));
+const CompleteProfile = lazy(() => import("@features/auth/pages/CompleteProfile"));
 const Operations = lazy(() => import("@features/operations/pages/Operations"));
+
 const ContentPage = lazy(() => import("@features/dashboard/pages/ContentPage"));
 const ResidentPortal = lazy(() => import("@features/residents/pages/ResidentPortal"));
 const ResidentRegister = lazy(() => import("@features/residents/pages/ResidentRegister"));
@@ -56,7 +58,10 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
       return <PGDetails navigate={navigate} />;
     case "auth":
       return <Auth navigate={navigate} />;
+    case "complete-profile":
+      return <CompleteProfile navigate={navigate} />;
     case "resident-portal":
+
       return <ResidentPortal navigate={navigate} />;
     case "resident-register":
       return <ResidentRegister navigate={navigate} />;

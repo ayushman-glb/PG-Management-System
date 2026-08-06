@@ -17,7 +17,9 @@ export type Page =
   | "pg-listing"
   | "pg-details"
   | "auth"
+  | "complete-profile"
   | "resident-portal"
+
   | "resident-register"
   | "rooms"
   | "beds"
