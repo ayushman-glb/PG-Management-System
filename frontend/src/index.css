@@ -160,7 +160,8 @@ html {
   font-family: "Poppins", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: auto;
   scroll-behavior: smooth;
   letter-spacing: 0.01em;
   width: 100%;
@@ -171,7 +172,8 @@ body {
   color: #3B2A24;
   min-width: 320px;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: auto;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 

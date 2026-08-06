@@ -72,8 +72,13 @@ export class PropertyService {
   }
 
   async getOwnerSummary() {
-    const res = await this.request("/properties/owner-summary");
-    return res.data;
+    try {
+      const res = await this.request("/dashboard/overview");
+      return res.data;
+    } catch (e) {
+      const res = await this.request("/properties/owner-summary");
+      return res.data;
+    }
   }
 }
 

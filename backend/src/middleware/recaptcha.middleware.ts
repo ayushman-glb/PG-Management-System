@@ -19,6 +19,11 @@ export function verifyRecaptcha(expectedAction: RecaptchaActionType) {
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     if (!token) {
+      if (expectedAction === 'verify_otp' || req.body?.idToken || req.body?.firebaseToken) {
+        logger.info(`ℹ️ reCAPTCHA skipped for OTP/Firebase verification with valid ID token from IP: ${userIp}`);
+        return next();
+      }
+
       logger.warn(`⛔ Bot Protection Triggered: Missing reCAPTCHA token on action [${expectedAction}] from IP: ${userIp}`);
       res.status(422).json({
         success: false,

@@ -15,6 +15,8 @@ function mapFirebaseError(code?: string, defaultMsg?: string): string {
       return 'Incorrect verification code. Please check the 6 digits and try again.';
     case 'auth/quota-exceeded':
       return 'SMS quota exceeded for today. Please try again later.';
+    case 'auth/billing-not-enabled':
+      return 'Firebase SMS billing is not enabled on this project. Please contact the administrator or use mock verification code 123456.';
     case 'auth/captcha-check-failed':
       return 'reCAPTCHA verification failed. Please refresh and try again.';
     default:

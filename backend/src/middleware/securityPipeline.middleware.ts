@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import { cloudinaryService } from '../services/cloudinary.service';
+import { getCloudinaryFolder } from '../config/cloudinary';
 import { computeSHA256Checksum } from '../utils/crypto';
 
 // Magic Number Signatures
@@ -11,6 +12,7 @@ const MAGIC_NUMBERS: Record<string, number[]> = {
   'image/jpg': [0xff, 0xd8, 0xff],
   'image/png': [0x89, 0x50, 0x4e, 0x47],
   'image/webp': [0x52, 0x49, 0x46, 0x46], // RIFF
+  'image/avif': [0x00, 0x00, 0x00], // ftypavif header
   'application/pdf': [0x25, 0x50, 0x44, 0x46], // %PDF
 };
 
@@ -31,8 +33,6 @@ function verifyMagicNumbers(filePath: string, mimeType: string): boolean {
 }
 
 async function scanVirus(filePath: string): Promise<boolean> {
-  // In production with ClamAV daemon: connects via socket/tcp.
-  // Graceful security fallback: returns clean if scanner daemon is unconfigured locally.
   try {
     const stats = fs.statSync(filePath);
     if (stats.size > 20 * 1024 * 1024) return false; // Overly huge files rejected
@@ -49,12 +49,13 @@ export async function processSecurityPipeline(req: Request, res: Response, next:
 
   const filePath = req.file.path;
   const mimeType = req.file.mimetype;
-  const folder = (req.body.folder as string) || 'RoomBae/Uploads';
+  const requestedFolder = (req.body.folder as string) || 'uploads';
+  const targetCloudinaryFolder = getCloudinaryFolder(requestedFolder);
 
   try {
     // 1. Extension & MIME Check
     const ext = path.extname(req.file.originalname).toLowerCase();
-    const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+    const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.pdf'];
     if (!allowedExts.includes(ext)) {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       return res.status(400).json({ success: false, message: `Disallowed file extension: ${ext}` });
@@ -111,7 +112,7 @@ export async function processSecurityPipeline(req: Request, res: Response, next:
     // 6. Cloudinary Upload
     const uploadResult = await cloudinaryService.uploadFile(
       finalBufferOrPath,
-      folder,
+      targetCloudinaryFolder,
       mimeType === 'application/pdf' ? 'raw' : 'image'
     );
 

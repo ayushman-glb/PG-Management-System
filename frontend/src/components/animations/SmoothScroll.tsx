@@ -18,9 +18,15 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       touchMultiplier: 1.5,
       wheelMultiplier: 1.0,
       prevent: (node: HTMLElement) => {
+        if (!node) return false;
         return (
           node.hasAttribute("data-lenis-prevent") ||
-          !!node.closest("[data-lenis-prevent]")
+          !!node.closest("[data-lenis-prevent]") ||
+          !!node.closest(".overflow-y-auto") ||
+          !!node.closest(".overflow-auto") ||
+          !!node.closest(".overflow-y-scroll") ||
+          !!node.closest("[role='dialog']") ||
+          !!node.closest(".modal-body")
         );
       },
     });

@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import { env } from '../config/env';
 import { PathResolver } from '../utils/pathResolver';
 
 const storage = multer.diskStorage({
@@ -7,23 +8,31 @@ const storage = multer.diskStorage({
     cb(null, PathResolver.getUploadsDir());
   },
   filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(sanitizedOriginalName).toLowerCase();
+    const baseName = path.basename(sanitizedOriginalName, ext).slice(0, 30);
+    cb(null, `${baseName}-${uniqueSuffix}${ext}`);
   },
 });
+
+const maxSizeBytes = parseInt(env.UPLOAD_MAX_SIZE || '10485760', 10);
 
 export const multerUpload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: isNaN(maxSizeBytes) ? 10 * 1024 * 1024 : maxSizeBytes,
   },
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
-    if (allowedTypes.includes(file.mimetype)) {
+    const allowedMimeTypes = (env.ALLOWED_IMAGE_TYPES + ',' + env.ALLOWED_DOCUMENT_TYPES)
+      .split(',')
+      .map((t) => t.trim());
+
+    if (allowedMimeTypes.includes(file.mimetype) || file.mimetype === 'image/avif') {
       cb(null, true);
     } else {
-      cb(null, false);
+      cb(new Error(`Unsupported file type: ${file.mimetype}. Allowed types: ${allowedMimeTypes.join(', ')}`));
     }
   },
 });
+

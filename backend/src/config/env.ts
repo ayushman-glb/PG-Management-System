@@ -88,6 +88,7 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().default(""),
   CLOUDINARY_API_SECRET: z.string().default(""),
   CLOUDINARY_URL: z.string().optional(),
+  CLOUDINARY_FOLDER_PREFIX: z.string().default(`RoomBae-${nodeEnv}`),
 
   FIREBASE_PROJECT_ID: z.string().default("roombae-app"),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
@@ -96,7 +97,7 @@ const envSchema = z.object({
   CLAMAV_HOST: z.string().default("localhost"),
   CLAMAV_PORT: z.string().default("3310"),
   UPLOAD_MAX_SIZE: z.string().default("10485760"),
-  ALLOWED_IMAGE_TYPES: z.string().default("image/jpeg,image/png,image/webp"),
+  ALLOWED_IMAGE_TYPES: z.string().default("image/jpeg,image/jpg,image/png,image/webp,image/avif"),
   ALLOWED_DOCUMENT_TYPES: z.string().default("application/pdf"),
   GOOGLE_CLOUD_PROJECT_ID: z.string().default("roombae-cff13"),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),

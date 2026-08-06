@@ -40,11 +40,11 @@ export const BentoDashboard: React.FC = () => {
     loadMetrics();
   }, []);
 
-  const occupancyRate = metrics?.occupancyRatePercent
+  const occupancyRate = metrics?.occupancyRatePercent !== undefined
     ? `${metrics.occupancyRatePercent}%`
     : "0%";
-  const mrrText = metrics?.mrr
-    ? `₹${metrics.mrr.toLocaleString("en-IN")}`
+  const mrrText = (metrics?.totalRevenue || metrics?.mrr)
+    ? `₹${(metrics.totalRevenue || metrics.mrr).toLocaleString("en-IN")}`
     : "₹0";
 
   const cardBg = darkMode

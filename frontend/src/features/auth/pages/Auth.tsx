@@ -22,7 +22,8 @@ import { ThemeToggle, useTheme } from "../../../theme";
 import { BackButton } from "../../../navigation";
 import { AnimatedTabs } from "../../../components/MotionPrimitives";
 import { authService } from "@services/auth.service";
-import { env } from "@config/env";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../../firebase/firebase";
 import { usePhoneAuth } from "../../../hooks/usePhoneAuth";
 import { useRecaptcha } from "../../../hooks/useRecaptcha";
 import { OTPInput } from "../../../components/OTPInput";
@@ -136,6 +137,32 @@ export default function Auth({ navigate }: Props) {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authSuccessMsg, setAuthSuccessMsg] = useState("");
+
+  const handleGoogleSignUp = async () => {
+    setAuthError("");
+    setAuthSuccessMsg("");
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (user) {
+        if (user.displayName) setFullName(user.displayName);
+        if (user.email) {
+          setEmail(user.email);
+          setIsEmailVerified(true);
+        }
+        if (user.photoURL) setPhotoUrl(user.photoURL);
+
+        setAuthSuccessMsg(`Successfully authenticated with Google as ${user.displayName || user.email}!`);
+        setRegStep(2);
+        setMode("register");
+      }
+    } catch (err: any) {
+      console.error("❌ Google Sign-In Error:", err);
+      setAuthError(err.message || "Failed to sign in with Google.");
+    }
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -689,11 +716,8 @@ export default function Auth({ navigate }: Props) {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      const roleParam = loginRole === "resident" ? "RESIDENT" : "OWNER";
-                      window.location.href = `${env.API_URL}/auth/google?role=${roleParam}`;
-                    }}
-                    className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                    onClick={handleGoogleSignUp}
+                    className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 48 48">
                       <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
@@ -1070,20 +1094,38 @@ export default function Auth({ navigate }: Props) {
                         </label>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <input
-                            type="password"
-                            placeholder="Create Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                          />
-                          <input
-                            type="password"
-                            placeholder="Confirm Password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                          />
+                          <div className="relative">
+                            <input
+                              type={showPass ? "text" : "password"}
+                              placeholder="Create Password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPass(!showPass)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500"
+                            >
+                              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showPass ? "text" : "password"}
+                              placeholder="Confirm Password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPass(!showPass)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500"
+                            >
+                              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px]">

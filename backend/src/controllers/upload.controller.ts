@@ -11,8 +11,11 @@ export class UploadController {
       success: true,
       message: 'File processed and uploaded successfully',
       data: {
-        url: uploadResult.secureUrl,
+        url: uploadResult.secureUrl || uploadResult.url,
+        secureUrl: uploadResult.secureUrl || uploadResult.url,
         publicId: uploadResult.publicId,
+        assetId: uploadResult.assetId,
+        folder: uploadResult.folder,
         checksum: uploadResult.checksum,
         format: uploadResult.format,
         bytes: uploadResult.bytes,

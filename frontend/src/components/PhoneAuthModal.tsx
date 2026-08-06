@@ -352,6 +352,7 @@ export const PhoneAuthModal: React.FC<PhoneAuthModalProps> = ({
                   {countdown > 0 ? `Resend OTP in ${countdown}s` : 'Resend OTP'}
                 </button>
               </div>
+              <div id="recaptcha-container" className="hidden" />
             </div>
           )}
 

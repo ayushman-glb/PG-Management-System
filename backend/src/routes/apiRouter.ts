@@ -16,6 +16,8 @@ import { settingsRoutes } from '../modules/settings';
 import residentManagementRoutes from './residentManagementRoutes';
 import saasManagementRoutes from './saasManagementRoutes';
 import uploadRoutes from './upload.routes';
+import mediaRoutes from './media.routes';
+import { dashboardRoutes } from './dashboard.routes';
 
 const apiRouter = Router();
 
@@ -23,6 +25,8 @@ apiRouter.use(tenantMiddleware);
 
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/upload', uploadRoutes);
+apiRouter.use('/media', mediaRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/onboarding', ownerRoutes);
 apiRouter.use('/owners', ownerRoutes);
 apiRouter.use('/properties', propertyRoutes);
