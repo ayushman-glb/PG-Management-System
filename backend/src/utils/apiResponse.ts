@@ -19,11 +19,26 @@ export class ApiResponse {
     });
   }
 
-  static error(res: Response, message: string, errors: any[] = [], statusCode: number = 400) {
+  static error(
+    res: Response,
+    message: string,
+    errors: any[] = [],
+    statusCode: number = 400,
+    errorCode?: string,
+    actionHint?: string
+  ) {
+    const code = errorCode || (statusCode === 401 ? 'UNAUTHORIZED' : statusCode === 403 ? 'FORBIDDEN' : statusCode === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR');
+    const action = actionHint || (statusCode === 401 ? 'login' : statusCode === 403 ? 'contact_admin' : 'retry');
+
     return res.status(statusCode).json({
       success: false,
       message,
-      errors
+      errors,
+      error: {
+        code,
+        message,
+        action
+      }
     });
   }
 }

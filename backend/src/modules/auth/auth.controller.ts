@@ -86,8 +86,12 @@ export class AuthController {
   });
 
   logout = catchAsync(async (req: Request, res: Response) => {
-    res.clearCookie("refreshToken");
-    return ApiResponse.success(res, "Logout successful");
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    return ApiResponse.success(res, "Logged out successfully", { success: true });
   });
 
   firebaseLogin = catchAsync(async (req: Request, res: Response) => {
@@ -176,9 +180,20 @@ export class AuthController {
   });
 
   refreshToken = catchAsync(async (req: Request, res: Response) => {
-    const token = req.cookies.refreshToken || req.body.refreshToken;
+    const token = req.cookies.refreshToken || req.body.refreshToken || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined);
     const result = await this.authService.refreshToken(token);
-    return ApiResponse.success(res, "Access token refreshed", result);
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return ApiResponse.success(res, "Access token refreshed and rotated", {
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    });
   });
 
   me = catchAsync(async (req: Request, res: Response) => {

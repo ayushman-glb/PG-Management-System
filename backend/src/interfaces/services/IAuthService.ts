@@ -60,7 +60,7 @@ export interface IAuthService {
   disableTwoFactor(
     userId: string,
   ): Promise<{ success: boolean; message: string }>;
-  refreshToken(token: string): Promise<{ accessToken: string }>;
+  refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }>;
   firebaseLogin(idToken: string): Promise<IAuthUserResult>;
   phoneVerify(idToken: string): Promise<IAuthUserResult>;
   me(userId: string): Promise<any>;

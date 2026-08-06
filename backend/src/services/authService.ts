@@ -441,15 +441,29 @@ export class AuthService implements IAuthService {
     return { success: true, message: "Two-factor authentication disabled" };
   }
 
-  async refreshToken(token: string): Promise<{ accessToken: string }> {
-    if (!token) throw new AppError("Refresh token required", 401);
-    const decoded = this.tokenService.verifyRefreshToken(token);
-    const accessToken = this.tokenService.generateAccessToken({
+  async refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }> {
+    if (!token) throw new AppError("Refresh token required", 401, "TOKEN_REQUIRED", "login");
+    let decoded: any;
+    try {
+      decoded = this.tokenService.verifyRefreshToken(token);
+    } catch (err: any) {
+      if (err.name === "TokenExpiredError") {
+        throw new AppError("Refresh token has expired. Please log in again.", 401, "REFRESH_TOKEN_EXPIRED", "login");
+      }
+      throw new AppError("Invalid refresh token signature.", 401, "INVALID_REFRESH_TOKEN", "login");
+    }
+
+    const payload = {
       id: decoded.id,
       email: decoded.email,
       role: decoded.role,
-    });
-    return { accessToken };
+      residentCode: decoded.residentCode,
+    };
+
+    const newAccessToken = this.tokenService.generateAccessToken(payload);
+    const newRefreshToken = this.tokenService.generateRefreshToken(payload);
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 
   async me(userId: string): Promise<any> {

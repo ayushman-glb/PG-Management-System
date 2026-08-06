@@ -28,11 +28,13 @@ export class JwtTokenService implements ITokenService {
   }
 
   generateAccessToken(payload: ITokenPayload): string {
-    return jwt.sign(payload, this.jwtSecret, { expiresIn: '15m' });
+    const expires: any = env.JWT_ACCESS_EXPIRATION || '15m';
+    return jwt.sign(payload, this.jwtSecret, { expiresIn: expires });
   }
 
   generateRefreshToken(payload: ITokenPayload): string {
-    return jwt.sign(payload, this.jwtRefreshSecret, { expiresIn: '7d' });
+    const expires: any = env.JWT_REFRESH_EXPIRATION || '7d';
+    return jwt.sign(payload, this.jwtRefreshSecret, { expiresIn: expires });
   }
 
   verifyAccessToken(token: string): any {

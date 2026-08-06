@@ -19,9 +19,7 @@ import passport from "./config/passport";
 export const app = express();
 
 // Trust proxy setting when deployed behind Render / Cloudflare reverse proxies
-if (env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+app.set("trust proxy", 1);
 
 // Correlation ID & Distributed Tracing
 app.use(correlationIdMiddleware);
