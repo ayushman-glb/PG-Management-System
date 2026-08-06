@@ -51,6 +51,11 @@ serviceAccountKey*.json
 service-account*.json
 firebase-admin*.json
 
+# Credentials & Private Documentation
+user_credentials.md
+credentials*.md
+*.credentials.md
+
 # Uploads and temp files
 uploads/
 temp_uploads/
