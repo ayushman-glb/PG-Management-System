@@ -11,7 +11,6 @@ import { AnimatedBadge } from "@components/animations/MotionPrimitives";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 import { api } from "@services/api";
-import { useRecaptcha } from "../../../hooks/useRecaptcha";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -165,7 +164,6 @@ const columns = [
 ];
 
 export default function Complaints({ navigate }: Props) {
-  const recaptcha = useRecaptcha();
   const [complaints, setComplaints] = useState(initialComplaints);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Complaint | null>(null);
@@ -177,8 +175,13 @@ export default function Complaints({ navigate }: Props) {
 
   const handleCreateComplaint = async (title: string, category: string, description: string, priority: string) => {
     try {
-      const recaptchaToken = await recaptcha.execute("complaint");
-      await api.createComplaint({ title, category, description, priority, recaptchaToken });
+      await api.post("/complaints", {
+        title,
+        category,
+        description,
+        priority,
+      });
+
       setShowModal(false);
     } catch {
       setShowModal(false);

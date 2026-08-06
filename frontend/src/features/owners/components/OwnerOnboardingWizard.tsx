@@ -13,7 +13,6 @@ import {
 import { useTheme } from "../../../theme";
 import { ownerService } from "@services/owner.service";
 import { authService } from "@services/auth.service";
-import { useRecaptcha } from "../../../hooks/useRecaptcha";
 
 interface OwnerOnboardingWizardProps {
   isOpen: boolean;
@@ -26,8 +25,8 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const recaptcha = useRecaptcha();
   const { darkMode } = useTheme();
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 10;
 
@@ -196,13 +195,12 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
     setSubmitState("submitting");
     setSubmitError("");
     try {
-      const recaptchaToken = await recaptcha.execute("owner_registration");
       const ownerId = await resolveOwnerId();
       await ownerService.runFullOnboarding({
         ownerId,
-        recaptchaToken,
         personal,
         kyc,
+
         business,
         bank,
         property,

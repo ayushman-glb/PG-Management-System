@@ -7,9 +7,17 @@ const SOCKET_URL = env.SOCKET_URL;
 let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("accessToken") ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("roombae_access_token")
+      : null;
+
   if (!socket) {
     socket = io(SOCKET_URL, {
-      autoConnect: true,
+      autoConnect: false,
+      auth: { token },
       withCredentials: true,
       reconnectionAttempts: 3,
       timeout: 5000,
@@ -17,11 +25,25 @@ export const getSocket = (): Socket => {
     });
 
     socket.on("connect_error", (err) => {
-      // Quietly handle connection errors without breaking React UI
-      console.warn("Socket connection unavailable:", err.message);
+      console.warn("⚠️ Real-time Socket connection notice:", err.message);
     });
+
+    if (token) {
+      socket.connect();
+    }
+  } else if (token && !socket.connected) {
+    socket.auth = { token };
+    socket.connect();
   }
+
   return socket;
+};
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
 };
 
 export function useSocketEvent<T = any>(

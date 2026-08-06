@@ -4,6 +4,8 @@ import { IAgreementRepository } from '../../interfaces/IAgreementRepository';
 import { IPdfAgreementService } from '../../interfaces/IPdfAgreementService';
 import { SocketServer } from '../../socket/socketServer';
 import { env } from '../../config/env';
+import { AppError } from '../../utils/appError';
+
 
 export class AgreementService implements IAgreementService {
   constructor(
@@ -31,7 +33,7 @@ export class AgreementService implements IAgreementService {
   async getAgreementById(id: string): Promise<any> {
     const agreement = await this.agreementRepo.findById(id);
     if (!agreement) {
-      throw new Error('Agreement not found');
+      throw new AppError('Agreement record not found', 404);
     }
     return agreement;
   }
@@ -39,7 +41,7 @@ export class AgreementService implements IAgreementService {
   async signAgreement(agreementId: string, signatureData: any): Promise<any> {
     const agreement = await this.agreementRepo.findById(agreementId);
     if (!agreement) {
-      throw new Error('Agreement not found');
+      throw new AppError('Agreement record not found for signature', 404);
     }
 
     const hmacSecret = env.JWT_SECRET;
@@ -73,7 +75,7 @@ export class AgreementService implements IAgreementService {
   async downloadAgreementPdfBuffer(agreementId: string): Promise<Buffer> {
     const agreement = await this.agreementRepo.findById(agreementId);
     if (!agreement) {
-      throw new Error('Agreement not found');
+      throw new AppError('Agreement record not found for PDF download', 404);
     }
     return this.pdfService.generateAgreementPdfBuffer(agreement);
   }

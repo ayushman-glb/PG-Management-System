@@ -22,14 +22,12 @@ import { ThemeToggle, useTheme } from "../../../theme";
 import { BackButton } from "../../../navigation";
 import { AnimatedTabs } from "../../../components/MotionPrimitives";
 import { authService } from "@services/auth.service";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "../../../firebase/firebase";
 import { usePhoneAuth } from "../../../hooks/usePhoneAuth";
-import { useRecaptcha } from "../../../hooks/useRecaptcha";
+
 import { OTPInput } from "../../../components/OTPInput";
 import { UploadCard } from "../../../components/UploadCard";
 import { PhoneAuthModal } from "../../../components/PhoneAuthModal";
-import { ReCaptchaWidget } from "../../../components/ReCaptchaWidget";
+import { env } from "../../../config/env";
 
 
 interface Props {
@@ -39,8 +37,8 @@ interface Props {
 type AuthMode = "login" | "register" | "forgot" | "otp";
 
 export default function Auth({ navigate }: Props) {
-  const recaptcha = useRecaptcha();
   const [mode, setMode] = useState<AuthMode>("login");
+
   const [showPass, setShowPass] = useState(false);
   const [loginRole, setLoginRole] = useState<"owner" | "resident">("owner");
   const { darkMode } = useTheme();
@@ -144,25 +142,11 @@ export default function Auth({ navigate }: Props) {
     setAuthError("");
     setAuthSuccessMsg("");
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      if (user) {
-        if (user.displayName) setFullName(user.displayName);
-        if (user.email) {
-          setEmail(user.email);
-          setIsEmailVerified(true);
-        }
-        if (user.photoURL) setPhotoUrl(user.photoURL);
-
-        setAuthSuccessMsg(`Successfully authenticated with Google as ${user.displayName || user.email}!`);
-        setRegStep(2);
-        setMode("register");
-      }
+      const backendOAuthUrl = `${env.API_URL}/auth/google?role=${encodeURIComponent(selectedRole)}`;
+      window.location.href = backendOAuthUrl;
     } catch (err: any) {
       console.error("❌ Google Sign-In Error:", err);
-      setAuthError(err.message || "Failed to sign in with Google.");
+      setAuthError(err.message || "Failed to initiate Google OAuth.");
     }
   };
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -439,7 +423,6 @@ export default function Auth({ navigate }: Props) {
     setShowSignupCta(false);
     setIsSubmitting(true);
     try {
-      const recaptchaToken = await recaptcha.execute('login');
       const emailEl = document.querySelector(
         'input[placeholder*="you@example.com"], input[placeholder*="RES1001"]',
       ) as HTMLInputElement | null;
@@ -448,7 +431,7 @@ export default function Auth({ navigate }: Props) {
       const identifier = emailEl?.value || (loginRole === "resident" ? "RES1001" : "owner1@roombae.com");
       const passwordVal = passEl?.value || "Password123!";
 
-      await authService.login({ identifier, password: passwordVal }, undefined, recaptchaToken);
+      await authService.login({ identifier, password: passwordVal });
 
       if (loginRole === "resident") {
         navigate("resident-portal");
@@ -475,15 +458,14 @@ export default function Auth({ navigate }: Props) {
     setAuthError("");
 
     try {
-      const recaptchaToken = await recaptcha.execute('signup');
       await authService.register({
         name: fullName || "RoomBae User",
         email: email || `user_${Date.now()}@roombae.com`,
         password: password || "Password123!",
         role: selectedRole === "OWNER" ? "OWNER" : "RESIDENT",
         phone: phone || "+91 98765 43210",
-        recaptchaToken,
       });
+
 
       // Clear draft on successful signup
       clearIncompleteDraft();
@@ -720,7 +702,6 @@ export default function Auth({ navigate }: Props) {
                     </div>
                   </div>
 
-                  <ReCaptchaWidget action="LOGIN" className="mb-4 flex justify-center" />
 
                   <button
                     type="button"
@@ -1407,7 +1388,6 @@ export default function Auth({ navigate }: Props) {
                         </label>
                       </div>
 
-                      <ReCaptchaWidget action="signup" className="mt-4 mb-2 flex justify-center" />
 
                       {/* Final Submit Button (Golden Glowing when isStep3Valid is true) */}
                       <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">

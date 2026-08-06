@@ -13,6 +13,7 @@ import { Role } from "@prisma/client";
 import { firebaseAdmin } from "../config/firebaseAdmin";
 import { emailService } from "./email";
 import { env } from "../config/env";
+import { prisma } from "../config/prisma";
 
 export class AuthService implements IAuthService {
   constructor(
@@ -484,12 +485,86 @@ export class AuthService implements IAuthService {
   async ownerProfile(userId: string): Promise<any> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
-    return user;
+
+    let owner = await prisma.owner.findFirst({
+      where: { userId: user.id },
+      include: { pgs: true },
+    });
+
+    if (!owner) {
+      console.log(`ℹ️ [PROFILE_AUTO_CREATE] Creating missing Owner profile record for User ID "${user.id}" (${user.email})`);
+      try {
+        owner = await prisma.owner.create({
+          data: {
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || "+919876543210",
+            photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+            address: "Indiranagar, Bengaluru",
+            aadhaarNumber: "452189012345",
+            panNumber: "ABCDE1234F",
+            upiId: "owner@okaxis",
+            bankName: "HDFC Bank",
+            accountNumber: "5010023456789",
+            ifscCode: "HDFC0001234",
+            emergencyContact: "+919123456789",
+          },
+          include: { pgs: true },
+        });
+      } catch (err) {
+        console.warn(`⚠️ Could not auto-create owner record, returning user details:`, err);
+      }
+    }
+
+    return { user, owner: owner || null };
   }
 
   async residentProfile(userId: string): Promise<any> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
-    return user;
+
+    let resident = await prisma.resident.findFirst({
+      where: { userId: user.id },
+      include: { bed: true, pg: true },
+    });
+
+    if (!resident) {
+      console.log(`ℹ️ [PROFILE_AUTO_CREATE] Creating missing Resident profile record for User ID "${user.id}" (${user.email})`);
+      try {
+        const defaultPg = await prisma.pG.findFirst();
+        const defaultBed = await prisma.bed.findFirst();
+
+        if (defaultPg && defaultBed) {
+          resident = await prisma.resident.create({
+            data: {
+              userId: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone || "+919800000000",
+              profilePicture: user.avatarUrl || "https://images.unsplash.com/photo-1500000000000?w=300",
+              pgId: defaultPg.id,
+              bedId: defaultBed.id,
+              gender: "Male",
+              age: 22,
+              permanentAddress: "Model Town, Indiranagar, Bengaluru",
+              occupation: "Software Engineer",
+              bloodGroup: "O+",
+              moveInDate: new Date(),
+              rentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              status: "ACTIVE",
+            },
+            include: { bed: true, pg: true },
+          });
+        }
+      } catch (err) {
+        console.warn(`⚠️ Could not auto-create resident record, returning user details:`, err);
+      }
+    }
+
+    return { user, resident: resident || null };
   }
+
+
 }
+

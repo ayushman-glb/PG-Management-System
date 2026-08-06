@@ -94,7 +94,7 @@ export class PrismaUserRepository implements IUserRepository {
       });
     }
 
-    return this.db.user.create({
+    const newUser = await this.db.user.create({
       data: {
         googleSubId: data.googleSubId,
         email: data.email,
@@ -105,7 +105,65 @@ export class PrismaUserRepository implements IUserRepository {
         authProvider: "GOOGLE",
       },
     });
+
+    try {
+      if (newUser.role === Role.OWNER) {
+        const existingOwner = await this.db.owner.findFirst({ where: { userId: newUser.id } });
+        if (!existingOwner) {
+          await this.db.owner.create({
+            data: {
+              userId: newUser.id,
+              name: newUser.name,
+              email: newUser.email,
+              phone: "+919876543210",
+              photo: newUser.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+              address: "Indiranagar, Bengaluru",
+              aadhaarNumber: "452189012345",
+              panNumber: "ABCDE1234F",
+              upiId: "owner@okaxis",
+              bankName: "HDFC Bank",
+              accountNumber: "5010023456789",
+              ifscCode: "HDFC0001234",
+              emergencyContact: "+919123456789",
+            },
+          });
+        }
+      } else {
+        const existingResident = await this.db.resident.findFirst({ where: { userId: newUser.id } });
+        if (!existingResident) {
+          const defaultPg = await this.db.pG.findFirst();
+          const defaultBed = await this.db.bed.findFirst();
+          if (defaultPg && defaultBed) {
+            await this.db.resident.create({
+              data: {
+                userId: newUser.id,
+                name: newUser.name,
+                email: newUser.email,
+                phone: "+919800000000",
+                profilePicture: newUser.avatarUrl || "https://images.unsplash.com/photo-1500000000000?w=300",
+                pgId: defaultPg.id,
+                bedId: defaultBed.id,
+                gender: "Male",
+                age: 22,
+                permanentAddress: "Indiranagar, Bengaluru",
+                occupation: "Software Engineer",
+                bloodGroup: "O+",
+                moveInDate: new Date(),
+                rentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                status: "ACTIVE",
+              },
+            });
+          }
+        }
+      }
+    } catch (profileErr) {
+      console.warn("⚠️ Could not auto-create Google signup profile record:", profileErr);
+    }
+
+
+    return newUser;
   }
+
 
   async findOrCreatePhoneUser(data: {
     phone: string;

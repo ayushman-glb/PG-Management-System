@@ -23,7 +23,6 @@ import type { Page } from "@app/App";
 import { ThemeToggle, useTheme } from "@theme/index";
 import { BackButton } from "@app/navigation";
 import { api } from "@services/api";
-import { useRecaptcha } from "@hooks/useRecaptcha";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -40,9 +39,9 @@ interface UploadedDoc {
 }
 
 export default function ResidentRegister({ navigate }: Props) {
-  const recaptcha = useRecaptcha();
   const [step, setStep] = useState(1);
   const { darkMode } = useTheme();
+
   const [submitted, setSubmitted] = useState(false);
 
   const stepCardRef = useRef<HTMLDivElement>(null);
@@ -284,16 +283,15 @@ export default function ResidentRegister({ navigate }: Props) {
       return;
     }
     try {
-      const recaptchaToken = await recaptcha.execute("signup");
       await api.onboardResident({
         name: formData.fullName,
         email: formData.email,
         phone: formData.mobile,
-        recaptchaToken,
         propertyId: "650000000000000000000001",
         bedId: "650000000000000000000002",
         idProofNumber: formData.aadhaarNumber || "1234 5678 9012",
         aadhaarNumber: formData.aadhaarNumber,
+
         panNumber: formData.panNumber,
         guardianName: formData.guardianName,
         guardianPhone: formData.guardianPhone,

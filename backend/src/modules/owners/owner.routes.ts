@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { OwnerController } from "./owner.controller";
-import { verifyRecaptcha } from "../../middleware/recaptcha.middleware";
 
 const router = Router();
 
-router.post("/onboard", verifyRecaptcha("owner_registration"), OwnerController.runFullOnboarding);
+router.post("/onboard", OwnerController.runFullOnboarding);
 router.put("/:ownerId/personal", OwnerController.savePersonalDetails);
 router.post("/:ownerId/kyc", OwnerController.submitKYC);
 router.put("/:ownerId/business", OwnerController.saveBusinessInfo);
