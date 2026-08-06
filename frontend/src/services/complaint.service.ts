@@ -45,7 +45,7 @@ export class ComplaintService {
     return res.data;
   }
 
-  async createComplaint(data: { category: string; title: string; description: string; priority?: string; recaptchaToken?: string }) {
+  async createComplaint(data: { category: string; title: string; description: string; priority?: string }) {
     const res = await this.request("/complaints", {
       method: "POST",
       body: JSON.stringify(data),

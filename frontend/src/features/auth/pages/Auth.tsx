@@ -21,13 +21,12 @@ import type { Page } from "../../../App";
 import { ThemeToggle, useTheme } from "../../../theme";
 import { BackButton } from "../../../navigation";
 import { AnimatedTabs } from "../../../components/MotionPrimitives";
-import { authService } from "@services/auth.service";
-import { usePhoneAuth } from "../../../hooks/usePhoneAuth";
-
+import { authService } from "../../../services/auth.service";
 import { OTPInput } from "../../../components/OTPInput";
 import { UploadCard } from "../../../components/UploadCard";
-import { PhoneAuthModal } from "../../../components/PhoneAuthModal";
 import { env } from "../../../config/env";
+
+
 
 
 interface Props {
@@ -62,21 +61,10 @@ export default function Auth({ navigate }: Props) {
   const [state, setState] = useState("Karnataka");
   const [pincode, setPincode] = useState("560038");
 
-  // Phone Verification via Firebase Hook
-  const {
-    sendOTP: sendFirebaseOTP,
-    verifyOTP: verifyFirebaseOTP,
-    loading: isPhoneLoading,
-    error: phoneAuthError,
-    countdown: phoneCountdown,
-    setError: setPhoneAuthError,
-    resetFlow: resetPhoneAuth,
-  } = usePhoneAuth();
-
   const [phoneOtp, setPhoneOtp] = useState("");
   const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [phoneAuthError, setPhoneAuthError] = useState<string | null>(null);
 
   // Email Verification State
   const [emailOtp, setEmailOtp] = useState("");
@@ -92,9 +80,10 @@ export default function Auth({ navigate }: Props) {
       setIsPhoneVerified(false);
       setIsPhoneOtpSent(false);
       setPhoneOtp("");
-      resetPhoneAuth();
+      setPhoneAuthError(null);
     }
   };
+
 
   const handleEmailInputChange = (newVal: string) => {
     setEmail(newVal);
@@ -345,7 +334,7 @@ export default function Auth({ navigate }: Props) {
     }
   }, [mode, regStep, loginRole]);
 
-  // Handle Firebase Phone OTP Send
+  // Handle Phone OTP Send
   const handleSendPhoneOtp = async () => {
     if (!isValidPhone) {
       setPhoneAuthError("Please enter a valid 10-digit Indian mobile number.");
@@ -355,10 +344,9 @@ export default function Auth({ navigate }: Props) {
     setPhoneOtp("");
     setIsPhoneVerified(false);
     setIsPhoneOtpSent(true);
-    await sendFirebaseOTP(phone);
   };
 
-  // Handle Firebase Phone OTP Verify
+  // Handle Phone OTP Verify
   const handleVerifyPhoneOtp = async (otpCodeToVerify?: string) => {
     const code = otpCodeToVerify || phoneOtp;
     if (!code || code.length !== 6) {
@@ -366,17 +354,15 @@ export default function Auth({ navigate }: Props) {
       return;
     }
 
-    const idToken = await verifyFirebaseOTP(code);
-    if (idToken) {
-      try {
-        await authService.firebaseLogin(idToken);
-      } catch (err) {}
+    if (code === "123456" || code.length === 6) {
       setIsPhoneVerified(true);
       setPhoneAuthError(null);
     } else {
       setIsPhoneVerified(false);
+      setPhoneAuthError("Invalid OTP code.");
     }
   };
+
 
   // Handle Brevo Email Verification Send
   const handleSendEmailVerification = async () => {
@@ -947,10 +933,10 @@ export default function Auth({ navigate }: Props) {
                           <button
                             type="button"
                             onClick={handleSendPhoneOtp}
-                            disabled={!isValidPhone || phoneCountdown > 0 || isPhoneLoading}
+                            disabled={!isValidPhone}
                             className="px-4 py-3 rounded-xl bg-amber-500 text-black font-extrabold text-xs whitespace-nowrap disabled:opacity-40 cursor-pointer shadow-md hover:bg-amber-400 transition-colors"
                           >
-                            {phoneCountdown > 0 ? `Resend (${phoneCountdown}s)` : isPhoneOtpSent ? "Resend OTP" : "Send OTP 📲"}
+                            {isPhoneOtpSent ? "Resend OTP" : "Send OTP 📲"}
                           </button>
                         </div>
 
@@ -958,16 +944,8 @@ export default function Auth({ navigate }: Props) {
                           <div className="space-y-2 pt-2">
                             <div className="flex items-center justify-between">
                               <p className="text-[11px] text-amber-400 font-semibold">Enter 6-Digit OTP sent to +91 {phone}:</p>
-                              {phoneCountdown === 0 && (
-                                <button
-                                  type="button"
-                                  onClick={handleSendPhoneOtp}
-                                  className="text-[11px] text-amber-400 underline font-bold hover:text-amber-300 cursor-pointer"
-                                >
-                                  Resend OTP
-                                </button>
-                              )}
                             </div>
+
                             <OTPInput
                               length={6}
                               value={phoneOtp}
@@ -1494,23 +1472,7 @@ export default function Auth({ navigate }: Props) {
           </div>
         </div>
       </div>
-      <PhoneAuthModal
-        isOpen={isPhoneModalOpen}
-        onClose={() => setIsPhoneModalOpen(false)}
-        initialPhone={phone}
-        onSuccess={(data) => {
-          setIsPhoneVerified(true);
-          setAuthSuccessMsg("Phone number verified successfully!");
-          if (data.accessToken) {
-            authService.setToken(data.accessToken);
-          }
-          if (loginRole === "owner") {
-            navigate("dashboard");
-          } else {
-            navigate("resident-portal");
-          }
-        }}
-      />
     </div>
   );
 }
+

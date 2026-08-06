@@ -82,13 +82,13 @@ export class AuthService {
     return data;
   }
 
-  async login(identifierOrCredentials: any, passwordArg?: string, recaptchaToken?: string) {
+  async login(identifierOrCredentials: any, passwordArg?: string) {
     let identifier = typeof identifierOrCredentials === "string" ? identifierOrCredentials : (identifierOrCredentials.identifier || identifierOrCredentials.email || "");
     let password = passwordArg || (typeof identifierOrCredentials === "object" ? identifierOrCredentials.password : "");
 
     const res = await this.request("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ identifier, password, recaptchaToken }),
+      body: JSON.stringify({ identifier, password }),
     });
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken);
@@ -96,7 +96,7 @@ export class AuthService {
     return res.data || res;
   }
 
-  async register(data: { name: string; email: string; password: string; role?: string; phone?: string; recaptchaToken?: string }) {
+  async register(data: { name: string; email: string; password: string; role?: string; phone?: string }) {
     const res = await this.request("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
@@ -107,18 +107,18 @@ export class AuthService {
     return res.data;
   }
 
-  async sendOtp(email: string, recaptchaToken?: string) {
+  async sendOtp(email: string) {
     const res = await this.request("/auth/send-otp", {
       method: "POST",
-      body: JSON.stringify({ email, recaptchaToken }),
+      body: JSON.stringify({ email }),
     });
     return res.data;
   }
 
-  async verifyOtp(email: string, otp: string, recaptchaToken?: string) {
+  async verifyOtp(email: string, otp: string) {
     const res = await this.request("/auth/verify-otp", {
       method: "POST",
-      body: JSON.stringify({ email, otp, recaptchaToken }),
+      body: JSON.stringify({ email, otp }),
     });
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken);
@@ -128,28 +128,6 @@ export class AuthService {
 
   async getCurrentUser() {
     const res = await this.request("/auth/me", { method: "GET" });
-    return res.data || res;
-  }
-
-  async firebaseLogin(idToken: string, recaptchaToken?: string) {
-    const res = await this.request("/auth/firebase-login", {
-      method: "POST",
-      body: JSON.stringify({ idToken, recaptchaToken }),
-    });
-    if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
-    }
-    return res.data || res;
-  }
-
-  async phoneVerify(idToken: string, recaptchaToken?: string) {
-    const res = await this.request("/auth/phone-verify", {
-      method: "POST",
-      body: JSON.stringify({ idToken, recaptchaToken }),
-    });
-    if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
-    }
     return res.data || res;
   }
 

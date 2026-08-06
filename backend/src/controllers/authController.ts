@@ -89,35 +89,8 @@ export class AuthController {
     return ApiResponse.success(res, result.message, result);
   });
 
-  firebaseLogin = catchAsync(async (req: Request, res: Response) => {
-    const { idToken } = req.body;
-    const result = await this.authService.phoneVerify(idToken);
-
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    return ApiResponse.success(res, 'Phone verification successful', result);
-  });
-
-  phoneVerify = catchAsync(async (req: Request, res: Response) => {
-    const { idToken } = req.body;
-    const result = await this.authService.phoneVerify(idToken);
-
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    return ApiResponse.success(res, 'Phone verification successful', result);
-  });
-
   sendEmailVerification = catchAsync(async (req: Request, res: Response) => {
+
     const { email } = req.body;
     const result = await this.authService.sendEmailVerification(email);
     return ApiResponse.success(res, result.message, result);

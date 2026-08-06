@@ -39,6 +39,17 @@ export const getSocket = (): Socket => {
   return socket;
 };
 
+export const updateSocketAuth = (newToken: string) => {
+  if (!newToken) return;
+  const s = getSocket();
+  s.auth = { token: newToken };
+  if (s.connected) {
+    s.emit("auth_refresh", newToken);
+  } else {
+    s.connect();
+  }
+};
+
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();

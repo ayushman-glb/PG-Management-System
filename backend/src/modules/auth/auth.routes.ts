@@ -31,15 +31,10 @@ router.post("/logout", (req, res, next) =>
 router.post("/refresh-token", (req, res, next) =>
   Container.authController.refreshToken(req, res, next),
 );
-router.post("/firebase-login", phoneVerifyLimiter, (req, res, next) =>
-  Container.authController.firebaseLogin(req, res, next),
-);
-router.post("/phone-verify", phoneVerifyLimiter, (req, res, next) =>
-  Container.authController.phoneVerify(req, res, next),
-);
 router.post("/test-email", (req, res, next) =>
   Container.authController.testEmail(req, res, next),
 );
+
 
 router.post("/send-phone-otp", validate(SendPhoneOtpSchema), (req, res, next) =>
   Container.authController.sendPhoneOtp(req, res, next),

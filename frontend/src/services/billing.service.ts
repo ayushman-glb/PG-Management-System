@@ -34,18 +34,18 @@ export class BillingService {
     return data;
   }
 
-  async createBillingOrder(residentId: string, baseAmount: number, recaptchaToken?: string) {
+  async createBillingOrder(residentId: string, baseAmount: number) {
     const res = await this.request("/billing/create-order", {
       method: "POST",
-      body: JSON.stringify({ residentId, baseAmount, recaptchaToken }),
+      body: JSON.stringify({ residentId, baseAmount }),
     });
     return res.data;
   }
 
-  async verifyPayment(paymentId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string, recaptchaToken?: string) {
+  async verifyPayment(paymentId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
     const res = await this.request("/billing/verify-payment", {
       method: "POST",
-      body: JSON.stringify({ paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature, recaptchaToken }),
+      body: JSON.stringify({ paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature }),
     });
     return res.data;
   }

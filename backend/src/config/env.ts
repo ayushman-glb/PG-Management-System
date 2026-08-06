@@ -110,10 +110,6 @@ const envSchema = z.object({
   CLOUDINARY_URL: z.string().optional(),
   CLOUDINARY_FOLDER_PREFIX: z.string().default(`RoomBae-${nodeEnv}`),
 
-  FIREBASE_PROJECT_ID: z.string().default("roombae-app"),
-  FIREBASE_CLIENT_EMAIL: z.string().optional(),
-  FIREBASE_PRIVATE_KEY: z.string().optional(),
-
   CLAMAV_HOST: z.string().default("localhost"),
   CLAMAV_PORT: z.string().default("3310"),
   UPLOAD_MAX_SIZE: z.string().default("10485760"),
@@ -121,13 +117,10 @@ const envSchema = z.object({
   ALLOWED_DOCUMENT_TYPES: z.string().default("application/pdf"),
   GOOGLE_CLOUD_PROJECT_ID: z.string().default("roombae-cff13"),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
-  RECAPTCHA_SITE_KEY: z.string().default("6LelFHgtAAAAAKBdRLguYh39vKllYv_uF1k07sUB"),
-  RECAPTCHA_SECRET_KEY: z.string().default("6LelFHgtAAAAAFfa5GLKPPgeFQu_dveCxAZfoTM2"),
-  RECAPTCHA_MIN_SCORE: z.string().default("0.5"),
-  RECAPTCHA_ENABLED: z.string().default("true"),
   SMS_API_KEY: z.string().default("mock_sms_api_key"),
   NOMINATIM_USER_AGENT: z.string().default("RoomBae-PG-Management/1.0"),
   CLUSTER_MODE: z.string().default("false"),
+
 });
 
 const parseResult = envSchema.safeParse(process.env);

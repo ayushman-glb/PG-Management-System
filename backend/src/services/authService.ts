@@ -10,10 +10,11 @@ import { ITokenService } from "../interfaces/infrastructure/ITokenService";
 import { IOtpService } from "../interfaces/infrastructure/IOtpService";
 import { AppError } from "../utils/appError";
 import { Role } from "@prisma/client";
-import { firebaseAdmin } from "../config/firebaseAdmin";
 import { emailService } from "./email";
 import { env } from "../config/env";
 import { prisma } from "../config/prisma";
+
+
 
 export class AuthService implements IAuthService {
   constructor(
@@ -313,82 +314,12 @@ export class AuthService implements IAuthService {
     throw new AppError("Invalid OTP code", 400);
   }
 
-  /**
-   * Firebase Phone Auth verification server-side
-   */
-  async firebaseLogin(idToken: string): Promise<IAuthUserResult> {
-    return this.phoneVerify(idToken);
-  }
-
-  /**
-   * Production-grade Firebase Phone Number verification endpoint
-   */
-  async phoneVerify(idToken: string): Promise<IAuthUserResult> {
-    if (!idToken) {
-      throw new AppError("Firebase ID token is required", 400);
-    }
-
-    let decodedToken: any;
-    try {
-      if (firebaseAdmin && firebaseAdmin.auth) {
-        decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
-      } else {
-        throw new AppError("Firebase Admin SDK not initialized", 500);
-      }
-    } catch (error: any) {
-      console.error("❌ Firebase ID Token Verification Failed:", error.message || error);
-      // Fallback for development/testing if mock token passed in dev mode
-      if (process.env.NODE_ENV !== "production" && idToken.startsWith("mock_firebase_id_token_")) {
-        decodedToken = { uid: "firebase_dev_" + Date.now(), phone_number: "+919876543210" };
-      } else {
-        throw new AppError(`Firebase verification failed: ${error.message || "Invalid ID token"}`, 401);
-      }
-    }
-
-    const phoneNumber = decodedToken.phone_number;
-    if (!phoneNumber) {
-      throw new AppError("Verified phone number missing from Firebase token claims", 400);
-    }
-
-    // Defense in depth: validate E.164 phone number format
-    const e164Regex = /^\+[1-9]\d{1,14}$/;
-    if (!e164Regex.test(phoneNumber)) {
-      throw new AppError("Invalid phone number format extracted from token", 400);
-    }
-
-    const user = await this.userRepository.findOrCreatePhoneUser({
-      phone: phoneNumber,
-      role: Role.RESIDENT,
-    });
-
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      residentCode: user.residentCode || undefined,
-    };
-
-    const accessToken = this.tokenService.generateAccessToken(payload);
-    const refreshToken = this.tokenService.generateRefreshToken(payload);
-
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        residentCode: user.residentCode || undefined,
-        avatarUrl: user.avatarUrl,
-      },
-      accessToken,
-      refreshToken,
-    };
-  }
 
   /**
    * Send Email Verification
    */
   async sendEmailVerification(
+
     email: string,
   ): Promise<{ success: boolean; message: string }> {
     if (!email) throw new AppError("Email address is required", 400);
