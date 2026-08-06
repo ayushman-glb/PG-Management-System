@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import { Request, Response, NextFunction } from 'express';
 import { env } from '../config/env';
 import { PathResolver } from '../utils/pathResolver';
 
@@ -28,7 +29,7 @@ export const multerUpload = multer({
       .split(',')
       .map((t) => t.trim());
 
-    if (allowedMimeTypes.includes(file.mimetype) || file.mimetype === 'image/avif') {
+    if (allowedMimeTypes.includes(file.mimetype) || file.mimetype === 'image/avif' || file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
       cb(new Error(`Unsupported file type: ${file.mimetype}. Allowed types: ${allowedMimeTypes.join(', ')}`));
@@ -36,3 +37,41 @@ export const multerUpload = multer({
   },
 });
 
+/**
+ * Robust middleware wrapper that handles flexible multipart form field names ('file', 'image', 'document', 'photo', 'avatar')
+ * and captures Multer errors cleanly, returning 400 Bad Request instead of throwing 500.
+ */
+export const handleSingleFileUpload = (req: Request, res: Response, next: NextFunction) => {
+  const uploadHandler = multerUpload.any();
+
+  uploadHandler(req, res, (err: any) => {
+    if (err) {
+      console.error('❌ Multer Parsing Error on Render:', err);
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({
+          success: false,
+          message: `File upload error [Multer]: ${err.message}`,
+          code: err.code,
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'File upload parsing failed',
+      });
+    }
+
+    const files = req.files as Express.Multer.File[];
+    if (files && files.length > 0) {
+      req.file = files[0];
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file was attached to the request. Please attach a file under field name "file" or "image".',
+      });
+    }
+
+    next();
+  });
+};

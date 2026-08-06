@@ -82,23 +82,27 @@ export async function processSecurityPipeline(req: Request, res: Response, next:
 
     // 4. Image Processing (Sharp) or PDF Validation
     if (mimeType.startsWith('image/')) {
-      const optimizedBuffer = await sharp(filePath)
-        .rotate() // Preserve EXIF orientation
-        .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 82 })
-        .toBuffer();
-
-      finalBufferOrPath = optimizedBuffer;
-    } else if (mimeType === 'application/pdf') {
-      const pdfParse = require('pdf-parse');
-      const pdfBuffer = fs.readFileSync(filePath);
       try {
-        await pdfParse(pdfBuffer);
-      } catch (pdfErr: any) {
+        const optimizedBuffer = await sharp(filePath)
+          .rotate() // Preserve EXIF orientation
+          .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
+
+        finalBufferOrPath = optimizedBuffer;
+      } catch (sharpErr: any) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        console.warn('⚠️ Sharp Image Processing Warning:', sharpErr.message);
+        // Fallback to original file path if sharp cannot convert
+        finalBufferOrPath = filePath;
+      }
+    } else if (mimeType === 'application/pdf') {
+      const pdfBuffer = fs.readFileSync(filePath);
+      if (pdfBuffer.length < 10 || pdfBuffer.toString('utf8', 0, 4) !== '%PDF') {
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         return res.status(400).json({
           success: false,
-          message: `Invalid or corrupted PDF file: ${pdfErr.message}`,
+          message: 'Invalid or corrupted PDF file stream.',
         });
       }
     }
@@ -138,10 +142,10 @@ export async function processSecurityPipeline(req: Request, res: Response, next:
         fs.unlinkSync(filePath);
       } catch (e) {}
     }
-    console.error('❌ Upload Security Pipeline Error:', error);
-    return res.status(500).json({
+    console.error('❌ Upload Security Pipeline Error on Render:', error);
+    return res.status(400).json({
       success: false,
-      message: `File processing pipeline error: ${error.message}`,
+      message: `File processing pipeline error: ${error.message || 'Processing failed'}`,
     });
   }
 }
