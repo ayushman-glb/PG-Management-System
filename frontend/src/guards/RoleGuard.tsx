@@ -22,6 +22,14 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     return <div className="p-8 text-center animate-pulse">Loading permissions...</div>;
   }
 
+  const hasToken =
+    typeof window !== "undefined" &&
+    (localStorage.getItem("accessToken") || localStorage.getItem("token") || localStorage.getItem("roombae_access_token"));
+
+  if (!hasToken && !user) {
+    return <>{fallback}</>;
+  }
+
   // Normalize role strings (e.g., "owner" -> "OWNER", "PG_OWNER" -> "OWNER")
   const rawRole = (user?.role || "OWNER").toUpperCase();
   const normalizedUserRole = rawRole === "PG_OWNER" ? "OWNER" : rawRole;
@@ -30,9 +38,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     return u === "PG_OWNER" ? "OWNER" : u;
   });
 
-  // Check if role matches or if demo/unauthenticated owner view
+  // Check if role matches
   const isAllowed =
-    !user || // Default to allowed for guest/demo dashboard view
     normalizedAllowed.includes(normalizedUserRole) ||
     (normalizedAllowed.includes("OWNER") &&
       ["OWNER", "PG_OWNER", "SUPER_ADMIN", "ADMIN", "MANAGER"].includes(normalizedUserRole)) ||

@@ -39,6 +39,7 @@ export interface IRecaptchaAssessmentResult {
 
 export interface IRecaptchaConfig {
   siteKey: string;
+  secretKey?: string;
   projectId: string;
   minScore: number;
   enabled: boolean;

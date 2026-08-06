@@ -122,6 +122,7 @@ const envSchema = z.object({
   GOOGLE_CLOUD_PROJECT_ID: z.string().default("roombae-cff13"),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
   RECAPTCHA_SITE_KEY: z.string().default("6LelFHgtAAAAAKBdRLguYh39vKllYv_uF1k07sUB"),
+  RECAPTCHA_SECRET_KEY: z.string().default("6LelFHgtAAAAAFfa5GLKPPgeFQu_dveCxAZfoTM2"),
   RECAPTCHA_MIN_SCORE: z.string().default("0.5"),
   RECAPTCHA_ENABLED: z.string().default("true"),
   SMS_API_KEY: z.string().default("mock_sms_api_key"),

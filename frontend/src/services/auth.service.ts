@@ -51,7 +51,7 @@ export class AuthService {
       credentials: "include",
     });
 
-    if (response.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh-token")) {
+    if (response.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
       try {
         const refreshRes = await fetch(`${env.API_URL}/auth/refresh-token`, {
           method: "POST",
@@ -67,8 +67,11 @@ export class AuthService {
             return this.request<T>(endpoint, options, true);
           }
         }
+        // If refresh fails, clear token
+        this.clearToken();
       } catch (refreshErr) {
         console.warn("⚠️ Token auto-refresh failed:", refreshErr);
+        this.clearToken();
       }
     }
 
