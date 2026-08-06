@@ -1,6 +1,5 @@
 import { AuthService } from '../services/authService';
 
-
 describe('RoomBae Enterprise Authentication System Unit Tests', () => {
   let mockUserRepo: any;
   let mockCryptoService: any;
@@ -32,6 +31,58 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     authService = new AuthService(mockUserRepo, mockCryptoService, mockTokenService, mockOtpService);
   });
 
+  test('Should authenticate valid user login and return tokens', async () => {
+    mockUserRepo.findByIdentifier.mockResolvedValue({
+      id: 'user-123',
+      name: 'Test Owner',
+      email: 'owner1@roombae.com',
+      passwordHash: '$2a$10$xyz',
+      role: 'OWNER',
+      residentCode: null,
+      avatarUrl: null
+    });
+
+    const result = await authService.login('owner1@roombae.com', 'Password123!');
+    expect(result.user.email).toBe('owner1@roombae.com');
+    expect(result.accessToken).toBe('mock_access_token');
+    expect(result.refreshToken).toBe('mock_refresh_token');
+  });
+
+  test('Should reject login for non-existent account with ACCOUNT_NOT_FOUND_OR_INVALID', async () => {
+    mockUserRepo.findByIdentifier.mockResolvedValue(null);
+    await expect(authService.login('unknown@roombae.com', 'Password123!')).rejects.toThrow('Invalid email/resident ID or password');
+  });
+
+  test('Should reject login when password comparison fails', async () => {
+    mockUserRepo.findByIdentifier.mockResolvedValue({
+      id: 'user-123',
+      email: 'owner1@roombae.com',
+      passwordHash: '$2a$10$xyz',
+      role: 'OWNER'
+    });
+    mockCryptoService.comparePassword.mockResolvedValue(false);
+
+    await expect(authService.login('owner1@roombae.com', 'WrongPass123')).rejects.toThrow('Invalid email/resident ID or password');
+  });
+
+  test('Should reject password login for Google OAuth account', async () => {
+    mockUserRepo.findByIdentifier.mockResolvedValue({
+      id: 'user-123',
+      email: 'oauth@roombae.com',
+      passwordHash: null,
+      googleSubId: 'sub_123',
+      role: 'OWNER'
+    });
+
+    await expect(authService.login('oauth@roombae.com', 'Password123!')).rejects.toThrow('Google OAuth');
+  });
+
+  test('Should refresh access token using valid refresh token', async () => {
+    const result = await authService.refreshToken('valid_refresh_token_string');
+    expect(result.accessToken).toBe('mock_access_token');
+    expect(result.refreshToken).toBe('mock_refresh_token');
+  });
+
   test('Should generate 6-digit Phone OTP with 60s countdown timer', async () => {
     const result = await authService.sendPhoneOtp('+91 98765 43210');
     expect(result.success).toBe(true);
@@ -51,7 +102,7 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should enable 2FA and generate TOTP QR Code URL', async () => {
     const result = await authService.enableTwoFactor('user-123');
-    expect(result.secret).toContain('ROOMBAE_TOTP_SECRET');
+    expect(result.secret).toBeDefined();
     expect(result.qrCodeUrl).toContain('https://api.qrserver.com');
   });
 

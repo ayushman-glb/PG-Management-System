@@ -115,10 +115,12 @@ export class AuthService implements IAuthService {
     const rawId = (identifier || "").trim();
     const cleanPass = (password || "").trim();
 
+    console.log(`🔑 [AUTH_AUDIT] Login Request Received for Identifier: "${rawId}" (Length: ${rawId.length})`);
+
     const user = await this.userRepository.findByIdentifier(rawId);
 
     if (!user) {
-      console.warn(`🔒 Auth Metrics [LOGIN_FAILED]: Account not found for identifier "${rawId}"`);
+      console.warn(`🔒 [AUTH_AUDIT] MongoDB Query Result: USER_NOT_FOUND for identifier "${rawId}"`);
       throw new AppError(
         "We couldn't find an account with these details. Would you like to sign up instead?",
         401,
@@ -126,8 +128,10 @@ export class AuthService implements IAuthService {
       );
     }
 
+    console.log(`✅ [AUTH_AUDIT] MongoDB Query Result: Found User ID="${user.id}", Email="${user.email}", Role="${user.role}", Code="${user.residentCode || 'N/A'}"`);
+
     if (!user.passwordHash) {
-      console.warn(`🔒 Auth Metrics [LOGIN_FAILED]: OAuth account attempt for "${rawId}"`);
+      console.warn(`🔒 [AUTH_AUDIT] Password Check: OAuth account detected for user "${user.id}"`);
       throw new AppError(
         "This account uses Google OAuth or Single Sign-On. Please sign in with Google.",
         401,
@@ -142,11 +146,14 @@ export class AuthService implements IAuthService {
 
     // Fallback for demo accounts seeded with standard default passwords
     if (!isValid && (cleanPass === "Password123!" || cleanPass === "RoomBae@123")) {
+      console.log(`ℹ️ [AUTH_AUDIT] Password Comparison: Demo credential fallback matched for user "${user.id}"`);
       isValid = true;
     }
 
+    console.log(`🔑 [AUTH_AUDIT] Password Comparison Result: ${isValid ? "VALID" : "INVALID"} for user "${user.id}"`);
+
     if (!isValid) {
-      console.warn(`🔒 Auth Metrics [LOGIN_FAILED]: Invalid password for user ID "${user.id}"`);
+      console.warn(`🔒 [AUTH_AUDIT] Login Rejected: Invalid password for user "${user.id}"`);
       throw new AppError(
         "We couldn't find an account with these details. Would you like to sign up instead?",
         401,
@@ -163,6 +170,8 @@ export class AuthService implements IAuthService {
 
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+    console.log(`🎉 [AUTH_AUDIT] Authentication Successful: Tokens generated for user "${user.id}" (Role: ${user.role})`);
 
     return {
       user: {
