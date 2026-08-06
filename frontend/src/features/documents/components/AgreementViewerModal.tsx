@@ -4,6 +4,7 @@ import { X, Download, ShieldCheck, CheckCircle2, PenTool } from "lucide-react";
 import { SignatureCanvas } from "@components/SignatureCanvas";
 import { useTheme } from "@theme/index";
 import { env } from "@config/env";
+import { downloadFile } from "@services/fileDownload.service";
 
 interface AgreementViewerModalProps {
   agreement: any;
@@ -20,6 +21,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   const [signerType, setSignerType] = useState<"RESIDENT" | "OWNER">(
     "RESIDENT",
   );
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const { darkMode } = useTheme();
 
   React.useEffect(() => {
@@ -62,8 +64,19 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
     }
   };
 
-  const handleDownloadPdf = () => {
-    window.open(`${env.API_URL}/agreements/${agreement.id}/pdf`, "_blank");
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    try {
+      const url = `${env.API_URL}/agreements/${agreement.id}/download`;
+      await downloadFile({
+        url,
+        filename: `Rental_Agreement_${agreement.agreementNumber || agreement.id}.pdf`,
+      });
+    } catch (err: any) {
+      alert(`Download failed: ${err.message}`);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const modalBg = darkMode
@@ -129,17 +142,19 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
             <div className="flex items-center gap-3 pr-10">
               <button
+                type="button"
+                disabled={isDownloadingPdf}
                 onClick={handleDownloadPdf}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
                   darkMode
                     ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
                     : "bg-[#D9A87C] text-black hover:bg-[#C58B63] hover:text-white border-[#D9A87C]"
                 }`}
               >
                 <Download
-                  className={`w-4 h-4 ${darkMode ? "text-amber-400" : "text-black"}`}
+                  className={`w-4 h-4 ${darkMode ? "text-amber-400" : "text-black"} ${isDownloadingPdf ? 'animate-spin' : ''}`}
                 />{" "}
-                Download PDF
+                {isDownloadingPdf ? "Generating PDF..." : "Download PDF"}
               </button>
             </div>
           </div>

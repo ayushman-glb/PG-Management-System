@@ -148,6 +148,38 @@ export default function Residents({ navigate }: Props) {
       r.room.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = () => {
+    setIsExporting(true);
+    try {
+      const headers = ["Name", "Email", "Phone", "Room", "PG", "Status", "Rent"];
+      const rows = filtered.map(r => [
+        `"${r.name}"`,
+        `"${r.email}"`,
+        `"${r.phone}"`,
+        `"${r.room}"`,
+        `"${r.pg}"`,
+        `"${r.status}"`,
+        `"${r.rent}"`
+      ]);
+      const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `RoomBae_Residents_Export_${new Date().toISOString().split("T")[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert("Failed to export resident list");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <DashboardLayout navigate={navigate} activePage="residents">
       <div className="flex h-full flex-col lg:flex-row">
@@ -212,9 +244,11 @@ export default function Residents({ navigate }: Props) {
               </button>
               <button
                 type="button"
-                className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                disabled={isExporting}
+                onClick={handleExport}
+                className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${darkMode ? "border-slate-600 text-slate-400 hover:bg-slate-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
               >
-                <Download className="w-3 h-3" /> Export
+                <Download className={`w-3 h-3 ${isExporting ? 'animate-spin' : ''}`} /> {isExporting ? "Exporting..." : "Export"}
               </button>
               <span
                 className={`ml-auto text-xs font-medium ${darkMode ? "text-slate-500" : "text-slate-400"}`}

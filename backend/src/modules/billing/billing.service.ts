@@ -105,24 +105,24 @@ export class BillingService implements IBillingService {
     return updated;
   }
 
-  async generateInvoicePdfStream(paymentId: string): Promise<InstanceType<typeof PDFDocument>> {
+  async generateInvoicePdfStream(paymentId: string, outputStream?: NodeJS.WritableStream): Promise<InstanceType<typeof PDFDocument>> {
     const payment = await this.billingRepository.findPaymentWithDetails(paymentId);
 
     if (!payment) {
       throw new AppError('Payment invoice not found', 404);
     }
 
-    return this.pdfService.generateInvoicePdf(payment);
+    return this.pdfService.generateInvoicePdf(payment, outputStream);
   }
 
-  async generateReceiptPdfStream(paymentId: string): Promise<InstanceType<typeof PDFDocument>> {
+  async generateReceiptPdfStream(paymentId: string, outputStream?: NodeJS.WritableStream): Promise<InstanceType<typeof PDFDocument>> {
     const payment = await this.billingRepository.findPaymentWithDetails(paymentId);
 
     if (!payment) {
       throw new AppError('Payment receipt record not found', 404);
     }
 
-    return this.pdfService.generateInvoicePdf(payment);
+    return this.pdfService.generateInvoicePdf(payment, outputStream);
   }
 
   async processRefund(paymentId: string, amount?: number, reason?: string) {

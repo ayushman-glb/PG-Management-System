@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Download, FileText, CheckCircle2, Clock, RotateCcw } from "lucide-react";
 import { useTheme } from "../../../theme";
+import { downloadFile } from "../../../services/fileDownload.service";
+import { env } from "../../../config/env";
 
 export interface TransactionItem {
   id: string;
@@ -62,6 +64,7 @@ interface TransactionTimelineProps {
 export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ onPayRetry }) => {
   const { darkMode } = useTheme();
   const [filter, setFilter] = useState<"ALL" | "PAID" | "PENDING" | "REFUNDED">("ALL");
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
 
   const cardBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
   const rowBg = darkMode ? "bg-[#332D2B] border-[#4A443F] hover:bg-[#3D3632]" : "bg-[#F8EEE5] border-[#E6D7CA] hover:bg-[#EDE0D4]";
@@ -70,10 +73,17 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ onPayR
 
   const filtered = MOCK_TRANSACTIONS.filter((t) => filter === "ALL" || t.status === filter);
 
-  const downloadPdf = (type: "invoice" | "receipt", id: string) => {
-    const backendUrl = import.meta.env.VITE_API_URL || "https://pg-management-system-boxb.onrender.com/api/v1";
-    const endpoint = type === "invoice" ? `${backendUrl}/billing/invoices/${id}/pdf` : `${backendUrl}/billing/receipts/${id}/pdf`;
-    window.open(endpoint, "_blank");
+  const downloadPdf = async (type: "invoice" | "receipt", item: TransactionItem) => {
+    const key = `${type}-${item.id}`;
+    setDownloadingKey(key);
+    try {
+      const endpoint = `${env.API_URL}/billing/${type === "invoice" ? "invoices" : "receipts"}/${item.id}/download`;
+      await downloadFile({ url: endpoint, filename: `${type === "invoice" ? "GST_Invoice" : "Receipt"}_${item.invoiceNumber || item.id}` });
+    } catch (err: any) {
+      alert(`Download failed: ${err.message}`);
+    } finally {
+      setDownloadingKey(null);
+    }
   };
 
   return (
@@ -168,23 +178,25 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ onPayR
                   <>
                     <button
                       type="button"
-                      onClick={() => downloadPdf("invoice", item.id)}
+                      disabled={downloadingKey === `invoice-${item.id}`}
+                      onClick={() => downloadPdf("invoice", item)}
                       title="Download PDF Invoice"
-                      className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
                         darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
                       }`}
                     >
-                      <FileText className="w-4 h-4" />
+                      <FileText className={`w-4 h-4 ${downloadingKey === `invoice-${item.id}` ? 'animate-spin' : ''}`} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => downloadPdf("receipt", item.id)}
+                      disabled={downloadingKey === `receipt-${item.id}`}
+                      onClick={() => downloadPdf("receipt", item)}
                       title="Download Payment Receipt"
-                      className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
                         darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
                       }`}
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className={`w-4 h-4 ${downloadingKey === `receipt-${item.id}` ? 'animate-spin' : ''}`} />
                     </button>
                   </>
                 )}

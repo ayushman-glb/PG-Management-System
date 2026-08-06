@@ -8,8 +8,11 @@ export class PdfKitInvoiceService implements IPdfGeneratorService {
   /**
    * Generates readable PDFKit Document stream for Express HTTP streaming responses
    */
-  async generateInvoicePdf(payment: any): Promise<InstanceType<typeof PDFDocument>> {
+  async generateInvoicePdf(payment: any, outputStream?: NodeJS.WritableStream): Promise<InstanceType<typeof PDFDocument>> {
     const doc = new PDFDocument({ margin: 50, size: "A4" });
+    if (outputStream) {
+      doc.pipe(outputStream);
+    }
     await this.buildInvoiceDocument(doc, payment);
     doc.end();
     return doc;

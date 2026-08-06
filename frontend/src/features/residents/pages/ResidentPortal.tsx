@@ -21,6 +21,8 @@ import type { Page } from "@app/App";
 import { ThemeToggle, useTheme } from "@theme/index";
 import { BackButton } from "@app/navigation";
 import { api } from "@services/api";
+import { downloadFile } from "@services/fileDownload.service";
+import { env } from "@config/env";
 import { AgreementViewerModal } from "@features/documents/components/AgreementViewerModal";
 import { DocumentUploadPortal } from "@components/DocumentUploadPortal";
 import { RoomTransferModal } from "@features/rooms/components/RoomTransferModal";
@@ -51,6 +53,20 @@ export default function ResidentPortal({ navigate }: Props) {
   const [selectedAgreement, setSelectedAgreement] = useState<any>(null);
   const [residentStatus, setResidentStatus] = useState("ACTIVE");
   const [isRoomTransferModalOpen, setIsRoomTransferModalOpen] = useState(false);
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadInvoice = async (pay: any) => {
+    setDownloadingId(pay.id);
+    try {
+      const url = `${env.API_URL}/billing/invoices/${pay.id}/download`;
+      await downloadFile({ url, filename: `GST_Invoice_${pay.invoiceNumber || pay.id}` });
+    } catch (err: any) {
+      alert(`Download failed: ${err.message}`);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const handleStatusChange = async (newStatus: string) => {
     setResidentStatus(newStatus);
@@ -576,11 +592,13 @@ export default function ResidentPortal({ navigate }: Props) {
                       <div className="flex items-center gap-3">
                         <span className="font-black text-base">₹{pay.totalAmount}</span>
                         <button
-                          onClick={() => alert(`✓ Downloading Official PDF GST Invoice ${pay.invoiceNumber}...`)}
-                          className={`p-2 rounded-xl border hover:bg-white/10 ${darkMode ? "border-[#4A433F]" : "border-[#E6D7CA]"}`}
+                          type="button"
+                          disabled={downloadingId === pay.id}
+                          onClick={() => handleDownloadInvoice(pay)}
+                          className={`p-2 rounded-xl border hover:bg-white/10 disabled:opacity-50 ${darkMode ? "border-[#4A433F]" : "border-[#E6D7CA]"}`}
                           title="Download PDF Invoice"
                         >
-                          <Download className="w-4 h-4 text-amber-500" />
+                          <Download className={`w-4 h-4 text-amber-500 ${downloadingId === pay.id ? 'animate-spin' : ''}`} />
                         </button>
                       </div>
                     </div>

@@ -19,6 +19,8 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies && req.cookies.accessToken) {
     token = req.cookies.accessToken;
+  } else if (req.query && req.query.token) {
+    token = req.query.token as string;
   }
 
   if (!token) {

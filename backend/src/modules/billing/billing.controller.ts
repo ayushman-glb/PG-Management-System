@@ -38,8 +38,6 @@ export class BillingController {
   getInvoicePdf = catchAsync(async (req: Request, res: Response) => {
     const { paymentId } = req.params;
     const dispositionType = req.query.disposition === "inline" ? "inline" : "attachment";
-    const pdfStream =
-      await this.billingService.generateInvoicePdfStream(paymentId);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -47,14 +45,12 @@ export class BillingController {
       `${dispositionType}; filename=Invoice_${paymentId}.pdf`,
     );
 
-    pdfStream.pipe(res);
+    await this.billingService.generateInvoicePdfStream(paymentId, res);
   });
 
   getReceiptPdf = catchAsync(async (req: Request, res: Response) => {
     const { paymentId } = req.params;
     const dispositionType = req.query.disposition === "inline" ? "inline" : "attachment";
-    const pdfStream =
-      await this.billingService.generateReceiptPdfStream(paymentId);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -62,7 +58,7 @@ export class BillingController {
       `${dispositionType}; filename=Receipt_${paymentId}.pdf`,
     );
 
-    pdfStream.pipe(res);
+    await this.billingService.generateReceiptPdfStream(paymentId, res);
   });
 
   processRefund = catchAsync(async (req: Request, res: Response) => {
