@@ -9,9 +9,17 @@ export class PrismaUserRepository implements IUserRepository {
 
   async findByIdentifier(identifier: string): Promise<User | null> {
     try {
+      const clean = identifier.trim();
+      const lower = clean.toLowerCase();
       return await this.db.user.findFirst({
         where: {
-          OR: [{ email: identifier }, { residentCode: identifier }],
+          OR: [
+            { email: { equals: clean, mode: "insensitive" } },
+            { email: { equals: lower, mode: "insensitive" } },
+            { residentCode: { equals: clean, mode: "insensitive" } },
+            { email: clean },
+            { residentCode: clean },
+          ],
         },
       });
     } catch (e) {
@@ -21,7 +29,15 @@ export class PrismaUserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     try {
-      return await this.db.user.findUnique({ where: { email } });
+      const clean = email.trim().toLowerCase();
+      return await this.db.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: clean, mode: "insensitive" } },
+            { email: clean },
+          ],
+        },
+      });
     } catch (e) {
       return null;
     }
