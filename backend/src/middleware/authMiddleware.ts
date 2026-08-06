@@ -52,8 +52,10 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 export const authorize = (...roles: Role[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return next(new AppError('Permission denied. Access unauthorized for your role.', 403));
+      return next(new AppError('Permission denied. Access unauthorized for your role.', 403, 'FORBIDDEN'));
     }
     next();
   };
 };
+
+export const requireRole = authorize;

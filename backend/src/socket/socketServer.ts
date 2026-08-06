@@ -72,8 +72,40 @@ export class SocketServer {
       },
     });
 
+    // Pre-connection Handshake Authentication Middleware
+    SocketServer.io.use((socket: Socket, next: (err?: Error) => void) => {
+      try {
+        const token =
+          (socket.handshake.auth?.token as string) ||
+          (socket.handshake.headers?.authorization?.split(" ")[1] as string);
+
+        if (!token) {
+          logger.warn(`🔌 Socket connection rejected [Handshake]: No token provided (ID: ${socket.id})`);
+          return next(new Error("Authentication failed: Access token missing during handshake"));
+        }
+
+        const decoded = tokenService.verifyAccessToken(token);
+        (socket as any).user = decoded;
+        next();
+      } catch (err: any) {
+        logger.warn(`🔌 Socket connection rejected [Handshake Invalid Token]: ${err.message} (ID: ${socket.id})`);
+        return next(new Error(`Authentication failed: ${err.message || "Invalid or expired token"}`));
+      }
+    });
+
     SocketServer.io.on("connection", (socket: Socket) => {
       logger.info(`🔌 Socket connected: ${socket.id}`);
+
+      socket.on("auth_refresh", (newToken: string) => {
+        try {
+          const decoded = tokenService.verifyAccessToken(newToken);
+          (socket as any).user = decoded;
+          socket.emit("auth_refresh_success", { status: "OK", userId: decoded.id });
+          logger.info(`🔌 Socket token refreshed mid-session for user ${decoded.id} (ID: ${socket.id})`);
+        } catch (err: any) {
+          socket.emit("auth_refresh_failed", { error: err.message });
+        }
+      });
 
       // Register feature module socket handlers
       registerAuthSocketHandlers(socket);

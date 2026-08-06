@@ -136,6 +136,7 @@ export default function Auth({ navigate }: Props) {
   const [pgReferenceCode, setPgReferenceCode] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [showSignupCta, setShowSignupCta] = useState(false);
   const [authSuccessMsg, setAuthSuccessMsg] = useState("");
 
   const handleGoogleSignUp = async () => {
@@ -323,6 +324,7 @@ export default function Auth({ navigate }: Props) {
 
   const animateSwitch = (newMode: AuthMode) => {
     setAuthError("");
+    setShowSignupCta(false);
     setAuthSuccessMsg("");
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !cardRef.current) {
       setMode(newMode);
@@ -433,6 +435,7 @@ export default function Auth({ navigate }: Props) {
 
   const handleLoginSubmit = async () => {
     setAuthError("");
+    setShowSignupCta(false);
     setIsSubmitting(true);
     try {
       const recaptchaToken = await recaptcha.execute('login');
@@ -445,16 +448,18 @@ export default function Auth({ navigate }: Props) {
       const passwordVal = passEl?.value || "Password123!";
 
       await authService.login({ identifier, password: passwordVal }, undefined, recaptchaToken);
+
+      if (loginRole === "resident") {
+        navigate("resident-portal");
+      } else {
+        navigate("dashboard");
+      }
     } catch (err: any) {
-      setAuthError(err?.message || "Login failed. Please check your credentials.");
+      const isSignupNudge = err?.code === 'ACCOUNT_NOT_FOUND_OR_INVALID' || err?.message?.includes("couldn't find an account");
+      setAuthError(err?.message || "We couldn't find an account with these details. Would you like to sign up instead?");
+      setShowSignupCta(isSignupNudge);
     } finally {
       setIsSubmitting(false);
-    }
-
-    if (loginRole === "resident") {
-      navigate("resident-portal");
-    } else {
-      navigate("dashboard");
     }
   };
 
@@ -618,9 +623,21 @@ export default function Auth({ navigate }: Props) {
                 </div>
               )}
               {authError && (
-                <div className="mb-4 p-4 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{authError}</span>
+                <div className="mb-4 p-4 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex flex-col gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{authError}</span>
+                  </div>
+                  {showSignupCta && (
+                    <button
+                      type="button"
+                      onClick={() => animateSwitch("register")}
+                      className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
+                    >
+                      <span>Create a RoomBae Account</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
 

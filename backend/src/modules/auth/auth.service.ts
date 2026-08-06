@@ -112,16 +112,24 @@ export class AuthService implements IAuthService {
   }
 
   async login(identifier: string, password: string): Promise<IAuthUserResult> {
-    const user = await this.userRepository.findByIdentifier(identifier);
+    const cleanId = identifier.trim().toLowerCase();
+    const user = await this.userRepository.findByIdentifier(cleanId);
 
     if (!user) {
-      throw new AppError("Invalid email/resident ID or password", 401);
+      console.warn(`🔒 Auth Metrics [LOGIN_FAILED]: Account not found for identifier "${cleanId}"`);
+      throw new AppError(
+        "We couldn't find an account with these details. Would you like to sign up instead?",
+        401,
+        "ACCOUNT_NOT_FOUND_OR_INVALID"
+      );
     }
 
     if (!user.passwordHash) {
+      console.warn(`🔒 Auth Metrics [LOGIN_FAILED]: OAuth account attempt for "${cleanId}"`);
       throw new AppError(
-        "This account uses a different sign-in method (e.g. Google OAuth).",
+        "This account uses Google OAuth or Single Sign-On. Please sign in with Google.",
         401,
+        "OAUTH_ACCOUNT_REQUIRES_SSO"
       );
     }
 
@@ -130,7 +138,12 @@ export class AuthService implements IAuthService {
       user.passwordHash,
     );
     if (!isValid) {
-      throw new AppError("Invalid email/resident ID or password", 401);
+      console.warn(`🔒 Auth Metrics [LOGIN_FAILED]: Invalid password for user ID "${user.id}"`);
+      throw new AppError(
+        "We couldn't find an account with these details. Would you like to sign up instead?",
+        401,
+        "ACCOUNT_NOT_FOUND_OR_INVALID"
+      );
     }
 
     const payload = {
@@ -158,24 +171,40 @@ export class AuthService implements IAuthService {
   }
 
   async register(data: IRegisterData): Promise<IAuthUserResult> {
-    const existing = await this.userRepository.findByEmail(data.email);
+    const cleanEmail = data.email.trim().toLowerCase();
+    const existing = await this.userRepository.findByEmail(cleanEmail);
     if (existing) {
       throw new AppError(
-        "An account with this email address already exists.",
+        "An account with this email address already exists. Would you like to log in instead?",
         409,
+        "DUPLICATE_ACCOUNT"
       );
     }
 
+    // Role escalation defense: client signups strictly force default Role.RESIDENT / Role.OWNER
+    // Admin / Manager / Staff roles must be assigned separately by authorized admin APIs
+    const forcedRole = (data.role && (data.role === Role.OWNER || data.role === Role.RESIDENT)) ? data.role : Role.RESIDENT;
     const passwordHash = await this.cryptoService.hashPassword(data.password);
-    const userRole = data.role || Role.OWNER;
 
-    const newUser = await this.userRepository.create({
-      name: data.name,
-      email: data.email,
-      passwordHash,
-      phone: data.phone,
-      role: userRole,
-    });
+    let newUser: any;
+    try {
+      newUser = await this.userRepository.create({
+        name: data.name,
+        email: cleanEmail,
+        passwordHash,
+        phone: data.phone,
+        role: forcedRole,
+      });
+    } catch (err: any) {
+      if (err.code === "P2002" || err.message?.includes("E11000")) {
+        throw new AppError(
+          "An account with this email or phone number already exists.",
+          409,
+          "DUPLICATE_ACCOUNT"
+        );
+      }
+      throw err;
+    }
 
     const payload = {
       id: newUser.id,
