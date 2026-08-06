@@ -42,6 +42,24 @@ export const multerUpload = multer({
  * and captures Multer errors cleanly, returning 400 Bad Request instead of throwing 500.
  */
 export const handleSingleFileUpload = (req: Request, res: Response, next: NextFunction) => {
+  const contentType = (req.headers['content-type'] || (req.headers as any)['Content-Type'] || '') as string;
+
+  if (!contentType || !contentType.toLowerCase().startsWith('multipart/form-data')) {
+    console.warn(`⚠️ Upload Error: Request Content-Type [${contentType}] is missing or not multipart/form-data.`);
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Content-Type header. File uploads must use multipart/form-data with a valid boundary parameter.',
+    });
+  }
+
+  if (!contentType.includes('boundary=')) {
+    console.warn(`⚠️ Upload Error: Request Content-Type [${contentType}] is missing required boundary parameter.`);
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Content-Type header: missing boundary parameter. Do not manually override the Content-Type header on FormData requests.',
+    });
+  }
+
   const uploadHandler = multerUpload.any();
 
   uploadHandler(req, res, (err: any) => {

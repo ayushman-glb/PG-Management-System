@@ -4,7 +4,11 @@ import type { ApiResponse } from "../types";
 export class AuthService {
   private getToken(): string | null {
     try {
-      return localStorage.getItem("accessToken");
+      return (
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("token") ||
+        localStorage.getItem("roombae_access_token")
+      );
     } catch {
       return null;
     }
@@ -13,16 +17,24 @@ export class AuthService {
   public setToken(token: string) {
     try {
       localStorage.setItem("accessToken", token);
+      localStorage.setItem("token", token);
+      localStorage.setItem("roombae_access_token", token);
     } catch (e) {}
   }
 
   public clearToken() {
     try {
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("roombae_access_token");
     } catch (e) {}
   }
 
-  private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  private async request<T = any>(
+    endpoint: string,
+    options: RequestInit = {},
+    isRetry: boolean = false
+  ): Promise<ApiResponse<T>> {
     const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -38,6 +50,27 @@ export class AuthService {
       headers,
       credentials: "include",
     });
+
+    if (response.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh-token")) {
+      try {
+        const refreshRes = await fetch(`${env.API_URL}/auth/refresh-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newToken = refreshData?.data?.accessToken || refreshData?.accessToken;
+          if (newToken) {
+            this.setToken(newToken);
+            return this.request<T>(endpoint, options, true);
+          }
+        }
+      } catch (refreshErr) {
+        console.warn("⚠️ Token auto-refresh failed:", refreshErr);
+      }
+    }
 
     const data = await response.json();
     if (!response.ok) {

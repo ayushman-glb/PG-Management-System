@@ -24,7 +24,8 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   if (!token) {
-    return next(new AppError('Authentication token required.', 401));
+    console.warn(`🔒 Auth Warning: No token provided on request [Path: ${req.method} ${req.originalUrl}]`);
+    return next(new AppError('Authentication token required.', 401, 'TOKEN_REQUIRED'));
   }
 
   try {
@@ -36,8 +37,15 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
       residentCode: decoded.residentCode
     };
     next();
-  } catch (err) {
-    return next(new AppError('Invalid or expired authentication token.', 401));
+  } catch (err: any) {
+    console.error(`🔒 Auth Verification Failed [Path: ${req.method} ${req.originalUrl}] [ErrorType: ${err.name}]: ${err.message}`);
+    if (err.name === 'TokenExpiredError') {
+      return next(new AppError('Authentication token has expired. Please refresh session.', 401, 'TOKEN_EXPIRED'));
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return next(new AppError('Invalid authentication token signature.', 401, 'INVALID_TOKEN'));
+    }
+    return next(new AppError(`Authentication token verification failed: ${err.message}`, 401, 'AUTH_FAILED'));
   }
 };
 

@@ -47,12 +47,22 @@ class ApiClient {
   public post<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
     const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
     const body = isFormData ? data : JSON.stringify(data);
-    const headers: Record<string, string> = isFormData ? {} : { "Content-Type": "application/json" };
+    const customHeaders = { ...(options?.headers as Record<string, string>) };
+
+    if (isFormData) {
+      delete customHeaders["Content-Type"];
+      delete customHeaders["content-type"];
+    }
+
+    const headers: Record<string, string> = isFormData
+      ? customHeaders
+      : { "Content-Type": "application/json", ...customHeaders };
+
     return this.request<T>(endpoint, {
       ...options,
       method: "POST",
       body,
-      headers: { ...headers, ...(options?.headers as Record<string, string>) },
+      headers,
     });
   }
 

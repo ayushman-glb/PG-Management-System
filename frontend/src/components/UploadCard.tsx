@@ -60,9 +60,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
       setProgress(45);
 
       const endpoint = isDocument || file.type === 'application/pdf' ? '/upload/document' : '/upload/image';
-      const res: any = await api.post(endpoint, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res: any = await api.post(endpoint, formData);
 
       setProgress(100);
       setLoading(false);
