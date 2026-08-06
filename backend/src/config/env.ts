@@ -45,6 +45,21 @@ if (process.env.CLIENT_URL && process.env.CLIENT_URL.includes("ayushman-glb.gith
 if (!process.env.JWT_REFRESH_SECRET && process.env.JWT_SECRET) {
   process.env.JWT_REFRESH_SECRET = process.env.JWT_SECRET;
 }
+if (!process.env.COOKIE_SECRET && process.env.SESSION_SECRET) {
+  process.env.COOKIE_SECRET = process.env.SESSION_SECRET;
+}
+if (!process.env.CSRF_SECRET && process.env.SESSION_SECRET) {
+  process.env.CSRF_SECRET = process.env.SESSION_SECRET;
+}
+if (!process.env.PASSWORD_RESET_SECRET && process.env.JWT_SECRET) {
+  process.env.PASSWORD_RESET_SECRET = process.env.JWT_SECRET;
+}
+if (!process.env.EMAIL_VERIFICATION_SECRET && process.env.JWT_SECRET) {
+  process.env.EMAIL_VERIFICATION_SECRET = process.env.JWT_SECRET;
+}
+if (!process.env.API_KEY_SECRET && process.env.JWT_SECRET) {
+  process.env.API_KEY_SECRET = process.env.JWT_SECRET;
+}
 
 const envSchema = z.object({
   PORT: z.string().default("5000"),
@@ -65,6 +80,11 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRATION: z.string().default("15m"),
   JWT_REFRESH_EXPIRATION: z.string().default("7d"),
   SESSION_SECRET: z.string().min(16, "SESSION_SECRET must be at least 16 characters long"),
+  COOKIE_SECRET: z.string().min(16, "COOKIE_SECRET must be at least 16 characters long"),
+  CSRF_SECRET: z.string().min(16, "CSRF_SECRET must be at least 16 characters long"),
+  PASSWORD_RESET_SECRET: z.string().min(16, "PASSWORD_RESET_SECRET must be at least 16 characters long"),
+  EMAIL_VERIFICATION_SECRET: z.string().min(16, "EMAIL_VERIFICATION_SECRET must be at least 16 characters long"),
+  API_KEY_SECRET: z.string().min(16, "API_KEY_SECRET must be at least 16 characters long"),
 
   AES_256_KEY: z.string().default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
   ENCRYPTION_KEY: z.string().default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),

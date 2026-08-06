@@ -5,10 +5,11 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
 
-// Key derived from ENV JWT_SECRET or ENCRYPTION_SECRET
+// Key derived strictly from validated environment secrets
 function getDerivedKey(): Buffer {
-  const secret = env.JWT_SECRET || 'roombae-production-enterprise-secret-key-32b';
-  return createHmac('sha256', 'roombae-salt').update(secret).digest();
+  const secret = env.ENCRYPTION_KEY || env.AES_256_KEY || env.JWT_SECRET;
+  const salt = env.SESSION_SECRET || env.JWT_REFRESH_SECRET;
+  return createHmac('sha256', salt).update(secret).digest();
 }
 
 export class CryptoEngine {
