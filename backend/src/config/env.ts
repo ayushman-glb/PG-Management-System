@@ -121,7 +121,7 @@ const envSchema = z.object({
   ALLOWED_DOCUMENT_TYPES: z.string().default("application/pdf"),
   GOOGLE_CLOUD_PROJECT_ID: z.string().default("roombae-cff13"),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
-  RECAPTCHA_SITE_KEY: z.string().default("6LfgNnYtAAAAAABdvCLaqfA6ucDLdBKTxy8sLCwfn"),
+  RECAPTCHA_SITE_KEY: z.string().default("6LelFHgtAAAAAKBdRLguYh39vKllYv_uF1k07sUB"),
   RECAPTCHA_MIN_SCORE: z.string().default("0.5"),
   RECAPTCHA_ENABLED: z.string().default("true"),
   SMS_API_KEY: z.string().default("mock_sms_api_key"),

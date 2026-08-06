@@ -147,3 +147,36 @@ export class RecaptchaService {
 }
 
 export const recaptchaService = new RecaptchaService();
+
+/**
+ * Standalone assessment helper function matching official Google Cloud reCAPTCHA Enterprise Node.js SDK documentation
+ */
+export async function createAssessment({
+  projectID = recaptchaConfig.projectId,
+  recaptchaKey = recaptchaConfig.siteKey,
+  token = "action-token",
+  recaptchaAction = "action-name",
+}: {
+  projectID?: string;
+  recaptchaKey?: string;
+  token: string;
+  recaptchaAction: string;
+}): Promise<number | null> {
+  const result = await recaptchaService.createAssessment({
+    token,
+    expectedAction: recaptchaAction as any,
+  });
+
+  if (!result.tokenValid) {
+    logger.warn(`The CreateAssessment call failed because the token was: ${result.invalidReason}`);
+    return null;
+  }
+
+  if (result.actionMatched) {
+    logger.info(`The reCAPTCHA score is: ${result.score}`);
+    return result.score;
+  } else {
+    logger.warn("The action attribute in your reCAPTCHA tag does not match the action you are expecting to score");
+    return null;
+  }
+}

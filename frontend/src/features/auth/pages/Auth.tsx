@@ -29,6 +29,7 @@ import { useRecaptcha } from "../../../hooks/useRecaptcha";
 import { OTPInput } from "../../../components/OTPInput";
 import { UploadCard } from "../../../components/UploadCard";
 import { PhoneAuthModal } from "../../../components/PhoneAuthModal";
+import { ReCaptchaWidget } from "../../../components/ReCaptchaWidget";
 
 
 interface Props {
@@ -474,12 +475,14 @@ export default function Auth({ navigate }: Props) {
     setAuthError("");
 
     try {
+      const recaptchaToken = await recaptcha.execute('signup');
       await authService.register({
         name: fullName || "RoomBae User",
         email: email || `user_${Date.now()}@roombae.com`,
         password: password || "Password123!",
         role: selectedRole === "OWNER" ? "OWNER" : "RESIDENT",
         phone: phone || "+91 98765 43210",
+        recaptchaToken,
       });
 
       // Clear draft on successful signup
@@ -716,6 +719,8 @@ export default function Auth({ navigate }: Props) {
                       </div>
                     </div>
                   </div>
+
+                  <ReCaptchaWidget action="LOGIN" className="mb-4 flex justify-center" />
 
                   <button
                     type="button"
@@ -1401,6 +1406,8 @@ export default function Auth({ navigate }: Props) {
                           I agree to RoomBae&apos;s <strong className="text-amber-500">Terms &amp; Conditions</strong> and <strong className="text-amber-500">Privacy Policy</strong>. All uploaded financial documents are subject to zero-trust encryption.
                         </label>
                       </div>
+
+                      <ReCaptchaWidget action="signup" className="mt-4 mb-2 flex justify-center" />
 
                       {/* Final Submit Button (Golden Glowing when isStep3Valid is true) */}
                       <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">

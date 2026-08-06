@@ -23,7 +23,7 @@ export const env = {
   IS_PROD: !isDev,
   RECAPTCHA_SITE_KEY:
     import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-    "6LfgNnYtAAAAAABdvCLaqfA6ucDLdBKTxy8sLCwfn",
+    "6LelFHgtAAAAAKBdRLguYh39vKllYv_uF1k07sUB",
 };
 
 export const getApiUrl = (path = "") =>

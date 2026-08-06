@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { recaptchaService } from '../services/recaptcha.service';
+import { recaptchaService, createAssessment } from '../services/recaptcha.service';
 import { verifyRecaptcha } from '../middleware/recaptcha.middleware';
 import { Request, Response, NextFunction } from 'express';
 
@@ -46,6 +46,16 @@ describe('Google reCAPTCHA Enterprise Integration Test Suite', () => {
 
       expect(result.tokenValid).toBe(true);
       expect(result.actionMatched).toBe(true);
+    });
+
+    it('standalone createAssessment helper function should return score for valid token', async () => {
+      const standaloneToken = `test_standalone_token_${Date.now()}`;
+      const score = await createAssessment({
+        token: standaloneToken,
+        recaptchaAction: 'login',
+      });
+
+      expect(score).toBe(1.0);
     });
   });
 

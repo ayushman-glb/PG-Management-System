@@ -43,11 +43,12 @@ router.post("/test-email", (req, res, next) =>
   Container.authController.testEmail(req, res, next),
 );
 
-router.post("/send-phone-otp", validate(SendPhoneOtpSchema), (req, res, next) =>
+router.post("/send-phone-otp", verifyRecaptcha("send_otp"), validate(SendPhoneOtpSchema), (req, res, next) =>
   Container.authController.sendPhoneOtp(req, res, next),
 );
 router.post(
   "/verify-phone-otp",
+  verifyRecaptcha("verify_otp"),
   validate(VerifyPhoneOtpSchema),
   (req, res, next) => Container.authController.verifyPhoneOtp(req, res, next),
 );
