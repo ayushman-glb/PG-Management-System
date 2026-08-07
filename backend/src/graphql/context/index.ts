@@ -7,9 +7,11 @@ export interface GraphQLContext {
   prisma: typeof prisma;
   loaders: GraphQLDataLoaders;
   user?: {
+    id: string;
     userId: string;
     email: string;
     role: string;
+    residentCode?: string;
   };
 }
 
@@ -22,7 +24,16 @@ export async function createContext({ req }: { req: Request }): Promise<GraphQLC
   if (authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     try {
-      user = tokenService.verifyAccessToken(token);
+      const decoded: any = tokenService.verifyAccessToken(token);
+      if (decoded) {
+        user = {
+          id: decoded.id,
+          userId: decoded.id,
+          email: decoded.email,
+          role: decoded.role,
+          residentCode: decoded.residentCode,
+        };
+      }
     } catch {
       // Unauthenticated access permitted for public queries
     }

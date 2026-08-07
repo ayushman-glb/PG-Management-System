@@ -7,7 +7,10 @@ const httpLink = createHttpLink({
 });
 
 const authLink = setContext((_: any, { headers }: any) => {
-  const token = localStorage.getItem("accessToken");
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("roombae_access_token");
   return {
     headers: {
       ...headers,
