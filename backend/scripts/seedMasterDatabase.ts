@@ -62,7 +62,7 @@ async function main() {
         data: {
           name: i === 0 ? 'RoomBae System Admin' : i === 1 ? 'Super Admin' : 'Lead Engineer',
           email,
-          passwordHash: '$2b$10$EpRvmqq5WqL95c73c33M7eK.H.K0m1G/Q1k48q9YwG0w7Y0.Z9z0S', // Password123!
+          passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG', // Password123!
           roleId: roles['SUPER_ADMIN'].id,
         },
       });
@@ -95,7 +95,7 @@ async function main() {
           name: o.name,
           email: o.email,
           phone: o.phone,
-          passwordHash: '$2b$10$EpRvmqq5WqL95c73c33M7eK.H.K0m1G/Q1k48q9YwG0w7Y0.Z9z0S',
+          passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG',
           role: 'OWNER',
           emailVerified: true,
           phoneVerified: true,
@@ -387,7 +387,7 @@ async function main() {
           email,
           phone,
           residentCode: `RES${1000 + i}`,
-          passwordHash: '$2b$10$EpRvmqq5WqL95c73c33M7eK.H.K0m1G/Q1k48q9YwG0w7Y0.Z9z0S',
+          passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG',
           role: 'RESIDENT',
           emailVerified: true,
           phoneVerified: true,

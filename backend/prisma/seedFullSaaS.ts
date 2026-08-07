@@ -35,7 +35,7 @@ export async function seedFullSaaS() {
         phone,
         phoneVerified: true,
         emailVerified: true,
-        passwordHash: '$2b$10$EpRvmqqYtWkg65YjO3w7ee./qH4PzN8KzFpD2wKjM.sKx4wN7hH.e' // Password123!
+        passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG' // Password123!
       },
       update: {}
     });
@@ -160,7 +160,7 @@ export async function seedFullSaaS() {
         phone,
         phoneVerified: true,
         emailVerified: true,
-        passwordHash: '$2b$10$EpRvmqqYtWkg65YjO3w7ee./qH4PzN8KzFpD2wKjM.sKx4wN7hH.e'
+        passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG'
       },
       update: {}
     });

@@ -40,6 +40,8 @@ export default function Auth({ navigate }: Props) {
 
   const [showPass, setShowPass] = useState(false);
   const [loginRole, setLoginRole] = useState<"owner" | "resident">("owner");
+  const [loginIdentifier, setLoginIdentifier] = useState("owner1@roombae.com");
+  const [loginPassword, setLoginPassword] = useState("Password123!");
   const { darkMode } = useTheme();
 
   // Unified Registration Wizard State
@@ -409,17 +411,14 @@ export default function Auth({ navigate }: Props) {
     setShowSignupCta(false);
     setIsSubmitting(true);
     try {
-      const emailEl = document.querySelector(
-        'input[placeholder*="you@example.com"], input[placeholder*="RES1001"]',
-      ) as HTMLInputElement | null;
-      const passEl = document.querySelector('input[placeholder="••••••••"]') as HTMLInputElement | null;
+      const identifier = (loginIdentifier || (loginRole === "resident" ? "RES1001" : "owner1@roombae.com")).trim();
+      const passwordVal = loginPassword || "Password123!";
 
-      const identifier = emailEl?.value || (loginRole === "resident" ? "RES1001" : "owner1@roombae.com");
-      const passwordVal = passEl?.value || "Password123!";
+      const loginRes = await authService.login({ identifier, password: passwordVal });
 
-      await authService.login({ identifier, password: passwordVal });
+      const userRole = loginRes?.user?.role || (loginRole === "resident" ? "RESIDENT" : "OWNER");
 
-      if (loginRole === "resident") {
+      if (userRole === "RESIDENT") {
         navigate("resident-portal");
       } else {
         navigate("dashboard");
@@ -630,7 +629,15 @@ export default function Auth({ navigate }: Props) {
                         { id: "resident", label: "🏠 Resident" },
                       ]}
                       activeTab={loginRole}
-                      onChange={(id: string) => setLoginRole(id as "owner" | "resident")}
+                      onChange={(id: string) => {
+                        const newRole = id as "owner" | "resident";
+                        setLoginRole(newRole);
+                        if (newRole === "resident" && (loginIdentifier === "owner1@roombae.com" || !loginIdentifier)) {
+                          setLoginIdentifier("RES1001");
+                        } else if (newRole === "owner" && (loginIdentifier === "RES1001" || !loginIdentifier)) {
+                          setLoginIdentifier("owner1@roombae.com");
+                        }
+                      }}
                       layoutId="auth-role-tab"
                     />
                   </div>
@@ -642,8 +649,9 @@ export default function Auth({ navigate }: Props) {
                       </label>
                       <input
                         type="text"
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
                         placeholder={loginRole === "resident" ? "RES1001 or resident@example.com" : "you@example.com"}
-                        defaultValue={loginRole === "resident" ? "RES1001" : "owner1@roombae.com"}
                         className={`w-full px-4 py-3 rounded-xl border text-sm transition-all ${
                           darkMode
                             ? "bg-[#2B2725] border-[#4A433F] text-[#F7F3EE] focus:ring-amber-500"
@@ -668,8 +676,9 @@ export default function Auth({ navigate }: Props) {
                       <div className="relative">
                         <input
                           type={showPass ? "text" : "password"}
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
                           placeholder="••••••••"
-                          defaultValue="Password123!"
                           className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all ${
                             darkMode
                               ? "bg-[#2B2725] border-[#4A433F] text-[#F7F3EE] focus:ring-amber-500"
@@ -690,10 +699,11 @@ export default function Auth({ navigate }: Props) {
 
                   <button
                     type="button"
+                    disabled={isSubmitting}
                     onClick={handleLoginSubmit}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.99] cursor-pointer"
+                    className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.99] cursor-pointer ${isSubmitting ? "opacity-50 pointer-events-none" : ""}`}
                   >
-                    Sign In to RoomBae <ArrowRight className="w-4 h-4" />
+                    {isSubmitting ? "Authenticating..." : "Sign In to RoomBae"} <ArrowRight className="w-4 h-4" />
                   </button>
 
                   <div className="flex items-center gap-3 my-5">

@@ -2,9 +2,14 @@ import { z } from 'zod';
 
 export const LoginSchema = z.object({
   body: z.object({
-    identifier: z.string().min(1, 'Identifier is required'),
-    password: z.string().min(6, 'Password must be at least 6 characters')
-  })
+    identifier: z.string().optional(),
+    email: z.string().optional(),
+    residentCode: z.string().optional(),
+    password: z.string().min(1, 'Password is required'),
+  }).refine((data) => !!(data.identifier || data.email || data.residentCode), {
+    message: 'Identifier (email/phone/residentCode) is required',
+    path: ['identifier'],
+  }),
 });
 
 export const RegisterSchema = z.object({

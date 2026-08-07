@@ -114,7 +114,7 @@ export class AuthService implements IAuthService {
 
   async login(identifier: string, password: string): Promise<IAuthUserResult> {
     const rawId = (identifier || "").trim();
-    const cleanPass = (password || "").trim();
+    const cleanPass = password || "";
 
     console.log(`🔑 [AUTH_AUDIT] Login Request Received for Identifier: "${rawId}" (Length: ${rawId.length})`);
 

@@ -8,39 +8,34 @@ export class AuthRepository implements IUserRepository {
   constructor(private readonly db: PrismaClient) { }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
-    try {
-      const clean = identifier.trim();
-      const lower = clean.toLowerCase();
-      return await this.db.user.findFirst({
-        where: {
-          OR: [
-            { email: { equals: clean, mode: "insensitive" } },
-            { email: { equals: lower, mode: "insensitive" } },
-            { residentCode: { equals: clean, mode: "insensitive" } },
-            { email: clean },
-            { residentCode: clean },
-          ],
-        },
-      });
-    } catch {
-      return null;
-    }
+    const clean = identifier.trim();
+    const lower = clean.toLowerCase();
+
+    return await this.db.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: lower, mode: "insensitive" } },
+          { email: { equals: clean, mode: "insensitive" } },
+          { residentCode: { equals: clean, mode: "insensitive" } },
+          { phone: { equals: clean, mode: "insensitive" } },
+          { email: clean },
+          { residentCode: clean },
+          { phone: clean },
+        ],
+      },
+    });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    try {
-      const clean = email.trim().toLowerCase();
-      return await this.db.user.findFirst({
-        where: {
-          OR: [
-            { email: { equals: clean, mode: "insensitive" } },
-            { email: clean },
-          ],
-        },
-      });
-    } catch {
-      return null;
-    }
+    const clean = email.trim().toLowerCase();
+    return await this.db.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: clean, mode: "insensitive" } },
+          { email: clean },
+        ],
+      },
+    });
   }
 
   async findById(id: string): Promise<User | null> {

@@ -20,7 +20,7 @@ export async function seedSaaSData() {
         name,
         role: Role.OWNER,
         phone: `+91 98765 4321${i - 1}`,
-        passwordHash: '$2b$10$EpRvmqqYtWkg65YjO3w7ee./qH4PzN8KzFpD2wKjM.sKx4wN7hH.e' // Password: Password123!
+        passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG' // Password: Password123!
       },
       update: {}
     });

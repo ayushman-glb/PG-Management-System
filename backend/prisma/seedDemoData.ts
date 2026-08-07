@@ -21,7 +21,7 @@ const prisma = new PrismaClient();
  * renders real backend data (properties, rooms, beds, residents, payments).
  */
 export async function seedDemoData() {
-  const defaultPasswordHash = await bcrypt.hash("RoomBae@123", 10);
+  const defaultPasswordHash = await bcrypt.hash("Password123!", 10);
 
   const ownerUser = await prisma.user.upsert({
     where: { email: "owner1@roombae.com" },

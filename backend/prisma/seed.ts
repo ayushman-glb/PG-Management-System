@@ -96,7 +96,7 @@ async function main() {
   await prisma.owner.deleteMany({});
   await prisma.user.deleteMany({});
 
-  const defaultPasswordHash = await bcrypt.hash('RoomBae@123', 10);
+  const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
   let globalResidentCount = 0;
 
   // 1. Seed 10 Owners

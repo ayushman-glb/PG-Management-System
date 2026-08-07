@@ -48,9 +48,26 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     expect(result.refreshToken).toBe('mock_refresh_token');
   });
 
+  test('Should authenticate valid resident login using residentCode', async () => {
+    mockUserRepo.findByIdentifier.mockResolvedValue({
+      id: 'res-user-1',
+      name: 'Test Resident',
+      email: 'resident1@roombae.com',
+      passwordHash: '$2a$10$xyz',
+      role: 'RESIDENT',
+      residentCode: 'RES1001',
+      avatarUrl: null
+    });
+
+    const result = await authService.login('RES1001', 'Password123!');
+    expect(result.user.residentCode).toBe('RES1001');
+    expect(result.user.role).toBe('RESIDENT');
+    expect(result.accessToken).toBe('mock_access_token');
+  });
+
   test('Should reject login for non-existent account with ACCOUNT_NOT_FOUND_OR_INVALID', async () => {
     mockUserRepo.findByIdentifier.mockResolvedValue(null);
-    await expect(authService.login('unknown@roombae.com', 'Password123!')).rejects.toThrow('Invalid email/resident ID or password');
+    await expect(authService.login('unknown@roombae.com', 'Password123!')).rejects.toThrow("We couldn't find an account");
   });
 
   test('Should reject login when password comparison fails', async () => {
@@ -62,7 +79,7 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     });
     mockCryptoService.comparePassword.mockResolvedValue(false);
 
-    await expect(authService.login('owner1@roombae.com', 'WrongPass123')).rejects.toThrow('Invalid email/resident ID or password');
+    await expect(authService.login('owner1@roombae.com', 'WrongPass123')).rejects.toThrow("We couldn't find an account");
   });
 
   test('Should reject password login for Google OAuth account', async () => {
