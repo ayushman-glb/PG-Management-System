@@ -54,7 +54,6 @@ export default defineConfig(({ mode }) => {
         "@features": path.resolve(__dirname, "./src/features"),
         "@hooks": path.resolve(__dirname, "./src/hooks"),
         "@services": path.resolve(__dirname, "./src/services"),
-        "@graphql": path.resolve(__dirname, "./src/graphql"),
         "@types": path.resolve(__dirname, "./src/types"),
         "@config": path.resolve(__dirname, "./src/config"),
         "@utils": path.resolve(__dirname, "./src/utils"),

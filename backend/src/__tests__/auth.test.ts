@@ -13,7 +13,10 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
       findByEmail: jest.fn(),
       findById: jest.fn(),
       create: jest.fn(),
-      updateOtp: jest.fn()
+      updateOtp: jest.fn(),
+      updateOtpForPhone: jest.fn(),
+      markEmailVerified: jest.fn(),
+      updateTwoFactor: jest.fn(),
     };
     mockCryptoService = {
       hashPassword: jest.fn().mockResolvedValue('hashed_password_xyz'),
@@ -25,7 +28,12 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
       verifyRefreshToken: jest.fn().mockReturnValue({ id: 'user-123', email: 'test@roombae.com', role: 'OWNER' })
     };
     mockOtpService = {
-      generateAndSendOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date(Date.now() + 300000), message: 'OTP sent' })
+      generateAndSendOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date(Date.now() + 300000), message: 'OTP sent' }),
+      generateAndSendPhoneOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date(Date.now() + 300000), message: 'OTP sent', timerSeconds: 300 }),
+      verifyPhoneOtp: jest.fn().mockResolvedValue(true),
+      generateAndSendEmailVerification: jest.fn().mockResolvedValue({ code: '123456', expiresAt: new Date(Date.now() + 300000), message: 'Verification code sent' }),
+      verifyEmailCode: jest.fn().mockResolvedValue(true),
+      generateSecureOtp: jest.fn().mockReturnValue('123456'),
     };
 
     authService = new AuthService(mockUserRepo, mockCryptoService, mockTokenService, mockOtpService);
@@ -100,27 +108,39 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     expect(result.refreshToken).toBe('mock_refresh_token');
   });
 
-  test('Should generate 6-digit Phone OTP with 60s countdown timer', async () => {
+  test('Should generate Phone OTP and return 300s countdown timer', async () => {
     const result = await authService.sendPhoneOtp('+91 98765 43210');
     expect(result.success).toBe(true);
-    expect(result.timerSeconds).toBe(60);
-    expect(result.message).toContain('+91 98765 43210');
+    expect(result.timerSeconds).toBe(300);
+    expect(result.message).toBeDefined();
   });
 
   test('Should verify valid Phone OTP successfully', async () => {
+    mockUserRepo.updateOtpForPhone.mockResolvedValue({ phoneVerified: true });
     const result = await authService.verifyPhoneOtp('+91 98765 43210', '123456');
     expect(result.success).toBe(true);
     expect(result.message).toContain('verified successfully');
   });
 
   test('Should reject invalid Phone OTP', async () => {
-    await expect(authService.verifyPhoneOtp('+91 98765 43210', '999')).rejects.toThrow();
+    mockOtpService.verifyPhoneOtp.mockResolvedValue(false);
+    await expect(authService.verifyPhoneOtp('+91 98765 43210', '999999')).rejects.toThrow('Invalid OTP code');
+  });
+
+  test('Should reject Phone OTP with wrong length', async () => {
+    await expect(authService.verifyPhoneOtp('+91 98765 43210', '123')).rejects.toThrow('Invalid OTP code');
   });
 
   test('Should enable 2FA and generate TOTP QR Code URL', async () => {
+    mockUserRepo.findById.mockResolvedValue({
+      id: 'user-123',
+      name: 'Test User',
+      email: 'test@roombae.com',
+    });
     const result = await authService.enableTwoFactor('user-123');
     expect(result.secret).toBeDefined();
-    expect(result.qrCodeUrl).toContain('https://api.qrserver.com');
+    expect(result.qrCodeUrl).toContain('otpauth://totp/');
+    expect(result.qrCodeImage).toBeDefined();
   });
 
   test('Should register user with specified role and return tokens', async () => {
@@ -142,5 +162,36 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     expect(result.user.name).toBe('Rajesh Kumar');
     expect(result.accessToken).toBe('mock_access_token');
     expect(result.refreshToken).toBe('mock_refresh_token');
+  });
+
+  test('Should send and verify email OTP', async () => {
+    mockUserRepo.findByEmail.mockResolvedValue({ id: 'user-1', email: 'test@roombae.com' });
+    mockOtpService.verifyEmailCode.mockResolvedValue(true);
+    mockUserRepo.updateOtp.mockResolvedValue({ id: 'user-1' });
+
+    const sendResult = await authService.sendOtp('test@roombae.com');
+    expect(sendResult.message).toBeDefined();
+
+    const verifyResult = await authService.verifyOtp('test@roombae.com', '123456');
+    expect(verifyResult.accessToken).toBe('mock_access_token');
+  });
+
+  test('Should send and verify email verification code', async () => {
+    mockUserRepo.findByEmail.mockResolvedValue({ id: 'user-1', email: 'test@roombae.com' });
+    mockOtpService.verifyEmailCode.mockResolvedValue(true);
+    mockUserRepo.markEmailVerified.mockResolvedValue({ id: 'user-1', emailVerified: true });
+
+    const sendResult = await authService.sendEmailVerification('test@roombae.com');
+    expect(sendResult.success).toBe(true);
+
+    const verifyResult = await authService.verifyEmail('test@roombae.com', '123456');
+    expect(verifyResult.success).toBe(true);
+  });
+
+  test('Should reject invalid email verification code', async () => {
+    mockUserRepo.findByEmail.mockResolvedValue({ id: 'user-1', email: 'test@roombae.com' });
+    mockOtpService.verifyEmailCode.mockResolvedValue(false);
+
+    await expect(authService.verifyEmail('test@roombae.com', '000000')).rejects.toThrow('Invalid verification code');
   });
 });

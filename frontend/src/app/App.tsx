@@ -68,32 +68,54 @@ export default function App() {
 
   const [skeletonLoading, setSkeletonLoading] = useState<boolean>(false);
 
-  // Handle Google OAuth callback query params (token, user, role, error)
+  // Handle OAuth callback: backend now sets tokens via cookies, not URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    const userJson = params.get("user");
+    const oauthSuccess = params.get("oauth");
     const role = params.get("role");
+    const residentCode = params.get("code");
     const error = params.get("error");
 
     if (error) {
       console.warn("Google OAuth error:", error);
-      // Clean the URL without reloading
       window.history.replaceState({}, "", window.location.pathname);
       return;
     }
 
-    if (token) {
+    if (oauthSuccess === "success") {
       try {
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("token", token);
-        if (userJson) {
-          localStorage.setItem("user", decodeURIComponent(userJson));
+        const cookieMatch = document.cookie.match(/(?:^|; )accessToken=([^;]+)/);
+        if (cookieMatch && cookieMatch[1]) {
+          const token = decodeURIComponent(cookieMatch[1]);
+          localStorage.setItem("accessToken", token);
+          localStorage.setItem("token", token);
+          if (residentCode) {
+            localStorage.setItem("residentCode", residentCode);
+          }
+        }
+        const targetPage: Page =
+          role === "RESIDENT" || role === "OWNER" ? "dashboard" : "dashboard";
+        setPage(targetPage);
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch (e) {
+        console.error("Failed to process OAuth callback:", e);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      return;
+    }
+
+    const legacyToken = params.get("token");
+    const legacyUserJson = params.get("user");
+    if (legacyToken) {
+      try {
+        localStorage.setItem("accessToken", legacyToken);
+        localStorage.setItem("token", legacyToken);
+        if (legacyUserJson) {
+          localStorage.setItem("user", decodeURIComponent(legacyUserJson));
         }
         const targetPage: Page =
           role === "RESIDENT" ? "resident-portal" : "dashboard";
         setPage(targetPage);
-        // Clean the URL without reloading
         window.history.replaceState({}, "", window.location.pathname);
       } catch (e) {
         console.error("Failed to process OAuth callback:", e);

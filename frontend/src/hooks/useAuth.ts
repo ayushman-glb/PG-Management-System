@@ -9,7 +9,9 @@ export function useAuth() {
   useEffect(() => {
     const token =
       localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (token) {
+    const cookieToken = document.cookie.match(/(?:^|; )accessToken=([^;]+)/);
+    const hasToken = token || (cookieToken ? decodeURIComponent(cookieToken[1]) : null);
+    if (hasToken) {
       authService
         .getCurrentUser()
         .then((res) => setUser(res.user || res || null))

@@ -13,7 +13,6 @@
       "@features/*": ["./src/features/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@services/*": ["./src/services/*"],
-      "@graphql/*": ["./src/graphql/*"],
       "@types/*": ["./src/types/*"],
       "@types": ["./src/types/index.ts"],
       "@config/*": ["./src/config/*"],

@@ -270,28 +270,23 @@ export class AuthController {
             maxAge: 7 * 24 * 60 * 60 * 1000,
           });
 
-          const userDto = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            residentCode: user.residentCode || undefined,
-            avatarUrl: user.avatarUrl,
-          };
-
-          const redirectParams = new URLSearchParams({
-            token: accessToken,
-            user: JSON.stringify(userDto),
-            role: user.role,
+          res.cookie("accessToken", accessToken, {
+            httpOnly: false,
+            secure: env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 15 * 60 * 1000,
           });
 
-          const finalRedirectUrl = `${targetFrontendUrl}?${redirectParams.toString()}`;
+          const targetParams = new URLSearchParams();
+          targetParams.set("oauth", "success");
+          targetParams.set("role", user.role);
+          if (user.residentCode) targetParams.set("code", user.residentCode);
 
-          logger.info("✅ Google OAuth Success -> Executing Frontend Redirect", {
+          const finalRedirectUrl = `${targetFrontendUrl}?${targetParams.toString()}`;
+
+          logger.info("Google OAuth success -> redirect (cookie-based)", {
             userId: user.id,
             email: user.email,
-            targetFrontendUrl,
-            finalRedirectUrl: `${targetFrontendUrl}?token=[REDACTED]`,
           });
 
           return res.redirect(finalRedirectUrl);

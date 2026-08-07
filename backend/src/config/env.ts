@@ -69,7 +69,6 @@ const envSchema = z.object({
   API_BASE_URL: z.string().default("http://localhost:5000"),
   API_PREFIX: z.string().default("/api/v1"),
   REST_PREFIX: z.string().default("/api/v1"),
-  GRAPHQL_PATH: z.string().default("/graphql"),
 
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   MONGODB_URI: z.string().optional(),

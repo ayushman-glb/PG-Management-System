@@ -3,6 +3,10 @@ import {
   IUserRepository,
   ICreateUserData,
 } from "../../interfaces/repositories/IUserRepository";
+import { AppError } from "../../utils/appError";
+
+const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
+const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png";
 
 export class AuthRepository implements IUserRepository {
   constructor(private readonly db: PrismaClient) { }
@@ -111,7 +115,7 @@ export class AuthRepository implements IUserRepository {
               name: newUser.name,
               email: newUser.email,
               phone: newUser.phone || "+919876543210",
-              photo: newUser.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+            photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
               address: "Indiranagar, Bengaluru",
               aadhaarNumber: "452189012345",
               panNumber: "ABCDE1234F",
@@ -134,7 +138,7 @@ export class AuthRepository implements IUserRepository {
               name: newUser.name,
               email: newUser.email,
               phone: newUser.phone || "+919800000000",
-              profilePicture: newUser.avatarUrl || "https://images.unsplash.com/photo-1500000000000?w=300",
+              profilePicture: newUser.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
               pgId: defaultPg?.id || null,
               bedId: defaultBed?.id || null,
               gender: "Male",
@@ -245,7 +249,7 @@ export class AuthRepository implements IUserRepository {
             name: newUser.name,
             email: newUser.email,
             phone: newUser.phone || "+919876543210",
-            photo: newUser.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+               photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
             address: "Indiranagar, Bengaluru",
             aadhaarNumber: "452189012345",
             panNumber: "ABCDE1234F",
@@ -286,6 +290,51 @@ export class AuthRepository implements IUserRepository {
     return this.db.user.update({
       where: { id },
       data: { otpSecret, otpExpiresAt },
+    });
+  }
+
+  async updateOtpForPhone(phone: string, verified: boolean): Promise<User> {
+    const user = await this.db.user.findFirst({
+      where: { phone },
+    });
+    if (!user) throw new AppError("User not found", 404);
+
+    return this.db.user.update({
+      where: { id: user.id },
+      data: { phoneVerified: verified, otpSecret: null, otpExpiresAt: null },
+    });
+  }
+
+  async markEmailVerified(email: string): Promise<User> {
+    const user = await this.db.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: email, mode: "insensitive" } },
+          { email: email },
+        ],
+      },
+    });
+    if (!user) throw new AppError("User not found", 404);
+
+    return this.db.user.update({
+      where: { id: user.id },
+      data: { emailVerified: true },
+    });
+  }
+
+  async updateTwoFactor(
+    id: string,
+    secret: string | null,
+    enabled: boolean,
+    method?: string,
+  ): Promise<User> {
+    return this.db.user.update({
+      where: { id },
+      data: {
+        twoFactorSecret: secret,
+        is2FAEnabled: enabled,
+        twoFactorMethod: method || (enabled ? "TOTP" : "NONE"),
+      },
     });
   }
 }

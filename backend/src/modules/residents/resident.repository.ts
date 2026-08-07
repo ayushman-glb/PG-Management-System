@@ -53,7 +53,7 @@ export class ResidentRepository implements IResidentRepository {
         userId: data.userId,
         pgId: data.propertyId,
         bedId: data.bedId,
-        profilePicture: data.profilePicture || 'https://images.unsplash.com/photo-1534528741775?w=300',
+        profilePicture: data.profilePicture || 'https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png',
         name: resUser?.name || 'Resident',
         gender: data.gender || 'Male',
         age: data.age || 22,

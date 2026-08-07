@@ -33,4 +33,12 @@ export interface IUserRepository {
     otpSecret: string | null,
     otpExpiresAt: Date | null,
   ): Promise<User>;
+  updateOtpForPhone(phone: string, verified: boolean): Promise<User>;
+  markEmailVerified(email: string): Promise<User>;
+  updateTwoFactor(
+    id: string,
+    secret: string | null,
+    enabled: boolean,
+    method?: string,
+  ): Promise<User>;
 }

@@ -9,7 +9,7 @@ const options: swaggerJSDoc.Options = {
       title: "RoomBae Zero-Trust Enterprise PG Management API",
       version: "1.0.0",
       description:
-        "Production-ready REST & GraphQL API specifications for RoomBae PG Management System.",
+        "Production-ready REST API specifications for RoomBae PG Management System.",
       contact: {
         name: "RoomBae Engineering",
         email: "engineering@roombae.com",
@@ -71,7 +71,6 @@ const options: swaggerJSDoc.Options = {
             services: {
               type: "object",
               properties: {
-                graphql: { type: "string" },
                 rest: { type: "string" },
                 soap: { type: "string" },
                 redis: { type: "string" },

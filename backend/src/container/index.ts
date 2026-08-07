@@ -6,7 +6,8 @@ import { JwtTokenService } from '../infrastructure/crypto/JwtTokenService';
 import { RedisLockService } from '../infrastructure/cache/RedisLockService';
 import { PdfKitInvoiceService } from '../infrastructure/pdf/PdfKitInvoiceService';
 import { PdfKitAgreementService } from '../infrastructure/pdf/PdfKitAgreementService';
-import { MockOtpService } from '../infrastructure/otp/MockOtpService';
+import { RedisOtpService } from '../infrastructure/otp/RedisOtpService';
+import { TotpService } from '../infrastructure/crypto/TotpService';
 
 // Document System
 import { DocumentRepository } from '../modules/documents/documents.repository';
@@ -37,7 +38,7 @@ export class Container {
   private static _lockService?: RedisLockService;
   private static _pdfInvoiceService?: PdfKitInvoiceService;
   private static _pdfAgreementService?: PdfKitAgreementService;
-  private static _otpService?: MockOtpService;
+  private static _otpService?: RedisOtpService;
 
   private static _userRepository?: AuthRepository;
   private static _propertyRepository?: PropertyRepository;
@@ -127,7 +128,7 @@ export class Container {
 
   public static get otpService() {
     if (!this._otpService) {
-      this._otpService = new MockOtpService();
+      this._otpService = new RedisOtpService();
     }
     return this._otpService;
   }

@@ -52,7 +52,7 @@ export interface IAuthService {
   ): Promise<{ success: boolean; message: string }>;
   enableTwoFactor(
     userId: string,
-  ): Promise<{ secret: string; qrCodeUrl: string }>;
+  ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string }>;
   verifyTwoFactor(
     userId: string,
     token: string,

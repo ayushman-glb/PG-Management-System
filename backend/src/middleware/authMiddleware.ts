@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/appError';
 import { Container } from '../container';
 import { Role } from '@prisma/client';
+import { logger } from '../utils/logger';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -25,7 +26,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   // leaked in Referer headers. All clients must use Authorization header.
 
   if (!token) {
-    console.warn(`🔒 Auth Warning: No token provided on request [Path: ${req.method} ${req.originalUrl}]`);
+    logger.warn("Auth Warning: No token provided on request", { path: `${req.method} ${req.originalUrl}` });
     return next(new AppError('Authentication token required.', 401, 'TOKEN_REQUIRED'));
   }
 
@@ -39,7 +40,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     };
     next();
   } catch (err: any) {
-    console.error(`🔒 Auth Verification Failed [Path: ${req.method} ${req.originalUrl}] [ErrorType: ${err.name}]: ${err.message}`);
+    logger.error("Auth verification failed", { path: `${req.method} ${req.originalUrl}`, errorType: err.name, message: err.message });
     if (err.name === 'TokenExpiredError') {
       return next(new AppError('Authentication token has expired. Please refresh session.', 401, 'TOKEN_EXPIRED'));
     }

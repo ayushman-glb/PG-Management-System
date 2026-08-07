@@ -55,7 +55,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
             availableBeds: 5,
             latitude: 12.9352,
             longitude: 77.6245,
-            images: ['https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=500']
+            images: ['https://res.cloudinary.com/roombae/image/upload/v1700000000/default-gallery.png']
           }
         ],
         total: 1
@@ -101,7 +101,7 @@ export class PrismaPropertyRepository implements IPropertyRepository {
         ownerId: data.ownerId,
         name: data.name,
         slug,
-        logo: data.logo || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200',
+        logo: data.logo || 'https://res.cloudinary.com/roombae/image/upload/v1700000000/default-logo.png',
         galleryImages: data.galleryImages || data.images || [],
         description: data.description || `Luxury PG in ${data.city}`,
         address: data.address,

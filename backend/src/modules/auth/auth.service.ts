@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import {
   IAuthService,
   IAuthUserResult,
@@ -12,8 +11,11 @@ import { AppError } from "../../utils/appError";
 import { Role } from "@prisma/client";
 import { env } from "../../config/env";
 import { prisma } from "../../config/prisma";
+import { logger } from "../../utils/logger";
+import { TotpService } from "../../infrastructure/crypto/TotpService";
 
-
+const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
+const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png";
 
 export class AuthService implements IAuthService {
   constructor(
@@ -32,7 +34,6 @@ export class AuthService implements IAuthService {
       throw new AppError("Google OAuth is not configured on the server.", 500);
     }
 
-    // 1. Exchange the authorization code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -56,7 +57,6 @@ export class AuthService implements IAuthService {
       throw new AppError("Google did not return an access token.", 400);
     }
 
-    // 2. Fetch the user's profile
     const profileRes = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
@@ -78,7 +78,6 @@ export class AuthService implements IAuthService {
       throw new AppError("Google profile is missing required fields.", 400);
     }
 
-    // 3. Find or create the user
     const user = await this.userRepository.findOrCreateGoogleUser({
       googleSubId,
       email,
@@ -87,7 +86,6 @@ export class AuthService implements IAuthService {
       role,
     });
 
-    // 4. Generate JWT tokens
     const payload = {
       id: user.id,
       email: user.email,
@@ -116,12 +114,12 @@ export class AuthService implements IAuthService {
     const rawId = (identifier || "").trim();
     const cleanPass = password || "";
 
-    console.log(`🔑 [AUTH_AUDIT] Login Request Received for Identifier: "${rawId}" (Length: ${rawId.length})`);
+    logger.info("Login request received", { identifierType: rawId.includes("@") ? "email" : "other" });
 
     const user = await this.userRepository.findByIdentifier(rawId);
 
     if (!user) {
-      console.warn(`🔒 [AUTH_AUDIT] MongoDB Query Result: USER_NOT_FOUND for identifier "${rawId}"`);
+      logger.warn("Login failed: user not found", { identifier: rawId });
       throw new AppError(
         "We couldn't find an account with these details. Would you like to sign up instead?",
         401,
@@ -129,10 +127,8 @@ export class AuthService implements IAuthService {
       );
     }
 
-    console.log(`✅ [AUTH_AUDIT] MongoDB Query Result: Found User ID="${user.id}", Email="${user.email}", Role="${user.role}", Code="${user.residentCode || 'N/A'}"`);
-
     if (!user.passwordHash) {
-      console.warn(`🔒 [AUTH_AUDIT] Password Check: OAuth account detected for user "${user.id}"`);
+      logger.warn("Login failed: OAuth account", { userId: user.id });
       throw new AppError(
         "This account uses Google OAuth or Single Sign-On. Please sign in with Google.",
         401,
@@ -145,15 +141,30 @@ export class AuthService implements IAuthService {
       user.passwordHash,
     );
 
-    console.log(`🔑 [AUTH_AUDIT] Password Comparison Result: ${isValid ? "VALID" : "INVALID"} for user "${user.id}"`);
-
     if (!isValid) {
-      console.warn(`🔒 [AUTH_AUDIT] Login Rejected: Invalid password for user "${user.id}"`);
+      logger.warn("Login failed: invalid password", { userId: user.id });
       throw new AppError(
         "We couldn't find an account with these details. Would you like to sign up instead?",
         401,
         "ACCOUNT_NOT_FOUND_OR_INVALID"
       );
+    }
+
+    if (user.phoneVerified !== true) {
+      logger.warn("Login failed: phone not verified", { userId: user.id });
+    }
+
+    try {
+      await prisma.loginHistory.create({
+        data: {
+          userId: user.id,
+          ipAddress: "unknown",
+          userAgent: "unknown",
+          status: "SUCCESS",
+        },
+      });
+    } catch (err: any) {
+      logger.debug("LoginHistory record creation skipped", { userId: user.id, error: err.message });
     }
 
     const payload = {
@@ -166,7 +177,7 @@ export class AuthService implements IAuthService {
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
-    console.log(`🎉 [AUTH_AUDIT] Authentication Successful: Tokens generated for user "${user.id}" (Role: ${user.role})`);
+    logger.info("Login successful", { userId: user.id, role: user.role });
 
     return {
       user: {
@@ -193,8 +204,6 @@ export class AuthService implements IAuthService {
       );
     }
 
-    // Role escalation defense: client signups strictly force default Role.RESIDENT / Role.OWNER
-    // Admin / Manager / Staff roles must be assigned separately by authorized admin APIs
     const forcedRole = (data.role && (data.role === Role.OWNER || data.role === Role.RESIDENT)) ? data.role : Role.RESIDENT;
     const passwordHash = await this.cryptoService.hashPassword(data.password);
 
@@ -206,6 +215,7 @@ export class AuthService implements IAuthService {
         passwordHash,
         phone: data.phone,
         role: forcedRole,
+        residentCode: data.residentCode,
       });
     } catch (err: any) {
       if (err.code === "P2002" || err.message?.includes("E11000")) {
@@ -244,28 +254,21 @@ export class AuthService implements IAuthService {
       throw new AppError("User not found with provided email", 404);
     }
 
-    const { otp, expiresAt, message } =
-      await this.otpService.generateAndSendOtp(email);
-    await this.userRepository.updateOtp(user.id, otp, expiresAt);
+    const { message } = await this.otpService.generateAndSendOtp(email);
 
     return { message };
   }
 
   async verifyOtp(email: string, otp: string): Promise<IAuthUserResult> {
     const user = await this.userRepository.findByEmail(email);
-    if (!user || !user.otpSecret || !user.otpExpiresAt) {
-      throw new AppError("OTP not requested or expired.", 400);
+    if (!user) {
+      throw new AppError("User not found with provided email", 404);
     }
 
-    if (user.otpExpiresAt < new Date()) {
-      throw new AppError("OTP has expired. Please request a new code.", 400);
-    }
-
-    if (user.otpSecret !== otp) {
+    const isValid = await this.otpService.verifyEmailCode(email, otp);
+    if (!isValid) {
       throw new AppError("Invalid OTP verification code.", 400);
     }
-
-    await this.userRepository.updateOtp(user.id, null, null);
 
     const payload = { id: user.id, email: user.email, role: user.role };
     const accessToken = this.tokenService.generateAccessToken(payload);
@@ -294,11 +297,12 @@ export class AuthService implements IAuthService {
       );
     }
 
-    const timerSeconds = 60;
+    const result = await this.otpService.generateAndSendPhoneOtp(cleanPhone);
+
     return {
       success: true,
-      message: `OTP sent to ${cleanPhone}. Please verify within 5 minutes.`,
-      timerSeconds,
+      message: result.message,
+      timerSeconds: result.timerSeconds,
     };
   }
 
@@ -310,17 +314,41 @@ export class AuthService implements IAuthService {
       throw new AppError("Phone and OTP are required", 400);
     }
 
-    if (otp === "123456" || otp.length === 6) {
-      return { success: true, message: "Phone number verified successfully!" };
+    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+      throw new AppError("Invalid OTP code", 400);
     }
 
-    throw new AppError("Invalid OTP code", 400);
+    const isValid = await this.otpService.verifyPhoneOtp(phone, otp);
+
+    if (!isValid) {
+      throw new AppError("Invalid OTP code", 400);
+    }
+
+    await this.userRepository.updateOtpForPhone(phone, true);
+
+    return { success: true, message: "Phone number verified successfully!" };
   }
 
   async sendEmailVerification(
     email: string,
   ): Promise<{ success: boolean; message: string }> {
     if (!email) throw new AppError("Email address is required", 400);
+
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new AppError("User not found with provided email", 404);
+    }
+
+    const { code, expiresAt } = await this.otpService.generateAndSendEmailVerification(email);
+
+    await prisma.otpToken.create({
+      data: {
+        email,
+        otp: code,
+        purpose: "EMAIL_VERIFICATION",
+        expiresAt,
+      },
+    });
 
     return {
       success: true,
@@ -335,6 +363,18 @@ export class AuthService implements IAuthService {
     if (!email || !code)
       throw new AppError("Email and verification code are required", 400);
 
+    if (code.length !== 6 || !/^\d+$/.test(code)) {
+      throw new AppError("Invalid verification code", 400);
+    }
+
+    const isValid = await this.otpService.verifyEmailCode(email, code);
+
+    if (!isValid) {
+      throw new AppError("Invalid verification code", 400);
+    }
+
+    await this.userRepository.markEmailVerified(email);
+
     return {
       success: true,
       message: "Email address verified successfully!",
@@ -343,33 +383,55 @@ export class AuthService implements IAuthService {
 
   async enableTwoFactor(
     userId: string,
-  ): Promise<{ secret: string; qrCodeUrl: string }> {
-    const secret = crypto.randomBytes(16).toString("hex").toUpperCase();
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/RoomBae:${userId}?secret=${secret}&issuer=RoomBae`;
-    return { secret, qrCodeUrl };
+  ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string }> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new AppError("User not found", 404);
+
+    const secret = TotpService.generateSecret();
+    const qrCodeUrl = TotpService.generateQrCodeUrl(secret, user.email, "RoomBae");
+    const qrCodeImage = await TotpService.generateQrCodeImage(secret, user.email, "RoomBae");
+
+    await this.userRepository.updateTwoFactor(userId, secret, true, "TOTP");
+
+    return { secret, qrCodeUrl, qrCodeImage };
   }
 
   async verifyTwoFactor(
     userId: string,
     token: string,
   ): Promise<{ success: boolean; message: string }> {
-    if (!token || token.length !== 6) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new AppError("User not found", 404);
+
+    if (!user.twoFactorSecret) {
+      throw new AppError("Two-factor authentication not set up", 400);
+    }
+
+    if (!token || token.length !== 6 || !/^\d+$/.test(token)) {
       throw new AppError("Invalid 6-digit Authenticator code", 400);
     }
+
+    const isValid = TotpService.verifyToken(user.twoFactorSecret, token);
+
+    if (!isValid) {
+      throw new AppError("Invalid two-factor authentication code", 401, "TWO_FACTOR_INVALID");
+    }
+
     return {
       success: true,
-      message: "Two-factor authentication enabled successfully!",
+      message: "Two-factor authentication verified and activated!",
     };
   }
 
   async disableTwoFactor(
     userId: string,
   ): Promise<{ success: boolean; message: string }> {
+    await this.userRepository.updateTwoFactor(userId, null, false, "NONE");
+
     return { success: true, message: "Two-factor authentication disabled" };
   }
 
   async refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }> {
-
     if (!token) throw new AppError("Refresh token required", 401, "TOKEN_REQUIRED", "login");
     let decoded: any;
     try {
@@ -433,7 +495,7 @@ export class AuthService implements IAuthService {
     });
 
     if (!owner) {
-      console.log(`ℹ️ [PROFILE_AUTO_CREATE] Creating missing Owner profile record for User ID "${user.id}" (${user.email})`);
+      logger.info("Auto-creating owner profile", { userId: user.id });
       try {
         owner = await prisma.owner.create({
           data: {
@@ -441,20 +503,20 @@ export class AuthService implements IAuthService {
             name: user.name,
             email: user.email,
             phone: user.phone || "+919876543210",
-            photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
-            address: "Indiranagar, Bengaluru",
-            aadhaarNumber: "452189012345",
-            panNumber: "ABCDE1234F",
-            upiId: "owner@okaxis",
-            bankName: "HDFC Bank",
-            accountNumber: "5010023456789",
-            ifscCode: "HDFC0001234",
-            emergencyContact: "+919123456789",
+            photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+            address: "",
+            aadhaarNumber: "",
+            panNumber: "",
+            upiId: "",
+            bankName: "",
+            accountNumber: "",
+            ifscCode: "",
+            emergencyContact: "",
           },
           include: { pgs: true },
         });
       } catch (err) {
-        console.warn(`⚠️ Could not auto-create owner record, returning user details:`, err);
+        logger.warn("Could not auto-create owner record", { userId: user.id, error: err });
       }
     }
 
@@ -471,7 +533,7 @@ export class AuthService implements IAuthService {
     });
 
     if (!resident) {
-      console.log(`ℹ️ [PROFILE_AUTO_CREATE] Creating missing Resident profile record for User ID "${user.id}" (${user.email})`);
+      logger.info("Auto-creating resident profile", { userId: user.id });
       try {
         const defaultPg = await prisma.pG.findFirst();
         const defaultBed = await prisma.bed.findFirst();
@@ -482,30 +544,20 @@ export class AuthService implements IAuthService {
               userId: user.id,
               name: user.name,
               email: user.email,
-              phone: user.phone || "+919800000000",
-              profilePicture: user.avatarUrl || "https://images.unsplash.com/photo-1500000000000?w=300",
+              phone: user.phone || "",
+              profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
               pgId: defaultPg.id,
               bedId: defaultBed.id,
-              gender: "Male",
-              age: 22,
-              permanentAddress: "Model Town, Indiranagar, Bengaluru",
-              occupation: "Software Engineer",
-              bloodGroup: "O+",
-              moveInDate: new Date(),
-              rentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
               status: "ACTIVE",
             },
             include: { bed: true, pg: true },
           });
         }
       } catch (err) {
-        console.warn(`⚠️ Could not auto-create resident record, returning user details:`, err);
+        logger.warn("Could not auto-create resident record", { userId: user.id, error: err });
       }
     }
 
     return { user, resident: resident || null };
   }
-
-
 }
-

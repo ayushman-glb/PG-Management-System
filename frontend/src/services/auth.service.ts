@@ -5,14 +5,22 @@ import { updateSocketAuth, disconnectSocket } from "./socket";
 export class AuthService {
   private getToken(): string | null {
     try {
-      return (
-        localStorage.getItem("accessToken") ||
+      const fromStorage = localStorage.getItem("accessToken") ||
         localStorage.getItem("token") ||
-        localStorage.getItem("roombae_access_token")
-      );
+        localStorage.getItem("roombae_access_token");
+      if (fromStorage) return fromStorage;
+
+      const cookieMatch = document.cookie.match(/(?:^|; )accessToken=([^;]+)/);
+      if (cookieMatch) {
+        const token = decodeURIComponent(cookieMatch[1]);
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("token", token);
+        return token;
+      }
     } catch {
       return null;
     }
+    return null;
   }
 
   public setToken(token: string) {
