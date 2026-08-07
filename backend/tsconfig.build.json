@@ -1,4 +1,17 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "src/tests", "src/__tests__"]
+  "compilerOptions": {
+    // Production build only needs node types — jest types are dev-only.
+    // Otherwise Render's production build fails with:
+    // error TS2688: Cannot find type definition file for 'jest'
+    "types": [
+      "node"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/tests",
+    "src/__tests__"
+  ]
 }
