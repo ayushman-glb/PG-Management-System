@@ -149,7 +149,7 @@ export class ResidentRepository implements IResidentRepository {
     const res = await this.db.resident.findUnique({ where: { id: residentId } });
     return this.db.mealSchedule.create({
       data: {
-        pgId: res!.pgId,
+        pgId: res?.pgId || '',
         dayOfWeek: 'Monday',
         breakfastMenu: 'Puri Bhaji',
         lunchMenu: 'Thali',

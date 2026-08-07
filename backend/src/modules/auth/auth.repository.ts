@@ -115,7 +115,7 @@ export class AuthRepository implements IUserRepository {
               userId: newUser.id,
               name: newUser.name,
               email: newUser.email,
-              phone: "+919876543210",
+              phone: newUser.phone || "+919876543210",
               photo: newUser.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
               address: "Indiranagar, Bengaluru",
               aadhaarNumber: "452189012345",
@@ -128,42 +128,36 @@ export class AuthRepository implements IUserRepository {
             },
           });
         }
-      } else {
+      } else if (newUser.role === Role.RESIDENT) {
         const existingResident = await this.db.resident.findFirst({ where: { userId: newUser.id } });
         if (!existingResident) {
           const defaultPg = await this.db.pG.findFirst();
           const defaultBed = await this.db.bed.findFirst();
-          if (defaultPg && defaultBed) {
-            await this.db.resident.create({
-              data: {
-                userId: newUser.id,
-                name: newUser.name,
-                email: newUser.email,
-                phone: "+919800000000",
-                profilePicture: newUser.avatarUrl || "https://images.unsplash.com/photo-1500000000000?w=300",
-                pgId: defaultPg.id,
-                bedId: defaultBed.id,
-                gender: "Male",
-                age: 22,
-                permanentAddress: "Indiranagar, Bengaluru",
-                occupation: "Software Engineer",
-                bloodGroup: "O+",
-                moveInDate: new Date(),
-                rentDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                status: "ACTIVE",
-              },
-            });
-          }
+          await this.db.resident.create({
+            data: {
+              userId: newUser.id,
+              name: newUser.name,
+              email: newUser.email,
+              phone: newUser.phone || "+919800000000",
+              profilePicture: newUser.avatarUrl || "https://images.unsplash.com/photo-1500000000000?w=300",
+              pgId: defaultPg?.id || null,
+              bedId: defaultBed?.id || null,
+              gender: "Male",
+              age: 22,
+              permanentAddress: "Indiranagar, Bengaluru",
+              occupation: "Software Engineer",
+              bloodGroup: "O+",
+              status: "ACTIVE",
+            },
+          });
         }
       }
     } catch (profileErr) {
-      console.warn("⚠️ Could not auto-create Google signup profile record:", profileErr);
+      console.warn("⚠️ Could not auto-create signup profile record:", profileErr);
     }
-
 
     return newUser;
   }
-
 
   async findOrCreatePhoneUser(data: {
     phone: string;
@@ -202,7 +196,7 @@ export class AuthRepository implements IUserRepository {
       });
     }
 
-    return this.db.user.create({
+    const newUser = await this.db.user.create({
       data: {
         name: data.name || `User ${cleanPhoneDigits.slice(-4)}`,
         email: generatedEmail,
@@ -212,10 +206,32 @@ export class AuthRepository implements IUserRepository {
         authProvider: "PHONE",
       },
     });
+
+    try {
+      if (newUser.role === Role.RESIDENT) {
+        const defaultPg = await this.db.pG.findFirst();
+        const defaultBed = await this.db.bed.findFirst();
+        await this.db.resident.create({
+          data: {
+            userId: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone || "+919800000000",
+            pgId: defaultPg?.id || null,
+            bedId: defaultBed?.id || null,
+            status: "ACTIVE",
+          },
+        });
+      }
+    } catch (err) {
+      console.warn("⚠️ Could not auto-create phone resident profile:", err);
+    }
+
+    return newUser;
   }
 
   async create(data: ICreateUserData): Promise<User> {
-    return this.db.user.create({
+    const newUser = await this.db.user.create({
       data: {
         name: data.name,
         email: data.email,
@@ -225,6 +241,46 @@ export class AuthRepository implements IUserRepository {
         residentCode: data.residentCode,
       },
     });
+
+    try {
+      if (newUser.role === Role.OWNER) {
+        await this.db.owner.create({
+          data: {
+            userId: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone || "+919876543210",
+            photo: newUser.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+            address: "Indiranagar, Bengaluru",
+            aadhaarNumber: "452189012345",
+            panNumber: "ABCDE1234F",
+            upiId: "owner@okaxis",
+            bankName: "HDFC Bank",
+            accountNumber: "5010023456789",
+            ifscCode: "HDFC0001234",
+            emergencyContact: "+919123456789",
+          },
+        });
+      } else if (newUser.role === Role.RESIDENT) {
+        const defaultPg = await this.db.pG.findFirst();
+        const defaultBed = await this.db.bed.findFirst();
+        await this.db.resident.create({
+          data: {
+            userId: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            phone: newUser.phone || "+919800000000",
+            pgId: defaultPg?.id || null,
+            bedId: defaultBed?.id || null,
+            status: "ACTIVE",
+          },
+        });
+      }
+    } catch (err) {
+      console.warn("⚠️ Could not auto-create profile for new user:", err);
+    }
+
+    return newUser;
   }
 
   async updateOtp(

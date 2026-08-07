@@ -473,7 +473,6 @@ export default function Auth({ navigate }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row w-full font-sans overflow-x-hidden">
-      <div id="recaptcha-container" className="hidden" />
 
       {/* Left Hero & Branding Section */}
       <div

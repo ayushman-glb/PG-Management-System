@@ -8,6 +8,12 @@ import { PdfKitInvoiceService } from '../infrastructure/pdf/PdfKitInvoiceService
 import { PdfKitAgreementService } from '../infrastructure/pdf/PdfKitAgreementService';
 import { MockOtpService } from '../infrastructure/otp/MockOtpService';
 
+// Document System
+import { DocumentRepository } from '../modules/documents/documents.repository';
+import { DocumentService } from '../modules/documents/documents.service';
+import { DocumentController } from '../modules/documents/documents.controller';
+import { DocumentStorageService } from '../services/documents/DocumentStorageService';
+
 // Modular Feature Repositories, Services, and Controllers
 import { AuthRepository, AuthService, AuthController } from '../modules/auth';
 import { PropertyRepository, PropertyService, PropertyController } from '../modules/properties';
@@ -48,6 +54,12 @@ export class Container {
   private static _complaintService?: ComplaintService;
   private static _agreementService?: AgreementService;
   private static _residentManagementService?: ResidentManagementService;
+
+  // Document system
+  private static _documentRepository?: DocumentRepository;
+  private static _documentStorageService?: DocumentStorageService;
+  private static _documentService?: DocumentService;
+  private static _documentController?: DocumentController;
 
   private static _authController?: AuthController;
   private static _propertyController?: PropertyController;
@@ -170,6 +182,20 @@ export class Container {
     return this._residentManagementRepository;
   }
 
+  public static get documentRepository() {
+    if (!this._documentRepository) {
+      this._documentRepository = new DocumentRepository(Container.db);
+    }
+    return this._documentRepository;
+  }
+
+  public static get documentStorageService() {
+    if (!this._documentStorageService) {
+      this._documentStorageService = new DocumentStorageService();
+    }
+    return this._documentStorageService;
+  }
+
   // Domain Services
   public static get authService() {
     if (!this._authService) {
@@ -242,6 +268,17 @@ export class Container {
     return this._residentManagementService;
   }
 
+  public static get documentService() {
+    if (!this._documentService) {
+      this._documentService = new DocumentService(
+        Container.documentRepository,
+        Container.documentStorageService,
+        Container.db
+      );
+    }
+    return this._documentService;
+  }
+
   // Feature Controllers
   public static get authController() {
     if (!this._authController) {
@@ -292,5 +329,12 @@ export class Container {
       );
     }
     return this._residentManagementController;
+  }
+
+  public static get documentController() {
+    if (!this._documentController) {
+      this._documentController = new DocumentController(Container.documentService);
+    }
+    return this._documentController;
   }
 }

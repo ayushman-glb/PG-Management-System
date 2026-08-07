@@ -9,3 +9,5 @@ export * from "./useSearch";
 export * from "./useNotifications";
 export * from "./useTheme";
 export * from "./useInfiniteScroll";
+export * from "./useDocumentDownload";
+

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ShieldCheck, CheckCircle2, PenTool } from "lucide-react";
+import { X, Download, ShieldCheck, CheckCircle2, PenTool, AlertTriangle } from "lucide-react";
 import { SignatureCanvas } from "@components/SignatureCanvas";
 import { useTheme } from "@theme/index";
 import { env } from "@config/env";
-import { downloadFile } from "@services/fileDownload.service";
+import { useDocumentDownload } from "@hooks/useDocumentDownload";
 
 interface AgreementViewerModalProps {
   agreement: any;
@@ -21,8 +21,8 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   const [signerType, setSignerType] = useState<"RESIDENT" | "OWNER">(
     "RESIDENT",
   );
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const { darkMode } = useTheme();
+  const { download, isDownloading, getError } = useDocumentDownload();
 
   React.useEffect(() => {
     const lenis = (window as any).__lenis;
@@ -61,21 +61,6 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
       }
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    setIsDownloadingPdf(true);
-    try {
-      const url = `${env.API_URL}/agreements/${agreement.id}/download`;
-      await downloadFile({
-        url,
-        filename: `Rental_Agreement_${agreement.agreementNumber || agreement.id}.pdf`,
-      });
-    } catch (err: any) {
-      alert(`Download failed: ${err.message}`);
-    } finally {
-      setIsDownloadingPdf(false);
     }
   };
 
@@ -141,21 +126,33 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
             </div>
 
             <div className="flex items-center gap-3 pr-10">
-              <button
-                type="button"
-                disabled={isDownloadingPdf}
-                onClick={handleDownloadPdf}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
-                  darkMode
-                    ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
-                    : "bg-[#D9A87C] text-black hover:bg-[#C58B63] hover:text-white border-[#D9A87C]"
-                }`}
-              >
-                <Download
-                  className={`w-4 h-4 ${darkMode ? "text-amber-400" : "text-black"} ${isDownloadingPdf ? 'animate-spin' : ''}`}
-                />{" "}
-                {isDownloadingPdf ? "Generating PDF..." : "Download PDF"}
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  disabled={isDownloading(agreement.id, 'SIGNED_AGREEMENT')}
+                  onClick={() => download({
+                    entityId: agreement.id,
+                    documentType: 'SIGNED_AGREEMENT',
+                    fileName: `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`,
+                  })}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
+                    darkMode
+                      ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
+                      : "bg-[#D9A87C] text-black hover:bg-[#C58B63] hover:text-white border-[#D9A87C]"
+                  }`}
+                >
+                  <Download
+                    className={`w-4 h-4 ${darkMode ? "text-amber-400" : "text-black"} ${isDownloading(agreement.id, 'SIGNED_AGREEMENT') ? 'animate-spin' : ''}`}
+                  />{" "}
+                  {isDownloading(agreement.id, 'SIGNED_AGREEMENT') ? "Generating PDF..." : "Download PDF"}
+                </button>
+                {getError(agreement.id, 'SIGNED_AGREEMENT') && (
+                  <div className="absolute -bottom-5 left-0 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-red-400" />
+                    <span className="text-[10px] text-red-400">Download failed</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

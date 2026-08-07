@@ -18,6 +18,7 @@ import saasManagementRoutes from './saasManagementRoutes';
 import uploadRoutes from './upload.routes';
 import mediaRoutes from './media.routes';
 import { dashboardRoutes } from './dashboard.routes';
+import { documentRoutes } from '../modules/documents';
 
 const apiRouter = Router();
 
@@ -42,5 +43,6 @@ apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/settings', settingsRoutes);
 apiRouter.use('/resident-management', residentManagementRoutes);
 apiRouter.use('/saas', saasManagementRoutes);
+apiRouter.use('/documents', documentRoutes);
 
 export default apiRouter;

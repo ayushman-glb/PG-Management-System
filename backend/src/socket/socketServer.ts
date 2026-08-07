@@ -85,7 +85,12 @@ export class SocketServer {
         }
 
         const decoded = tokenService.verifyAccessToken(token);
-        (socket as any).user = decoded;
+        (socket as any).user = {
+          id: decoded.id,
+          email: decoded.email,
+          role: decoded.role,
+          residentCode: decoded.residentCode,
+        };
         next();
       } catch (err: any) {
         logger.warn(`🔌 Socket connection rejected [Handshake Invalid Token]: ${err.message} (ID: ${socket.id})`);

@@ -584,26 +584,26 @@ model Resident {
   id                String                  @id @default(auto()) @map("_id") @db.ObjectId
   userId            String                  @unique @db.ObjectId
   user              User                    @relation(fields: [userId], references: [id])
-  pgId              String                  @db.ObjectId
-  pg                PG                      @relation(fields: [pgId], references: [id])
-  bedId             String                  @unique @db.ObjectId
-  bed               Bed                     @relation(fields: [bedId], references: [id])
-  profilePicture    String
+  pgId              String?                 @db.ObjectId
+  pg                PG?                     @relation(fields: [pgId], references: [id])
+  bedId             String?                 @unique @db.ObjectId
+  bed               Bed?                    @relation(fields: [bedId], references: [id])
+  profilePicture    String?
   name              String
-  gender            String
-  age               Int
+  gender            String?
+  age               Int?
   phone             String
   email             String
-  permanentAddress  String
+  permanentAddress  String?
   college           String?
   company           String?
-  occupation        String
-  bloodGroup        String
+  occupation        String?
+  bloodGroup        String?
   foodPreference    FoodPreference          @default(VEG)
   medicalConditions String?
-  moveInDate        DateTime
+  moveInDate        DateTime?               @default(now())
   expectedMoveOut   DateTime?
-  rentDueDate       DateTime
+  rentDueDate       DateTime?
   status            ResidentStatus          @default(ACTIVE)
   guardian          Guardian?
   emergencyContact  EmergencyContact?
@@ -1150,4 +1150,68 @@ model RoomTransferHistory {
   performedBy String?
   notes       String?
   timestamp   DateTime            @default(now())
+}
+
+// ==========================================
+// CENTRALIZED GENERATED DOCUMENT SYSTEM
+// ==========================================
+
+// GeneratedDocument — stores metadata + Cloudinary reference for every PDF
+// documentKey is deterministic: "{DOCUMENT_TYPE}:{entityType}:{entityId}:v{N}"
+// Example: "INVOICE:payment:abc123:v1", "SIGNED_AGREEMENT:agreement:xyz:v1"
+model GeneratedDocument {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  // Deterministic unique key — prevents duplicate generation
+  documentKey     String   @unique
+  // Document classification
+  documentType    String   // INVOICE | PAYMENT_RECEIPT | REFUND_RECEIPT | RENT_RECEIPT | SECURITY_DEPOSIT_RECEIPT | KYC_DOCUMENT | KYC_VERIFICATION | LEASE_AGREEMENT | SIGNED_AGREEMENT | DIGITAL_AGREEMENT | TRANSACTION_RECEIPT
+  entityType      String   // payment | agreement | resident | owner | refund
+  entityId        String   // ID of the source entity
+  // Ownership for authorization checks
+  ownerId         String?  @db.ObjectId
+  residentId      String?  @db.ObjectId
+  // File metadata
+  fileName        String
+  mimeType        String   @default("application/pdf")
+  // Cloudinary storage
+  storageProvider String   @default("cloudinary")
+  storagePublicId String?
+  storageUrl      String?
+  fileSize        Int?
+  // Integrity
+  sha256Hash      String?
+  // Versioning
+  version         Int      @default(1)
+  // Generation lifecycle: PENDING | GENERATING | READY | FAILED | STORAGE_MISSING
+  status          String   @default("PENDING")
+  // Immutable data snapshot used to generate this PDF (JSON blob)
+  sourceSnapshot  String?
+  generatedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([documentType, entityType, entityId])
+  @@index([residentId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+// DocumentAuditLog — tracks every document lifecycle event
+model DocumentAuditLog {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  documentId   String?  @db.ObjectId
+  documentKey  String?
+  documentType String
+  userId       String   @db.ObjectId
+  action       String   // DOCUMENT_GENERATION_STARTED | DOCUMENT_GENERATED | DOCUMENT_STORAGE_COMPLETED | DOCUMENT_DOWNLOAD_REQUESTED | DOCUMENT_DOWNLOADED | DOCUMENT_GENERATION_FAILED | DOCUMENT_STORAGE_MISSING | DOCUMENT_REGENERATED | DOCUMENT_CACHE_HIT
+  ipAddress    String?
+  userAgent    String?
+  success      Boolean  @default(true)
+  errorMessage String?
+  version      Int      @default(1)
+  timestamp    DateTime @default(now())
+
+  @@index([documentKey])
+  @@index([userId])
+  @@index([action])
 }

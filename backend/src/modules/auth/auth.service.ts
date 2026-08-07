@@ -140,16 +140,10 @@ export class AuthService implements IAuthService {
       );
     }
 
-    let isValid = await this.cryptoService.comparePassword(
+    const isValid = await this.cryptoService.comparePassword(
       cleanPass,
       user.passwordHash,
     );
-
-    // Fallback for demo accounts seeded with standard default passwords
-    if (!isValid && (cleanPass === "Password123!" || cleanPass === "RoomBae@123")) {
-      console.log(`ℹ️ [AUTH_AUDIT] Password Comparison: Demo credential fallback matched for user "${user.id}"`);
-      isValid = true;
-    }
 
     console.log(`🔑 [AUTH_AUDIT] Password Comparison Result: ${isValid ? "VALID" : "INVALID"} for user "${user.id}"`);
 
@@ -403,7 +397,30 @@ export class AuthService implements IAuthService {
   async me(userId: string): Promise<any> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
-    return user;
+
+    let profile: any = null;
+    if (user.role === Role.OWNER) {
+      profile = await prisma.owner.findFirst({
+        where: { userId: user.id },
+        include: { pgs: true },
+      });
+    } else if (user.role === Role.RESIDENT) {
+      profile = await prisma.resident.findFirst({
+        where: { userId: user.id },
+        include: { bed: true, pg: true },
+      });
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
+      residentCode: user.residentCode || undefined,
+      profile: profile || null,
+    };
   }
 
   async ownerProfile(userId: string): Promise<any> {

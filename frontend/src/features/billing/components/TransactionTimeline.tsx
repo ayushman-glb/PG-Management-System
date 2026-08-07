@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, FileText, CheckCircle2, Clock, RotateCcw } from "lucide-react";
+import { Download, FileText, CheckCircle2, Clock, RotateCcw, AlertTriangle } from "lucide-react";
 import { useTheme } from "../../../theme";
-import { downloadFile } from "../../../services/fileDownload.service";
-import { env } from "../../../config/env";
+import { useDocumentDownload } from "../../../hooks/useDocumentDownload";
 
 export interface TransactionItem {
   id: string;
@@ -64,7 +63,7 @@ interface TransactionTimelineProps {
 export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ onPayRetry }) => {
   const { darkMode } = useTheme();
   const [filter, setFilter] = useState<"ALL" | "PAID" | "PENDING" | "REFUNDED">("ALL");
-  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const { download, isDownloading, getError } = useDocumentDownload();
 
   const cardBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
   const rowBg = darkMode ? "bg-[#332D2B] border-[#4A443F] hover:bg-[#3D3632]" : "bg-[#F8EEE5] border-[#E6D7CA] hover:bg-[#EDE0D4]";
@@ -72,19 +71,6 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ onPayR
   const textMuted = darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]";
 
   const filtered = MOCK_TRANSACTIONS.filter((t) => filter === "ALL" || t.status === filter);
-
-  const downloadPdf = async (type: "invoice" | "receipt", item: TransactionItem) => {
-    const key = `${type}-${item.id}`;
-    setDownloadingKey(key);
-    try {
-      const endpoint = `${env.API_URL}/billing/${type === "invoice" ? "invoices" : "receipts"}/${item.id}/download`;
-      await downloadFile({ url: endpoint, filename: `${type === "invoice" ? "GST_Invoice" : "Receipt"}_${item.invoiceNumber || item.id}` });
-    } catch (err: any) {
-      alert(`Download failed: ${err.message}`);
-    } finally {
-      setDownloadingKey(null);
-    }
-  };
 
   return (
     <div className={`p-6 rounded-3xl border shadow-xl backdrop-blur-xl space-y-5 ${cardBg}`}>
@@ -176,28 +162,57 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ onPayR
               <div className="flex items-center gap-1.5">
                 {item.status === "PAID" && (
                   <>
-                    <button
-                      type="button"
-                      disabled={downloadingKey === `invoice-${item.id}`}
-                      onClick={() => downloadPdf("invoice", item)}
-                      title="Download PDF Invoice"
-                      className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
-                        darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
-                      }`}
-                    >
-                      <FileText className={`w-4 h-4 ${downloadingKey === `invoice-${item.id}` ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={downloadingKey === `receipt-${item.id}`}
-                      onClick={() => downloadPdf("receipt", item)}
-                      title="Download Payment Receipt"
-                      className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
-                        darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
-                      }`}
-                    >
-                      <Download className={`w-4 h-4 ${downloadingKey === `receipt-${item.id}` ? 'animate-spin' : ''}`} />
-                    </button>
+                    {/* Invoice download */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        disabled={isDownloading(item.id, 'INVOICE')}
+                        onClick={() => download({
+                          entityId: item.id,
+                          documentType: 'INVOICE',
+                          fileName: `RoomBae-Invoice-${item.invoiceNumber || item.id}.pdf`,
+                        })}
+                        title="Download GST Invoice (PDF)"
+                        className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
+                          darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
+                        }`}
+                      >
+                        <FileText className={`w-4 h-4 ${isDownloading(item.id, 'INVOICE') ? 'animate-spin' : ''}`} />
+                      </button>
+                      {getError(item.id, 'INVOICE') && (
+                        <div className="absolute -top-1 -right-1">
+                          <span title={getError(item.id, 'INVOICE')}>
+                            <AlertTriangle className="w-3 h-3 text-red-400" />
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Receipt download */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        disabled={isDownloading(item.id, 'PAYMENT_RECEIPT')}
+                        onClick={() => download({
+                          entityId: item.id,
+                          documentType: 'PAYMENT_RECEIPT',
+                          fileName: `RoomBae-Receipt-${item.invoiceNumber || item.id}.pdf`,
+                        })}
+                        title="Download Payment Receipt"
+                        className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
+                          darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
+                        }`}
+                      >
+                        <Download className={`w-4 h-4 ${isDownloading(item.id, 'PAYMENT_RECEIPT') ? 'animate-spin' : ''}`} />
+                      </button>
+                      {getError(item.id, 'PAYMENT_RECEIPT') && (
+                        <div className="absolute -top-1 -right-1">
+                          <span title={getError(item.id, 'PAYMENT_RECEIPT')}>
+                            <AlertTriangle className="w-3 h-3 text-red-400" />
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
 

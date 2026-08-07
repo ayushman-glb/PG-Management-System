@@ -78,7 +78,28 @@ export class ResidentService implements IResidentService {
   }
 
   async getPortalData(userId: string) {
-    const resident = await this.residentRepository.findByUserId(userId);
+    let resident = await this.residentRepository.findByUserId(userId);
+
+    if (!resident) {
+      const user = await this.userRepository.findById(userId);
+      if (user && user.role === Role.RESIDENT) {
+        try {
+          const defaultPg = await this.residentRepository.findBedById("").catch(() => null);
+          resident = await (this.residentRepository as any).db?.resident.create({
+            data: {
+              userId: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone || "+919800000000",
+              status: "ACTIVE",
+            },
+            include: { bed: { include: { room: true } }, pg: true, user: true, payments: true, complaints: true, visitors: true, leaveApplications: true }
+          });
+        } catch {
+          // continue
+        }
+      }
+    }
 
     if (!resident) {
       throw new AppError('Resident profile record not found', 404);
@@ -91,7 +112,7 @@ export class ResidentService implements IResidentService {
       } catch {}
     }
 
-    const roomBeds = await this.residentRepository.findRoomBeds(resident.bed.roomId);
+    const roomBeds = resident.bed?.roomId ? await this.residentRepository.findRoomBeds(resident.bed.roomId) : [];
 
     const roommates = roomBeds
       .filter(b => b.resident && b.resident.id !== resident.id)
@@ -101,24 +122,28 @@ export class ResidentService implements IResidentService {
         bedNumber: b.bedNumber
       }));
 
+    const roomNumber = resident.bed?.room?.roomNumber || 'N/A';
+    const bedNumber = resident.bed?.bedNumber || 'Unassigned';
+    const propertyName = resident.pg?.name || 'RoomBae Co-living';
+
     return {
       profile: {
         id: resident.id,
-        name: resident.user.name,
-        email: resident.user.email,
-        phone: resident.user.phone,
-        residentCode: resident.user.residentCode,
-        roomNumber: resident.bed.room.roomNumber,
-        bedNumber: resident.bed.bedNumber,
-        propertyName: resident.pg?.name || 'RoomBae Co-living',
+        name: resident.user?.name || resident.name,
+        email: resident.user?.email || resident.email,
+        phone: resident.user?.phone || resident.phone,
+        residentCode: resident.user?.residentCode,
+        roomNumber,
+        bedNumber,
+        propertyName,
         moveInDate: resident.moveInDate,
         rentDueDate: resident.rentDueDate,
         kycStatus: 'VERIFIED',
         kycDetails: decryptedKyc
       },
       wifiCredentials: {
-        ssid: `${resident.pg?.name || 'RoomBae'}_Guest_WiFi`,
-        password: `RoomBae@${resident.bed.room.roomNumber}`
+        ssid: `${propertyName}_Guest_WiFi`,
+        password: `RoomBae@${roomNumber}`
       },
       roommates,
       payments: resident.payments || [],

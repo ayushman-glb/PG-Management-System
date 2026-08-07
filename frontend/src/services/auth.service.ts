@@ -1,5 +1,6 @@
 import { env } from "@config/env";
 import type { ApiResponse } from "../types";
+import { updateSocketAuth, disconnectSocket } from "./socket";
 
 export class AuthService {
   private getToken(): string | null {
@@ -19,6 +20,7 @@ export class AuthService {
       localStorage.setItem("accessToken", token);
       localStorage.setItem("token", token);
       localStorage.setItem("roombae_access_token", token);
+      updateSocketAuth(token);
     } catch (e) {}
   }
 
@@ -27,6 +29,7 @@ export class AuthService {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("token");
       localStorage.removeItem("roombae_access_token");
+      disconnectSocket();
     } catch (e) {}
   }
 
