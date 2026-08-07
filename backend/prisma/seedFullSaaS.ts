@@ -37,7 +37,9 @@ export async function seedFullSaaS() {
         emailVerified: true,
         passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG' // Password123!
       },
-      update: {}
+      update: {
+        passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG'
+      }
     });
 
     const owner = await prisma.owner.upsert({
@@ -162,7 +164,9 @@ export async function seedFullSaaS() {
         emailVerified: true,
         passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG'
       },
-      update: {}
+      update: {
+        passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG'
+      }
     });
 
     const bedObj = createdBeds[(r - 1) % createdBeds.length];

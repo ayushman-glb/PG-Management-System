@@ -296,6 +296,9 @@ model User {
   loginHistories     LoginHistory[]
   deviceHistories    DeviceHistory[]
   auditLogs          ActivityLog[]
+
+  @@index([residentCode])
+  @@index([phone])
 }
 
 model OtpToken {
