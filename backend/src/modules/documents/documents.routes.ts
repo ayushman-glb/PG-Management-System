@@ -7,13 +7,10 @@ const router = Router();
 // All document download routes require authentication
 router.use(authenticate);
 
-// ─── Typed download routes (new centralized API) ──────────────────────────────
-// GET /api/v1/documents/:entityId/:type  — generic download by type
-router.get('/:entityId/:type', (req, res, next) =>
-  Container.documentController.download(req as any, res, next)
-);
-
-// ─── Named convenience routes ─────────────────────────────────────────────────
+// ─── Named convenience routes (MUST be registered BEFORE generic routes) ──────
+// Express matches routes in registration order — `/:entityId/:type` would
+// otherwise intercept `/invoice/:paymentId`, `/receipt/:paymentId`, etc.
+// and treat `invoice` as entityId → PDF generation fails every time.
 // GET /api/v1/documents/invoice/:paymentId
 router.get('/invoice/:entityId', (req, res, next) =>
   Container.documentController.downloadInvoice(req as any, res, next)
@@ -42,6 +39,12 @@ router.get('/refund/:entityId', (req, res, next) =>
 // GET /api/v1/documents/status/:documentKey  — poll generation status
 router.get('/status/:documentKey', (req, res, next) =>
   Container.documentController.getStatus(req as any, res, next)
+);
+
+// ─── Typed download routes (generic, MUST stay AFTER named routes) ────────────
+// GET /api/v1/documents/:entityId/:type  — generic download by type
+router.get('/:entityId/:type', (req, res, next) =>
+  Container.documentController.download(req as any, res, next)
 );
 
 export default router;

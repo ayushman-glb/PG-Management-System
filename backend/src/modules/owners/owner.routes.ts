@@ -1,9 +1,14 @@
 import { Router } from "express";
 import { OwnerController } from "./owner.controller";
+import { authenticate, authorize } from "../../middleware/authMiddleware";
+import { Role } from "@prisma/client";
 
 const router = Router();
 
-router.get("/", OwnerController.getOwners);
+// All owner routes require authentication
+router.use(authenticate);
+
+router.get("/", authorize(Role.SUPER_ADMIN, Role.ADMIN), OwnerController.getOwners);
 router.get("/profile", OwnerController.getProfile);
 router.get("/:ownerId/metrics", OwnerController.getMetrics);
 router.get("/:id", OwnerController.getOwnerById);
@@ -19,5 +24,7 @@ router.post("/property/:pgId/rooms/batch", OwnerController.batchCreateRooms);
 router.post("/:ownerId/subscription", OwnerController.selectSubscription);
 router.post("/property/:pgId/submit", OwnerController.submitForApproval);
 router.get("/:ownerId/progress", OwnerController.getProgress);
+// Alias for frontend compatibility — frontend calls /owners/:ownerId/status
+router.get("/:ownerId/status", OwnerController.getProgress);
 
 export default router;

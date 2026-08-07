@@ -33,20 +33,20 @@ export class PdfKitInvoiceService implements IPdfGeneratorService {
 
   /**
    * @deprecated — Use generateInvoicePdfBuffer() instead.
-   * Streams PDF into outputStream if provided; otherwise returns doc instance.
-   * Kept for legacy callers only.
+   * Streams the pre-generated PDF buffer into outputStream if provided.
+   * Fixed: previously created an empty PDFDocument and ended it immediately,
+   * causing a race condition where the output stream received an empty PDF
+   * followed by the real buffer — corrupting the download.
    */
   async generateInvoicePdf(payment: any, outputStream?: NodeJS.WritableStream): Promise<InstanceType<typeof PDFDocument>> {
     const buf = await this.generateInvoicePdfBuffer(payment);
+    if (outputStream) {
+      // Write the complete buffer directly — no empty doc race condition
+      outputStream.write(buf);
+      outputStream.end();
+    }
+    // Return a minimal doc instance for interface compatibility
     const doc = new PDFDocument({ margin: 50, size: 'A4', autoFirstPage: false });
-    if (outputStream) {
-      doc.pipe(outputStream);
-    }
-    // End immediately — buffer is already complete
-    doc.end();
-    if (outputStream) {
-      outputStream.end(buf);
-    }
     return doc;
   }
 }

@@ -82,6 +82,8 @@ export const useDocumentDownload = () => {
   const [states, setStates] = useState<Record<string, DocumentDownloadState>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const retryTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // Tracks in-flight downloads to prevent duplicate requests (avoids stale closure)
+  const inFlightRef = useRef<Record<string, boolean>>({});
 
   const buildKey = (entityId: string, documentType: DocumentType) =>
     `${documentType}:${entityId}`;
@@ -104,6 +106,7 @@ export const useDocumentDownload = () => {
 
   /**
    * Download a document. If backend returns 202, automatically retries.
+   * Uses a ref for in-flight tracking to avoid stale closures.
    */
   const download = useCallback(async (opts: DownloadDocumentOptions): Promise<void> => {
     const {
@@ -116,11 +119,11 @@ export const useDocumentDownload = () => {
 
     const key = buildKey(entityId, documentType);
 
-    // Prevent duplicate in-flight downloads
-    const currentState = states[key];
-    if (currentState === 'generating' || currentState === 'downloading') {
+    // Prevent duplicate in-flight downloads using a ref (not state — avoids stale closure)
+    if (inFlightRef.current[key]) {
       return;
     }
+    inFlightRef.current[key] = true;
 
     clearError(key);
     setState(key, 'generating');
@@ -136,12 +139,13 @@ export const useDocumentDownload = () => {
       attempts++;
 
       try {
-        setState(key, attempts > 1 ? 'generating' : 'generating');
+        setState(key, 'generating');
 
         // Use the secure download utility (Authorization header, no URL token)
         await downloadFile({ url, filename: resolvedFileName });
 
         setState(key, 'success');
+        inFlightRef.current[key] = false;
 
         // Auto-reset to idle after 3 seconds
         setTimeout(() => {
@@ -168,18 +172,20 @@ export const useDocumentDownload = () => {
         if (err.message?.includes('401') || err.message?.includes('403')) {
           setState(key, 'error');
           setError(key, 'Access denied. You are not authorized to download this document.');
+          inFlightRef.current[key] = false;
           return;
         }
 
         // Final failure
         setState(key, 'error');
         setError(key, err.message || `Failed to download ${friendlyName}.`);
+        inFlightRef.current[key] = false;
       }
     };
 
     await attemptDownload();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [states]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Get the current download state for a given document.
@@ -216,12 +222,17 @@ export const useDocumentDownload = () => {
   const reset = useCallback((entityId: string, documentType: DocumentType) => {
     const key = buildKey(entityId, documentType);
     clearError(key);
+    inFlightRef.current[key] = false;
+    if (retryTimers.current[key]) {
+      clearTimeout(retryTimers.current[key]);
+      delete retryTimers.current[key];
+    }
     setStates(prev => {
       const next = { ...prev };
       delete next[key];
       return next;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

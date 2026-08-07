@@ -19,9 +19,10 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies && req.cookies.accessToken) {
     token = req.cookies.accessToken;
-  } else if (req.query && req.query.token) {
-    token = req.query.token as string;
   }
+  // SECURITY: JWT tokens must NEVER be accepted via URL query parameters.
+  // Tokens in URLs get logged by servers, stored in browser history, and
+  // leaked in Referer headers. All clients must use Authorization header.
 
   if (!token) {
     console.warn(`🔒 Auth Warning: No token provided on request [Path: ${req.method} ${req.originalUrl}]`);
