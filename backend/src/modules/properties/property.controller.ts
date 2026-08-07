@@ -40,4 +40,10 @@ export class PropertyController {
     const summary = await this.propertyService.getOwnerSummary(ownerId as string);
     return ApiResponse.success(res, 'Owner summary metrics retrieved', summary);
   });
+
+  getMealSchedules = catchAsync(async (req: Request, res: Response) => {
+    const pgId = req.params.pgId || (req.query.pgId as string);
+    const schedules = await (this.propertyService as any).db?.mealSchedule.findMany({ where: { pgId } }) || [];
+    return ApiResponse.success(res, 'Meal schedules retrieved', schedules);
+  });
 }

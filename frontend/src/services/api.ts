@@ -75,6 +75,15 @@ class ApiClient {
     });
   }
 
+  public patch<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: "PATCH",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json", ...(options?.headers as Record<string, string>) },
+    });
+  }
+
   public delete<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
@@ -122,6 +131,29 @@ class ApiClient {
   public getAgreementById = agreementService.getAgreementById.bind(agreementService);
   public signAgreement = agreementService.signAgreement.bind(agreementService);
   public verifyAgreement = agreementService.verifyAgreement.bind(agreementService);
+
+  // Rental Platform APIs
+  public toggleShortlist = (propertyId: string) => this.post(`/shortlist/${propertyId}`);
+  public getShortlist = () => this.get("/shortlist");
+  public requestTour = (data: { propertyId: string; requestedSlot: string; notes?: string }) => this.post("/tours", data);
+  public getTours = () => this.get("/tours");
+  public updateTourStatus = (id: string, data: { status: string; ownerNotes?: string; requestedSlot?: string }) => this.patch(`/tours/${id}`, data);
+
+  public createApplication = (data: any) => this.post("/applications", data);
+  public uploadApplicationDoc = (appId: string, docData: any) => this.post(`/applications/${appId}/documents`, docData);
+  public getApplication = (id: string) => this.get(`/applications/${id}`);
+  public getApplications = () => this.get("/applications");
+  public updateApplicationStatus = (id: string, statusData: any) => this.patch(`/applications/${id}/status`, statusData);
+  public signLease = (id: string, signData: any) => this.post(`/applications/${id}/sign-lease`, signData);
+
+  public getOrCreateThread = (pgId: string) => this.post("/messages/thread", { pgId });
+  public getThreads = () => this.get("/messages/threads");
+  public getThreadMessages = (threadId: string) => this.get(`/messages/thread/${threadId}`);
+  public sendMessage = (data: { threadId: string; content: string }) => this.post("/messages", data);
+
+  public getMoveInInfo = (propertyId: string) => this.get(`/move-in/${propertyId}`);
+  public updateMoveInInfo = (propertyId: string, data: any) => this.post(`/move-in/${propertyId}`, data);
+  public getTenantDashboardSummary = () => this.get("/move-in/tenant-summary");
 }
 
 export const api = new ApiClient();

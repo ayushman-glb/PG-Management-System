@@ -18,6 +18,10 @@ const Operations = lazy(() => import("@features/operations/pages/Operations"));
 const ContentPage = lazy(() => import("@features/dashboard/pages/ContentPage"));
 const ResidentPortal = lazy(() => import("@features/residents/pages/ResidentPortal"));
 const ResidentRegister = lazy(() => import("@features/residents/pages/ResidentRegister"));
+const ShortlistPage = lazy(() => import("@features/search/pages/ShortlistPage"));
+const ToursPage = lazy(() => import("@features/search/pages/ToursPage"));
+const ApplicationPage = lazy(() => import("@features/search/pages/ApplicationPage"));
+const MoveInDashboardPage = lazy(() => import("@features/search/pages/MoveInDashboardPage"));
 
 interface RoutesProps {
   page: Page;
@@ -56,6 +60,14 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
       return <PGListing navigate={navigate} />;
     case "pg-details":
       return <PGDetails navigate={navigate} />;
+    case "shortlist":
+      return <ShortlistPage navigate={navigate} />;
+    case "tours":
+      return <ToursPage navigate={navigate} />;
+    case "application":
+      return <ApplicationPage navigate={navigate} />;
+    case "move-in-dashboard":
+      return <MoveInDashboardPage navigate={navigate} />;
     case "auth":
       return <Auth navigate={navigate} />;
     case "complete-profile":

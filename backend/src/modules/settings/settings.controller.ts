@@ -24,4 +24,13 @@ export class SettingsController {
     await settingsService.softDeleteAccount(userId, reason, req.ip, req.get('user-agent'));
     return ApiResponse.success(res, 'Account soft-deleted');
   });
+
+  getAuditLogs = catchAsync(async (req: Request, res: Response) => {
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+    const logs = await prisma.activityLog.findMany({
+      take: limit,
+      orderBy: { timestamp: 'desc' }
+    });
+    return ApiResponse.success(res, 'Audit logs retrieved', logs);
+  });
 }

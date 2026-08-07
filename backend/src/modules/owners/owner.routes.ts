@@ -3,6 +3,10 @@ import { OwnerController } from "./owner.controller";
 
 const router = Router();
 
+router.get("/", OwnerController.getOwners);
+router.get("/profile", OwnerController.getProfile);
+router.get("/:ownerId/metrics", OwnerController.getMetrics);
+router.get("/:id", OwnerController.getOwnerById);
 router.post("/onboard", OwnerController.runFullOnboarding);
 router.put("/:ownerId/personal", OwnerController.savePersonalDetails);
 router.post("/:ownerId/kyc", OwnerController.submitKYC);

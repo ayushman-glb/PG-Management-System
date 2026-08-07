@@ -220,4 +220,84 @@ export class OwnerController {
       res.status(400).json({ success: false, message: err.message });
     }
   }
+
+  static async getOwners(req: Request, res: Response): Promise<void> {
+    try {
+      const owners = await Container.db.owner.findMany({ include: { pgs: true } });
+      res.status(200).json({ success: true, message: "Owners retrieved", data: owners });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  static async getOwnerById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const owner = await Container.db.owner.findUnique({ where: { id }, include: { pgs: true } });
+      if (!owner) {
+        res.status(404).json({ success: false, message: "Owner not found" });
+        return;
+      }
+      res.status(200).json({ success: true, message: "Owner retrieved", data: owner });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  static async getMetrics(req: Request, res: Response): Promise<void> {
+    try {
+      const { ownerId } = req.params;
+      const pgs = await Container.db.pG.findMany({ where: { ownerId } });
+      const pgIds = pgs.map(p => p.id);
+
+      const totalBeds = pgs.reduce((acc, p) => acc + (p.totalBedsCount || p.capacity || 0), 0);
+      const occupiedBeds = pgs.reduce((acc, p) => acc + (p.currentOccupancy || 0), 0);
+      const occupancyRatePercent = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 0;
+
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const paidPayments = await Container.db.payment.findMany({
+        where: { pgId: { in: pgIds }, status: 'PAID', paymentDate: { gte: startOfMonth } },
+        select: { totalAmount: true }
+      });
+      const mrr = paidPayments.reduce((sum, p) => sum + p.totalAmount, 0);
+
+      const activeComplaints = await Container.db.complaint.count({
+        where: { pgId: { in: pgIds }, status: { in: ['OPEN', 'IN_PROGRESS'] } }
+      });
+
+      const pendingPayments = await Container.db.payment.findMany({
+        where: { pgId: { in: pgIds }, status: 'PENDING' },
+        select: { totalAmount: true }
+      });
+      const pendingDuesAmount = pendingPayments.reduce((sum, p) => sum + p.totalAmount, 0);
+
+      const metrics = {
+        totalProperties: pgs.length,
+        mrr: parseFloat(mrr.toFixed(2)),
+        totalBeds,
+        occupiedBeds,
+        occupancyRatePercent: Number(occupancyRatePercent.toFixed(1)),
+        activeComplaints,
+        pendingDuesAmount: parseFloat(pendingDuesAmount.toFixed(2))
+      };
+
+      res.status(200).json({ success: true, message: "Owner metrics retrieved", data: metrics });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  static async getProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.id || (req as any).user?.userId || req.params.userId;
+      const owner = await Container.db.owner.findUnique({ where: { userId }, include: { pgs: true } });
+      if (!owner) {
+        res.status(404).json({ success: false, message: "Owner profile not found" });
+        return;
+      }
+      res.status(200).json({ success: true, message: "Owner profile retrieved", data: owner });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
 }

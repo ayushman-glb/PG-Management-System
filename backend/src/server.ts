@@ -88,7 +88,6 @@ async function bootstrap() {
         const actualPort = address ? address.port : port;
 
         const apiUrl = `${env.API_BASE_URL.replace(/\/$/, "")}${env.API_PREFIX}`;
-        const graphqlUrl = `${env.API_BASE_URL.replace(/\/$/, "")}${env.GRAPHQL_PATH}`;
         const swaggerUrl = `${env.API_BASE_URL.replace(/\/$/, "")}/api/docs`;
 
         const banner = [
@@ -98,7 +97,6 @@ async function bootstrap() {
           `✅ MongoDB Atlas Connected    : ${mongoStatus}`,
           `✅ Authentication Module Ready: Active`,
           `✅ REST APIs Loaded           : ${apiUrl}`,
-          `✅ GraphQL Loaded             : ${graphqlUrl}`,
           `✅ Swagger Loaded             : ${swaggerUrl}`,
           `✅ OTP Service Running        : Phone & Email OTP Active`,
           `✅ Email Service Running      : Transactional Dispatch Active`,

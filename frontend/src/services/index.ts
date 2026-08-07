@@ -12,4 +12,3 @@ export * from "./visitor.service";
 export * from "./document.service";
 export * from "./search.service";
 export * from "./socket.service";
-export * from "./graphql.service";

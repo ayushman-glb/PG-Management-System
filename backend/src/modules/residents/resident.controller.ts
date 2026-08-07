@@ -3,6 +3,7 @@ import { IResidentService } from '../../interfaces/services/IResidentService';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
 import { AuthRequest } from '../../middleware/authMiddleware';
+import { Container } from '../../container';
 
 export class ResidentController {
   constructor(private readonly residentService: IResidentService) {}
@@ -46,5 +47,53 @@ export class ResidentController {
     const { date, mealType } = req.body;
     const result = await this.residentService.toggleMealSkip(userId, date, mealType);
     return ApiResponse.success(res, result.message, result);
+  });
+
+  getResidentById = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const resident = await Container.db.resident.findUnique({ where: { id } });
+    if (!resident) {
+      return ApiResponse.error(res, 'Resident not found', undefined, 404);
+    }
+    return ApiResponse.success(res, 'Resident retrieved', resident);
+  });
+
+  updateStatus = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { residentId } = req.params;
+    const { status, reason } = req.body;
+    const updated = await Container.db.resident.update({
+      where: { id: residentId },
+      data: { status: status as any }
+    });
+    await Container.db.residentStatusHistory.create({
+      data: {
+        residentId,
+        status: status as any,
+        reason,
+        updatedBy: req.user?.id || 'system'
+      }
+    });
+    return ApiResponse.success(res, 'Resident status updated', updated);
+  });
+
+  getStatusHistory = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { residentId } = req.params;
+    const history = await Container.db.residentStatusHistory.findMany({
+      where: { residentId },
+      orderBy: { createdAt: 'desc' }
+    });
+    return ApiResponse.success(res, 'Resident status history retrieved', history);
+  });
+
+  getProfile = catchAsync(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id || (req as any).user?.userId || req.params.userId;
+    const resident = await Container.db.resident.findUnique({
+      where: { userId },
+      include: { pg: true, bed: true }
+    });
+    if (!resident) {
+      return ApiResponse.error(res, 'Resident profile not found', undefined, 404);
+    }
+    return ApiResponse.success(res, 'Resident profile retrieved', resident);
   });
 }

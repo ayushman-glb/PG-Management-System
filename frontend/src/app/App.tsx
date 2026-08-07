@@ -21,6 +21,10 @@ export type Page =
   | "resident-portal"
 
   | "resident-register"
+  | "shortlist"
+  | "tours"
+  | "application"
+  | "move-in-dashboard"
   | "rooms"
   | "beds"
   | "visitors"

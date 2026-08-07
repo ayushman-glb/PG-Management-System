@@ -106,6 +106,57 @@ export class BillingController {
     const analytics = await this.billingService.getPaymentAnalytics(ownerId);
     return ApiResponse.success(res, 'Payment analytics retrieved', analytics);
   });
+
+  getPayments = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { pgId, status } = req.query;
+    const where: any = {};
+    if (pgId) where.pgId = pgId as string;
+    if (status) where.status = status as string;
+    const payments = await Container.db.payment.findMany({ where, orderBy: { createdAt: 'desc' } });
+    return ApiResponse.success(res, 'Payments retrieved', payments);
+  });
+
+  getFineRules = catchAsync(async (req: AuthRequest, res: Response) => {
+    const pgId = req.query.pgId as string;
+    const rules = await Container.db.fineRule.findMany({ where: { pgId, isActive: true } });
+    return ApiResponse.success(res, 'Fine rules retrieved', rules);
+  });
+
+  getResidentFines = catchAsync(async (req: AuthRequest, res: Response) => {
+    const residentId = req.params.residentId || (req.query.residentId as string);
+    const fines = await Container.db.fine.findMany({ where: { residentId }, orderBy: { createdAt: 'desc' } });
+    return ApiResponse.success(res, 'Resident fines retrieved', fines);
+  });
+
+  createFineRule = catchAsync(async (req: AuthRequest, res: Response) => {
+    const rule = await Container.db.fineRule.create({ data: req.body });
+    return ApiResponse.success(res, 'Fine rule created', rule, undefined, 201);
+  });
+
+  issueFine = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { residentId, fineType, amount, reason, dueDate } = req.body;
+    const fine = await Container.db.fine.create({
+      data: {
+        residentId,
+        fineType,
+        amount,
+        reason,
+        dueDate: new Date(dueDate),
+        status: 'UNPAID'
+      }
+    });
+    return ApiResponse.success(res, 'Fine issued', fine, undefined, 201);
+  });
+
+  waiveFine = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { fineId } = req.params;
+    const ownerId = req.user?.id || req.body.ownerId;
+    const fine = await Container.db.fine.update({
+      where: { id: fineId },
+      data: { status: 'WAIVED', waivedBy: ownerId, waivedAt: new Date() }
+    });
+    return ApiResponse.success(res, 'Fine waived', fine);
+  });
 }
 
 async function resolveUserIdentifiers(userId: string, role: string) {

@@ -11,7 +11,6 @@ import apiRouter from "./routes/apiRouter";
 import { globalErrorHandler } from "./middleware/errorMiddleware";
 import { generalLimiter } from "./middleware/rateLimiter";
 import { correlationIdMiddleware } from "./middleware/correlationMiddleware";
-import { setupGraphQLServer } from "./graphql/apolloServer";
 import { setupSoapServer } from "./services/soapService";
 import { APP_INFO, PathResolver } from "./utils/pathResolver";
 import passport from "./config/passport";
@@ -27,7 +26,7 @@ app.use(correlationIdMiddleware);
 // Security & Optimization Middlewares
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Allows Apollo GraphQL Studio and Swagger UI in dev
+    contentSecurityPolicy: false,
   }),
 );
 const allowedOrigins = [
@@ -143,7 +142,6 @@ app.get("/health", async (req, res) => {
     },
     services: {
       restApi: "READY",
-      graphQL: "READY",
       soapERP: "READY",
       webSocket: "READY",
       swaggerDocs: "READY",
@@ -182,7 +180,6 @@ app.get("/", (req, res) => {
     version: APP_INFO.version,
     timestamp: new Date().toISOString(),
     documentation: "/api/v1",
-    graphql: "/graphql",
     health: "/health",
   });
 });
@@ -190,8 +187,7 @@ app.get("/", (req, res) => {
 // REST API v1 Routes
 app.use(env.API_PREFIX, apiRouter);
 
-// Initialize Dual API Services: GraphQL & SOAP ERP
-setupGraphQLServer(app);
+// Initialize SOAP ERP Service
 setupSoapServer(app);
 
 // Global Error Handler

@@ -16,11 +16,7 @@
     "test": "jest --detectOpenHandles"
   },
   "dependencies": {
-    "@apollo/server": "^4.11.3",
     "@prisma/client": "^5.22.0",
-
-
-
 
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.7.5",
@@ -52,8 +48,6 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.0",
     "file-type": "^22.0.1",
-    "graphql": "^16.10.0",
-
     "helmet": "^8.3.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",

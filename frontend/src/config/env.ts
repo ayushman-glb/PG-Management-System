@@ -8,11 +8,6 @@ export const env = {
     (isLocalhost || isDev
       ? "http://localhost:5000/api/v1"
       : "https://pg-management-system-boxb.onrender.com/api/v1"),
-  GRAPHQL_URL:
-    import.meta.env.VITE_GRAPHQL_URL ||
-    (isLocalhost || isDev
-      ? "http://localhost:5000/graphql"
-      : "https://pg-management-system-boxb.onrender.com/graphql"),
   SOCKET_URL:
     import.meta.env.VITE_SOCKET_URL ||
     (isLocalhost || isDev

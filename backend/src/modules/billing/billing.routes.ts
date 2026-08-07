@@ -6,6 +6,13 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get('/payments', (req, res, next) => Container.billingController.getPayments(req, res, next));
+router.get('/fine-rules', (req, res, next) => Container.billingController.getFineRules(req, res, next));
+router.post('/fine-rules', (req, res, next) => Container.billingController.createFineRule(req, res, next));
+router.get('/residents/:residentId/fines', (req, res, next) => Container.billingController.getResidentFines(req, res, next));
+router.post('/fines', (req, res, next) => Container.billingController.issueFine(req, res, next));
+router.post('/fines/:fineId/waive', (req, res, next) => Container.billingController.waiveFine(req, res, next));
+
 router.post('/orders', (req, res, next) => Container.billingController.createOrder(req, res, next));
 router.post('/create-order', (req, res, next) => Container.billingController.createOrder(req, res, next));
 

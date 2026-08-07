@@ -19,6 +19,10 @@ import uploadRoutes from './upload.routes';
 import mediaRoutes from './media.routes';
 import { dashboardRoutes } from './dashboard.routes';
 import { documentRoutes } from '../modules/documents';
+import { toursRoutes } from '../modules/tours';
+import { applicationsRoutes } from '../modules/applications';
+import { messagesRoutes } from '../modules/messages';
+import { moveInRoutes } from '../modules/moveIn';
 
 const apiRouter = Router();
 
@@ -44,5 +48,10 @@ apiRouter.use('/settings', settingsRoutes);
 apiRouter.use('/resident-management', residentManagementRoutes);
 apiRouter.use('/saas', saasManagementRoutes);
 apiRouter.use('/documents', documentRoutes);
+apiRouter.use('/tours', toursRoutes);
+apiRouter.use('/shortlist', toursRoutes);
+apiRouter.use('/applications', applicationsRoutes);
+apiRouter.use('/messages', messagesRoutes);
+apiRouter.use('/move-in', moveInRoutes);
 
 export default apiRouter;

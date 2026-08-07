@@ -100,6 +100,10 @@ export class SocketServer {
 
     SocketServer.io.on("connection", (socket: Socket) => {
       logger.info(`🔌 Socket connected: ${socket.id}`);
+      const userId = (socket as any).user?.id;
+      if (userId) {
+        socket.join(`user_${userId}`);
+      }
 
       socket.on("auth_refresh", (newToken: string) => {
         try {
@@ -205,6 +209,16 @@ export class SocketServer {
   ) {
     if (SocketServer.io) {
       SocketServer.io.to(`resident_${residentId}`).emit(event, payload);
+    }
+  }
+
+  public static emitToUser(
+    userId: string,
+    event: string,
+    payload: any,
+  ) {
+    if (SocketServer.io) {
+      SocketServer.io.to(`user_${userId}`).to(`owner_${userId}`).to(`resident_${userId}`).emit(event, payload);
     }
   }
 }
