@@ -104,7 +104,7 @@ export class AuthRepository implements IUserRepository {
       },
     });
 
-    // 4. Auto-create linked Owner or Resident profile record
+    // 4. Auto-create linked Owner or Resident profile record with real user data
     try {
       if (newUser.role === Role.OWNER) {
         const existingOwner = await this.db.owner.findFirst({ where: { userId: newUser.id } });
@@ -114,38 +114,29 @@ export class AuthRepository implements IUserRepository {
               userId: newUser.id,
               name: newUser.name,
               email: newUser.email,
-              phone: newUser.phone || "+919876543210",
-            photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
-              address: "Indiranagar, Bengaluru",
-              aadhaarNumber: "452189012345",
-              panNumber: "ABCDE1234F",
-              upiId: "owner@okaxis",
-              bankName: "HDFC Bank",
-              accountNumber: "5010023456789",
-              ifscCode: "HDFC0001234",
-              emergencyContact: "+919123456789",
+              phone: newUser.phone || "",
+              photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+              address: "",
+              aadhaarNumber: "",
+              panNumber: "",
+              upiId: "",
+              bankName: "",
+              accountNumber: "",
+              ifscCode: "",
+              emergencyContact: "",
             },
           });
         }
       } else if (newUser.role === Role.RESIDENT) {
         const existingResident = await this.db.resident.findFirst({ where: { userId: newUser.id } });
         if (!existingResident) {
-          const defaultPg = await this.db.pG.findFirst();
-          const defaultBed = await this.db.bed.findFirst();
           await this.db.resident.create({
             data: {
               userId: newUser.id,
               name: newUser.name,
               email: newUser.email,
-              phone: newUser.phone || "+919800000000",
+              phone: newUser.phone || "",
               profilePicture: newUser.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
-              pgId: defaultPg?.id || null,
-              bedId: defaultBed?.id || null,
-              gender: "Male",
-              age: 22,
-              permanentAddress: "Indiranagar, Bengaluru",
-              occupation: "Software Engineer",
-              bloodGroup: "O+",
               status: "ACTIVE",
             },
           });
@@ -208,16 +199,12 @@ export class AuthRepository implements IUserRepository {
 
     try {
       if (newUser.role === Role.RESIDENT) {
-        const defaultPg = await this.db.pG.findFirst();
-        const defaultBed = await this.db.bed.findFirst();
         await this.db.resident.create({
           data: {
             userId: newUser.id,
             name: newUser.name,
             email: newUser.email,
-            phone: newUser.phone || "+919800000000",
-            pgId: defaultPg?.id || null,
-            bedId: defaultBed?.id || null,
+            phone: newUser.phone || "",
             status: "ACTIVE",
           },
         });
@@ -248,29 +235,25 @@ export class AuthRepository implements IUserRepository {
             userId: newUser.id,
             name: newUser.name,
             email: newUser.email,
-            phone: newUser.phone || "+919876543210",
-               photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
-            address: "Indiranagar, Bengaluru",
-            aadhaarNumber: "452189012345",
-            panNumber: "ABCDE1234F",
-            upiId: "owner@okaxis",
-            bankName: "HDFC Bank",
-            accountNumber: "5010023456789",
-            ifscCode: "HDFC0001234",
-            emergencyContact: "+919123456789",
+            phone: newUser.phone || "",
+            photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+            address: "",
+            aadhaarNumber: "",
+            panNumber: "",
+            upiId: "",
+            bankName: "",
+            accountNumber: "",
+            ifscCode: "",
+            emergencyContact: "",
           },
         });
       } else if (newUser.role === Role.RESIDENT) {
-        const defaultPg = await this.db.pG.findFirst();
-        const defaultBed = await this.db.bed.findFirst();
         await this.db.resident.create({
           data: {
             userId: newUser.id,
             name: newUser.name,
             email: newUser.email,
-            phone: newUser.phone || "+919800000000",
-            pgId: defaultPg?.id || null,
-            bedId: defaultBed?.id || null,
+            phone: newUser.phone || "",
             status: "ACTIVE",
           },
         });

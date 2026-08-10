@@ -86,8 +86,17 @@ export class AuthController {
   });
 
   logout = catchAsync(async (req: Request, res: Response) => {
+    const token = req.cookies.refreshToken || req.body.refreshToken || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined);
+    if (token) {
+      await this.authService.logout(token);
+    }
     res.clearCookie("refreshToken", {
       httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+    res.clearCookie("accessToken", {
+      httpOnly: false,
       secure: env.NODE_ENV === "production",
       sameSite: "lax",
     });
@@ -172,17 +181,19 @@ export class AuthController {
   me = catchAsync(async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     if (!userId) {
-      return ApiResponse.success(res, "Guest Session", {
-        id: "guest",
-        name: "Guest User",
-        email: "guest@roombae.com",
-        role: "OWNER",
-        residentCode: undefined,
-        avatarUrl: undefined,
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "TOKEN_REQUIRED",
+          message: "Authentication required. Please log in.",
+        },
       });
     }
     const result = await this.authService.me(userId);
-    return ApiResponse.success(res, "Current user details", result);
+    return ApiResponse.success(res, "Current user details", {
+      user: result,
+      ...result,
+    });
   });
 
   googleLogin = (req: Request, res: Response, next: NextFunction) => {

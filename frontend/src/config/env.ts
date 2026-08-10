@@ -7,12 +7,12 @@ export const env = {
     import.meta.env.VITE_API_BASE_URL ||
     (isLocalhost || isDev
       ? "http://localhost:5000/api/v1"
-      : "https://pg-management-system-boxb.onrender.com/api/v1"),
+      : ""),
   SOCKET_URL:
     import.meta.env.VITE_SOCKET_URL ||
     (isLocalhost || isDev
       ? "http://localhost:5000"
-      : "https://pg-management-system-boxb.onrender.com"),
+      : ""),
   MODE: import.meta.env.MODE ?? (isDev ? "development" : "production"),
   IS_DEV: isDev,
   IS_PROD: !isDev,

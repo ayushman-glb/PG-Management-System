@@ -1,43 +1,16 @@
-import { useState, useEffect } from "react";
-import { authService } from "@services/auth.service";
-import type { User } from "@types";
+import { useAuth as useAuthContext } from "@providers/AuthProvider";
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    const cookieToken = document.cookie.match(/(?:^|; )accessToken=([^;]+)/);
-    const hasToken = token || (cookieToken ? decodeURIComponent(cookieToken[1]) : null);
-    if (hasToken) {
-      authService
-        .getCurrentUser()
-        .then((res) => setUser(res.user || res || null))
-        .catch(() => setUser(null))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = async (credentials: any) => {
-    const res = await authService.login(credentials);
-    const token = res?.accessToken || res?.token;
-    if (res?.user && token) {
-      localStorage.setItem("accessToken", token);
-      localStorage.setItem("token", token);
-      setUser(res.user);
-    }
-    return res;
+  const ctx = useAuthContext();
+  return {
+    user: ctx.user,
+    loading: ctx.isLoading,
+    isAuthenticated: ctx.isAuthenticated,
+    login: ctx.login,
+    logout: ctx.logout,
+    register: ctx.register,
+    refreshUser: ctx.refreshUser,
+    setUser: ctx.setUser,
+    status: ctx.status,
   };
-
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("token");
-    setUser(null);
-  };
-
-  return { user, loading, isAuthenticated: !!user, login, logout };
 }

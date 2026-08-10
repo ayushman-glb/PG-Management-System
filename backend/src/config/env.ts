@@ -85,13 +85,13 @@ const envSchema = z.object({
   EMAIL_VERIFICATION_SECRET: z.string().min(16, "EMAIL_VERIFICATION_SECRET must be at least 16 characters long"),
   API_KEY_SECRET: z.string().min(16, "API_KEY_SECRET must be at least 16 characters long"),
 
-  AES_256_KEY: z.string().default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
-  ENCRYPTION_KEY: z.string().default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
-  KYC_ENCRYPTION_KEY: z.string().default("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+  AES_256_KEY: z.string().min(32, "AES_256_KEY must be set in environment"),
+  ENCRYPTION_KEY: z.string().min(32, "ENCRYPTION_KEY must be set in environment"),
+  KYC_ENCRYPTION_KEY: z.string().min(32, "KYC_ENCRYPTION_KEY must be set in environment"),
 
-  RAZORPAY_KEY_ID: z.string().default("rzp_test_mock_key"),
-  RAZORPAY_KEY_SECRET: z.string().default("mock_razorpay_secret"),
-  RAZORPAY_WEBHOOK_SECRET: z.string().default("mock_webhook_secret"),
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
 
   GOOGLE_CLIENT_ID: z.string().default(""),
   GOOGLE_CLIENT_SECRET: z.string().default(""),

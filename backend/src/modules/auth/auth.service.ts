@@ -2,6 +2,7 @@ import {
   IAuthService,
   IAuthUserResult,
   IRegisterData,
+  IRefreshResult,
 } from "../../interfaces/services/IAuthService";
 import { IUserRepository } from "../../interfaces/repositories/IUserRepository";
 import { ICryptoService } from "../../interfaces/infrastructure/ICryptoService";
@@ -13,10 +14,22 @@ import { env } from "../../config/env";
 import { prisma } from "../../config/prisma";
 import { logger } from "../../utils/logger";
 import { TotpService } from "../../infrastructure/crypto/TotpService";
+import * as crypto from "crypto";
 
 const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
 const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png";
 
+/**
+ * AuthService - Production-grade authentication service.
+ * Implements:
+ *  - password hashing & verification
+ *  - JWT access/refresh tokens
+ *  - refresh token rotation & revocation
+ *  - role-based authorization helpers
+ *  - email & phone verification
+ *  - Google OAuth
+ *  - 2FA TOTP
+ */
 export class AuthService implements IAuthService {
   constructor(
     private readonly userRepository: IUserRepository,
@@ -25,7 +38,152 @@ export class AuthService implements IAuthService {
     private readonly otpService: IOtpService,
   ) {}
 
-  async googleAuth(code: string, role?: Role): Promise<IAuthUserResult> {
+  /**
+   * Hash a refresh token so we never store raw refresh tokens in the database.
+   */
+  private hashRefreshToken(token: string): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
+  }
+
+  /**
+   * Generate an access token from a User record.
+   */
+  private buildAccessPayload(user: any) {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      residentCode: user.residentCode || undefined,
+      sessionId: crypto.randomBytes(16).toString("hex"),
+      tokenVersion: user.tokenVersion || 0,
+    };
+  }
+
+  /**
+   * Persist a refresh token (hashed) associated with the user.
+   */
+  private async persistRefreshToken(
+    userId: string,
+    refreshToken: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    const expiresAt = new Date();
+    const expiresInMs = env.JWT_REFRESH_EXPIRATION || "7d";
+    // Parse expires duration (e.g. "7d" -> 7 days)
+    const match = expiresInMs.match(/^(\d+)([smhd])$/);
+    if (match) {
+      const [, num, unit] = match;
+      const mult = unit === "s" ? 1000 : unit === "m" ? 60 * 1000 : unit === "h" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      expiresAt.setTime(Date.now() + parseInt(num) * mult);
+    } else {
+      expiresAt.setDate(expiresAt.getDate() + 7);
+    }
+
+    await prisma.refreshToken.create({
+      data: {
+        userId,
+        tokenHash: this.hashRefreshToken(refreshToken),
+        expiresAt,
+        ipAddress,
+        userAgent,
+      },
+    });
+  }
+
+  /**
+   * Rotate a refresh token - revoke old token and generate a new pair.
+   * Detects reuse of a revoked token.
+   */
+  async refreshToken(token: string, ipAddress?: string, userAgent?: string): Promise<IRefreshResult> {
+    if (!token) throw new AppError("Refresh token required", 401, "TOKEN_REQUIRED", "login");
+
+    // Verify JWT signature
+    let decoded: any;
+    try {
+      decoded = this.tokenService.verifyRefreshToken(token);
+    } catch (err: any) {
+      if (err.name === "TokenExpiredError") {
+        throw new AppError("Refresh token has expired. Please log in again.", 401, "REFRESH_TOKEN_EXPIRED", "login");
+      }
+      throw new AppError("Invalid refresh token signature.", 401, "INVALID_REFRESH_TOKEN", "login");
+    }
+
+    // Check stored token record
+    const tokenHash = this.hashRefreshToken(token);
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!storedToken) {
+      // Possibly a token from before rotation tracking - revoke all user tokens if we can identify user
+      if (decoded?.id) {
+        await prisma.refreshToken.updateMany({
+          where: { userId: decoded.id, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
+      throw new AppError("Invalid refresh token. Please log in again.", 401, "INVALID_REFRESH_TOKEN", "login");
+    }
+
+    if (storedToken.revokedAt) {
+      // Token reuse detected - revoke entire token family
+      logger.warn("Refresh token reuse detected, revoking all tokens", { userId: storedToken.userId });
+      await prisma.refreshToken.updateMany({
+        where: { userId: storedToken.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      throw new AppError("Refresh token has been revoked. Please log in again.", 401, "REFRESH_TOKEN_REVOKED", "login");
+    }
+
+    if (storedToken.expiresAt < new Date()) {
+      throw new AppError("Refresh token has expired. Please log in again.", 401, "REFRESH_TOKEN_EXPIRED", "login");
+    }
+
+    // Load fresh user from DB to ensure they still exist and get updated role/tokenVersion
+    const user = await this.userRepository.findById(storedToken.userId);
+    if (!user) {
+      throw new AppError("User account no longer exists.", 401, "ACCOUNT_NOT_FOUND", "login");
+    }
+
+    if (user.accountStatus !== "ACTIVE") {
+      throw new AppError("This account has been deactivated.", 403, "ACCOUNT_INACTIVE", "login");
+    }
+
+    // Revoke current token (rotation)
+    await prisma.refreshToken.update({
+      where: { id: storedToken.id },
+      data: { revokedAt: new Date() },
+    });
+
+    // Generate new tokens
+    const payload = this.buildAccessPayload(user);
+    const newAccessToken = this.tokenService.generateAccessToken(payload);
+    const newRefreshToken = this.tokenService.generateRefreshToken(payload);
+
+    // Persist new rotated token
+    await this.persistRefreshToken(user.id, newRefreshToken, ipAddress, userAgent);
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
+  /**
+   * Logout - revoke the provided refresh token.
+   */
+  async logout(token: string): Promise<void> {
+    if (!token) return;
+    const tokenHash = this.hashRefreshToken(token);
+    try {
+      await prisma.refreshToken.updateMany({
+        where: { tokenHash, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    } catch (err) {
+      logger.warn("Failed to revoke refresh token during logout", { error: err });
+    }
+  }
+
+  async googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult> {
     const clientId = env.GOOGLE_CLIENT_ID;
     const clientSecret = env.GOOGLE_CLIENT_SECRET;
     const redirectUri = env.GOOGLE_CALLBACK_URL;
@@ -86,15 +244,11 @@ export class AuthService implements IAuthService {
       role,
     });
 
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      residentCode: user.residentCode || undefined,
-    };
-
+    const payload = this.buildAccessPayload(user);
     const newAccessToken = this.tokenService.generateAccessToken(payload);
     const newRefreshToken = this.tokenService.generateRefreshToken(payload);
+
+    await this.persistRefreshToken(user.id, newRefreshToken, ipAddress, userAgent);
 
     return {
       user: {
@@ -104,13 +258,16 @@ export class AuthService implements IAuthService {
         role: user.role,
         residentCode: user.residentCode || undefined,
         avatarUrl: user.avatarUrl,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
       },
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     };
   }
 
-  async login(identifier: string, password: string): Promise<IAuthUserResult> {
+  async login(identifier: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult> {
     const rawId = (identifier || "").trim();
     const cleanPass = password || "";
 
@@ -150,32 +307,33 @@ export class AuthService implements IAuthService {
       );
     }
 
-    if (user.phoneVerified !== true) {
-      logger.warn("Login failed: phone not verified", { userId: user.id });
+    if (user.accountStatus !== "ACTIVE") {
+      throw new AppError("This account has been deactivated.", 403, "ACCOUNT_INACTIVE");
     }
 
+    // Record login history (best-effort)
     try {
       await prisma.loginHistory.create({
         data: {
           userId: user.id,
-          ipAddress: "unknown",
-          userAgent: "unknown",
+          ipAddress: ipAddress || "unknown",
+          userAgent: userAgent || "unknown",
           status: "SUCCESS",
         },
+      });
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
       });
     } catch (err: any) {
       logger.debug("LoginHistory record creation skipped", { userId: user.id, error: err.message });
     }
 
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      residentCode: user.residentCode || undefined,
-    };
-
+    const payload = this.buildAccessPayload(user);
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+    await this.persistRefreshToken(user.id, refreshToken, ipAddress, userAgent);
 
     logger.info("Login successful", { userId: user.id, role: user.role });
 
@@ -187,13 +345,16 @@ export class AuthService implements IAuthService {
         role: user.role,
         residentCode: user.residentCode || undefined,
         avatarUrl: user.avatarUrl,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
       },
       accessToken,
       refreshToken,
     };
   }
 
-  async register(data: IRegisterData): Promise<IAuthUserResult> {
+  async register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult> {
     const cleanEmail = data.email.trim().toLowerCase();
     const existing = await this.userRepository.findByEmail(cleanEmail);
     if (existing) {
@@ -228,13 +389,11 @@ export class AuthService implements IAuthService {
       throw err;
     }
 
-    const payload = {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    };
+    const payload = this.buildAccessPayload(newUser);
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+    await this.persistRefreshToken(newUser.id, refreshToken, ipAddress, userAgent);
 
     return {
       user: {
@@ -242,6 +401,9 @@ export class AuthService implements IAuthService {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
+        phone: newUser.phone,
+        emailVerified: newUser.emailVerified,
+        phoneVerified: newUser.phoneVerified,
       },
       accessToken,
       refreshToken,
@@ -270,9 +432,11 @@ export class AuthService implements IAuthService {
       throw new AppError("Invalid OTP verification code.", 400);
     }
 
-    const payload = { id: user.id, email: user.email, role: user.role };
+    const payload = this.buildAccessPayload(user);
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+    await this.persistRefreshToken(user.id, refreshToken);
 
     return {
       user: {
@@ -280,6 +444,9 @@ export class AuthService implements IAuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
       },
       accessToken,
       refreshToken,
@@ -431,31 +598,6 @@ export class AuthService implements IAuthService {
     return { success: true, message: "Two-factor authentication disabled" };
   }
 
-  async refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }> {
-    if (!token) throw new AppError("Refresh token required", 401, "TOKEN_REQUIRED", "login");
-    let decoded: any;
-    try {
-      decoded = this.tokenService.verifyRefreshToken(token);
-    } catch (err: any) {
-      if (err.name === "TokenExpiredError") {
-        throw new AppError("Refresh token has expired. Please log in again.", 401, "REFRESH_TOKEN_EXPIRED", "login");
-      }
-      throw new AppError("Invalid refresh token signature.", 401, "INVALID_REFRESH_TOKEN", "login");
-    }
-
-    const payload = {
-      id: decoded.id,
-      email: decoded.email,
-      role: decoded.role,
-      residentCode: decoded.residentCode,
-    };
-
-    const newAccessToken = this.tokenService.generateAccessToken(payload);
-    const newRefreshToken = this.tokenService.generateRefreshToken(payload);
-
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
-  }
-
   async me(userId: string): Promise<any> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
@@ -464,7 +606,7 @@ export class AuthService implements IAuthService {
     if (user.role === Role.OWNER) {
       profile = await prisma.owner.findFirst({
         where: { userId: user.id },
-        include: { pgs: true },
+        include: { pgs: true, kyc: true, business: true, subscription: true },
       });
     } else if (user.role === Role.RESIDENT) {
       profile = await prisma.resident.findFirst({
@@ -481,6 +623,9 @@ export class AuthService implements IAuthService {
       phone: user.phone,
       avatarUrl: user.avatarUrl,
       residentCode: user.residentCode || undefined,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      accountStatus: user.accountStatus,
       profile: profile || null,
     };
   }
@@ -496,13 +641,14 @@ export class AuthService implements IAuthService {
 
     if (!owner) {
       logger.info("Auto-creating owner profile", { userId: user.id });
+      // Create owner profile with empty/placeholder values - user will complete KYC later
       try {
         owner = await prisma.owner.create({
           data: {
             userId: user.id,
             name: user.name,
             email: user.email,
-            phone: user.phone || "+919876543210",
+            phone: user.phone || "",
             photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
             address: "",
             aadhaarNumber: "",
@@ -533,26 +679,19 @@ export class AuthService implements IAuthService {
     });
 
     if (!resident) {
-      logger.info("Auto-creating resident profile", { userId: user.id });
+      logger.info("Creating resident profile with user data", { userId: user.id });
       try {
-        const defaultPg = await prisma.pG.findFirst();
-        const defaultBed = await prisma.bed.findFirst();
-
-        if (defaultPg && defaultBed) {
-          resident = await prisma.resident.create({
-            data: {
-              userId: user.id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone || "",
-              profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
-              pgId: defaultPg.id,
-              bedId: defaultBed.id,
-              status: "ACTIVE",
-            },
-            include: { bed: true, pg: true },
-          });
-        }
+        resident = await prisma.resident.create({
+          data: {
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || "",
+            profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
+            status: "ACTIVE",
+          },
+          include: { bed: true, pg: true },
+        });
       } catch (err) {
         logger.warn("Could not auto-create resident record", { userId: user.id, error: err });
       }

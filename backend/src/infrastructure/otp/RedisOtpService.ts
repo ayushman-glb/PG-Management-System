@@ -132,7 +132,7 @@ export class RedisOtpService implements IOtpService {
       const storedOtp = await redisClient.get(key);
 
       if (!storedOtp) {
-        return false;
+        return this.verifyOtpFromMongo(key, otp, attemptsKey);
       }
 
       const isValid = storedOtp === otp;

@@ -8,6 +8,9 @@ export interface IAuthUserResult {
     role: Role;
     residentCode?: string;
     avatarUrl?: string | null;
+    phone?: string | null;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
   };
   accessToken: string;
   refreshToken: string;
@@ -30,10 +33,15 @@ export interface IRegisterData {
   pgId?: string;
 }
 
+export interface IRefreshResult {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface IAuthService {
-  login(identifier: string, password: string): Promise<IAuthUserResult>;
-  register(data: IRegisterData): Promise<IAuthUserResult>;
-  googleAuth(code: string, role?: Role): Promise<IAuthUserResult>;
+  login(identifier: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
+  register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
+  googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   sendOtp(email: string): Promise<{ message: string }>;
   verifyOtp(email: string, otp: string): Promise<IAuthUserResult>;
   sendPhoneOtp(
@@ -60,7 +68,8 @@ export interface IAuthService {
   disableTwoFactor(
     userId: string,
   ): Promise<{ success: boolean; message: string }>;
-  refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }>;
+  refreshToken(token: string, ipAddress?: string, userAgent?: string): Promise<IRefreshResult>;
+  logout(token: string): Promise<void>;
   me(userId: string): Promise<any>;
 
   ownerProfile(userId: string): Promise<any>;

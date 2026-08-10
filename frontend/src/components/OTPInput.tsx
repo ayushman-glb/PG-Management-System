@@ -29,6 +29,33 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     setDigits(updated);
   }, [value, length]);
 
+  // WebOTP API listener for automatic OTP reading when permitted by user
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'OTPCredential' in window) {
+      const ac = new AbortController();
+      (navigator.credentials as any)
+        .get({
+          otp: { transport: ['sms'] },
+          signal: ac.signal,
+        })
+        .then((otpCredential: any) => {
+          if (otpCredential && otpCredential.code) {
+            const code = otpCredential.code.replace(/\D/g, '').slice(0, length);
+            onChange(code);
+            if (onComplete && code.length === length) {
+              onComplete(code);
+            }
+          }
+        })
+        .catch(() => {
+          // WebOTP request denied or aborted
+        });
+      return () => {
+        ac.abort();
+      };
+    }
+  }, [length, onChange, onComplete]);
+
   const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     const lastChar = val.slice(-1);
@@ -87,6 +114,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
           ref={(el) => { inputRefs.current[index] = el; }}
           type="text"
           inputMode="numeric"
+          autoComplete={index === 0 ? "one-time-code" : "off"}
           pattern="\d*"
           maxLength={1}
           value={digits[index] || ''}

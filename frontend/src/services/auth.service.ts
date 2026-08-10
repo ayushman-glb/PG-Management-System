@@ -142,6 +142,33 @@ export class AuthService {
     return res.data || res;
   }
 
+  async refreshToken() {
+    const res = await this.request("/auth/refresh-token", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    if (res.data?.accessToken) {
+      this.setToken(res.data.accessToken);
+    }
+    return res.data || res;
+  }
+
+  async sendPhoneOtp(phone: string) {
+    const res = await this.request("/auth/send-phone-otp", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    });
+    return res.data || res;
+  }
+
+  async verifyPhoneOtp(phone: string, otp: string) {
+    const res = await this.request("/auth/verify-phone-otp", {
+      method: "POST",
+      body: JSON.stringify({ phone, otp }),
+    });
+    return res.data || res;
+  }
+
   async sendEmailVerification(email: string) {
     const res = await this.request("/auth/send-email-verification", {
       method: "POST",

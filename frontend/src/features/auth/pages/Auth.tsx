@@ -40,8 +40,8 @@ export default function Auth({ navigate }: Props) {
 
   const [showPass, setShowPass] = useState(false);
   const [loginRole, setLoginRole] = useState<"owner" | "resident">("owner");
-  const [loginIdentifier, setLoginIdentifier] = useState("owner1@roombae.com");
-  const [loginPassword, setLoginPassword] = useState("Password123!");
+  const [loginIdentifier, setLoginIdentifier] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const { darkMode } = useTheme();
 
   // Unified Registration Wizard State
@@ -348,7 +348,7 @@ export default function Auth({ navigate }: Props) {
     setIsPhoneOtpSent(true);
   };
 
-  // Handle Phone OTP Verify
+  // Handle Phone OTP Verify - calls backend to validate OTP
   const handleVerifyPhoneOtp = async (otpCodeToVerify?: string) => {
     const code = otpCodeToVerify || phoneOtp;
     if (!code || code.length !== 6) {
@@ -356,12 +356,20 @@ export default function Auth({ navigate }: Props) {
       return;
     }
 
-    if (code === "123456" || code.length === 6) {
+    if (!phone || phone.length < 10) {
+      setPhoneAuthError("Please enter a valid phone number first.");
+      return;
+    }
+
+    setPhoneAuthError(null);
+    try {
+      const fullPhone = `+91${phone}`;
+      await authService.verifyPhoneOtp(fullPhone, code);
       setIsPhoneVerified(true);
       setPhoneAuthError(null);
-    } else {
+    } catch (err: any) {
       setIsPhoneVerified(false);
-      setPhoneAuthError("Invalid OTP code.");
+      setPhoneAuthError(err?.message || "Invalid OTP code. Please try again.");
     }
   };
 
@@ -407,21 +415,29 @@ export default function Auth({ navigate }: Props) {
   };
 
   const handleLoginSubmit = async () => {
+    if (!loginIdentifier.trim() || !loginPassword) {
+      setAuthError("Please enter your email/phone and password.");
+      return;
+    }
     setAuthError("");
     setShowSignupCta(false);
     setIsSubmitting(true);
     try {
-      const identifier = (loginIdentifier || (loginRole === "resident" ? "RES1001" : "owner1@roombae.com")).trim();
-      const passwordVal = loginPassword || "Password123!";
+      const identifier = loginIdentifier.trim();
+      const passwordVal = loginPassword;
 
       const loginRes = await authService.login({ identifier, password: passwordVal });
 
-      const userRole = loginRes?.user?.role || (loginRole === "resident" ? "RESIDENT" : "OWNER");
+      // IMPORTANT: Role must come from the backend response - never trust the frontend tab selection
+      const userRole = loginRes?.user?.role;
 
       if (userRole === "RESIDENT") {
         navigate("resident-portal");
-      } else {
+      } else if (userRole === "OWNER" || userRole === "ADMIN" || userRole === "SUPER_ADMIN" || userRole === "MANAGER") {
         navigate("dashboard");
+      } else {
+        // Unknown role - redirect to auth with error
+        setAuthError("Your account role could not be determined. Please contact support.");
       }
     } catch (err: any) {
       const isSignupNudge = err?.code === 'ACCOUNT_NOT_FOUND_OR_INVALID' || err?.message?.includes("couldn't find an account");
@@ -443,12 +459,16 @@ export default function Auth({ navigate }: Props) {
     setAuthError("");
 
     try {
+      if (!fullName.trim() || !email.trim() || !password) {
+        setAuthError("Please complete all required personal details.");
+        return;
+      }
       await authService.register({
-        name: fullName || "RoomBae User",
-        email: email || `user_${Date.now()}@roombae.com`,
-        password: password || "Password123!",
+        name: fullName.trim(),
+        email: email.trim(),
+        password,
         role: selectedRole === "OWNER" ? "OWNER" : "RESIDENT",
-        phone: phone || "+91 98765 43210",
+        phone: phone ? `+91${phone}` : undefined,
       });
 
 
@@ -632,11 +652,7 @@ export default function Auth({ navigate }: Props) {
                       onChange={(id: string) => {
                         const newRole = id as "owner" | "resident";
                         setLoginRole(newRole);
-                        if (newRole === "resident" && (loginIdentifier === "owner1@roombae.com" || !loginIdentifier)) {
-                          setLoginIdentifier("RES1001");
-                        } else if (newRole === "owner" && (loginIdentifier === "RES1001" || !loginIdentifier)) {
-                          setLoginIdentifier("owner1@roombae.com");
-                        }
+                        // Do NOT prefill credentials - user must enter their real credentials
                       }}
                       layoutId="auth-role-tab"
                     />

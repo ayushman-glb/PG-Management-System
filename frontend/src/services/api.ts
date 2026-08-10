@@ -17,7 +17,7 @@ export interface ApiResponse<T = any> {
 }
 
 class ApiClient {
-  public async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  public async request<T = any>(endpoint: string, options: RequestInit = {}, isRetry: boolean = false): Promise<T> {
     const token = typeof localStorage !== "undefined" ? (localStorage.getItem("accessToken") || localStorage.getItem("token")) : null;
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
@@ -30,7 +30,20 @@ class ApiClient {
     const res = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
       ...options,
       headers,
+      credentials: "include",
     });
+
+    if (res.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
+      try {
+        const refreshed = await authService.refreshToken();
+        if (refreshed?.accessToken) {
+          authService.setToken(refreshed.accessToken);
+          return this.request<T>(endpoint, options, true);
+        }
+      } catch {
+        authService.clearToken();
+      }
+    }
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));

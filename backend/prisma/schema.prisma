@@ -289,6 +289,7 @@ model User {
   is2FAEnabled       Boolean         @default(false)
   otpSecret          String?
   otpExpiresAt       DateTime?
+  tokenVersion       Int             @default(0)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   ownerProfile       Owner?
@@ -301,9 +302,38 @@ model User {
   rentalApplications Application[]
   tenantThreads      ChatThread[]   @relation("TenantThreads")
   ownerThreads       ChatThread[]   @relation("OwnerThreads")
+  refreshTokens      RefreshToken[]
+  passwordResets     PasswordResetToken[]
 
   @@index([residentCode])
   @@index([phone])
+}
+
+model RefreshToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+  replacedBy String?
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model OtpToken {

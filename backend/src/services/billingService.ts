@@ -116,7 +116,7 @@ export class BillingService implements IBillingService {
     let isValid = true;
     if (env.RAZORPAY_KEY_SECRET !== 'your_razorpay_key_secret' && env.RAZORPAY_KEY_SECRET !== 'mock_razorpay_secret') {
       const generatedSignature = crypto
-        .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
+        .createHmac('sha256', env.RAZORPAY_KEY_SECRET || '')
         .update(`${data.razorpayOrderId}|${data.razorpayPaymentId}`)
         .digest('hex');
       isValid = generatedSignature === data.razorpaySignature;

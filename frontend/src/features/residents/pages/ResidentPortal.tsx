@@ -28,6 +28,7 @@ import { DocumentUploadPortal } from "@components/DocumentUploadPortal";
 import { RoomTransferModal } from "@features/rooms/components/RoomTransferModal";
 
 import { Logo } from "@components/ui/Logo";
+import { useAuth } from "@hooks/useAuth";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -50,9 +51,13 @@ export default function ResidentPortal({ navigate }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const { darkMode } = useTheme();
 
+  const { user } = useAuth();
   const [selectedAgreement, setSelectedAgreement] = useState<any>(null);
   const [residentStatus, setResidentStatus] = useState("ACTIVE");
   const [isRoomTransferModalOpen, setIsRoomTransferModalOpen] = useState(false);
+  const [portalData, setPortalData] = useState<any>(null);
+  const [agreementsList, setAgreementsList] = useState<any[]>([]);
+  const [residentProfile, setResidentProfile] = useState<any>(null);
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -71,7 +76,7 @@ export default function ResidentPortal({ navigate }: Props) {
   const handleStatusChange = async (newStatus: string) => {
     setResidentStatus(newStatus);
     try {
-      await api.updateResidentStatus("res-1", newStatus, "Self-service status update from resident portal");
+      await api.updateResidentStatus(user?.id || "unknown", newStatus, "Self-service status update from resident portal");
     } catch (e) {
       console.warn("Status update API call:", e);
     }
@@ -83,90 +88,11 @@ export default function ResidentPortal({ navigate }: Props) {
   const [newGatepass, setNewGatepass] = useState({ passType: "DAY_OUTING", destination: "", departureTime: "", returnTime: "", reason: "" });
   const [skippedMeals, setSkippedMeals] = useState<Record<string, boolean>>({});
 
-  const [complaintsList, setComplaintsList] = useState<any[]>([
-    {
-      id: "c-1",
-      ticketCode: "TICK-8492",
-      category: "Plumbing",
-      title: "Hot Water Geyser Low Pressure",
-      description: "Water pressure in room 101 attached bathroom geyser is slow.",
-      priority: "MEDIUM",
-      status: "IN_PROGRESS",
-      createdAt: "2026-07-28"
-    },
-    {
-      id: "c-2",
-      ticketCode: "TICK-3190",
-      category: "Electrical",
-      title: "Study Lamp Socket Replacement",
-      description: "Plug socket near bed 101-A needs replacement.",
-      priority: "LOW",
-      status: "RESOLVED",
-      createdAt: "2026-07-20"
-    }
-  ]);
-
-  const [visitorPassesList, setVisitorPassesList] = useState<any[]>([
-    {
-      id: "vp-1",
-      passCode: "VP-9402",
-      visitorName: "Amit Sharma",
-      visitorMobile: "+91 98112 33445",
-      relation: "Brother",
-      visitDate: "2026-07-31",
-      timeSlot: "17:00 - 19:00",
-      status: "APPROVED"
-    }
-  ]);
-
-  const [gatePassesList, setGatePassesList] = useState<any[]>([
-    {
-      id: "gp-1",
-      passCode: "GP-1823",
-      passType: "DAY_OUTING",
-      destination: "MG Road Mall",
-      departureTime: "2026-07-30T10:00",
-      returnTime: "2026-07-30T20:00",
-      reason: "Shopping & Weekend Outing",
-      status: "APPROVED"
-    }
-  ]);
-
-  const [paymentsList] = useState<any[]>([
-    {
-      id: "pay-1",
-      invoiceNumber: "INV-2026-8841",
-      month: "July 2026",
-      baseAmount: 8500,
-      totalAmount: 8500,
-      status: "PAID",
-      paymentDate: "2026-07-04"
-    },
-    {
-      id: "pay-2",
-      invoiceNumber: "INV-2026-9920",
-      month: "August 2026",
-      baseAmount: 8500,
-      totalAmount: 8500,
-      status: "PENDING",
-      dueDate: "2026-08-05"
-    }
-  ]);
-
-  const mockAgreement = {
-    id: "agr-101",
-    agreementNumber: "RMB-AGR-2026-9482",
-    status: "PENDING",
-    rentAmount: 8500,
-    securityDeposit: 17000,
-    roomNumber: "101",
-    bedNumber: "101-A",
-    noticePeriodDays: 30,
-    resident: { name: "Rahul Sharma", phone: "+91 98765 43210", permanentAddress: "New Delhi" },
-    owner: { name: "Rajesh Kumar", phone: "+91 91234 56789", address: "Bengaluru" },
-    pg: { name: "RoomBae Indiranagar Luxe" },
-    signatures: []
-  };
+  const [complaintsList, setComplaintsList] = useState<any[]>([]);
+  const [visitorPassesList, setVisitorPassesList] = useState<any[]>([]);
+  const [gatePassesList, setGatePassesList] = useState<any[]>([]);
+  const [paymentsList, setPaymentsList] = useState<any[]>([]);
+  const [mockAgreement, setMockAgreement] = useState<any>(null);
 
   useEffect(() => {
     async function loadPortalData() {
@@ -184,6 +110,17 @@ export default function ResidentPortal({ navigate }: Props) {
         if (portalRes?.gatePasses?.length) {
           setGatePassesList(portalRes.gatePasses);
         }
+        if (portalRes?.payments?.length) {
+          setPaymentsList(portalRes.payments);
+        }
+        if (portalRes?.agreements?.length) {
+          setAgreementsList(portalRes.agreements);
+          setMockAgreement(portalRes.agreements[0]);
+        }
+        if (portalRes?.profile) {
+          setResidentProfile(portalRes.profile);
+        }
+        setPortalData(portalRes);
       } catch (e) {
         console.warn("Portal data load fallback:", e);
       }
@@ -271,10 +208,10 @@ export default function ResidentPortal({ navigate }: Props) {
     <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
       <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
         <div className="flex items-center gap-3 overflow-hidden">
-          <Logo onClick={() => navigate("landing")} badge="RES1001" />
+          <Logo onClick={() => navigate("landing")} badge={user?.id?.slice(0, 8) || "—"} />
           <div className="hidden lg:block border-l border-[#E6D7CA] dark:border-[#4A433F] pl-3">
             <p className={`text-xs font-medium truncate ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
-              RoomBae Indiranagar Luxe — Room 101 (Bed 101-A)
+              {portalData?.pg?.name || "My PG"} — {portalData?.room?.roomNumber || "—"} ({portalData?.bed?.bedNumber || "—"})
             </p>
           </div>
         </div>
@@ -315,15 +252,14 @@ export default function ResidentPortal({ navigate }: Props) {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveTab(item.id as Tab)}
-                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all text-left cursor-pointer ${
-                  isActive
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all text-left cursor-pointer ${isActive
                     ? darkMode
                       ? "bg-[#C89A4B] text-[#1D1B1A] font-bold shadow-md"
                       : "bg-[#D9A87C] text-white font-bold shadow-md"
                     : darkMode
                       ? "text-[#C6B9AE] hover:bg-[#2B2725]"
                       : "text-[#6E5A52] hover:bg-[#F8EEE5]"
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 <span>{item.label}</span>
@@ -341,10 +277,10 @@ export default function ResidentPortal({ navigate }: Props) {
                     <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                       Rent Due Soon
                     </span>
-                    <span className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>August 2026</span>
+                    <span className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>{portalData?.currentMonth || "—"}</span>
                   </div>
-                  <h2 className="text-2xl font-black">₹8,500 / month</h2>
-                  <p className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Due date: 05 Aug 2026 · Room 101 Bed 101-A</p>
+                  <h2 className="text-2xl font-black">₹{portalData?.rentAmount || 0} / month</h2>
+                  <p className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Due date: {portalData?.dueDate || "—"} · {portalData?.room?.roomNumber || "—"} {portalData?.bed?.bedNumber || "—"}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -401,21 +337,21 @@ export default function ResidentPortal({ navigate }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-amber-500 mb-1">
                     <Building className="w-4 h-4" /> Room Allotment
                   </div>
-                  <div className="text-lg font-black">Room 101</div>
-                  <div className="text-xs text-slate-400">Bed 101-A (Double Sharing AC)</div>
+                  <div className="text-lg font-black">{portalData?.room?.roomNumber || "—"}</div>
+                  <div className="text-xs text-slate-400">{portalData?.bed?.bedNumber || "—"} ({portalData?.room?.roomType || "—"})</div>
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-emerald-500 mb-1">
                     <Wifi className="w-4 h-4" /> Guest WiFi
                   </div>
-                  <div className="text-lg font-black">Indiranagar_WiFi</div>
-                  <div className="text-xs font-mono text-slate-400">Pass: RoomBae@101</div>
+                  <div className="text-lg font-black">{portalData?.wifiName || "—"}</div>
+                  <div className="text-xs font-mono text-slate-400">Pass: {portalData?.wifiPassword || "—"}</div>
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
@@ -423,7 +359,7 @@ export default function ResidentPortal({ navigate }: Props) {
                     <Wrench className="w-4 h-4" /> Active Complaints
                   </div>
                   <div className="text-lg font-black">{complaintsList.filter(c => c.status !== 'RESOLVED').length} Tickets</div>
-                  <div className="text-xs text-slate-400">1 In Progress</div>
+                  <div className="text-xs text-slate-400">{complaintsList.filter(c => c.status === 'IN_PROGRESS').length} In Progress</div>
                 </div>
 
                 <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
@@ -431,7 +367,7 @@ export default function ResidentPortal({ navigate }: Props) {
                     <QrCode className="w-4 h-4" /> Active Passes
                   </div>
                   <div className="text-lg font-black">{visitorPassesList.length + gatePassesList.length} Active</div>
-                  <div className="text-xs text-slate-400">1 Visitor, 1 Outing</div>
+                  <div className="text-xs text-slate-400">{visitorPassesList.length} Visitor, {gatePassesList.length} Outing</div>
                 </div>
               </div>
             </div>
@@ -447,25 +383,31 @@ export default function ResidentPortal({ navigate }: Props) {
                   </div>
                 </div>
 
+                {mockAgreement ? (
                 <div className={`p-5 rounded-2xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm">{mockAgreement.agreementNumber}</span>
+                      <span className="font-bold text-sm">{mockAgreement.agreementNumber || "—"}</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        {mockAgreement.status}
+                        {mockAgreement.status || "PENDING"}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400">RoomBae Indiranagar Luxe • Room 101 (Bed 101-A)</p>
-                    <p className="text-xs text-amber-500 font-semibold">Monthly Rent: ₹8,500/mo • Deposit: ₹17,000</p>
+                    <p className="text-xs text-slate-400">{mockAgreement.pg?.name || portalData?.pg?.name || "—"} • {mockAgreement.roomNumber || portalData?.room?.roomNumber || "—"} ({mockAgreement.bedNumber || portalData?.bed?.bedNumber || "—"})</p>
+                    <p className="text-xs text-amber-500 font-semibold">Monthly Rent: ₹{mockAgreement.rentAmount || 0}/mo • Deposit: ₹{mockAgreement.securityDeposit || 0}</p>
                   </div>
 
                   <button
                     onClick={() => setSelectedAgreement(mockAgreement)}
                     className="px-5 py-2.5 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 flex items-center gap-2 shadow-lg shadow-amber-500/20"
                   >
-                    <PenTool className="w-4 h-4" /> View Contract &amp; Sign
+                    <PenTool className="w-4 h-4" /> View Contract & Sign
                   </button>
                 </div>
+                ) : (
+                <div className={`p-5 rounded-2xl border text-center ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                  <p className="text-sm text-slate-400">No active agreements found.</p>
+                </div>
+                )}
               </div>
             </div>
           )}
@@ -493,24 +435,24 @@ export default function ResidentPortal({ navigate }: Props) {
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider">Resident Details</h3>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Full Name</span><span className="font-bold">Rahul Sharma</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Resident Code</span><span className="font-mono font-bold text-amber-500">RES1001</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Email Address</span><span className="font-bold">rahul.sharma@gmail.com</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Mobile Number</span><span className="font-bold">+91 98765 43210</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Gender / Age</span><span className="font-bold">Male / 24 yrs</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Blood Group</span><span className="font-bold text-red-400">O+ Positive</span></div>
-                      <div className="flex justify-between py-1.5"><span className="text-slate-400">Occupation</span><span className="font-bold">Software Engineer (TCS)</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Full Name</span><span className="font-bold">{user?.name || residentProfile?.name || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Resident Code</span><span className="font-mono font-bold text-amber-500">{residentProfile?.residentCode || user?.id?.slice(0, 8) || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Email Address</span><span className="font-bold">{user?.email || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Mobile Number</span><span className="font-bold">{user?.phone || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Gender / Age</span><span className="font-bold">{residentProfile?.gender || "—"} / {residentProfile?.age || "—"} yrs</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Blood Group</span><span className="font-bold text-red-400">{residentProfile?.bloodGroup || "—"}</span></div>
+                      <div className="flex justify-between py-1.5"><span className="text-slate-400">Occupation</span><span className="font-bold">{residentProfile?.occupation || "—"}</span></div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider">KYC &amp; Emergency Info</h3>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Aadhaar (Masked)</span><span className="font-mono font-bold">XXXX-XXXX-4921</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">PAN Number</span><span className="font-mono font-bold">ABCPS1234K</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Guardian Name</span><span className="font-bold">Suresh Sharma</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Guardian Mobile</span><span className="font-bold">+91 98111 00998</span></div>
-                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Permanent Address</span><span className="font-bold text-right">B-42, Vasant Kunj, New Delhi</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Aadhaar (Masked)</span><span className="font-mono font-bold">{residentProfile?.aadhaarMasked || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">PAN Number</span><span className="font-mono font-bold">{residentProfile?.panNumber || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Guardian Name</span><span className="font-bold">{residentProfile?.guardianName || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Guardian Mobile</span><span className="font-bold">{residentProfile?.guardianMobile || "—"}</span></div>
+                      <div className="flex justify-between py-1.5 border-b border-white/5"><span className="text-slate-400">Permanent Address</span><span className="font-bold text-right">{residentProfile?.permanentAddress || "—"}</span></div>
                       <div className="flex justify-between py-1.5"><span className="text-slate-400">Encryption Standard</span><span className="font-mono text-emerald-400">AES-256-GCM Zero-Trust</span></div>
                     </div>
                   </div>
@@ -523,28 +465,30 @@ export default function ResidentPortal({ navigate }: Props) {
             <div className="space-y-6 animate-fade-in">
               <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
                 <div className="mb-6">
-                  <h2 className="text-xl font-black">Room Allotment &amp; Roommates</h2>
-                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Room 101 · Double Sharing AC · First Floor</p>
+                  <h2 className="text-xl font-black">Room Allotment & Roommates</h2>
+                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>{portalData?.room?.roomNumber || "—"} · {portalData?.room?.roomType || "—"} · {portalData?.floor || "—"} Floor</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-sm">Bed 101-A (Your Bed)</span>
+                      <span className="font-bold text-sm">{portalData?.bed?.bedNumber || "—"} (Your Bed)</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">Occupied</span>
                     </div>
-                    <p className="text-xs text-slate-400">Occupant: Rahul Sharma (You)</p>
-                    <p className="text-xs text-slate-400">Move-in: 01 Jan 2026</p>
+                    <p className="text-xs text-slate-400">Occupant: {user?.name || "—"} (You)</p>
+                    <p className="text-xs text-slate-400">Move-in: {portalData?.moveInDate || "—"}</p>
                   </div>
 
+                  {portalData?.roommate && (
                   <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-sm">Bed 101-B (Roommate)</span>
+                      <span className="font-bold text-sm">{portalData?.roommate?.bedNumber || "—"} (Roommate)</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">Occupied</span>
                     </div>
-                    <p className="text-xs text-slate-400">Occupant: Vikram Singh</p>
-                    <p className="text-xs text-slate-400">Contact: +91 97112 88776 · Software Dev</p>
+                    <p className="text-xs text-slate-400">Occupant: {portalData?.roommate?.name || "—"}</p>
+                    <p className="text-xs text-slate-400">Contact: {portalData?.roommate?.phone || "—"} · {portalData?.roommate?.occupation || "—"}</p>
                   </div>
+                  )}
                 </div>
 
                 <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider mb-3">Room Amenities Included</h3>
@@ -569,10 +513,21 @@ export default function ResidentPortal({ navigate }: Props) {
                     <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Monthly rent payment, Razorpay gateway, and downloadable official GST tax receipts</p>
                   </div>
                   <button
-                    onClick={() => alert("✓ Launching Secure Razorpay Gateway...")}
+                    onClick={() => {
+                      const pendingPayment = paymentsList.find(p => p.status === 'PENDING');
+                      if (pendingPayment) {
+                        api.createBillingOrder(pendingPayment.id, pendingPayment.totalAmount).then(() => {
+                          alert("✓ Launching Secure Razorpay Gateway...");
+                        }).catch((err: any) => {
+                          alert(`Payment initiation failed: ${err.message}`);
+                        });
+                      } else {
+                        alert("No pending payments found.");
+                      }
+                    }}
                     className="px-6 py-3 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 shadow-lg shadow-amber-500/20"
                   >
-                    Pay August Rent (₹8,500)
+                    Pay Rent Now
                   </button>
                 </div>
 
@@ -779,11 +734,10 @@ export default function ResidentPortal({ navigate }: Props) {
 
                         <button
                           onClick={() => handleToggleMeal(meal.type)}
-                          className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${
-                            isSkipped
+                          className={`w-full py-2 rounded-xl text-xs font-bold transition-all ${isSkipped
                               ? "bg-red-500/20 text-red-400 border border-red-500/30"
                               : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
-                          }`}
+                            }`}
                         >
                           {isSkipped ? "✓ Meal Skipped" : "Attending Meal"}
                         </button>
@@ -873,14 +827,14 @@ export default function ResidentPortal({ navigate }: Props) {
         isOpen={isRoomTransferModalOpen}
         onClose={() => setIsRoomTransferModalOpen(false)}
         mode="resident-request"
-        residentData={{
-          id: "res-1",
-          name: "Rahul Sharma",
-          pgId: "pg-1",
-          currentBedId: "bed-1",
-          roomNumber: "101",
-          bedNumber: "101-A"
-        }}
+          residentData={{
+            id: user?.id || "unknown",
+            name: user?.name || "—",
+            pgId: portalData?.pg?.id || "",
+            currentBedId: portalData?.bed?.id || "",
+            roomNumber: portalData?.room?.roomNumber || "",
+            bedNumber: portalData?.bed?.bedNumber || ""
+          }}
         onSuccess={() => setIsRoomTransferModalOpen(false)}
       />
     </div>

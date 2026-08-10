@@ -25,25 +25,37 @@ export class ResidentController {
   });
 
   getPortalMe = catchAsync(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id || '650000000000000000000002';
+    const userId = req.user?.id;
+    if (!userId) {
+      return ApiResponse.error(res, 'Authentication required. Please log in.', undefined, 401);
+    }
     const data = await this.residentService.getPortalData(userId);
     return ApiResponse.success(res, 'Resident portal data fetched', data);
   });
 
   createVisitorPass = catchAsync(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id || '650000000000000000000002';
+    const userId = req.user?.id;
+    if (!userId) {
+      return ApiResponse.error(res, 'Authentication required. Please log in.', undefined, 401);
+    }
     const pass = await this.residentService.createVisitorPass(userId, req.body);
     return ApiResponse.success(res, 'Visitor pass created successfully with QR code', pass, undefined, 201);
   });
 
   createGatePass = catchAsync(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id || '650000000000000000000002';
+    const userId = req.user?.id;
+    if (!userId) {
+      return ApiResponse.error(res, 'Authentication required. Please log in.', undefined, 401);
+    }
     const pass = await this.residentService.createGatePass(userId, req.body);
     return ApiResponse.success(res, 'Gate pass submitted successfully', pass, undefined, 201);
   });
 
   toggleMealSkip = catchAsync(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id || '650000000000000000000002';
+    const userId = req.user?.id;
+    if (!userId) {
+      return ApiResponse.error(res, 'Authentication required. Please log in.', undefined, 401);
+    }
     const { date, mealType } = req.body;
     const result = await this.residentService.toggleMealSkip(userId, date, mealType);
     return ApiResponse.success(res, result.message, result);
