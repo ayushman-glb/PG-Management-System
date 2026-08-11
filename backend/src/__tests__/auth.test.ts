@@ -1,5 +1,25 @@
 import { AuthService } from '../services/authService';
 
+jest.mock('../config/prisma', () => ({
+  prisma: {
+    refreshToken: {
+      create: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn().mockResolvedValue(null),
+      update: jest.fn().mockResolvedValue({}),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    otpToken: {
+      create: jest.fn().mockResolvedValue({}),
+      findFirst: jest.fn().mockResolvedValue(null),
+      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    user: {
+      update: jest.fn().mockResolvedValue({}),
+    },
+    $transaction: jest.fn().mockImplementation((callback) => callback({})),
+  },
+}));
+
 describe('RoomBae Enterprise Authentication System Unit Tests', () => {
   let mockUserRepo: any;
   let mockCryptoService: any;
@@ -25,7 +45,7 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     mockTokenService = {
       generateAccessToken: jest.fn().mockReturnValue('mock_access_token'),
       generateRefreshToken: jest.fn().mockReturnValue('mock_refresh_token'),
-      verifyRefreshToken: jest.fn().mockReturnValue({ id: 'user-123', email: 'test@roombae.com', role: 'OWNER' })
+      verifyRefreshToken: jest.fn().mockReturnValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', role: 'OWNER' })
     };
     mockOtpService = {
       generateAndSendOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date(Date.now() + 300000), message: 'OTP sent' }),
@@ -41,11 +61,12 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should authenticate valid user login and return tokens', async () => {
     mockUserRepo.findByIdentifier.mockResolvedValue({
-      id: 'user-123',
+      id: '507f1f77bcf86cd799439011',
       name: 'Test Owner',
       email: 'owner1@roombae.com',
       passwordHash: '$2a$10$xyz',
       role: 'OWNER',
+      accountStatus: 'ACTIVE',
       residentCode: null,
       avatarUrl: null
     });
@@ -58,11 +79,12 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should authenticate valid resident login using residentCode', async () => {
     mockUserRepo.findByIdentifier.mockResolvedValue({
-      id: 'res-user-1',
+      id: '507f1f77bcf86cd799439012',
       name: 'Test Resident',
       email: 'resident1@roombae.com',
       passwordHash: '$2a$10$xyz',
       role: 'RESIDENT',
+      accountStatus: 'ACTIVE',
       residentCode: 'RES1001',
       avatarUrl: null
     });
@@ -80,10 +102,11 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should reject login when password comparison fails', async () => {
     mockUserRepo.findByIdentifier.mockResolvedValue({
-      id: 'user-123',
+      id: '507f1f77bcf86cd799439011',
       email: 'owner1@roombae.com',
       passwordHash: '$2a$10$xyz',
-      role: 'OWNER'
+      role: 'OWNER',
+      accountStatus: 'ACTIVE'
     });
     mockCryptoService.comparePassword.mockResolvedValue(false);
 
@@ -92,17 +115,30 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should reject password login for Google OAuth account', async () => {
     mockUserRepo.findByIdentifier.mockResolvedValue({
-      id: 'user-123',
+      id: '507f1f77bcf86cd799439011',
       email: 'oauth@roombae.com',
       passwordHash: null,
       googleSubId: 'sub_123',
-      role: 'OWNER'
+      role: 'OWNER',
+      accountStatus: 'ACTIVE'
     });
 
     await expect(authService.login('oauth@roombae.com', 'Password123!')).rejects.toThrow('Google OAuth');
   });
 
   test('Should refresh access token using valid refresh token', async () => {
+    mockUserRepo.findById.mockResolvedValueOnce({
+      id: '507f1f77bcf86cd799439011',
+      email: 'test@roombae.com',
+      role: 'OWNER',
+      accountStatus: 'ACTIVE'
+    });
+    (require('../config/prisma').prisma.refreshToken.findUnique as jest.Mock).mockResolvedValueOnce({
+      tokenHash: 'hashed_valid_refresh_token_string',
+      userId: '507f1f77bcf86cd799439011',
+      revokedAt: null,
+      expiresAt: new Date(Date.now() + 86400000)
+    });
     const result = await authService.refreshToken('valid_refresh_token_string');
     expect(result.accessToken).toBe('mock_access_token');
     expect(result.refreshToken).toBe('mock_refresh_token');
@@ -133,11 +169,11 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should enable 2FA and generate TOTP QR Code URL', async () => {
     mockUserRepo.findById.mockResolvedValue({
-      id: 'user-123',
+      id: '507f1f77bcf86cd799439011',
       name: 'Test User',
       email: 'test@roombae.com',
     });
-    const result = await authService.enableTwoFactor('user-123');
+    const result = await authService.enableTwoFactor('507f1f77bcf86cd799439011');
     expect(result.secret).toBeDefined();
     expect(result.qrCodeUrl).toContain('otpauth://totp/');
     expect(result.qrCodeImage).toBeDefined();
@@ -146,10 +182,11 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
   test('Should register user with specified role and return tokens', async () => {
     mockUserRepo.findByEmail.mockResolvedValue(null);
     mockUserRepo.create.mockResolvedValue({
-      id: 'new-user-1',
+      id: '507f1f77bcf86cd799439013',
       name: 'Rajesh Kumar',
       email: 'rajesh@roombae.com',
-      role: 'OWNER'
+      role: 'OWNER',
+      accountStatus: 'ACTIVE'
     });
 
     const result = await authService.register({
@@ -165,9 +202,9 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
   });
 
   test('Should send and verify email OTP', async () => {
-    mockUserRepo.findByEmail.mockResolvedValue({ id: 'user-1', email: 'test@roombae.com' });
+    mockUserRepo.findByEmail.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
     mockOtpService.verifyEmailCode.mockResolvedValue(true);
-    mockUserRepo.updateOtp.mockResolvedValue({ id: 'user-1' });
+    mockUserRepo.updateOtp.mockResolvedValue({ id: '507f1f77bcf86cd799439011' });
 
     const sendResult = await authService.sendOtp('test@roombae.com');
     expect(sendResult.message).toBeDefined();
@@ -177,9 +214,9 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
   });
 
   test('Should send and verify email verification code', async () => {
-    mockUserRepo.findByEmail.mockResolvedValue({ id: 'user-1', email: 'test@roombae.com' });
+    mockUserRepo.findByEmail.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
     mockOtpService.verifyEmailCode.mockResolvedValue(true);
-    mockUserRepo.markEmailVerified.mockResolvedValue({ id: 'user-1', emailVerified: true });
+    mockUserRepo.markEmailVerified.mockResolvedValue({ id: '507f1f77bcf86cd799439011', emailVerified: true });
 
     const sendResult = await authService.sendEmailVerification('test@roombae.com');
     expect(sendResult.success).toBe(true);
@@ -189,9 +226,10 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
   });
 
   test('Should reject invalid email verification code', async () => {
-    mockUserRepo.findByEmail.mockResolvedValue({ id: 'user-1', email: 'test@roombae.com' });
+    mockUserRepo.findByEmail.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
     mockOtpService.verifyEmailCode.mockResolvedValue(false);
 
     await expect(authService.verifyEmail('test@roombae.com', '000000')).rejects.toThrow('Invalid verification code');
   });
 });
+
