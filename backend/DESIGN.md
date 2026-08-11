@@ -92,15 +92,19 @@ Each module contains:
 ## 🔐 4. Zero-Trust Security & Concurrency Architecture
 
 ### 4.1 Field-Level Encryption (AES-256-GCM)
+
 Sensitive resident KYC data (Aadhaar number, PAN number, Bank account details) is encrypted before database persistence using AES-256-GCM encryption with IVs and authentication tags.
 
 ### 4.2 Distributed Concurrency Locks (Redis Redlock)
+
 When multiple users attempt to reserve or pay for the same bed concurrently:
+
 1. Redlock acquires a lock on `bed:lock:{bedId}` with a 30-second TTL.
 2. The transaction sets bed status to `OCCUPIED` and links `residentId`.
 3. Concurrent requests fail lock acquisition and trigger instant payment rollback/refund.
 
 ### 4.3 Multi-Role Authorization (RBAC)
+
 - Roles: `PUBLIC`, `RESIDENT`, `OWNER`, `ADMIN`.
 - Protected routes evaluate JWT claims and enforce role-level permission guards.
 

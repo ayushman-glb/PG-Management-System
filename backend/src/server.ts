@@ -9,7 +9,7 @@ try {
 
 import { app } from "./app";
 import { env, resolvedPort } from "./config/env";
-import { prisma } from "./config/prisma";
+import { prisma, connectPrismaWithTimeout } from "./config/prisma";
 import { logger } from "./utils/logger";
 import { SocketServer } from "./socket/socketServer";
 import { runInCluster } from "./cluster";
@@ -37,7 +37,7 @@ async function bootstrap() {
 
     const connectStart = Date.now();
     try {
-      await prisma.$connect();
+      await connectPrismaWithTimeout(5000);
       connectionTimeMs = Date.now() - connectStart;
       mongoStatus = `Connected (${connectionTimeMs}ms)`;
       logger.info(

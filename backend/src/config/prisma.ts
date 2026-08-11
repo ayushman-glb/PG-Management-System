@@ -13,3 +13,15 @@ export const prisma = global.prismaSingleton || new PrismaClient({
 if (env.NODE_ENV !== 'production') {
   global.prismaSingleton = prisma;
 }
+
+/**
+ * Attempts to connect Prisma to the database with a configurable timeout (default 5000ms).
+ */
+export async function connectPrismaWithTimeout(timeoutMs = 5000): Promise<void> {
+  const connectPromise = prisma.$connect();
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`MongoDB connection timed out after ${timeoutMs}ms`)), timeoutMs)
+  );
+  await Promise.race([connectPromise, timeoutPromise]);
+}
+
