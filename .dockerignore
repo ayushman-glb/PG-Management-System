@@ -1,0 +1,27 @@
+# Docker build context exclusions for root
+.git
+.gitignore
+.dockerignore
+node_modules
+dist
+build
+.env
+.env.*
+!.env.example
+
+# Documentation & design assets
+Design/
+.planning/
+.agents/
+.claude/
+docs/
+docs_consolidated/
+*.md
+
+# IDE and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+tmp/
