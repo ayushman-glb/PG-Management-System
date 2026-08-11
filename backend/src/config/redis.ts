@@ -23,11 +23,14 @@ redisClient.on('connect', () => {
   console.log('✅ Redis Cloud Connected');
 });
 
-// Self-executing connection test (non-blocking)
+// Self-executing connection attempt — non-blocking, idempotent
+// Guards against duplicate connect() calls if module is re-evaluated
 (async () => {
   try {
-    await redisClient.connect();
-  } catch (err) {
-    console.warn('⚠️ Could not establish Redis connection. Fallbacks active.');
+    if (!redisClient.isOpen && !redisClient.isReady) {
+      await redisClient.connect();
+    }
+  } catch (err: any) {
+    console.warn('⚠️ Could not establish Redis connection. Fallbacks active.', err?.message ?? '');
   }
 })();

@@ -48,17 +48,20 @@ export class ResidentRepository implements IResidentRepository {
 
   async createResident(data: ICreateResidentData): Promise<Resident> {
     const resUser = await this.db.user.findUnique({ where: { id: data.userId } });
+    if (!resUser) {
+      throw new Error(`User ${data.userId} not found for resident creation`);
+    }
     return this.db.resident.create({
       data: {
         userId: data.userId,
         pgId: data.propertyId,
         bedId: data.bedId,
         profilePicture: data.profilePicture || 'https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png',
-        name: resUser?.name || 'Resident',
+        name: resUser.name,
         gender: data.gender || 'Male',
         age: data.age || 22,
-        phone: resUser?.phone || '+919876543210',
-        email: resUser?.email || 'resident@roombae.com',
+        phone: resUser.phone || '',
+        email: resUser.email || '',
         permanentAddress: data.permanentAddress || 'Residential Address',
         occupation: data.occupation || 'Student',
         bloodGroup: data.bloodGroup || 'O+',

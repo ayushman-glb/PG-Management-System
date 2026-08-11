@@ -56,7 +56,7 @@ export default function ResidentPortal({ navigate }: Props) {
   const [residentStatus, setResidentStatus] = useState("ACTIVE");
   const [isRoomTransferModalOpen, setIsRoomTransferModalOpen] = useState(false);
   const [portalData, setPortalData] = useState<any>(null);
-  const [agreementsList, setAgreementsList] = useState<any[]>([]);
+  const [_agreementsList, setAgreementsList] = useState<any[]>([]);
   const [residentProfile, setResidentProfile] = useState<any>(null);
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);

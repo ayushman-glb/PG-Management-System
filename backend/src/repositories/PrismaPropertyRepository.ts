@@ -45,20 +45,8 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       return { properties, total };
     } catch (e) {
       return {
-        properties: [
-          {
-            id: '650000000000000000000010',
-            name: 'Stanza Living Luxury PG',
-            city: 'Bangalore',
-            address: 'Koramangala 5th Block',
-            rentStartingFrom: 12000,
-            availableBeds: 5,
-            latitude: 12.9352,
-            longitude: 77.6245,
-            images: ['https://res.cloudinary.com/roombae/image/upload/v1700000000/default-gallery.png']
-          }
-        ],
-        total: 1
+        properties: [],
+        total: 0
       };
     }
   }

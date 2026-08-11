@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -23,129 +23,59 @@ interface Props {
   navigate: (p: Page) => void;
 }
 
-const residents = [
-  {
-    id: 1,
-    name: "Ankit Joshi",
-    email: "ankit@example.com",
-    phone: "+91 98765 43210",
-    room: "202A",
-    pg: "Sunrise PG",
-    joined: "15 Jan 2025",
-    rent: 12000,
-    status: "Active",
-    kyc: "Verified",
-    avatar: "AJ",
-    city: "Bengaluru",
-    profession: "Software Engineer",
-  },
-  {
-    id: 2,
-    name: "Meera Pillai",
-    email: "meera@example.com",
-    phone: "+91 87654 32109",
-    room: "104B",
-    pg: "Green Valley",
-    joined: "3 Feb 2025",
-    rent: 10500,
-    status: "Active",
-    kyc: "Verified",
-    avatar: "MP",
-    city: "Bengaluru",
-    profession: "Data Analyst",
-  },
-  {
-    id: 3,
-    name: "Suresh Babu",
-    email: "suresh@example.com",
-    phone: "+91 76543 21098",
-    room: "301C",
-    pg: "Urban Nest",
-    joined: "20 Mar 2025",
-    rent: 11000,
-    status: "Due",
-    kyc: "Verified",
-    avatar: "SB",
-    city: "Bengaluru",
-    profession: "UX Designer",
-  },
-  {
-    id: 4,
-    name: "Kavya Nair",
-    email: "kavya@example.com",
-    phone: "+91 65432 10987",
-    room: "205D",
-    pg: "Sunrise PG",
-    joined: "8 Apr 2025",
-    rent: 13500,
-    status: "Active",
-    kyc: "Pending",
-    avatar: "KN",
-    city: "Bengaluru",
-    profession: "Product Manager",
-  },
-  {
-    id: 5,
-    name: "Rohit Sinha",
-    email: "rohit@example.com",
-    phone: "+91 54321 09876",
-    room: "110A",
-    pg: "City Heights",
-    joined: "12 May 2025",
-    rent: 9500,
-    status: "Late",
-    kyc: "Verified",
-    avatar: "RS",
-    city: "Bengaluru",
-    profession: "Marketing Lead",
-  },
-  {
-    id: 6,
-    name: "Divya Reddy",
-    email: "divya@example.com",
-    phone: "+91 43210 98765",
-    room: "308B",
-    pg: "Urban Nest",
-    joined: "22 Jun 2025",
-    rent: 14000,
-    status: "Active",
-    kyc: "Verified",
-    avatar: "DR",
-    city: "Bengaluru",
-    profession: "Finance Analyst",
-  },
-];
-
-const timeline = [
-  { label: "Moved In", date: "15 Jan 2025", icon: "🏠" },
-  { label: "KYC Verified", date: "16 Jan 2025", icon: "✅" },
-  { label: "Agreement Signed", date: "17 Jan 2025", icon: "📝" },
-  { label: "Feb Rent Paid", date: "5 Feb 2025", icon: "💳" },
-  { label: "Complaint Raised", date: "20 Feb 2025", icon: "⚠️" },
-  { label: "Mar Rent Paid", date: "3 Mar 2025", icon: "💳" },
-];
-
-const paymentHistory = [
-  { month: "Jul 2025", amount: 12000, status: "Paid", date: "2 Jul 2025" },
-  { month: "Jun 2025", amount: 12000, status: "Paid", date: "1 Jun 2025" },
-  { month: "May 2025", amount: 12000, status: "Paid", date: "5 May 2025" },
-  { month: "Apr 2025", amount: 12000, status: "Late", date: "12 Apr 2025" },
-  { month: "Mar 2025", amount: 12000, status: "Paid", date: "2 Mar 2025" },
-];
-
 export default function Residents({ navigate }: Props) {
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(residents[0]);
+  const [selected, setSelected] = useState<any>(null);
   const [showPalette, setShowPalette] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "payments" | "timeline"
   >("overview");
+  const [residents, setResidents] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
   const { darkMode } = useTheme();
 
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await api.get("/residents");
+        const data = (res as any).data || res || [];
+        const list = Array.isArray(data) ? data : [];
+        if (!cancelled) {
+          setResidents(list);
+          if (list.length > 0 && !selected) setSelected(list[0]);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e.message || "Failed to load residents");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!selected) return;
+    const status = (selected.status || "").toLowerCase();
+    setPaymentHistory([
+      { month: "Current", amount: selected.rent || 0, status: status === "late" ? "Due" : status === "active" ? "Paid" : "Pending", date: new Date().toISOString().split("T")[0] },
+    ]);
+    setTimeline([
+      { label: "Moved In", date: selected.joined || new Date().toISOString().split("T")[0], icon: "🏠" },
+      { label: "Profile Loaded", date: new Date().toISOString().split("T")[0], icon: "📋" },
+    ]);
+  }, [selected]);
+
   const filtered = residents.filter(
-    (r) =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.room.toLowerCase().includes(search.toLowerCase()),
+    (r: any) =>
+      (r.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.room || "").toLowerCase().includes(search.toLowerCase()),
   );
 
   const [isExporting, setIsExporting] = useState(false);
@@ -373,7 +303,7 @@ export default function Residents({ navigate }: Props) {
                   <span className="text-[11px] font-bold text-white/60 uppercase mr-1">Owner Action:</span>
                   <button
                     onClick={() => {
-                      setSelected(prev => ({ ...prev, status: "Active" }));
+                      setSelected((prev: any) => ({ ...prev, status: "Active" }));
                       api.updateResidentStatus(String(selected.id), "ACTIVE", "Owner manual status change");
                     }}
                     className="px-2.5 py-1 rounded-lg bg-emerald-500/30 text-emerald-200 text-xs font-semibold hover:bg-emerald-500/50 transition-colors"
@@ -382,7 +312,7 @@ export default function Residents({ navigate }: Props) {
                   </button>
                   <button
                     onClick={() => {
-                      setSelected(prev => ({ ...prev, status: "Home" }));
+                      setSelected((prev: any) => ({ ...prev, status: "Home" }));
                       api.updateResidentStatus(String(selected.id), "HOME", "Owner manual status change");
                     }}
                     className="px-2.5 py-1 rounded-lg bg-blue-500/30 text-blue-200 text-xs font-semibold hover:bg-blue-500/50 transition-colors"
@@ -391,7 +321,7 @@ export default function Residents({ navigate }: Props) {
                   </button>
                   <button
                     onClick={() => {
-                      setSelected(prev => ({ ...prev, status: "Leave" }));
+                      setSelected((prev: any) => ({ ...prev, status: "Leave" }));
                       api.updateResidentStatus(String(selected.id), "ON_LEAVE", "Owner manual status change");
                     }}
                     className="px-2.5 py-1 rounded-lg bg-yellow-500/30 text-yellow-200 text-xs font-semibold hover:bg-yellow-500/50 transition-colors"
@@ -400,7 +330,7 @@ export default function Residents({ navigate }: Props) {
                   </button>
                   <button
                     onClick={() => {
-                      setSelected(prev => ({ ...prev, status: "Hold" }));
+                      setSelected((prev: any) => ({ ...prev, status: "Hold" }));
                       api.updateResidentStatus(String(selected.id), "HOLD", "Owner manual status change");
                     }}
                     className="px-2.5 py-1 rounded-lg bg-amber-500/30 text-amber-200 text-xs font-semibold hover:bg-amber-500/50 transition-colors"
@@ -409,7 +339,7 @@ export default function Residents({ navigate }: Props) {
                   </button>
                   <button
                     onClick={() => {
-                      setSelected(prev => ({ ...prev, status: "Checked Out" }));
+                      setSelected((prev: any) => ({ ...prev, status: "Checked Out" }));
                       api.updateResidentStatus(String(selected.id), "CHECKED_OUT", "Owner manual status change");
                     }}
                     className="px-2.5 py-1 rounded-lg bg-purple-500/30 text-purple-200 text-xs font-semibold hover:bg-purple-500/50 transition-colors"

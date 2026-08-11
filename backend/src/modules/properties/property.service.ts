@@ -73,26 +73,10 @@ export class PropertyService implements IPropertyService {
   }
 
   async createProperty(ownerId: string, data: Omit<ICreatePropertyData, 'ownerId'>) {
-    let property: any = null;
-    try {
-      property = await this.propertyRepository.create({
-        ownerId,
-        ...data
-      });
-    } catch {
-      return {
-        id: "650000000000000000000003",
-        ownerId,
-        name: data.name,
-        address: data.address,
-        city: data.city,
-        pincode: data.pincode,
-        totalRooms: data.totalRooms,
-        totalBeds: data.totalBeds,
-        rooms: [],
-        complaints: []
-      };
-    }
+    const property = await this.propertyRepository.create({
+      ownerId,
+      ...data
+    });
 
     for (let r = 1; r <= data.totalRooms; r++) {
       const roomNum = (100 + r).toString();

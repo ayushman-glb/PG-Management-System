@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useTheme } from "../../../theme";
+import { useAuth } from "../../../hooks/useAuth";
 import { billingService } from "../../../services/billing.service";
 
 interface PayRentModalProps {
@@ -18,8 +19,9 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
   defaultAmount = 8500,
 }) => {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
   const [amount, setAmount] = useState<number>(defaultAmount);
-  const [accountNumber, setAccountNumber] = useState("2255 4595 9874 4423");
+  const [accountNumber, setAccountNumber] = useState("");
   const [pin, setPin] = useState("");
   const [paymentType, setPaymentType] = useState<"RENT" | "DEPOSIT" | "ADVANCE">("RENT");
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,8 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
 
     try {
       // Step 1: Create Order from Billing Service
-      const order = await billingService.createBillingOrder("res_demo", amount);
+      const residentId = (user as any)?.residentId || (user as any)?.id || "unknown";
+      const order = await billingService.createBillingOrder(residentId, amount);
 
       // Step 2: Open Razorpay Checkout or fallback verification
       const options = {
@@ -65,9 +68,9 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
           }
         },
         prefill: {
-          name: "Eler Minton",
-          email: "resident@roombae.com",
-          contact: "+919876543210",
+          name: (user as any)?.name || "Resident",
+          email: (user as any)?.email || "resident@roombae.com",
+          contact: (user as any)?.phone || "",
         },
         theme: {
           color: "#D9A87C",

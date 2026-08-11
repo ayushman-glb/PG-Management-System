@@ -47,91 +47,57 @@ export default function ResidentRegister({ navigate }: Props) {
   const stepCardRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
-    fullName: "Ankit Joshi",
-    gender: "Male",
-    dob: "1998-05-14",
-    mobile: "9876543210",
-    altMobile: "9876543211",
-    email: "ankit.joshi@example.com",
-    emergencyName: "Ramesh Joshi",
-    emergencyPhone: "9876500000",
-    emergencyRelation: "Father",
-    bloodGroup: "O+",
-    occupation: "Working Professional",
-    companyCollege: "TechCorp Solutions",
+    fullName: "",
+    gender: "",
+    dob: "",
+    mobile: "",
+    altMobile: "",
+    email: "",
+    emergencyName: "",
+    emergencyPhone: "",
+    emergencyRelation: "",
+    bloodGroup: "",
+    occupation: "",
+    companyCollege: "",
 
-    aadhaarNumber: "1234 5678 9012",
-    panNumber: "ABCDE1234F",
+    aadhaarNumber: "",
+    panNumber: "",
     passportNumber: "",
     drivingLicense: "",
 
-    permanentAddress: "123 Heritage Lane, Civil Lines",
-    currentAddress: "45 Lotus Garden, Indiranagar",
-    city: "Bengaluru",
-    state: "Karnataka",
-    pincode: "560038",
-    guardianName: "Ramesh Joshi",
-    guardianPhone: "9876500000",
-    guardianAddress: "123 Heritage Lane, Civil Lines",
+    permanentAddress: "",
+    currentAddress: "",
+    city: "",
+    state: "",
+    pincode: "",
+    guardianName: "",
+    guardianPhone: "",
+    guardianAddress: "",
 
-    preferredPg: "Sunrise PG Homes",
-    roomSharing: "Double Sharing",
-    checkInDate: "2025-08-01",
-    stayDuration: "6 Months",
-    foodPref: "North Indian (Veg & Non-Veg)",
-    parkingRequired: "Two Wheeler",
-    vehicleNumber: "KA-01-EQ-4521",
+    preferredPg: "",
+    roomSharing: "",
+    checkInDate: "",
+    stayDuration: "",
+    foodPref: "",
+    parkingRequired: "",
+    vehicleNumber: "",
 
-    bankName: "HDFC Bank",
-    accountHolder: "Ankit Joshi",
-    accountNumber: "5010023456789",
-    ifscCode: "HDFC0000128",
-    upiId: "ankit@upi",
-    agreeTerms: true,
+    bankName: "",
+    accountHolder: "",
+    accountNumber: "",
+    ifscCode: "",
+    upiId: "",
+    agreeTerms: false,
   });
 
-  const [docs, setDocs] = useState<Record<string, UploadedDoc>>({
-    aadhaarFront: {
-      fileName: "aadhaar_front.jpg",
-      fileSize: "1.8 MB",
-      uploadTime: "Just now",
-      type: "image",
-      previewUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop",
-      progress: 100,
-      status: "success",
-    },
-    aadhaarBack: {
-      fileName: "aadhaar_back.jpg",
-      fileSize: "1.6 MB",
-      uploadTime: "Just now",
-      type: "image",
-      previewUrl: "https://images.unsplash.com/photo-1557683316-973673baf926?w=400&auto=format&fit=crop",
-      progress: 100,
-      status: "success",
-    },
-    panCard: {
-      fileName: "pan_card_copy.pdf",
-      fileSize: "840 KB",
-      uploadTime: "Just now",
-      type: "pdf",
-      progress: 100,
-      status: "success",
-    },
-    photo: {
-      fileName: "profile_photo.jpg",
-      fileSize: "920 KB",
-      uploadTime: "Just now",
-      type: "image",
-      previewUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop",
-      progress: 100,
-      status: "success",
-    },
-  });
+  const [docs, setDocs] = useState<Record<string, UploadedDoc>>({});
 
   const [activeDrag, setActiveDrag] = useState<string | null>(null);
   const [previewModal, setPreviewModal] = useState<UploadedDoc | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedPropertyId, _setSelectedPropertyId] = useState("");
+  const [selectedBedId, _setSelectedBedId] = useState("");
 
   useEffect(() => {
     if (stepCardRef.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -287,9 +253,9 @@ export default function ResidentRegister({ navigate }: Props) {
         name: formData.fullName,
         email: formData.email,
         phone: formData.mobile,
-        propertyId: "650000000000000000000001",
-        bedId: "650000000000000000000002",
-        idProofNumber: formData.aadhaarNumber || "1234 5678 9012",
+        propertyId: selectedPropertyId || "",
+        bedId: selectedBedId || "",
+        idProofNumber: formData.aadhaarNumber || "",
         aadhaarNumber: formData.aadhaarNumber,
 
         panNumber: formData.panNumber,

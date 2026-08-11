@@ -263,27 +263,3 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({ resi
     </AnimatePresence>
   );
 };
-</arg_value>
-<task_progress>
-- [x] Audit existing project structure (frontend + backend)
-- [x] Audit backend: routes, controllers, services, repositories, models, auth middleware
-- [x] Audit frontend: auth state, API clients, components, hard-coded data
-- [x] Audit database schema, env files, security config
-- [x] Remove hard-coded users/auth/data
-- [x] Build REST API authentication architecture
-- [x] Implement JWT access/refresh token system
-- [ ] Implement registration, login, logout, /me endpoints
-- [ ] Implement email verification (Brevo)
-- [ ] Implement Firebase phone verification
-- [ ] Implement Google OAuth
-- [ ] Implement role-based authorization
-- [x] Build frontend auth state + API client layer
-- [ ] Make all user data dynamic
-- [ ] Fix scrolling/responsive issues
-- [ ] Fix loading/empty/error states
-- [ ] Security audit + env cleanup
-- [x] Build + type check frontend/backend
-- [ ] Runtime testing + iterative debugging
-- [ ] Final implementation report
-</task_progress>
-</write_to_file></tool_call>

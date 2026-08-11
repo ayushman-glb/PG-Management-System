@@ -86,26 +86,10 @@ export class PropertyService implements IPropertyService {
    * Owner Endpoint to create a property with auto-generated rooms & beds
    */
   async createProperty(ownerId: string, data: Omit<ICreatePropertyData, 'ownerId'>) {
-    let property: any = null;
-    try {
-      property = await this.propertyRepository.create({
-        ownerId,
-        ...data
-      });
-    } catch (e) {
-      return {
-        id: "650000000000000000000003",
-        ownerId,
-        name: data.name,
-        address: data.address,
-        city: data.city,
-        pincode: data.pincode,
-        totalRooms: data.totalRooms,
-        totalBeds: data.totalBeds,
-        rooms: [],
-        complaints: []
-      };
-    }
+    const property = await this.propertyRepository.create({
+      ownerId,
+      ...data
+    });
 
     // Auto-create room grid structure (101, 102...)
     for (let r = 1; r <= data.totalRooms; r++) {
