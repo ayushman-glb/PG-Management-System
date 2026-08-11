@@ -44,26 +44,15 @@ export class SocketServer {
           const allowedOrigins = [
             env.CLIENT_URL,
             env.FRONTEND_URL,
-            "https://ayushman-glb.github.io",
             "https://ayushman-glb.github.io/PG-Management-System",
-            "https://ayushman-glb.github.io/PG-Management-System/",
             "https://pg-management-system-boxb.onrender.com",
-            "http://localhost:8443",
             "http://localhost:5173",
-            "http://localhost:4173",
-            "http://localhost:3000",
-            "http://localhost:5000",
-            "http://127.0.0.1:8443",
             "http://127.0.0.1:5173",
           ].filter(Boolean);
           const isAllowed = allowedOrigins.some(
             (o) => o && o.replace(/\/$/, "") === cleanOrigin,
           );
-          if (
-            isAllowed ||
-            origin.includes("localhost") ||
-            origin.includes("127.0.0.1")
-          ) {
+          if (isAllowed) {
             return callback(null, true);
           }
           return callback(new Error(`Origin ${origin} not allowed by CORS`));

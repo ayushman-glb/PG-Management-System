@@ -26,22 +26,34 @@ app.use(correlationIdMiddleware);
 // Security & Optimization Middlewares
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: ["'self'", "https:", "wss:", "ws:"],
+        fontSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : undefined,
+      },
+    },
+    crossOriginEmbedderPolicy: env.NODE_ENV === "production" ? "require-corp" : false,
+    crossOriginOpenerPolicy: env.NODE_ENV === "production" ? "same-origin" : false,
+    crossOriginResourcePolicy: env.NODE_ENV === "production" ? "same-origin" : false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: env.NODE_ENV === "production" ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
   }),
 );
+
 const allowedOrigins = [
   env.CLIENT_URL,
   env.FRONTEND_URL,
-  "https://ayushman-glb.github.io",
   "https://ayushman-glb.github.io/PG-Management-System",
-  "https://ayushman-glb.github.io/PG-Management-System/",
   "https://pg-management-system-boxb.onrender.com",
-  "http://localhost:8443",
   "http://localhost:5173",
-  "http://localhost:4173",
-  "http://localhost:3000",
-  "http://localhost:5000",
-  "http://127.0.0.1:8443",
   "http://127.0.0.1:5173",
 ].filter(Boolean);
 
@@ -51,14 +63,9 @@ app.use(
       if (!origin) return callback(null, true);
       const cleanOrigin = origin.replace(/\/$/, "");
       const isAllowed = allowedOrigins.some((o) => o && o.replace(/\/$/, "") === cleanOrigin);
-      if (
-        isAllowed ||
-        origin.includes("localhost") ||
-        origin.includes("127.0.0.1")
-      ) {
+      if (isAllowed) {
         return callback(null, true);
       }
-
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true,
@@ -73,15 +80,20 @@ app.use(passport.initialize());
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
 
-// Swagger Documentation Endpoints
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/api/docs.json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
-});
+// Swagger Documentation Endpoints — only accessible in non-production environments
+if (env.NODE_ENV !== "production") {
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.get("/api/docs.json", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(swaggerSpec);
+  });
+}
 
 // Phase 15 - System Health, Readiness, Liveness, & Prometheus Metrics Probes
 app.get("/metrics", (req, res) => {
+  if (env.NODE_ENV === "production") {
+    return res.status(403).json({ success: false, message: "Forbidden" });
+  }
   const mem = process.memoryUsage();
   const metrics = [
     "# HELP node_memory_rss_bytes Resident Set Size in bytes",
@@ -130,22 +142,24 @@ app.get("/health", async (req, res) => {
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime()),
     latencyMs: Date.now() - startTime,
-    memory: {
-      rssMB: (memoryUsage.rss / 1024 / 1024).toFixed(2),
-      heapTotalMB: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
-      heapUsedMB: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
-    },
+    memory: env.NODE_ENV === "production"
+      ? { rssMB: "N/A", heapTotalMB: "N/A", heapUsedMB: "N/A" }
+      : {
+          rssMB: (memoryUsage.rss / 1024 / 1024).toFixed(2),
+          heapTotalMB: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
+          heapUsedMB: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
+        },
     database: {
       provider: "mongodb",
       status: dbStatus,
-      latencyMs: dbLatency,
+      latencyMs: env.NODE_ENV === "production" ? "N/A" : dbLatency,
     },
     services: {
       restApi: "READY",
       soapERP: "READY",
       webSocket: "READY",
-      swaggerDocs: "READY",
-      prometheusMetrics: "READY",
+      swaggerDocs: env.NODE_ENV !== "production" ? "READY" : "DISABLED_IN_PROD",
+      prometheusMetrics: env.NODE_ENV !== "production" ? "READY" : "DISABLED_IN_PROD",
     },
   });
 });

@@ -45,7 +45,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
 
       // Step 2: Open Razorpay Checkout or fallback verification
       const options = {
-        key: order.keyId || "rzp_test_TM4mpVud9kvppK",
+        key: order.keyId,
         amount: order.totalAmount * 100,
         currency: order.currency || "INR",
         name: "RoomBae Stays",

@@ -85,18 +85,8 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   );
 } else {
   // Graceful fallback for deployments without active Google OAuth client configuration
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: "unconfigured_google_client_id.apps.googleusercontent.com",
-        clientSecret: "unconfigured_google_client_secret",
-        callbackURL: env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/v1/auth/google/callback",
-      },
-      (_accessToken: string, _refreshToken: string, _profile: Profile, done: VerifyCallback) => {
-        done(new Error("Google OAuth 2.0 is not configured in server environment variables."));
-      }
-    )
-  );
+  // Google OAuth 2.0 is not configured in server environment variables.
+  // Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable Google Sign-In.
 }
 
 passport.serializeUser((user: Express.User, done: (err: any, id?: unknown) => void) => {
