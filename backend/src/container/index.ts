@@ -26,6 +26,9 @@ import { ResidentManagementRepository } from '../repositories/ResidentManagement
 import { ResidentManagementService } from '../services/ResidentManagementService';
 import { ResidentManagementController } from '../controllers/residentManagementController';
 
+// Device Security Subsystem
+import { DeviceRepository, DeviceService, DeviceController } from '../modules/devices';
+
 import { PaymentStrategyContext } from '../core/patterns/payment/PaymentStrategy';
 import { EventDispatcher } from '../core/patterns/events/EventDispatcher';
 
@@ -337,5 +340,31 @@ export class Container {
       this._documentController = new DocumentController(Container.documentService);
     }
     return this._documentController;
+  }
+
+  // Device Security Subsystem
+  private static _deviceRepository?: DeviceRepository;
+  private static _deviceService?: DeviceService;
+  private static _deviceController?: DeviceController;
+
+  public static get deviceRepository() {
+    if (!this._deviceRepository) {
+      this._deviceRepository = new DeviceRepository(Container.db);
+    }
+    return this._deviceRepository;
+  }
+
+  public static get deviceService() {
+    if (!this._deviceService) {
+      this._deviceService = new DeviceService(Container.deviceRepository);
+    }
+    return this._deviceService;
+  }
+
+  public static get deviceController() {
+    if (!this._deviceController) {
+      this._deviceController = new DeviceController(Container.deviceService);
+    }
+    return this._deviceController;
   }
 }

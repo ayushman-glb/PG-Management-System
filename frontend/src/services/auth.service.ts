@@ -86,13 +86,39 @@ export class AuthService {
     let identifier = typeof identifierOrCredentials === "string" ? identifierOrCredentials : (identifierOrCredentials.identifier || identifierOrCredentials.email || "");
     let password = passwordArg || (typeof identifierOrCredentials === "object" ? identifierOrCredentials.password : "");
 
+    let visitorId: string | undefined;
+    let deviceLabel: string | undefined;
+
+    try {
+      const { deviceIdentityProvider } = await import("./deviceIdentity");
+      const identity = await deviceIdentityProvider.getDeviceIdentity();
+      visitorId = identity.visitorId;
+      deviceLabel = identity.deviceLabel;
+    } catch {
+      // Ignore if fingerprinting unavailable
+    }
+
     const res = await this.request("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ identifier, password, visitorId, deviceLabel }),
     });
+
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken);
     }
+
+    if (res.data?.deviceSecurity?.isNewDevice && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("roombae-new-device-detected", {
+          detail: {
+            deviceLabel: deviceLabel || "New Browser",
+            status: res.data.deviceSecurity.status,
+            riskLevel: res.data.deviceSecurity.riskLevel,
+          },
+        }),
+      );
+    }
+
     return res.data || res;
   }
 

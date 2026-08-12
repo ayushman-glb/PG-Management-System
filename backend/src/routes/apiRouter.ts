@@ -23,12 +23,14 @@ import { toursRoutes } from '../modules/tours';
 import { applicationsRoutes } from '../modules/applications';
 import { messagesRoutes } from '../modules/messages';
 import { moveInRoutes } from '../modules/moveIn';
+import { deviceRoutes } from '../modules/devices';
 
 const apiRouter = Router();
 
 apiRouter.use(tenantMiddleware);
 
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/security/devices', deviceRoutes);
 apiRouter.use('/upload', uploadRoutes);
 apiRouter.use('/media', mediaRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);

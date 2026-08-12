@@ -304,6 +304,8 @@ model User {
   ownerThreads       ChatThread[]   @relation("OwnerThreads")
   refreshTokens      RefreshToken[]
   passwordResets     PasswordResetToken[]
+  userDevices        UserDevice[]
+  securityAuditEvents SecurityAuditEvent[]
 
   @@index([residentCode])
   @@index([phone])
@@ -356,6 +358,52 @@ model LoginHistory {
   userAgent String
   status    String // SUCCESS, FAILED
   createdAt DateTime @default(now())
+}
+
+model UserDevice {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String    @db.ObjectId
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visitorIdHash   String
+  provider        String    @default("fingerprintjs")
+  providerVersion String?
+  deviceLabel     String
+  status          String    @default("NEW") // NEW, TRUSTED, BLOCKED, REVOKED
+  trustLevel      String    @default("UNTRUSTED") // TRUSTED, UNTRUSTED
+  lastIpHash      String?
+  userAgentHash   String?
+  failedAttempts  Int       @default(0)
+  firstSeenAt     DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  lastLoginAt     DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, visitorIdHash])
+  @@index([userId])
+  @@index([visitorIdHash])
+  @@index([status])
+}
+
+model SecurityAuditEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deviceId  String?
+  eventType String   // LOGIN_SUCCESS, LOGIN_FAILURE, NEW_DEVICE, DEVICE_TRUSTED, DEVICE_REVOKED, DEVICE_BLOCKED, DEVICE_UNBLOCKED, SUSPICIOUS_LOGIN, STEP_UP_REQUIRED, STEP_UP_SUCCESS, STEP_UP_FAILURE, LOGOUT, SESSION_REVOKED
+  severity  String   @default("INFO") // INFO, WARNING, CRITICAL
+  riskScore Int      @default(0)
+  riskLevel String   @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  ipAddress String?
+  userAgent String?
+  requestId String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
 }
 
 model DeviceHistory {

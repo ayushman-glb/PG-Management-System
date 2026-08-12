@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
 import { AvatarThemeSelector } from "@components/ui/Avatar";
+import { DeviceManagementSection } from "../../settings/components/DeviceManagementSection";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 
@@ -211,6 +212,8 @@ export default function Operations({ navigate, page }: Props) {
                 </div>
               </div>
             </div>
+
+            <DeviceManagementSection />
           </div>
         )}
 

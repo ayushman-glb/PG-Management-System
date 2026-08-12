@@ -24,6 +24,38 @@ export class AuthController {
 
     const result = await this.authService.login(loginId, password);
 
+    const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
+    let deviceSecurity: any = null;
+
+    if (visitorId && result?.user?.id) {
+      try {
+        const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
+        const userAgent = req.headers["user-agent"];
+        const requestId = (req as any).correlationId;
+
+        const evalResult = await Container.deviceService.identifyAndEvaluateDevice(
+          result.user.id,
+          { visitorId, deviceLabel: req.body.deviceLabel },
+          { ipAddress, userAgent, requestId },
+        );
+
+        if (evalResult?.device?.status === "BLOCKED") {
+          return res.status(403).json({
+            success: false,
+            message: "Authentication denied: This browser/device has been blocked by security policy.",
+          });
+        }
+
+        deviceSecurity = {
+          isNewDevice: evalResult.isNew,
+          status: evalResult.device?.status,
+          riskLevel: evalResult.risk?.level,
+        };
+      } catch (deviceError) {
+        logger.warn("Device security evaluation notice:", deviceError);
+      }
+    }
+
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
@@ -34,6 +66,7 @@ export class AuthController {
     return ApiResponse.success(res, "Login successful", {
       user: result.user,
       accessToken: result.accessToken,
+      deviceSecurity,
     });
   });
 

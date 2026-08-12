@@ -54,10 +54,32 @@ import {
 export const BRANDED_LOADING_DURATION_MS = 2000;
 export const SESSION_KEY = "loadingShown";
 
+import { NewDeviceNotificationModal } from "../components/security/NewDeviceNotificationModal";
+import { deviceService } from "../services/device.service";
+
 export default function App() {
   const [page, setPage] = useState<Page>("landing");
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
   const directionRef = useRef<1 | -1>(1);
+  const [newDeviceModal, setNewDeviceModal] = useState<{ isOpen: boolean; deviceLabel: string }>({
+    isOpen: false,
+    deviceLabel: "",
+  });
+
+  useEffect(() => {
+    const handleNewDevice = (e: any) => {
+      if (e.detail?.deviceLabel) {
+        setNewDeviceModal({
+          isOpen: true,
+          deviceLabel: e.detail.deviceLabel,
+        });
+      }
+    };
+    window.addEventListener("roombae-new-device-detected", handleNewDevice);
+    return () => {
+      window.removeEventListener("roombae-new-device-detected", handleNewDevice);
+    };
+  }, []);
 
   const [showOneTimeLoading, setShowOneTimeLoading] = useState<boolean>(() => {
     try {
@@ -211,6 +233,35 @@ export default function App() {
             </motion.div>
           )}
         </AnimatePresence>
+        <NewDeviceNotificationModal
+          isOpen={newDeviceModal.isOpen}
+          deviceLabel={newDeviceModal.deviceLabel}
+          onTrust={async () => {
+            try {
+              const devices = await deviceService.getUserDevices();
+              if (devices.length > 0) {
+                await deviceService.trustDevice(devices[0].id);
+              }
+            } catch {
+              // Ignore if trust call fails
+            } finally {
+              setNewDeviceModal({ isOpen: false, deviceLabel: "" });
+            }
+          }}
+          onRevoke={async () => {
+            try {
+              const devices = await deviceService.getUserDevices();
+              if (devices.length > 0) {
+                await deviceService.revokeDevice(devices[0].id);
+              }
+            } catch {
+              // Ignore if revoke fails
+            } finally {
+              setNewDeviceModal({ isOpen: false, deviceLabel: "" });
+            }
+          }}
+          onClose={() => setNewDeviceModal({ isOpen: false, deviceLabel: "" })}
+        />
       </NavigationProvider>
     </AppProviders>
   );

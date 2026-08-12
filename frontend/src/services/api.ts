@@ -1,5 +1,6 @@
 import { API_CONFIG } from "@config/api";
 import { authService } from "./auth.service";
+import { deviceIdentityProvider } from "./deviceIdentity";
 import { propertyService } from "./property.service";
 import { residentService } from "./resident.service";
 import { billingService } from "./billing.service";
@@ -25,6 +26,15 @@ class ApiClient {
 
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    try {
+      const identity = await deviceIdentityProvider.getDeviceIdentity();
+      if (identity && identity.visitorId) {
+        headers["X-Visitor-Id"] = identity.visitorId;
+      }
+    } catch {
+      // Ignore device identity error if blocked
     }
 
     const res = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
