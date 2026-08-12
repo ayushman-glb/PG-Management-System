@@ -10,6 +10,7 @@ declare global {
       name?: string;
       avatarUrl?: string | null;
       googleSubId?: string | null;
+      tokenVersion?: number;
     }
 
     interface Request {

@@ -37,11 +37,23 @@ export class JwtTokenService implements ITokenService {
     return jwt.sign(payload, this.jwtRefreshSecret, { expiresIn: expires });
   }
 
+  generatePreAuthToken(payload: any): string {
+    return jwt.sign({ ...payload, preAuth: true }, this.jwtSecret, { expiresIn: '5m' });
+  }
+
   verifyAccessToken(token: string): any {
     return jwt.verify(token, this.jwtSecret);
   }
 
   verifyRefreshToken(token: string): any {
     return jwt.verify(token, this.jwtRefreshSecret);
+  }
+
+  verifyPreAuthToken(token: string): any {
+    const decoded: any = jwt.verify(token, this.jwtSecret);
+    if (!decoded || !decoded.preAuth) {
+      throw new Error('Invalid pre-auth token');
+    }
+    return decoded;
   }
 }

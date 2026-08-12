@@ -192,14 +192,25 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
           )}
 
           <div className="flex items-center gap-3">
-            <Avatar name="Rajesh Kumar" initials="RK" size="md" />
+            <Avatar
+              name={user?.name || "User"}
+              initials={
+                (user?.name || "User")
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)
+              }
+              size="md"
+            />
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-semibold truncate ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                  Rajesh Kumar
+                  {user?.name || "User"}
                 </p>
-                <p className={`text-xs truncate ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`}>
-                  Owner
+                <p className={`text-xs capitalize truncate ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`}>
+                  {user?.role ? user.role.toLowerCase() : "User"}
                 </p>
               </div>
             )}
@@ -329,7 +340,18 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             </button>
 
             <div className="flex-shrink-0">
-              <Avatar name="Rajesh Kumar" initials="RK" size="sm" />
+              <Avatar
+                name={user?.name || "User"}
+                initials={
+                  (user?.name || "User")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)
+                }
+                size="sm"
+              />
             </div>
           </div>
 

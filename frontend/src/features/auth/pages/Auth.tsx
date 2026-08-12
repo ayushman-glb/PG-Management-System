@@ -377,12 +377,15 @@ export default function Auth({ navigate }: Props) {
     }
     setAuthError("");
     setShowSignupCta(false);
-    setIsSubmitting(true);
     try {
       const identifier = loginIdentifier.trim();
       const passwordVal = loginPassword;
-
-      const loginRes = await authService.login({ identifier, password: passwordVal });
+      const loginRes = await authService.login({ identifier, password: passwordVal, rememberMe });
+      if (loginRes?.requiresTwoFactor) {
+        setAuthSuccessMsg("Two-factor authentication code required. Please enter your TOTP code.");
+        setMode("otp");
+        return;
+      }
       const userRole = loginRes?.user?.role;
 
       if (userRole === "RESIDENT") {

@@ -45,7 +45,10 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
     mockTokenService = {
       generateAccessToken: jest.fn().mockReturnValue('mock_access_token'),
       generateRefreshToken: jest.fn().mockReturnValue('mock_refresh_token'),
-      verifyRefreshToken: jest.fn().mockReturnValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', role: 'OWNER' })
+      generatePreAuthToken: jest.fn().mockReturnValue('mock_pre_auth_token'),
+      verifyAccessToken: jest.fn().mockReturnValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', role: 'OWNER' }),
+      verifyRefreshToken: jest.fn().mockReturnValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', role: 'OWNER' }),
+      verifyPreAuthToken: jest.fn().mockReturnValue({ preAuth: true, userId: '507f1f77bcf86cd799439011', role: 'ADMIN' }),
     };
     mockOtpService = {
       generateAndSendOtp: jest.fn().mockResolvedValue({ otp: '123456', expiresAt: new Date(Date.now() + 300000), message: 'OTP sent' }),

@@ -59,34 +59,28 @@ export class AuthService implements IAuthService {
     };
   }
 
-  /**
-   * Persist a refresh token (hashed) associated with the user.
-   */
   private async persistRefreshToken(
     userId: string,
     refreshToken: string,
+    rememberMeOrIp?: boolean | string,
     ipAddress?: string,
     userAgent?: string,
   ) {
+    const rememberMe = typeof rememberMeOrIp === "boolean" ? rememberMeOrIp : false;
+    const actualIp = typeof rememberMeOrIp === "string" ? rememberMeOrIp : ipAddress;
+    const actualUserAgent = typeof rememberMeOrIp === "string" ? ipAddress : userAgent;
+
     const expiresAt = new Date();
-    const expiresInMs = env.JWT_REFRESH_EXPIRATION || "7d";
-    // Parse expires duration (e.g. "7d" -> 7 days)
-    const match = expiresInMs.match(/^(\d+)([smhd])$/);
-    if (match) {
-      const [, num, unit] = match;
-      const mult = unit === "s" ? 1000 : unit === "m" ? 60 * 1000 : unit === "h" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
-      expiresAt.setTime(Date.now() + parseInt(num) * mult);
-    } else {
-      expiresAt.setDate(expiresAt.getDate() + 7);
-    }
+    const days = rememberMe ? 30 : 7;
+    expiresAt.setDate(expiresAt.getDate() + days);
 
     await prisma.refreshToken.create({
       data: {
         userId,
         tokenHash: this.hashRefreshToken(refreshToken),
         expiresAt,
-        ipAddress,
-        userAgent,
+        ipAddress: actualIp,
+        userAgent: actualUserAgent,
       },
     });
   }
@@ -275,9 +269,19 @@ export class AuthService implements IAuthService {
     return { accessToken, refreshToken };
   }
 
-  async login(identifier: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult> {
+  async login(
+    identifier: string,
+    password: string,
+    rememberMe?: boolean | string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<IAuthUserResult | any> {
     const rawId = (identifier || "").trim();
     const cleanPass = password || "";
+
+    const isRememberMe = typeof rememberMe === "boolean" ? rememberMe : false;
+    const actualIp = typeof rememberMe === "string" ? rememberMe : ipAddress;
+    const actualUserAgent = typeof rememberMe === "string" ? ipAddress : userAgent;
 
     logger.info("Login request received", { identifierType: rawId.includes("@") ? "email" : "other" });
 
@@ -319,13 +323,37 @@ export class AuthService implements IAuthService {
       throw new AppError("This account has been deactivated.", 403, "ACCOUNT_INACTIVE");
     }
 
+    if (user.emailVerified === false) {
+      throw new AppError(
+        "Please verify your email address before signing in.",
+        403,
+        "ACCOUNT_UNVERIFIED"
+      );
+    }
+
+    // 2FA Enforcement for Admin/Super Admin or users with is2FAEnabled
+    if (user.is2FAEnabled === true || user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+      if (user.is2FAEnabled && this.tokenService.generatePreAuthToken) {
+        const preAuthToken = this.tokenService.generatePreAuthToken({
+          preAuth: true,
+          userId: user.id,
+          role: user.role,
+        });
+        return {
+          requiresTwoFactor: true,
+          preAuthToken,
+          message: "Two-factor authentication code required",
+        };
+      }
+    }
+
     // Record login history (best-effort)
     try {
       await prisma.loginHistory.create({
         data: {
           userId: user.id,
-          ipAddress: ipAddress || "unknown",
-          userAgent: userAgent || "unknown",
+          ipAddress: actualIp || "unknown",
+          userAgent: actualUserAgent || "unknown",
           status: "SUCCESS",
         },
       });
@@ -341,7 +369,7 @@ export class AuthService implements IAuthService {
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
-    await this.persistRefreshToken(user.id, refreshToken, ipAddress, userAgent);
+    await this.persistRefreshToken(user.id, refreshToken, isRememberMe, actualIp, actualUserAgent);
 
     logger.info("Login successful", { userId: user.id, role: user.role });
 
@@ -421,7 +449,7 @@ export class AuthService implements IAuthService {
   async sendOtp(email: string): Promise<{ message: string }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw new AppError("User not found with provided email", 404);
+      return { message: "If an account with that email exists, an OTP code has been sent." };
     }
 
     const { message } = await this.otpService.generateAndSendOtp(email);
@@ -511,7 +539,10 @@ export class AuthService implements IAuthService {
 
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw new AppError("User not found with provided email", 404);
+      return {
+        success: true,
+        message: `If an account with that email exists, a verification code has been sent to ${email}`,
+      };
     }
 
     const { code, expiresAt } = await this.otpService.generateAndSendEmailVerification(email);
@@ -572,9 +603,27 @@ export class AuthService implements IAuthService {
   }
 
   async verifyTwoFactor(
-    userId: string,
+    userIdOrPreAuthToken: string,
     token: string,
-  ): Promise<{ success: boolean; message: string }> {
+    rememberMe?: boolean,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<any> {
+    let userId = userIdOrPreAuthToken;
+    let isPreAuth = false;
+
+    if (this.tokenService.verifyPreAuthToken) {
+      try {
+        const decoded = this.tokenService.verifyPreAuthToken(userIdOrPreAuthToken);
+        if (decoded && decoded.userId) {
+          userId = decoded.userId;
+          isPreAuth = true;
+        }
+      } catch (e) {
+        // Not a pre-auth token, treat as userId directly
+      }
+    }
+
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
 
@@ -590,6 +639,43 @@ export class AuthService implements IAuthService {
 
     if (!isValid) {
       throw new AppError("Invalid two-factor authentication code", 401, "TWO_FACTOR_INVALID");
+    }
+
+    if (isPreAuth) {
+      const payload = this.buildAccessPayload(user);
+      const accessToken = this.tokenService.generateAccessToken(payload);
+      const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+      await this.persistRefreshToken(user.id, refreshToken, rememberMe, ipAddress, userAgent);
+
+      try {
+        await prisma.loginHistory.create({
+          data: {
+            userId: user.id,
+            ipAddress: ipAddress || "unknown",
+            userAgent: userAgent || "unknown",
+            status: "SUCCESS",
+          },
+        });
+      } catch {}
+
+      return {
+        success: true,
+        message: "Two-factor authentication verified successfully!",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          residentCode: user.residentCode || undefined,
+          avatarUrl: user.avatarUrl,
+          phone: user.phone,
+          emailVerified: user.emailVerified,
+          phoneVerified: user.phoneVerified,
+        },
+        accessToken,
+        refreshToken,
+      };
     }
 
     return {

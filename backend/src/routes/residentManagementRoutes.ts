@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { Container } from '../container';
+import { authenticate } from '../middleware/authMiddleware';
 
 const router = Router();
+
+// All resident management endpoints require authentication
+router.use(authenticate);
 
 // Resident Status Endpoints
 router.post('/status', (req, res) => Container.residentManagementController.updateResidentStatus(req, res));

@@ -20,12 +20,34 @@ export class AuthService {
     updateSocketAuth(token);
   }
 
+  public getStoredRefreshToken(): string | null {
+    try {
+      return sessionStorage.getItem("roombae_refresh_token") || localStorage.getItem("roombae_refresh_token");
+    } catch {
+      return null;
+    }
+  }
+
+  public setRefreshToken(refreshToken: string, rememberMe: boolean = false) {
+    try {
+      if (rememberMe) {
+        localStorage.setItem("roombae_refresh_token", refreshToken);
+        sessionStorage.removeItem("roombae_refresh_token");
+      } else {
+        sessionStorage.setItem("roombae_refresh_token", refreshToken);
+        localStorage.removeItem("roombae_refresh_token");
+      }
+    } catch {}
+  }
+
   public clearToken() {
     this.inMemoryToken = null;
     try {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("token");
       localStorage.removeItem("roombae_access_token");
+      localStorage.removeItem("roombae_refresh_token");
+      sessionStorage.removeItem("roombae_refresh_token");
     } catch {}
     disconnectSocket();
   }
@@ -53,21 +75,27 @@ export class AuthService {
 
     if (response.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
       try {
+        const storedRefreshToken = this.getStoredRefreshToken();
         const refreshRes = await fetch(`${env.API_URL}/auth/refresh-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: storedRefreshToken }),
           credentials: "include",
         });
 
         if (refreshRes.ok) {
           const refreshData = await refreshRes.json();
           const newToken = refreshData?.data?.accessToken || refreshData?.accessToken;
+          const newRefreshToken = refreshData?.data?.refreshToken || refreshData?.refreshToken;
           if (newToken) {
             this.setToken(newToken);
+            if (newRefreshToken) {
+              const isPersistent = Boolean(localStorage.getItem("roombae_refresh_token"));
+              this.setRefreshToken(newRefreshToken, isPersistent);
+            }
             return this.request<T>(endpoint, options, true);
           }
         }
-        // If refresh fails, clear token
         this.clearToken();
       } catch (refreshErr) {
         console.warn("⚠️ Token auto-refresh failed:", refreshErr);
@@ -82,9 +110,10 @@ export class AuthService {
     return data;
   }
 
-  async login(identifierOrCredentials: any, passwordArg?: string) {
+  async login(identifierOrCredentials: any, passwordArg?: string, rememberMeArg?: boolean) {
     let identifier = typeof identifierOrCredentials === "string" ? identifierOrCredentials : (identifierOrCredentials.identifier || identifierOrCredentials.email || "");
     let password = passwordArg || (typeof identifierOrCredentials === "object" ? identifierOrCredentials.password : "");
+    let rememberMe = rememberMeArg !== undefined ? rememberMeArg : (typeof identifierOrCredentials === "object" ? Boolean(identifierOrCredentials.rememberMe) : false);
 
     let visitorId: string | undefined;
     let deviceLabel: string | undefined;
@@ -100,11 +129,14 @@ export class AuthService {
 
     const res = await this.request("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ identifier, password, visitorId, deviceLabel }),
+      body: JSON.stringify({ identifier, password, rememberMe, visitorId, deviceLabel }),
     });
 
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken);
+    }
+    if (res.data?.refreshToken) {
+      this.setRefreshToken(res.data.refreshToken, rememberMe);
     }
 
     if (res.data?.deviceSecurity?.isNewDevice && typeof window !== "undefined") {
@@ -130,6 +162,9 @@ export class AuthService {
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken);
     }
+    if (res.data?.refreshToken) {
+      this.setRefreshToken(res.data.refreshToken, false);
+    }
     return res.data;
   }
 
@@ -149,6 +184,9 @@ export class AuthService {
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken);
     }
+    if (res.data?.refreshToken) {
+      this.setRefreshToken(res.data.refreshToken, false);
+    }
     return res.data;
   }
 
@@ -167,12 +205,17 @@ export class AuthService {
 
     this.refreshPromise = (async () => {
       try {
+        const storedRefreshToken = this.getStoredRefreshToken();
         const res = await this.request("/auth/refresh-token", {
           method: "POST",
-          body: JSON.stringify({}),
+          body: JSON.stringify({ refreshToken: storedRefreshToken }),
         });
         if (res.data?.accessToken) {
           this.setToken(res.data.accessToken);
+        }
+        if (res.data?.refreshToken) {
+          const isPersistent = Boolean(localStorage.getItem("roombae_refresh_token"));
+          this.setRefreshToken(res.data.refreshToken, isPersistent);
         }
         return res.data || res;
       } finally {

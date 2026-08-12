@@ -115,6 +115,7 @@ async function main() {
       passwordHash: superAdminPassHash,
       role: Role.SUPER_ADMIN,
       is2FAEnabled: true,
+      emailVerified: true,
     }
   });
 
@@ -128,6 +129,7 @@ async function main() {
       passwordHash: adminPassHash,
       role: Role.ADMIN,
       is2FAEnabled: true,
+      emailVerified: true,
     }
   });
 
@@ -148,7 +150,8 @@ async function main() {
         phone: ownerData.phone,
         passwordHash: ownerPassHash,
         role: Role.OWNER,
-        is2FAEnabled: true
+        is2FAEnabled: false,
+        emailVerified: true,
       }
     });
 
@@ -248,7 +251,8 @@ async function main() {
                 residentCode: resCode,
                 passwordHash: resPassHash,
                 role: Role.RESIDENT,
-                is2FAEnabled: false
+                is2FAEnabled: false,
+                emailVerified: true,
               }
             });
 

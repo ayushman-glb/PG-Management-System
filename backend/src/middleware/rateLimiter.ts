@@ -80,4 +80,10 @@ export const uploadLimiter = createLimiter(
 
 export const authLimiter = loginLimiter;
 export const phoneVerifyLimiter = verifyOtpLimiter;
+export const refreshTokenLimiter = createLimiter(
+  15 * 60 * 1000,
+  20,
+  'Too many token refresh attempts. Please try again after 15 minutes.',
+  'REFRESH_RATE_EXCEEDED'
+);
 

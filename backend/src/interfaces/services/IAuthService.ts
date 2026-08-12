@@ -39,7 +39,7 @@ export interface IRefreshResult {
 }
 
 export interface IAuthService {
-  login(identifier: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
+  login(identifier: string, password: string, rememberMe?: boolean | string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult | any>;
   register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   generateOAuthTokens(user: any, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string }>;
@@ -63,14 +63,17 @@ export interface IAuthService {
     userId: string,
   ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string }>;
   verifyTwoFactor(
-    userId: string,
+    userIdOrPreAuthToken: string,
     token: string,
-  ): Promise<{ success: boolean; message: string }>;
+    rememberMe?: boolean,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ success: boolean; message: string } | any>;
   disableTwoFactor(
     userId: string,
   ): Promise<{ success: boolean; message: string }>;
   refreshToken(token: string, ipAddress?: string, userAgent?: string): Promise<IRefreshResult>;
-  logout(token: string): Promise<void>;
+  logout(token: string, userId?: string, ipAddress?: string, userAgent?: string): Promise<void>;
   me(userId: string): Promise<any>;
 
   ownerProfile(userId: string): Promise<any>;

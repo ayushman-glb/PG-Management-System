@@ -12,8 +12,10 @@ export class AuthController {
   constructor(private readonly authService: IAuthService) {}
 
   login = catchAsync(async (req: Request, res: Response) => {
-    const { identifier, email, residentCode, password } = req.body;
+    const { identifier, email, residentCode, password, rememberMe } = req.body;
     const loginId = identifier || email || residentCode;
+    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
+    const userAgent = req.headers["user-agent"];
 
     if (!loginId || !password) {
       return res.status(400).json({
@@ -22,15 +24,21 @@ export class AuthController {
       });
     }
 
-    const result = await this.authService.login(loginId, password);
+    const isRememberMe = Boolean(rememberMe);
+    const result = await this.authService.login(loginId, password, isRememberMe, ipAddress, userAgent);
+
+    if (result && result.requiresTwoFactor) {
+      return ApiResponse.success(res, result.message || "Two-factor authentication code required", {
+        requiresTwoFactor: true,
+        preAuthToken: result.preAuthToken,
+      });
+    }
 
     const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
     let deviceSecurity: any = null;
 
     if (visitorId && result?.user?.id) {
       try {
-        const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-        const userAgent = req.headers["user-agent"];
         const requestId = (req as any).correlationId;
 
         const evalResult = await Container.deviceService.identifyAndEvaluateDevice(
@@ -46,26 +54,34 @@ export class AuthController {
           });
         }
 
+        let stepUpRequired = false;
+        if (evalResult?.device?.status === "REVOKED") {
+          stepUpRequired = true;
+        }
+
         deviceSecurity = {
           isNewDevice: evalResult.isNew,
           status: evalResult.device?.status,
           riskLevel: evalResult.risk?.level,
+          stepUpRequired,
         };
       } catch (deviceError) {
         logger.warn("Device security evaluation notice:", deviceError);
       }
     }
 
+    const cookieMaxAge = isRememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: cookieMaxAge,
     });
 
     return ApiResponse.success(res, "Login successful", {
       user: result.user,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       deviceSecurity,
     });
   });
@@ -182,9 +198,23 @@ export class AuthController {
   });
 
   verifyTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id || req.body.userId || "USER_CURRENT";
-    const { token } = req.body;
-    const result = await this.authService.verifyTwoFactor(userId, token);
+    const { preAuthToken, userId: bodyUserId, token, rememberMe } = req.body;
+    const tokenOrUserId = preAuthToken || bodyUserId || (req as any).user?.id || "USER_CURRENT";
+    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
+    const userAgent = req.headers["user-agent"];
+
+    const result = await this.authService.verifyTwoFactor(tokenOrUserId, token, rememberMe, ipAddress, userAgent);
+
+    if (result && result.refreshToken) {
+      const cookieMaxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+      res.cookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: cookieMaxAge,
+      });
+    }
+
     return ApiResponse.success(res, result.message, result);
   });
 

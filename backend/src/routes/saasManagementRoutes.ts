@@ -1,12 +1,16 @@
 import { Router, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { FineEngineService } from "../services/FineEngineService";
 import { SearchService } from "../services/SearchService";
+import { authenticate, authorize } from "../middleware/authMiddleware";
 
 const router = Router();
 const prisma = new PrismaClient();
 const fineEngine = new FineEngineService(prisma);
 const searchService = new SearchService(prisma);
+
+// All SaaS management endpoints require authentication
+router.use(authenticate);
 
 // FINE ENGINE ENDPOINTS
 router.post("/fines/rules", async (req: Request, res: Response) => {
@@ -78,7 +82,7 @@ router.get("/search", async (req: Request, res: Response) => {
 });
 
 // ADMIN VERIFICATION QUEUE ENDPOINTS
-router.get("/admin/verification-queue", async (req: Request, res: Response) => {
+router.get("/admin/verification-queue", authorize(Role.ADMIN, Role.SUPER_ADMIN), async (req: Request, res: Response) => {
   try {
     const pendingOwners = await prisma.owner.findMany({
       include: {
@@ -94,7 +98,7 @@ router.get("/admin/verification-queue", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/admin/approve-pg/:pgId", async (req: Request, res: Response) => {
+router.post("/admin/approve-pg/:pgId", authorize(Role.ADMIN, Role.SUPER_ADMIN), async (req: Request, res: Response) => {
   try {
     const pg = await prisma.pG.update({
       where: { id: req.params.pgId },
