@@ -1,0 +1,41 @@
+import request from "supertest";
+import { app } from "../app";
+
+describe("CORS & Preflight OPTIONS Middleware Unit Tests", () => {
+  const GITHUB_PAGES_ORIGIN = "https://ayushman-glb.github.io";
+
+  test("Should handle OPTIONS /api/v1/auth/login preflight with 204 status and valid CORS headers", async () => {
+    const res = await request(app)
+      .options("/api/v1/auth/login")
+      .set("Origin", GITHUB_PAGES_ORIGIN)
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "Content-Type, Authorization");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["access-control-allow-origin"]).toBe(GITHUB_PAGES_ORIGIN);
+    expect(res.headers["access-control-allow-credentials"]).toBe("true");
+    expect(res.headers["access-control-allow-methods"]).toContain("POST");
+  });
+
+  test("Should handle OPTIONS /api/v1/auth/me preflight with 204 status", async () => {
+    const res = await request(app)
+      .options("/api/v1/auth/me")
+      .set("Origin", GITHUB_PAGES_ORIGIN)
+      .set("Access-Control-Request-Method", "GET");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["access-control-allow-origin"]).toBe(GITHUB_PAGES_ORIGIN);
+    expect(res.headers["access-control-allow-credentials"]).toBe("true");
+  });
+
+  test("Should NOT throw 500 Internal Server Error on unallowed origin OPTIONS request", async () => {
+    const res = await request(app)
+      .options("/api/v1/auth/login")
+      .set("Origin", "https://unauthorized-domain.com")
+      .set("Access-Control-Request-Method", "POST");
+
+    // Should return 204 or non-500 status without Access-Control-Allow-Origin header
+    expect(res.status).not.toBe(500);
+    expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+});

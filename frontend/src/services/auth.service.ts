@@ -157,15 +157,30 @@ export class AuthService {
     return res.data || res;
   }
 
+  private refreshPromise: Promise<any> | null = null;
+
   async refreshToken() {
-    const res = await this.request("/auth/refresh-token", {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
-    if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
+    if (this.refreshPromise) {
+      const res = await this.refreshPromise;
+      return res.data || res;
     }
-    return res.data || res;
+
+    this.refreshPromise = (async () => {
+      try {
+        const res = await this.request("/auth/refresh-token", {
+          method: "POST",
+          body: JSON.stringify({}),
+        });
+        if (res.data?.accessToken) {
+          this.setToken(res.data.accessToken);
+        }
+        return res.data || res;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
   }
 
   async sendPhoneOtp(phone: string) {

@@ -22,6 +22,59 @@ export const app = express();
 // Trust proxy setting when deployed behind Render / Cloudflare reverse proxies
 app.set("trust proxy", 1);
 
+// ── 1. CORS Middleware (MUST BE REGISTERED FIRST BEFORE HELMET / AUTH / OTHER MIDDLEWARES) ──
+const rawOrigins = [
+  ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
+  env.CLIENT_URL,
+  env.FRONTEND_URL,
+  "https://ayushman-glb.github.io",
+  "https://pg-management-system-boxb.onrender.com",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+];
+
+const allowedOrigins = Array.from(
+  new Set(
+    rawOrigins
+      .filter(Boolean)
+      .map((item) => {
+        const trimmed = item.trim();
+        if (!trimmed) return "";
+        try {
+          if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return new URL(trimmed).origin.toLowerCase();
+          }
+          return trimmed.replace(/\/$/, "").toLowerCase();
+        } catch {
+          return trimmed.replace(/\/$/, "").toLowerCase();
+        }
+      })
+      .filter(Boolean)
+  )
+);
+
+const corsMiddleware = cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
+    const isAllowed = allowedOrigins.includes(cleanOrigin);
+    if (isAllowed) {
+      return callback(null, true);
+    }
+    // Return callback(null, false) instead of passing an Error to avoid triggering Express 500 error handler
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Visitor-Id", "X-Correlation-ID", "Accept"],
+  exposedHeaders: ["X-Correlation-ID", "Set-Cookie"],
+  optionsSuccessStatus: 204,
+});
+
+app.use(corsMiddleware);
+app.options("*", corsMiddleware);
+
 // Correlation ID & Distributed Tracing
 app.use(correlationIdMiddleware);
 
@@ -42,35 +95,11 @@ app.use(
         upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : null,
       },
     },
-    crossOriginEmbedderPolicy: env.NODE_ENV === "production" ? { policy: "require-corp" } : false,
-    crossOriginOpenerPolicy: env.NODE_ENV === "production" ? { policy: "same-origin" } : false,
-    crossOriginResourcePolicy: env.NODE_ENV === "production" ? { policy: "same-origin" } : false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     hsts: env.NODE_ENV === "production" ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
-  }),
-);
-
-const allowedOrigins = [
-  env.CLIENT_URL,
-  env.FRONTEND_URL,
-  "https://ayushman-glb.github.io/PG-Management-System",
-  "https://pg-management-system-boxb.onrender.com",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-].filter(Boolean);
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      const cleanOrigin = origin.replace(/\/$/, "");
-      const isAllowed = allowedOrigins.some((o) => o && o.replace(/\/$/, "") === cleanOrigin);
-      if (isAllowed) {
-        return callback(null, true);
-      }
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
-    credentials: true,
   }),
 );
 app.use(compression());
