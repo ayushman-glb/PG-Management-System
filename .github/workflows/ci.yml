@@ -38,7 +38,9 @@ jobs:
           cd backend
           npm run typecheck
 
-      - name: Run Backend Production Build
+      - name: Run Backend Production Build (Render Production Mode Simulation)
+        env:
+          NODE_ENV: production
         run: |
           cd backend
           npm run build

@@ -11,5 +11,9 @@ declare global {
       avatarUrl?: string | null;
       googleSubId?: string | null;
     }
+
+    interface Request {
+      user?: User;
+    }
   }
 }

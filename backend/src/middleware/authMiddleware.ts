@@ -1,16 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/appError';
-import { Container } from '../container';
 import { Role } from '@prisma/client';
 import { logger } from '../utils/logger';
 
+export interface AuthUserPayload {
+  id: string;
+  email: string;
+  role: Role;
+  residentCode?: string | null;
+  name?: string;
+  avatarUrl?: string | null;
+  googleSubId?: string | null;
+}
+
 export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: Role;
-    residentCode?: string | null;
-  };
+  user?: AuthUserPayload;
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -31,11 +36,13 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   try {
-    const decoded = Container.tokenService.verifyAccessToken(token);
+    const secret = process.env.JWT_SECRET || 'dev_secret_change_me_in_production';
+    const decoded = jwt.verify(token, secret) as any;
+
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      role: decoded.role as Role,
+      role: decoded.role,
       residentCode: decoded.residentCode
     };
     next();
