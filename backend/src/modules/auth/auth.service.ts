@@ -267,6 +267,14 @@ export class AuthService implements IAuthService {
     };
   }
 
+  async generateOAuthTokens(user: any, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = this.buildAccessPayload(user);
+    const accessToken = this.tokenService.generateAccessToken(payload);
+    const refreshToken = this.tokenService.generateRefreshToken(payload);
+    await this.persistRefreshToken(user.id, refreshToken, ipAddress, userAgent);
+    return { accessToken, refreshToken };
+  }
+
   async login(identifier: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult> {
     const rawId = (identifier || "").trim();
     const cleanPass = password || "";

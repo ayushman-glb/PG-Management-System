@@ -1,14 +1,29 @@
 import { Router } from 'express';
 import { Container } from '../../container';
-import { authenticate } from '../../middleware/authMiddleware';
+import { authenticate, authorize } from '../../middleware/authMiddleware';
+import { Role } from '@prisma/client';
 
 const router = Router();
 
 router.use(authenticate);
 
-router.post('/', (req, res, next) => Container.complaintController.create(req, res, next));
-router.get('/', (req, res, next) => Container.complaintController.list(req, res, next));
-router.put('/:id/status', (req, res, next) => Container.complaintController.updateStatus(req, res, next));
-router.patch('/:id/status', (req, res, next) => Container.complaintController.updateStatus(req, res, next));
+// ── File a complaint (any authenticated user) ─────────────────────────────────
+router.post('/',
+  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.complaintController.create(req, res, next));
+
+// ── List complaints (owner/admin sees their PG's complaints) ──────────────────
+router.get('/',
+  authorize(Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.complaintController.list(req, res, next));
+
+// ── Resolve / reject a complaint (owner/admin only) ───────────────────────────
+router.put('/:id/status',
+  authorize(Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.complaintController.updateStatus(req, res, next));
+
+router.patch('/:id/status',
+  authorize(Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.complaintController.updateStatus(req, res, next));
 
 export default router;

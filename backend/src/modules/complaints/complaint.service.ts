@@ -4,6 +4,7 @@ import { IResidentRepository } from '../../interfaces/repositories/IResidentRepo
 import { AppError } from '../../utils/appError';
 import { Priority, TicketStatus } from '@prisma/client';
 import crypto from 'crypto';
+import { SocketServer } from '../../socket/socketServer';
 
 export class ComplaintService implements IComplaintService {
   constructor(
@@ -19,16 +20,24 @@ export class ComplaintService implements IComplaintService {
 
     const ticketCode = `TICK-${crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 
-    return this.complaintRepository.create({
+    const complaint = await this.complaintRepository.create({
       ticketCode,
       residentId: resident.id,
-      propertyId: resident.propertyId || resident.pgId,
+      propertyId: resident.pgId || 'default-pg',
       category: data.category,
       title: data.title,
       description: data.description,
       priority: data.priority || Priority.MEDIUM,
       status: TicketStatus.OPEN
     });
+
+    try {
+      if (complaint.pgId) {
+        SocketServer.emitToPg(complaint.pgId, 'complaint:created', complaint);
+      }
+    } catch {}
+
+    return complaint;
   }
 
   async listComplaints(filters: IComplaintFilters) {
@@ -41,6 +50,14 @@ export class ComplaintService implements IComplaintService {
       throw new AppError('Complaint ticket not found', 404);
     }
 
-    return this.complaintRepository.updateStatus(complaintId, status);
+    const updated = await this.complaintRepository.updateStatus(complaintId, status);
+
+    try {
+      if (complaint.pgId) {
+        SocketServer.emitToPg(complaint.pgId, 'complaint:status_change', updated);
+      }
+    } catch {}
+
+    return updated;
   }
 }

@@ -38,6 +38,10 @@ export const BentoDashboard: React.FC = () => {
       }
     }
     loadMetrics();
+
+    const handleDataChanged = () => loadMetrics();
+    window.addEventListener("roombae-data-changed", handleDataChanged);
+    return () => window.removeEventListener("roombae-data-changed", handleDataChanged);
   }, []);
 
   const occupancyRate = metrics?.occupancyRatePercent !== undefined

@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ResidentStatus, PGStatus, HoldStatus, LeaveStatus, FoodPreference, RoomType, WashroomType, ACType, PaymentStatus, Priority, TicketStatus, PassStatus } from '@prisma/client';
+import { PrismaClient, Role, ResidentStatus, PGStatus, FoodPreference, RoomType, WashroomType, ACType, PaymentStatus, Priority, TicketStatus, BedStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -35,16 +35,16 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number; metro: string
 };
 
 const OWNER_SEEDS = [
-  { name: 'Rajesh Sharma', city: 'Bengaluru', phone: '+919876543210', email: 'rajesh.owner@roombae.com' },
-  { name: 'Priya Venkatesh', city: 'Bengaluru', phone: '+919876543211', email: 'priya.owner@roombae.com' },
-  { name: 'Amitabh Malhotra', city: 'Gurugram', phone: '+919876543212', email: 'amitabh.owner@roombae.com' },
-  { name: 'Sunita Aggarwal', city: 'Gurugram', phone: '+919876543213', email: 'sunita.owner@roombae.com' },
-  { name: 'Vikram Joshi', city: 'Pune', phone: '+919876543214', email: 'vikram.owner@roombae.com' },
-  { name: 'Ananya Deshmukh', city: 'Pune', phone: '+919876543215', email: 'ananya.owner@roombae.com' },
-  { name: 'Suresh Reddy', city: 'Hyderabad', phone: '+919876543216', email: 'suresh.owner@roombae.com' },
-  { name: 'Kavitha Rao', city: 'Hyderabad', phone: '+919876543217', email: 'kavitha.owner@roombae.com' },
-  { name: 'Rohan Gupta', city: 'Bengaluru', phone: '+919876543218', email: 'rohan.owner@roombae.com' },
-  { name: 'Meenakshi Sundaram', city: 'Bengaluru', phone: '+919876543219', email: 'meenakshi.owner@roombae.com' }
+  { name: 'Rajesh Sharma', city: 'Bengaluru', phone: '+919876543210', email: 'rajesh.owner@roombae.com', pass: 'Owner_Rajesh_1001!' },
+  { name: 'Priya Venkatesh', city: 'Bengaluru', phone: '+919876543211', email: 'priya.owner@roombae.com', pass: 'Owner_Priya_1002!' },
+  { name: 'Amitabh Malhotra', city: 'Gurugram', phone: '+919876543212', email: 'amitabh.owner@roombae.com', pass: 'Owner_Amitabh_1003!' },
+  { name: 'Sunita Aggarwal', city: 'Gurugram', phone: '+919876543213', email: 'sunita.owner@roombae.com', pass: 'Owner_Sunita_1004!' },
+  { name: 'Vikram Joshi', city: 'Pune', phone: '+919876543214', email: 'vikram.owner@roombae.com', pass: 'Owner_Vikram_1005!' },
+  { name: 'Ananya Deshmukh', city: 'Pune', phone: '+919876543215', email: 'ananya.owner@roombae.com', pass: 'Owner_Ananya_1006!' },
+  { name: 'Suresh Reddy', city: 'Hyderabad', phone: '+919876543216', email: 'suresh.owner@roombae.com', pass: 'Owner_Suresh_1007!' },
+  { name: 'Kavitha Rao', city: 'Hyderabad', phone: '+919876543217', email: 'kavitha.owner@roombae.com', pass: 'Owner_Kavitha_1008!' },
+  { name: 'Rohan Gupta', city: 'Bengaluru', phone: '+919876543218', email: 'rohan.owner@roombae.com', pass: 'Owner_Rohan_1009!' },
+  { name: 'Meenakshi Sundaram', city: 'Bengaluru', phone: '+919876543219', email: 'meenakshi.owner@roombae.com', pass: 'Owner_Meenakshi_1010!' }
 ];
 
 const COMPLAINT_TOPICS = [
@@ -60,9 +60,15 @@ const COMPLAINT_TOPICS = [
   { category: 'Electrical', title: 'Power Socket Inoperative near Bed B', priority: Priority.MEDIUM }
 ];
 
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
 async function main() {
+  const dbUrl = process.env.DATABASE_URL || '';
+  const isLocalDB = dbUrl.startsWith('mongodb://localhost') || dbUrl.startsWith('mongodb://127.0.0.1');
+  if (!isLocalDB) {
+    console.error('❌ SEED REFUSED: DATABASE_URL does not look like a local/dev database.');
+    console.error('   Only run seeds against localhost MongoDB. Current URL:', dbUrl.slice(0, 40) + '...');
+    process.exit(1);
+  }
+
   console.log('🚀 Starting Production-Grade RoomBae Database Seeding...');
 
   // Clean existing collections
@@ -96,20 +102,51 @@ async function main() {
   await prisma.owner.deleteMany({});
   await prisma.user.deleteMany({});
 
-  const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
+  const saltRounds = 12;
+
+  // 1. Seed Super Admin & Admin
+  const superAdminSalt = await bcrypt.genSalt(saltRounds);
+  const superAdminPassHash = await bcrypt.hash('SuperAdmin_RB_2026!', superAdminSalt);
+  await prisma.user.create({
+    data: {
+      name: 'Super Admin',
+      email: 'superadmin@roombae.com',
+      phone: '+919900000001',
+      passwordHash: superAdminPassHash,
+      role: Role.SUPER_ADMIN,
+      is2FAEnabled: true,
+    }
+  });
+
+  const adminSalt = await bcrypt.genSalt(saltRounds);
+  const adminPassHash = await bcrypt.hash('Admin_RoomBae_7890!', adminSalt);
+  await prisma.user.create({
+    data: {
+      name: 'Platform Admin',
+      email: 'admin@roombae.com',
+      phone: '+919900000002',
+      passwordHash: adminPassHash,
+      role: Role.ADMIN,
+      is2FAEnabled: true,
+    }
+  });
+
   let globalResidentCount = 0;
 
-  // 1. Seed 10 Owners
+  // 2. Seed 10 Owners & properties
   for (let i = 0; i < OWNER_SEEDS.length; i++) {
     const ownerData = OWNER_SEEDS[i];
     const cityMeta = CITY_COORDINATES[ownerData.city];
+
+    const ownerSalt = await bcrypt.genSalt(saltRounds);
+    const ownerPassHash = await bcrypt.hash(ownerData.pass, ownerSalt);
 
     const user = await prisma.user.create({
       data: {
         name: ownerData.name,
         email: ownerData.email,
         phone: ownerData.phone,
-        passwordHash: defaultPasswordHash,
+        passwordHash: ownerPassHash,
         role: Role.OWNER,
         is2FAEnabled: true
       }
@@ -129,173 +166,141 @@ async function main() {
         bankName: 'HDFC Bank Enterprise',
         accountNumber: `5010023456789${i}`,
         ifscCode: 'HDFC0001234',
-        emergencyContact: '+919123456789',
-        bio: `Senior Hospitality Executive & PG Property Manager in ${ownerData.city} with 10+ years operational experience.`
+        emergencyContact: `+91912345678${i}`
       }
     });
 
-    // Seed 3-4 PGs per Owner
-    const pgsToCreate = 3 + (i % 2); // 3 or 4 PGs
-    for (let p = 1; p <= pgsToCreate; p++) {
-      const pgName = `RoomBae Executive Living ${ownerData.city} ${p}`;
-      const slug = `roombae-${ownerData.city.toLowerCase()}-owner${i + 1}-pg${p}`;
+    // 3. Create 3 PGs per owner (30 PGs total)
+    for (let p = 1; p <= 3; p++) {
+      const pgName = `${ownerData.name.split(' ')[0]}'s ${p === 1 ? 'Executive' : p === 2 ? 'Luxury' : 'Premier'} PG ${ownerData.city}`;
+      const slug = `${ownerData.name.toLowerCase().split(' ')[0]}-pg-${ownerData.city.toLowerCase()}-${p}`;
 
       const pg = await prisma.pG.create({
         data: {
           ownerId: owner.id,
           name: pgName,
           slug,
-          logo: `https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200&auto=format&fit=crop&q=80`,
+          logo: `https://images.unsplash.com/photo-${1560518883 + p}?w=200&auto=format&fit=crop&q=80`,
           galleryImages: [
-            'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=80',
-            'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=80',
-            'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop&q=80'
+            `https://images.unsplash.com/photo-${1522708323590 + p}?w=800&auto=format&fit=crop&q=80`,
+            `https://images.unsplash.com/photo-${1502672260266 + p}?w=800&auto=format&fit=crop&q=80`
           ],
-          description: `Premium co-living luxury PG in prime locality of ${ownerData.city}. Features high-speed WiFi, daily housekeeping, biometric security, and gourmet 3-meal mess service.`,
-          amenities: ['WiFi', 'Laundry', 'Parking', 'CCTV', 'Power Backup', 'Lift', 'Mess', 'Security', 'Gaming Lounge', 'Gym'],
-          rules: ['No loud music after 10 PM', 'Visitors allowed till 8 PM in common areas', 'Biometric check-in mandatory'],
-          rentStartingFrom: 9500,
+          description: `Luxury co-living PG with premium amenities, high-speed optical fiber WiFi, and 24/7 security in ${ownerData.city}.`,
+          amenities: ['WiFi', 'Laundry', 'CCTV', 'Power Backup', 'Lift', 'Mess', 'Security', 'Gym', 'Biometric Gate'],
+          rules: ['No loud music after 10 PM', 'Visitors allowed in common areas till 8 PM', 'Biometric check-in mandatory'],
+          rentStartingFrom: 8500 + (p * 1500),
           securityDeposit: 15000,
-          latitude: cityMeta.lat + (Math.random() * 0.05 - 0.025),
-          longitude: cityMeta.lng + (Math.random() * 0.05 - 0.025),
-          address: `${p * 12}, Tech Park Outer Ring Road, ${ownerData.city}`,
+          latitude: cityMeta.lat + (p * 0.005),
+          longitude: cityMeta.lng + (p * 0.005),
+          address: `Plot ${12 + p}, Sector ${4 + i}, ${ownerData.city}`,
           city: ownerData.city,
-          pincode: '560103',
+          pincode: '560038',
           nearbyColleges: cityMeta.colleges,
           nearbyCompanies: cityMeta.companies,
           nearbyMetro: cityMeta.metro,
-          capacity: 72,
-          currentOccupancy: 35,
-          availableBeds: 37,
+          capacity: 48,
+          currentOccupancy: 0,
+          availableBeds: 48,
           status: PGStatus.ACTIVE
         }
       });
 
-      // Seed 7-Day Meal Schedule
-      for (const day of DAYS_OF_WEEK) {
-        await prisma.mealSchedule.create({
-          data: {
-            pgId: pg.id,
-            dayOfWeek: day,
-            breakfastMenu: day === 'Sunday' ? 'Masala Dosa, Sambar, Coconut Chutney, Tea/Coffee' : 'Idli Vada, Sambar, Tea/Coffee',
-            lunchMenu: day === 'Sunday' ? 'Paneer Butter Masala, Veg Biryani, Raita, Gulab Jamun' : 'Dal Tadka, Mix Veg Curry, Rice, Roti, Salad',
-            snacksMenu: 'Veg Cutlet / Samosa & Hot Filter Coffee',
-            dinnerMenu: 'Rajma Masala, Jeera Rice, Chapati, Kheer',
-            calories: 2100,
-            isSpecialDay: day === 'Sunday',
-            specialDetails: day === 'Sunday' ? 'Chef Special Dessert & Biryani Delight' : null,
-            ratingAverage: 4.6
-          }
-        });
-      }
-
-      // Seed Building -> 3 Floors -> 8 Rooms -> 3 Beds = 72 beds per PG
+      // Create Building, Floor, Rooms, Beds
       const building = await prisma.building.create({
-        data: {
-          pgId: pg.id,
-          name: 'Main Block A',
-          floorsCount: 3
-        }
+        data: { pgId: pg.id, name: 'Main Block', floorsCount: 3 }
       });
-
-      let pgResidentCount = 0;
 
       for (let f = 1; f <= 3; f++) {
         const floor = await prisma.floor.create({
-          data: {
-            buildingId: building.id,
-            floorNumber: f
-          }
-        } as any);
+          data: { buildingId: building.id, floorNumber: f }
+        });
 
-        for (let r = 1; r <= 8; r++) {
+        for (let r = 1; r <= 4; r++) {
           const roomNum = `${f}0${r}`;
           const room = await prisma.room.create({
             data: {
               floorId: floor.id,
               roomNumber: roomNum,
               roomType: r % 2 === 0 ? RoomType.DOUBLE : RoomType.TRIPLE,
-              acType: r % 3 === 0 ? ACType.AC : ACType.NON_AC,
+              rentAmount: 9000 + (r * 500),
               washroomType: WashroomType.ATTACHED,
-              rentAmount: 8500 + (r * 300)
+              acType: ACType.AC
             }
           });
 
-          for (let b = 1; b <= 3; b++) {
-            const bedNum = `${roomNum}-${String.fromCharCode(64 + b)}`;
-            const isOccupied = pgResidentCount < 35; // 35 residents per PG
+          // Create Beds & Residents
+          const bedCount = r % 2 === 0 ? 2 : 3;
+          for (let b = 1; b <= bedCount; b++) {
+            const bedName = `Bed ${String.fromCharCode(64 + b)}`;
+            globalResidentCount++;
+            const resCode = `RES${1000 + globalResidentCount}`;
+            const resEmail = `resident${globalResidentCount}@roombae.com`;
+            const resPass = `Resident_RES${1000 + globalResidentCount}_Pass!`;
+
+            const resSalt = await bcrypt.genSalt(saltRounds);
+            const resPassHash = await bcrypt.hash(resPass, resSalt);
+
+            const resUser = await prisma.user.create({
+              data: {
+                name: `Resident ${globalResidentCount} (${ownerData.city})`,
+                email: resEmail,
+                phone: `+9190000${String(10000 + globalResidentCount).padStart(5, '0')}`,
+                residentCode: resCode,
+                passwordHash: resPassHash,
+                role: Role.RESIDENT,
+                is2FAEnabled: false
+              }
+            });
 
             const bed = await prisma.bed.create({
               data: {
                 roomId: room.id,
-                bedNumber: bedNum,
-                isOccupied
+                bedNumber: `${roomNum}-${bedName}`,
+                status: b === 1 ? BedStatus.OCCUPIED : BedStatus.AVAILABLE,
+                isOccupied: b === 1
               }
             });
 
-            if (isOccupied) {
-              pgResidentCount++;
-              globalResidentCount++;
-
-              const residentUser = await prisma.user.create({
-                data: {
-                  name: `Resident ${globalResidentCount}`,
-                  email: `resident${globalResidentCount}@roombae.com`,
-                  phone: `+9198000${String(globalResidentCount).padStart(5, '0')}`,
-                  passwordHash: defaultPasswordHash,
-                  residentCode: `RES${1000 + globalResidentCount}`,
-                  role: Role.RESIDENT
-                }
-              });
-
+            if (b === 1) {
               const resident = await prisma.resident.create({
                 data: {
-                  userId: residentUser.id,
+                  userId: resUser.id,
                   pgId: pg.id,
                   bedId: bed.id,
-                  profilePicture: `https://images.unsplash.com/photo-${1500000000000 + (globalResidentCount % 100)}?w=300&auto=format&fit=crop&q=80`,
-                  name: `Resident ${globalResidentCount}`,
-                  gender: globalResidentCount % 2 === 0 ? 'Male' : 'Female',
-                  age: 21 + (globalResidentCount % 6),
-                  phone: residentUser.phone!,
-                  email: residentUser.email,
-                  permanentAddress: `House #${globalResidentCount}, Model Town, ${ownerData.city}`,
-                  college: globalResidentCount % 2 === 0 ? cityMeta.colleges[0] : null,
-                  company: globalResidentCount % 2 !== 0 ? cityMeta.companies[0] : null,
-                  occupation: globalResidentCount % 2 === 0 ? 'Student' : 'Software Engineer',
+                  name: resUser.name,
+                  email: resUser.email,
+                  phone: resUser.phone || "+919000000000",
                   bloodGroup: 'O+',
-                  foodPreference: globalResidentCount % 3 === 0 ? FoodPreference.JAIN : FoodPreference.VEG,
-                  moveInDate: new Date('2026-01-15'),
-                  rentDueDate: new Date('2026-08-05'),
-                  status: globalResidentCount % 10 === 0 ? ResidentStatus.ON_LEAVE : ResidentStatus.ACTIVE
+                  foodPreference: FoodPreference.VEG,
+                  status: ResidentStatus.ACTIVE,
+                  rentDueDate: new Date(new Date().getFullYear(), new Date().getMonth(), 5)
                 }
               });
 
-              // Create Guardian
-              await prisma.guardian.create({
-                data: {
-                  residentId: resident.id,
-                  name: `Parent of Resident ${globalResidentCount}`,
-                  relation: 'Father',
-                  phone: `+9191000${String(globalResidentCount).padStart(5, '0')}`,
-                  address: `House #${globalResidentCount}, Model Town, ${ownerData.city}`
-                }
-              });
-
-              // Create Payment
-              await prisma.payment.create({
+              // Create Payment & Invoice
+              const payment = await prisma.payment.create({
                 data: {
                   residentId: resident.id,
                   pgId: pg.id,
-                  invoiceNumber: `INV-2026-${1000 + globalResidentCount}`,
-                  baseAmount: 8500,
-                  cgstAmount: 765,
-                  sgstAmount: 765,
+                  invoiceNumber: `INV-${pg.id.slice(-4)}-${1000 + globalResidentCount}`,
+                  baseAmount: room.rentAmount,
+                  cgstAmount: parseFloat((room.rentAmount * 0.09).toFixed(2)),
+                  sgstAmount: parseFloat((room.rentAmount * 0.09).toFixed(2)),
                   igstAmount: 0,
-                  totalAmount: 10030,
-                  dueDate: new Date('2026-08-05'),
-                  paymentMethod: 'RAZORPAY',
+                  totalAmount: parseFloat((room.rentAmount * 1.18).toFixed(2)),
+                  dueDate: new Date(new Date().getFullYear(), new Date().getMonth(), 5),
+                  paymentMethod: 'UPI_ONLINE',
                   status: PaymentStatus.PAID
+                }
+              });
+
+              await prisma.invoice.create({
+                data: {
+                  paymentId: payment.id,
+                  residentId: resident.id,
+                  pgId: pg.id,
+                  invoiceNumber: payment.invoiceNumber,
+                  pdfUrl: `https://roombae-documents.s3.amazonaws.com/invoices/${payment.invoiceNumber}.pdf`
                 }
               });
             }
@@ -303,11 +308,11 @@ async function main() {
         }
       }
 
-      // Seed 5 Complaints per PG
-      for (let c = 0; c < 5; c++) {
-        const topic = COMPLAINT_TOPICS[c % COMPLAINT_TOPICS.length];
-        const residentFirst = await prisma.resident.findFirst({ where: { pgId: pg.id } });
-        if (residentFirst) {
+      // 4. Create Complaints
+      const residentFirst = await prisma.resident.findFirst({ where: { pgId: pg.id } });
+      if (residentFirst) {
+        for (let c = 0; c < 2; c++) {
+          const topic = COMPLAINT_TOPICS[c % COMPLAINT_TOPICS.length];
           await prisma.complaint.create({
             data: {
               ticketCode: `TICK-${pg.id.slice(-4)}-${100 + c}`,
@@ -315,7 +320,7 @@ async function main() {
               pgId: pg.id,
               category: topic.category,
               title: topic.title,
-              description: `Detailed report: ${topic.title}. Requires immediate facility management review.`,
+              description: `Detailed report: ${topic.title}. Requires facility management review.`,
               priority: topic.priority,
               status: TicketStatus.OPEN,
               assignedStaff: 'Ramesh Maintenance Engineer'
@@ -326,7 +331,8 @@ async function main() {
     }
   }
 
-  console.log(`✅ RoomBae Database Seeding Completed Successfully! Seeded 10 Owners, 35 PGs, & ${globalResidentCount} Residents.`);
+  console.log(`✅ RoomBae Database Seeding Completed Successfully!`);
+  console.log(`   Seeded 1 Super Admin, 1 Admin, 10 Owners, 30 PGs, & ${globalResidentCount} Residents.`);
 }
 
 main()

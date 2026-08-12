@@ -75,6 +75,7 @@ export default function Billing({ navigate }: Props) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "paid" | "due" | "late">("all");
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [selectedPayAmount, setSelectedPayAmount] = useState(8500);
   const { darkMode } = useTheme();
 
   const filtered = invoices.filter((inv) => {
@@ -342,7 +343,19 @@ export default function Billing({ navigate }: Props) {
                         </span>
                       </td>
                       <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
+                          {inv.status !== "Paid" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedPayAmount(inv.amount + (inv.lateFee || 0));
+                                setIsPayModalOpen(true);
+                              }}
+                              className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
+                            >
+                              Pay Now
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => window.open(`https://pg-management-system-boxb.onrender.com/api/v1/billing/invoices/${inv.id}/pdf`, "_blank")}
@@ -370,7 +383,9 @@ export default function Billing({ navigate }: Props) {
       <PayRentModal
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}
-        onSuccess={() => setActiveTab("overview")}
+        defaultAmount={selectedPayAmount}
+        itemTitle="Monthly PG Accommodation Rent"
+        itemCategory="RENT"
       />
     </DashboardLayout>
   );

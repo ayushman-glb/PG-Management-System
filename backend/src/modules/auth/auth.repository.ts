@@ -75,12 +75,15 @@ export class AuthRepository implements IUserRepository {
   }): Promise<User> {
     // 1. Try to find by Google sub id
     const bySub = await this.findByGoogleSubId(data.googleSubId);
-    if (bySub) return bySub;
+    if (bySub) {
+      await this.ensureUserProfile(bySub);
+      return bySub;
+    }
 
-    // 2. Try to find by email and link the google sub id
+    // 2. Try to find by email and link the google sub id (preserves user's existing role!)
     const byEmail = await this.findByEmail(data.email);
     if (byEmail) {
-      return this.db.user.update({
+      const updatedUser = await this.db.user.update({
         where: { id: byEmail.id },
         data: {
           googleSubId: data.googleSubId,
@@ -89,33 +92,45 @@ export class AuthRepository implements IUserRepository {
           authProvider: "GOOGLE",
         },
       });
+      await this.ensureUserProfile(updatedUser);
+      return updatedUser;
     }
 
-    // 3. Create a brand-new user
+    // 3. Create a brand-new user (Strictly RESIDENT or OWNER — ADMIN/SUPER_ADMIN never publicly self-served)
+    const allowedRole = (data.role === Role.OWNER || data.role === Role.RESIDENT)
+      ? data.role
+      : Role.RESIDENT;
+
     const newUser = await this.db.user.create({
       data: {
         name: data.name,
         email: data.email,
         googleSubId: data.googleSubId,
         avatarUrl: data.avatarUrl,
-        role: data.role || Role.OWNER,
+        role: allowedRole,
         emailVerified: true,
         authProvider: "GOOGLE",
       },
     });
 
     // 4. Auto-create linked Owner or Resident profile record with real user data
+    await this.ensureUserProfile(newUser);
+
+    return newUser;
+  }
+
+  private async ensureUserProfile(user: User): Promise<void> {
     try {
-      if (newUser.role === Role.OWNER) {
-        const existingOwner = await this.db.owner.findFirst({ where: { userId: newUser.id } });
+      if (user.role === Role.OWNER) {
+        const existingOwner = await this.db.owner.findFirst({ where: { userId: user.id } });
         if (!existingOwner) {
           await this.db.owner.create({
             data: {
-              userId: newUser.id,
-              name: newUser.name,
-              email: newUser.email,
-              phone: newUser.phone || "",
-              photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+              userId: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone || "",
+              photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
               address: "",
               aadhaarNumber: "",
               panNumber: "",
@@ -127,16 +142,16 @@ export class AuthRepository implements IUserRepository {
             },
           });
         }
-      } else if (newUser.role === Role.RESIDENT) {
-        const existingResident = await this.db.resident.findFirst({ where: { userId: newUser.id } });
+      } else if (user.role === Role.RESIDENT) {
+        const existingResident = await this.db.resident.findFirst({ where: { userId: user.id } });
         if (!existingResident) {
           await this.db.resident.create({
             data: {
-              userId: newUser.id,
-              name: newUser.name,
-              email: newUser.email,
-              phone: newUser.phone || "",
-              profilePicture: newUser.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
+              userId: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone || "",
+              profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
               status: "ACTIVE",
             },
           });
@@ -145,8 +160,6 @@ export class AuthRepository implements IUserRepository {
     } catch (profileErr) {
       console.warn("⚠️ Could not auto-create signup profile record:", profileErr);
     }
-
-    return newUser;
   }
 
   async findOrCreatePhoneUser(data: {

@@ -21,7 +21,16 @@ const prisma = new PrismaClient();
  * renders real backend data (properties, rooms, beds, residents, payments).
  */
 export async function seedDemoData() {
-  const defaultPasswordHash = await bcrypt.hash("Password123!", 10);
+  const dbUrl = process.env.DATABASE_URL || '';
+  const isLocalDB = dbUrl.startsWith('mongodb://localhost') || dbUrl.startsWith('mongodb://127.0.0.1');
+  if (!isLocalDB) {
+    console.error('❌ SEED REFUSED: DATABASE_URL does not look like a local/dev database.');
+    console.error('   Only run seeds against localhost MongoDB. Current URL:', dbUrl.slice(0, 40) + '...');
+    process.exit(1);
+  }
+
+  const defaultSalt = await bcrypt.genSalt(12);
+  const defaultPasswordHash = await bcrypt.hash("Password123!", defaultSalt);
 
   const ownerUser = await prisma.user.upsert({
     where: { email: "owner1@roombae.com" },

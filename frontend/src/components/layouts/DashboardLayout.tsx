@@ -36,13 +36,15 @@ import { Logo } from "../ui/Logo";
 
 
 
+import { useAuth } from "@hooks/useAuth";
+
 interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   page: Page;
 }
 
-const sidebarItems: SidebarItem[] = [
+const baseSidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", page: "dashboard" },
   { icon: Building2, label: "Properties", page: "properties" },
   { icon: DoorOpen, label: "Rooms", page: "rooms" },
@@ -63,6 +65,14 @@ interface Props {
 }
 
 export default function DashboardLayout({ children, navigate, activePage }: Props) {
+  const { user } = useAuth();
+  const rawRole = String(user?.role || "").toUpperCase();
+  const isAdmin = rawRole === "ADMIN" || rawRole === "SUPER_ADMIN";
+
+  const sidebarItems = isAdmin
+    ? [{ icon: ShieldCheck, label: "Admin Console", page: "admin-console" as Page }, ...baseSidebarItems]
+    : baseSidebarItems;
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed] = useState(false);
   const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);

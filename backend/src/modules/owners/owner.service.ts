@@ -11,6 +11,13 @@ import {
   RoomConfigInput,
   SubscriptionSelectionInput
 } from '../../services/IOwnerOnboardingService';
+import { ICryptoService } from '../../interfaces/infrastructure/ICryptoService';
+import { Container } from '../../container';
+
+/** Resolve the crypto service lazily so we don't create a circular dep at module load time. */
+function getCrypto(): ICryptoService {
+  return Container.cryptoService;
+}
 
 export class OwnerService implements IOwnerOnboardingService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -30,37 +37,44 @@ export class OwnerService implements IOwnerOnboardingService {
   }
 
   async submitKYC(ownerId: string, input: OwnerKYCInput): Promise<any> {
+    const crypto = getCrypto();
+    // Encrypt all PII fields before persistence — AES-256-GCM
+    const encAadhaar   = input.aadhaarNumber ? crypto.encrypt(input.aadhaarNumber) : '';
+    const encPan       = input.panNumber ? crypto.encrypt(input.panNumber) : '';
+    const encPassport  = input.passportNumber ? crypto.encrypt(input.passportNumber) : undefined;
+    const encDL        = input.drivingLicenseNo ? crypto.encrypt(input.drivingLicenseNo) : undefined;
+
     return this.prisma.ownerKYC.upsert({
       where: { ownerId },
       create: {
         ownerId,
-        aadhaarNumber: input.aadhaarNumber,
+        aadhaarNumber: encAadhaar,
         aadhaarDocUrl: input.aadhaarDocUrl,
-        panNumber: input.panNumber,
+        panNumber: encPan,
         panDocUrl: input.panDocUrl,
-        passportNumber: input.passportNumber,
+        passportNumber: encPassport,
         passportDocUrl: input.passportDocUrl,
-        drivingLicenseNo: input.drivingLicenseNo,
+        drivingLicenseNo: encDL,
         drivingLicenseUrl: input.drivingLicenseUrl,
         ownerSelfieUrl: input.ownerSelfieUrl,
         faceVerificationToken: input.faceVerificationToken || `FACE_VERIFIED_${Date.now()}`,
         digitalSignatureUrl: input.digitalSignatureUrl,
-        verificationStatus: OwnerKYCStatus.PENDING
+        verificationStatus: OwnerKYCStatus.PENDING,
       },
       update: {
-        aadhaarNumber: input.aadhaarNumber,
+        aadhaarNumber: encAadhaar,
         aadhaarDocUrl: input.aadhaarDocUrl,
-        panNumber: input.panNumber,
+        panNumber: encPan,
         panDocUrl: input.panDocUrl,
-        passportNumber: input.passportNumber,
+        passportNumber: encPassport,
         passportDocUrl: input.passportDocUrl,
-        drivingLicenseNo: input.drivingLicenseNo,
+        drivingLicenseNo: encDL,
         drivingLicenseUrl: input.drivingLicenseUrl,
         ownerSelfieUrl: input.ownerSelfieUrl,
         faceVerificationToken: input.faceVerificationToken,
         digitalSignatureUrl: input.digitalSignatureUrl,
-        verificationStatus: OwnerKYCStatus.PENDING
-      }
+        verificationStatus: OwnerKYCStatus.PENDING,
+      },
     });
   }
 
@@ -115,14 +129,19 @@ export class OwnerService implements IOwnerOnboardingService {
       throw new Error('Invalid UPI ID format (e.g. owner@upi).');
     }
 
+    const crypto = getCrypto();
+    // Encrypt sensitive bank fields — AES-256-GCM
+    const encAccount = crypto.encrypt(input.accountNumber);
+    const encIfsc    = crypto.encrypt(input.ifscCode);
+
     return this.prisma.owner.update({
       where: { id: ownerId },
       data: {
         bankName: input.bankName,
-        accountNumber: input.accountNumber,
-        ifscCode: input.ifscCode,
-        upiId: input.upiId
-      }
+        accountNumber: encAccount,
+        ifscCode: encIfsc,
+        upiId: input.upiId, // UPI IDs are not classically PII — stored plain
+      },
     });
   }
 

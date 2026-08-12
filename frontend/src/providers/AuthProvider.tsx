@@ -54,20 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const checkSession = async () => {
-      const hasToken =
-        typeof localStorage !== "undefined" &&
-        (localStorage.getItem("accessToken") || localStorage.getItem("token"));
-      const cookieToken = typeof document !== "undefined"
-        ? document.cookie.match(/(?:^|; )accessToken=([^;]+)/)
-        : null;
-
-      if (!hasToken && !cookieToken) {
-        if (!cancelled) {
-          setStatus("unauthenticated");
-        }
-        return;
-      }
-
       try {
         const res = await authService.getCurrentUser();
         if (!cancelled) {
@@ -76,24 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setStatus(u ? "authenticated" : "unauthenticated");
         }
       } catch (err) {
-        // Try refresh once
-        try {
-          const refreshed = await authService.refreshToken();
-          if (refreshed?.accessToken) {
-            authService.setToken(refreshed.accessToken);
-            const meRes = await authService.getCurrentUser();
-            if (!cancelled) {
-              const u = meRes?.user || meRes || null;
-              setUserState(u);
-              setStatus(u ? "authenticated" : "unauthenticated");
-              return;
-            }
-          }
-        } catch (refreshErr) {
-          // Failed - clear
-          authService.clearToken();
-        }
         if (!cancelled) {
+          authService.clearToken();
           setUserState(null);
           setStatus("unauthenticated");
         }
@@ -107,26 +77,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (credentials: { identifier: string; password: string }) => {
-    const res = await authService.login(credentials);
-    const u = res?.user || null;
-    if (u) {
-      setUserState(u);
-      setStatus("authenticated");
+    // Reset user state synchronously before logging in new user
+    setUserState(null);
+    setStatus("initializing");
+    try {
+      const res = await authService.login(credentials);
+      const u = res?.user || null;
+      if (u) {
+        setUserState(u);
+        setStatus("authenticated");
+      } else {
+        setStatus("unauthenticated");
+      }
+      return u;
+    } catch (err) {
+      setUserState(null);
+      setStatus("unauthenticated");
+      throw err;
     }
-    return u;
   }, []);
 
   const register = useCallback(async (data: { name: string; email: string; password: string; role?: string; phone?: string }) => {
-    const res = await authService.register(data);
-    const u = res?.user || null;
-    if (u) {
-      setUserState(u);
-      setStatus("authenticated");
+    setUserState(null);
+    setStatus("initializing");
+    try {
+      const res = await authService.register(data);
+      const u = res?.user || null;
+      if (u) {
+        setUserState(u);
+        setStatus("authenticated");
+      } else {
+        setStatus("unauthenticated");
+      }
+      return u;
+    } catch (err) {
+      setUserState(null);
+      setStatus("unauthenticated");
+      throw err;
     }
-    return u;
   }, []);
 
   const logout = useCallback(async () => {
+    setUserState(null);
+    setStatus("unauthenticated");
+    try {
+      localStorage.removeItem("roombaeOwnerId");
+      localStorage.removeItem("residentCode");
+    } catch {}
     try {
       await authService.logout();
     } finally {

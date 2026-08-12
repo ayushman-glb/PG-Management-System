@@ -9,8 +9,35 @@ const onboardingService = new OwnerService(prisma);
 export class OwnerController {
   static async runFullOnboarding(req: Request, res: Response): Promise<void> {
     try {
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        res.status(401).json({ success: false, message: "Unauthorized — valid owner session required" });
+        return;
+      }
+
+      let owner = await prisma.owner.findFirst({ where: { userId: user.id } });
+      if (!owner) {
+        owner = await prisma.owner.create({
+          data: {
+            userId: user.id,
+            name: user.name || "Owner",
+            email: user.email,
+            phone: user.phone || "",
+            photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+            address: "",
+            aadhaarNumber: "",
+            panNumber: "",
+            upiId: "",
+            bankName: "",
+            accountNumber: "",
+            ifscCode: "",
+            emergencyContact: "",
+          },
+        });
+      }
+      const targetOwnerId = owner.id;
+
       const {
-        ownerId,
         personal,
         kyc,
         business,
@@ -22,27 +49,20 @@ export class OwnerController {
         subscription,
       } = req.body;
 
-      if (!ownerId) {
-        res
-          .status(400)
-          .json({ success: false, message: "ownerId is required" });
-        return;
-      }
-
       // 1. Personal
       if (personal)
-        await onboardingService.savePersonalDetails(ownerId, personal);
+        await onboardingService.savePersonalDetails(targetOwnerId, personal);
       // 2. KYC
-      if (kyc) await onboardingService.submitKYC(ownerId, kyc);
+      if (kyc) await onboardingService.submitKYC(targetOwnerId, kyc);
       // 3. Business
-      if (business) await onboardingService.saveBusinessInfo(ownerId, business);
+      if (business) await onboardingService.saveBusinessInfo(targetOwnerId, business);
       // 4. Bank
-      if (bank) await onboardingService.saveBankDetails(ownerId, bank);
+      if (bank) await onboardingService.saveBankDetails(targetOwnerId, bank);
       // 5. Property + location + building + rooms + subscription + submit
       let pgId: string | null = null;
       if (property) {
         const pg = await onboardingService.registerPGProperty(
-          ownerId,
+          targetOwnerId,
           property,
         );
         pgId = pg?.id || null;
@@ -56,12 +76,12 @@ export class OwnerController {
       }
       // 6. Subscription
       if (subscription)
-        await onboardingService.selectSubscriptionPlan(ownerId, subscription);
+        await onboardingService.selectSubscriptionPlan(targetOwnerId, subscription);
 
       res.status(201).json({
         success: true,
         message: "Full owner onboarding completed successfully",
-        data: { ownerId, pgId },
+        data: { ownerId: targetOwnerId, pgId },
       });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });

@@ -42,23 +42,61 @@ if (process.env.FRONTEND_URL && process.env.FRONTEND_URL.includes("ayushman-glb.
 if (process.env.CLIENT_URL && process.env.CLIENT_URL.includes("ayushman-glb.github.io") && !process.env.CLIENT_URL.includes("PG-Management-System")) {
   process.env.CLIENT_URL = `${process.env.CLIENT_URL.replace(/\/$/, "")}/PG-Management-System`;
 }
-if (!process.env.JWT_REFRESH_SECRET && process.env.JWT_SECRET) {
-  process.env.JWT_REFRESH_SECRET = process.env.JWT_SECRET;
-}
 if (!process.env.COOKIE_SECRET && process.env.SESSION_SECRET) {
   process.env.COOKIE_SECRET = process.env.SESSION_SECRET;
 }
 if (!process.env.CSRF_SECRET && process.env.SESSION_SECRET) {
   process.env.CSRF_SECRET = process.env.SESSION_SECRET;
 }
-if (!process.env.PASSWORD_RESET_SECRET && process.env.JWT_SECRET) {
-  process.env.PASSWORD_RESET_SECRET = process.env.JWT_SECRET;
-}
-if (!process.env.EMAIL_VERIFICATION_SECRET && process.env.JWT_SECRET) {
-  process.env.EMAIL_VERIFICATION_SECRET = process.env.JWT_SECRET;
-}
-if (!process.env.API_KEY_SECRET && process.env.JWT_SECRET) {
-  process.env.API_KEY_SECRET = process.env.JWT_SECRET;
+
+// Fallback defaults for local development / testing when env secrets are unpopulated or contain placeholders
+const isDevOrTest = (process.env.NODE_ENV || "development") !== "production";
+
+if (isDevOrTest) {
+  const DEFAULT_64_HEX = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  const DEFAULT_ACCESS_SECRET  = "dev_default_access_secret_key_32_chars_long!";
+  const DEFAULT_REFRESH_SECRET = "dev_default_refresh_secret_key_32_chars_long!";
+  const DEFAULT_SESSION_SECRET = "dev_default_session_secret_key_32_chars_long!";
+  const DEFAULT_COOKIE_SECRET  = "dev_default_cookie_secret_key_32_chars_long!";
+  const DEFAULT_CSRF_SECRET    = "dev_default_csrf_secret_key_32_chars_long!";
+  const DEFAULT_RESET_SECRET   = "dev_default_reset_secret_key_32_chars_long!";
+
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.startsWith("<REPLACE")) {
+    process.env.DATABASE_URL = "mongodb://localhost:27017/roombae-db";
+  }
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16 || process.env.JWT_SECRET.startsWith("<REPLACE")) {
+    process.env.JWT_SECRET = DEFAULT_ACCESS_SECRET;
+  }
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 16 || process.env.JWT_REFRESH_SECRET.startsWith("<REPLACE")) {
+    process.env.JWT_REFRESH_SECRET = DEFAULT_REFRESH_SECRET;
+  }
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 16 || process.env.SESSION_SECRET.startsWith("<REPLACE")) {
+    process.env.SESSION_SECRET = DEFAULT_SESSION_SECRET;
+  }
+  if (!process.env.COOKIE_SECRET || process.env.COOKIE_SECRET.length < 16 || process.env.COOKIE_SECRET.startsWith("<REPLACE")) {
+    process.env.COOKIE_SECRET = DEFAULT_COOKIE_SECRET;
+  }
+  if (!process.env.CSRF_SECRET || process.env.CSRF_SECRET.length < 16 || process.env.CSRF_SECRET.startsWith("<REPLACE")) {
+    process.env.CSRF_SECRET = DEFAULT_CSRF_SECRET;
+  }
+  if (!process.env.PASSWORD_RESET_SECRET || process.env.PASSWORD_RESET_SECRET.length < 16 || process.env.PASSWORD_RESET_SECRET.startsWith("<REPLACE")) {
+    process.env.PASSWORD_RESET_SECRET = DEFAULT_RESET_SECRET;
+  }
+  if (!process.env.EMAIL_VERIFICATION_SECRET || process.env.EMAIL_VERIFICATION_SECRET.length < 16 || process.env.EMAIL_VERIFICATION_SECRET.startsWith("<REPLACE")) {
+    process.env.EMAIL_VERIFICATION_SECRET = DEFAULT_RESET_SECRET;
+  }
+  if (!process.env.API_KEY_SECRET || process.env.API_KEY_SECRET.length < 16 || process.env.API_KEY_SECRET.startsWith("<REPLACE")) {
+    process.env.API_KEY_SECRET = DEFAULT_ACCESS_SECRET;
+  }
+  if (!process.env.AES_256_KEY || process.env.AES_256_KEY.length < 32 || process.env.AES_256_KEY.startsWith("<REPLACE")) {
+    process.env.AES_256_KEY = DEFAULT_64_HEX;
+  }
+  if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32 || process.env.ENCRYPTION_KEY.startsWith("<REPLACE")) {
+    process.env.ENCRYPTION_KEY = DEFAULT_64_HEX;
+  }
+  if (!process.env.KYC_ENCRYPTION_KEY || process.env.KYC_ENCRYPTION_KEY.length < 32 || process.env.KYC_ENCRYPTION_KEY.startsWith("<REPLACE")) {
+    process.env.KYC_ENCRYPTION_KEY = DEFAULT_64_HEX;
+  }
 }
 
 const envSchema = z.object({

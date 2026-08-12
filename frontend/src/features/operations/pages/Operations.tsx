@@ -136,13 +136,20 @@ export default function Operations({ navigate, page }: Props) {
           {content.stats.map(([label, value]) => (
             <div
               key={label}
-              className={`rounded-2xl p-5 border ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
+              className={`rounded-2xl p-5 border glass-card ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100"}`}
             >
-              <p
-                className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}
-              >
-                {label}
-              </p>
+              <div className="flex items-center justify-between">
+                <p
+                  className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+                >
+                  {label}
+                </p>
+                {label === "Available" && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 badge-pulse">
+                    ● Available
+                  </span>
+                )}
+              </div>
               <p
                 className={`text-2xl font-black mt-2 ${darkMode ? "text-white" : "text-slate-900"}`}
               >

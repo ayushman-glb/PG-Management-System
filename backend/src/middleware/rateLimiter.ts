@@ -23,9 +23,9 @@ export const generalLimiter = createLimiter(
 );
 
 export const loginLimiter = createLimiter(
-  60 * 1000, // 1 minute
+  15 * 60 * 1000, // 15 minutes — matches DESIGN.md §8.3 spec: 5 req/15min
   5,
-  'Too many login attempts. Please try again after 1 minute.',
+  'Too many login attempts. Please try again after 15 minutes.',
   'LOGIN_RATE_EXCEEDED'
 );
 

@@ -42,6 +42,7 @@ export interface IAuthService {
   login(identifier: string, password: string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
+  generateOAuthTokens(user: any, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string }>;
   sendOtp(email: string): Promise<{ message: string }>;
   verifyOtp(email: string, otp: string): Promise<IAuthUserResult>;
   sendPhoneOtp(

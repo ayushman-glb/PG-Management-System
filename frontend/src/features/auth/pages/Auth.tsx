@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Building2,
   Eye,
@@ -6,28 +6,22 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCircle,
-  Shield,
-  Smartphone,
   Check,
   Home,
   AlertCircle,
   Sparkles,
-  Mail,
   Lock,
-  CreditCard,
+  Mail,
+  ShieldCheck,
 } from "lucide-react";
-import gsap from "gsap";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Page } from "../../../App";
 import { ThemeToggle, useTheme } from "../../../theme";
 import { BackButton } from "../../../navigation";
 import { AnimatedTabs } from "../../../components/MotionPrimitives";
 import { authService } from "../../../services/auth.service";
-import { OTPInput } from "../../../components/OTPInput";
 import { UploadCard } from "../../../components/UploadCard";
 import { env } from "../../../config/env";
-
-
-
 
 interface Props {
   navigate: (p: Page) => void;
@@ -37,11 +31,12 @@ type AuthMode = "login" | "register" | "forgot" | "otp";
 
 export default function Auth({ navigate }: Props) {
   const [mode, setMode] = useState<AuthMode>("login");
-
   const [showPass, setShowPass] = useState(false);
-  const [loginRole, setLoginRole] = useState<"owner" | "resident">("owner");
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [loginRole, setLoginRole] = useState<"owner" | "resident" | "admin">("owner");
   const [loginIdentifier, setLoginIdentifier] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const { darkMode } = useTheme();
 
   // Unified Registration Wizard State
@@ -57,7 +52,6 @@ export default function Auth({ navigate }: Props) {
   const [dob, setDob] = useState("2000-01-15");
   const [gender, setGender] = useState("MALE");
   const [phone, setPhone] = useState("");
-  const [altPhone, setAltPhone] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("Bengaluru");
   const [state, setState] = useState("Karnataka");
@@ -86,7 +80,6 @@ export default function Auth({ navigate }: Props) {
     }
   };
 
-
   const handleEmailInputChange = (newVal: string) => {
     setEmail(newVal);
     if (isEmailVerified || isEmailOtpSent) {
@@ -105,30 +98,28 @@ export default function Auth({ navigate }: Props) {
   const [signatureDoc, setSignatureDoc] = useState("");
   const [permanentAddress, setPermanentAddress] = useState("");
   const [landmark, setLandmark] = useState("");
-  const [district, setDistrict] = useState("Bengaluru Urban");
 
   // Step 3 PG Owner Details
   const [ownerAadhaarPdf, setOwnerAadhaarPdf] = useState("");
   const [ownerPanPdf, setOwnerPanPdf] = useState("");
   const [addressProofPdf, setAddressProofPdf] = useState("");
-  const [businessProofPdf, setBusinessProofPdf] = useState("");
 
   // Bank & Settlement Details (Encrypted Server-Side)
   const [accountHolderName, setAccountHolderName] = useState("");
   const [bankName, setBankName] = useState("HDFC Bank");
   const [ifscCode, setIfscCode] = useState("HDFC0001234");
-  const [branch, setBranch] = useState("Indiranagar Branch");
   const [accountNumber, setAccountNumber] = useState("");
   const [confirmAccountNumber, setConfirmAccountNumber] = useState("");
   const [upiId, setUpiId] = useState("");
 
   // Role-Specific Code / Terms / Submitting
-  const [pgReferenceCode, setPgReferenceCode] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [authError, setAuthError] = useState("");
   const [showSignupCta, setShowSignupCta] = useState(false);
   const [authSuccessMsg, setAuthSuccessMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Google Sign-In Handler
   const handleGoogleSignUp = async () => {
     setAuthError("");
     setAuthSuccessMsg("");
@@ -140,10 +131,6 @@ export default function Auth({ navigate }: Props) {
       setAuthError(err.message || "Failed to initiate Google OAuth.");
     }
   };
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const cardRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
 
   // Check for saved incomplete signup on mount
   useEffect(() => {
@@ -298,43 +285,12 @@ export default function Auth({ navigate }: Props) {
 
   const isStep3Valid = selectedRole === "RESIDENT" ? isStep3ResidentValid : isStep3OwnerValid;
 
-  const animateSwitch = (newMode: AuthMode) => {
+  const switchAuthMode = (newMode: AuthMode) => {
     setAuthError("");
     setShowSignupCta(false);
     setAuthSuccessMsg("");
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !cardRef.current) {
-      setMode(newMode);
-      return;
-    }
-
-    const isSlideRight = newMode === "register";
-
-    gsap.timeline().to(cardRef.current, {
-      x: isSlideRight ? -35 : 35,
-      opacity: 0,
-      scale: 0.98,
-      duration: 0.3,
-      ease: "power3.in",
-      onComplete: () => {
-        setMode(newMode);
-        gsap.fromTo(
-          cardRef.current,
-          { x: isSlideRight ? 35 : -35, opacity: 0, scale: 0.98 },
-          { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" },
-        );
-      },
-    });
+    setMode(newMode);
   };
-
-  useEffect(() => {
-    if (formRef.current && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      gsap.fromTo(
-        formRef.current.children,
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: "power2.out" },
-      );
-    }
-  }, [mode, regStep, loginRole]);
 
   // Handle Phone OTP Send
   const handleSendPhoneOtp = async () => {
@@ -372,7 +328,6 @@ export default function Auth({ navigate }: Props) {
       setPhoneAuthError(err?.message || "Invalid OTP code. Please try again.");
     }
   };
-
 
   // Handle Brevo Email Verification Send
   const handleSendEmailVerification = async () => {
@@ -414,7 +369,8 @@ export default function Auth({ navigate }: Props) {
     }
   };
 
-  const handleLoginSubmit = async () => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!loginIdentifier.trim() || !loginPassword) {
       setAuthError("Please enter your email/phone and password.");
       return;
@@ -427,8 +383,6 @@ export default function Auth({ navigate }: Props) {
       const passwordVal = loginPassword;
 
       const loginRes = await authService.login({ identifier, password: passwordVal });
-
-      // IMPORTANT: Role must come from the backend response - never trust the frontend tab selection
       const userRole = loginRes?.user?.role;
 
       if (userRole === "RESIDENT") {
@@ -436,11 +390,10 @@ export default function Auth({ navigate }: Props) {
       } else if (userRole === "OWNER" || userRole === "ADMIN" || userRole === "SUPER_ADMIN" || userRole === "MANAGER") {
         navigate("dashboard");
       } else {
-        // Unknown role - redirect to auth with error
         setAuthError("Your account role could not be determined. Please contact support.");
       }
     } catch (err: any) {
-      const isSignupNudge = err?.code === 'ACCOUNT_NOT_FOUND_OR_INVALID' || err?.message?.includes("couldn't find an account");
+      const isSignupNudge = err?.code === "ACCOUNT_NOT_FOUND_OR_INVALID" || err?.message?.includes("couldn't find an account");
       setAuthError(err?.message || "We couldn't find an account with these details. Would you like to sign up instead?");
       setShowSignupCta(isSignupNudge);
     } finally {
@@ -471,10 +424,7 @@ export default function Auth({ navigate }: Props) {
         phone: phone ? `+91${phone}` : undefined,
       });
 
-
-      // Clear draft on successful signup
       clearIncompleteDraft();
-
       setAuthSuccessMsg("✓ Account created successfully! Access granted to RoomBae Enterprise.");
       setTimeout(() => {
         if (selectedRole === "OWNER") {
@@ -490,1014 +440,913 @@ export default function Auth({ navigate }: Props) {
     }
   };
 
+  const isSignUp = mode === "register";
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row w-full font-sans overflow-x-hidden">
-
-      {/* Left Hero & Branding Section */}
-      <div
-        className="w-full lg:w-[48%] relative flex flex-col justify-between p-8 md:p-12 lg:p-16 overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, #2D201A 0%, #1D1B1A 40%, #0F0E0D 100%)",
-        }}
-      >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-700/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col justify-between h-full space-y-12">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => navigate("landing")}
-              className="flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl shadow-lg shadow-amber-500/20 text-black">
-                <Building2 className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-white font-extrabold text-2xl tracking-tight block">
-                  RoomBae
-                </span>
-                <span className="text-xs text-amber-400 font-mono font-bold">
-                  ENTERPRISE SAAS
-                </span>
-              </div>
-            </button>
-
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <BackButton />
-            </div>
+    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
+      {/* Top Header Bar */}
+      <header className="w-full px-6 py-4 flex items-center justify-between z-30 border-b border-white/10">
+        <button
+          type="button"
+          onClick={() => navigate("landing")}
+          className="flex items-center gap-3 group cursor-pointer"
+        >
+          <div className="p-2.5 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl shadow-lg shadow-amber-500/20 text-black">
+            <Building2 className="w-5 h-5" />
           </div>
-
-          <div>
-            <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-6">
-              Next-Gen Coliving &amp; PG Automation Platform
-            </h1>
-            <p className="text-white/80 text-base mb-8 leading-relaxed max-w-lg">
-              Unified Security Pipeline, Firebase Phone Authentication, Brevo Email Relay, and Encrypted Financial Onboarding.
-            </p>
-
-            <div className="space-y-4">
-              {[
-                "Firebase Phone Auth & Server-Side Verification",
-                "Brevo SMTP Automated Transactional Email",
-                "Cloudinary Media Storage & Virus Scanner Pipeline",
-                "AES-256-GCM Financial Encrypted Onboarding",
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center shrink-0 border border-amber-500/30">
-                    <Check className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-white/90 text-sm font-medium">{item}</span>
-                </div>
-              ))}
-            </div>
+          <div className="text-left">
+            <span className="text-xl font-extrabold tracking-tight block">RoomBae</span>
+            <span className="text-[10px] text-amber-500 font-mono font-bold tracking-wider uppercase">Enterprise SaaS</span>
           </div>
+        </button>
 
-          <div className="grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
-            {[
-              { value: "500+", label: "Active PGs" },
-              { value: "10K+", label: "Verified Tenants" },
-              { value: "99.9%", label: "Bank Security" },
-            ].map((s) => (
-              <div key={s.label} className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/10">
-                <p className="text-2xl font-black text-amber-400">{s.value}</p>
-                <p className="text-white/70 text-xs mt-0.5 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <BackButton />
         </div>
-      </div>
+      </header>
 
-      {/* Right Form Card Section */}
-      <div className={`w-full lg:w-[52%] flex items-center justify-center px-6 pt-12 pb-12 relative overflow-hidden ${darkMode ? "bg-[#1D1B1A]" : "bg-[#FFF8F2]"}`}>
-        <div className="w-full max-w-xl relative z-10">
+      {/* Main Split Authentication Container */}
+      <main className="flex-1 flex items-center justify-center p-4 md:p-8 lg:p-12 relative overflow-hidden">
+        {/* Background Ambient Glow Orbs */}
+        <div className="absolute top-1/4 left-10 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-700/10 rounded-full blur-3xl pointer-events-none" />
 
+        <div className="w-full max-w-6xl relative z-10">
           {/* Incomplete Signup Resume Alert Banner */}
           {incompleteDraft && (
-            <div className="mb-6 p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 text-xs font-semibold flex items-center justify-between gap-3 shadow-lg">
-              <div className="flex items-center gap-2.5">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 text-xs font-semibold flex items-center justify-between gap-3 shadow-xl backdrop-blur-md"
+            >
+              <div className="flex items-center gap-3">
                 <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
                 <div>
-                  <span className="font-extrabold block">Incomplete Signup Progress Found!</span>
-                  <span className="text-[11px] text-amber-300/80">Resume from where you left off as {incompleteDraft.fullName || 'User'}.</span>
+                  <span className="font-extrabold block">Incomplete Signup Draft Detected</span>
+                  <span className="text-[11px] text-amber-300/80">Resume from where you left off as {incompleteDraft.fullName || "User"}.</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={resumeIncompleteSignup}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 text-black font-extrabold text-xs shadow-md hover:bg-amber-400 transition-colors"
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-black font-extrabold text-xs shadow-md hover:bg-amber-400 transition-all cursor-pointer"
                 >
                   Resume
                 </button>
                 <button
                   type="button"
                   onClick={clearIncompleteDraft}
-                  className="p-1.5 text-amber-400 hover:text-amber-200 transition-colors"
+                  className="p-1.5 text-amber-400 hover:text-amber-200 transition-colors cursor-pointer"
                   title="Discard draft"
                 >
                   &times;
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
-          <div ref={cardRef} className="glass-panel rounded-3xl p-6 md:p-8 shadow-2xl border border-[#E6D7CA]/80 dark:border-[#4A443F]/80">
-            <div ref={formRef}>
-              {authSuccessMsg && (
-                <div className="mb-4 p-4 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 shrink-0" />
-                  <span>{authSuccessMsg}</span>
+          {/* Dynamic Sliding Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[640px]">
+            
+            {/* BRANDING PANEL (SLIDING SECTION B) */}
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 220, damping: 28 }}
+              className={`lg:col-span-5 rounded-3xl p-8 lg:p-12 relative overflow-hidden flex flex-col justify-between min-h-[560px] shadow-2xl ${
+                isSignUp ? "order-1 lg:order-2" : "order-1 lg:order-1"
+              }`}
+              style={{
+                background: "linear-gradient(135deg, #2D201A 0%, #1D1B1A 40%, #0F0E0D 100%)",
+              }}
+            >
+              <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-700/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 space-y-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-mono font-extrabold">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>256-BIT ENCRYPTED PLATFORM</span>
                 </div>
-              )}
-              {authError && (
-                <div className="mb-4 p-4 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex flex-col gap-2.5">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{authError}</span>
-                  </div>
-                  {showSignupCta && (
-                    <button
-                      type="button"
-                      onClick={() => animateSwitch("register")}
-                      className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
-                    >
-                      <span>Create a RoomBae Account</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              )}
 
-              {/* LOGIN MODE */}
-              {mode === "login" && (
-                <>
-                  <div className="mb-6">
-                    <h2 className={`text-2xl font-black ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                      Sign in to RoomBae
-                    </h2>
-                    <p className={`text-sm mt-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
-                      Enter your credentials to access your portal or dashboard
-                    </p>
-                  </div>
-
-                  <div className="mb-6">
-                    <AnimatedTabs
-                      tabs={[
-                        { id: "owner", label: "🏢 PG Owner" },
-                        { id: "resident", label: "🏠 Resident" },
-                      ]}
-                      activeTab={loginRole}
-                      onChange={(id: string) => {
-                        const newRole = id as "owner" | "resident";
-                        setLoginRole(newRole);
-                        // Do NOT prefill credentials - user must enter their real credentials
-                      }}
-                      layoutId="auth-role-tab"
-                    />
-                  </div>
-
-                  <div className="space-y-4 mb-5">
-                    <div>
-                      <label className={`block text-xs font-bold uppercase mb-1.5 ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                        {loginRole === "resident" ? "Resident ID or Email" : "Email or Phone Number"}
-                      </label>
-                      <input
-                        type="text"
-                        value={loginIdentifier}
-                        onChange={(e) => setLoginIdentifier(e.target.value)}
-                        placeholder={loginRole === "resident" ? "RES1001 or resident@example.com" : "you@example.com"}
-                        className={`w-full px-4 py-3 rounded-xl border text-sm transition-all ${
-                          darkMode
-                            ? "bg-[#2B2725] border-[#4A433F] text-[#F7F3EE] focus:ring-amber-500"
-                            : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] focus:ring-amber-500"
-                        }`}
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className={`text-xs font-bold uppercase ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                          Password
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => animateSwitch("forgot")}
-                          className="text-xs font-semibold text-amber-500 hover:underline"
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type={showPass ? "text" : "password"}
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          placeholder="••••••••"
-                          className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all ${
-                            darkMode
-                              ? "bg-[#2B2725] border-[#4A433F] text-[#F7F3EE] focus:ring-amber-500"
-                              : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] focus:ring-amber-500"
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                        >
-                          {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-
-                  <button
-                    type="button"
-                    disabled={isSubmitting}
-                    onClick={handleLoginSubmit}
-                    className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.99] cursor-pointer ${isSubmitting ? "opacity-50 pointer-events-none" : ""}`}
-                  >
-                    {isSubmitting ? "Authenticating..." : "Sign In to RoomBae"} <ArrowRight className="w-4 h-4" />
-                  </button>
-
-                  <div className="flex items-center gap-3 my-5">
-                    <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
-                    <span className="text-xs font-semibold text-slate-400">OR</span>
-                    <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignUp}
-                    className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 48 48">
-                      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-                      <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-                      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-                      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-                    </svg>
-                    Continue with Google
-                  </button>
-
-                  <p className="text-center text-xs mt-6 text-slate-500 dark:text-slate-400">
-                    New to RoomBae?{" "}
-                    <button
-                      type="button"
-                      onClick={() => animateSwitch("register")}
-                      className="font-bold text-amber-500 hover:underline cursor-pointer"
-                    >
-                      Create an account
-                    </button>
-                  </p>
-                </>
-              )}
-
-              {/* REGISTER WIZARD MODE */}
-              {mode === "register" && (
                 <div>
-                  <div className="mb-6 flex justify-between items-center border-b pb-4 border-amber-500/20">
-                    <div>
-                      <h2 className={`text-2xl font-black ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                        Create Account
-                      </h2>
-                      <p className="text-xs text-amber-500 font-semibold mt-0.5">
-                        Step {regStep} of 3 — {regStep === 1 ? "Choose Role" : regStep === 2 ? "Personal & Security Details" : selectedRole === "RESIDENT" ? "KYC & Documents" : "Owner Verification & Bank Details"}
-                      </p>
+                  <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight mb-4">
+                    {isSignUp ? "Join 10,000+ PG Residents & Owners" : "Next-Gen Coliving Automation"}
+                  </h2>
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    {isSignUp
+                      ? "Seamless digital onboarding, verified tenant profiles, automated rental invoices, and instant ticket resolution."
+                      : "Access real-time room occupancy, digital agreements, automated GST billing, and priority helpdesk tickets."}
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  {[
+                    "Firebase Phone Auth & Server Validation",
+                    "Brevo Automated Transactional Mail",
+                    "Cloudinary Virus-Scanned Media Storage",
+                    "AES-256-GCM Financial Data Encryption",
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center shrink-0 border border-amber-500/30">
+                        <Check className="w-3 h-3" />
+                      </div>
+                      <span className="text-white/90 text-xs font-semibold">{item}</span>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                      {selectedRole === "RESIDENT" ? "🏠 Resident" : "🏢 PG Owner"}
-                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative z-10 pt-8 border-t border-white/10 grid grid-cols-3 gap-3">
+                {[
+                  { value: "500+", label: "Active PGs" },
+                  { value: "10K+", label: "Tenants" },
+                  { value: "99.9%", label: "Uptime" },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white/5 backdrop-blur-md rounded-2xl p-3 text-center border border-white/10">
+                    <p className="text-xl font-black text-amber-400">{s.value}</p>
+                    <p className="text-white/70 text-[10px] mt-0.5 font-medium">{s.label}</p>
                   </div>
+                ))}
+              </div>
+            </motion.div>
 
-                  {/* STEP 1: ROLE SELECTION */}
-                  {regStep === 1 && (
-                    <div className="space-y-5">
-                      <p className="text-xs font-bold uppercase tracking-wider text-amber-500">
-                        Select your platform account type:
-                      </p>
+            {/* AUTHENTICATION FORM CARD (SECTION A) */}
+            <motion.div
+              layout
+              transition={{ type: "spring", stiffness: 220, damping: 28 }}
+              className={`lg:col-span-7 ${isSignUp ? "order-2 lg:order-1" : "order-2 lg:order-2"}`}
+            >
+              <div className={`glass-card rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl border ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+                
+                {/* Global Status Messages */}
+                {authSuccessMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-2.5"
+                  >
+                    <CheckCircle className="w-4 h-4 shrink-0" />
+                    <span>{authSuccessMsg}</span>
+                  </motion.div>
+                )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div
-                          onClick={() => setSelectedRole("RESIDENT")}
-                          className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-                            selectedRole === "RESIDENT"
-                              ? "bg-amber-500/15 border-amber-500 shadow-xl"
-                              : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500">
-                              <Home className="w-6 h-6" />
-                            </div>
-                            <input
-                              type="radio"
-                              name="role-select"
-                              checked={selectedRole === "RESIDENT"}
-                              onChange={() => setSelectedRole("RESIDENT")}
-                              className="w-5 h-5 accent-amber-500 cursor-pointer"
-                            />
-                          </div>
-                          <div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white">
-                              🏠 Resident
-                            </h3>
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
-                              Live in a PG. Pay rent, log complaints &amp; view digital agreements.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div
-                          onClick={() => setSelectedRole("OWNER")}
-                          className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
-                            selectedRole === "OWNER"
-                              ? "bg-amber-500/15 border-amber-500 shadow-xl"
-                              : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500">
-                              <Building2 className="w-6 h-6" />
-                            </div>
-                            <input
-                              type="radio"
-                              name="role-select"
-                              checked={selectedRole === "OWNER"}
-                              onChange={() => setSelectedRole("OWNER")}
-                              className="w-5 h-5 accent-amber-500 cursor-pointer"
-                            />
-                          </div>
-                          <div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white">
-                              🏢 PG Owner
-                            </h3>
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
-                              Manage PG properties, track occupancy &amp; collect rent seamlessly.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
-                        <button
-                          type="button"
-                          onClick={() => animateSwitch("login")}
-                          className="text-xs font-bold text-slate-400 hover:underline"
-                        >
-                          Already have an account? Sign in
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRegStep(2)}
-                          className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 hover:scale-105 transition-all"
-                        >
-                          Continue to Details <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
+                {authError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex flex-col gap-2.5"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{authError}</span>
                     </div>
-                  )}
+                    {showSignupCta && (
+                      <button
+                        type="button"
+                        onClick={() => switchAuthMode("register")}
+                        className="w-full py-2 px-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
+                      >
+                        <span>Create a RoomBae Account</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    )}
+                  </motion.div>
+                )}
 
-                  {/* STEP 2: PERSONAL DETAILS & REAL-TIME VALIDATION */}
-                  {regStep === 2 && (
-                    <div className="space-y-4 text-xs max-h-[65vh] overflow-y-auto pr-1">
-
-                      {/* Profile Photo Upload Card */}
-                      <UploadCard
-                        label="Profile Photo"
-                        sublabel="Take photo or choose file (JPG, PNG, WEBP max 5MB)"
-                        folder="RoomBae/ProfileImages"
-                        acceptTypes="image/*"
-                        value={photoUrl}
-                        onChange={setPhotoUrl}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">
-                            Full Name <span className="text-amber-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Rajesh Kumar"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className={`w-full p-3 rounded-xl border text-xs focus:outline-none transition-all ${
-                              fullName && !isValidFullName
-                                ? "border-rose-500 text-rose-500 bg-rose-500/5"
-                                : "border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:border-amber-500"
-                            }`}
-                          />
-                          {fullName && !isValidFullName && (
-                            <p className="text-rose-500 text-[10px] mt-1">Letters only, min 2 characters, no emojis/numbers.</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">
-                            Gender <span className="text-amber-500">*</span>
-                          </label>
-                          <select
-                            value={gender}
-                            onChange={(e) => setGender(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs focus:border-amber-500"
-                          >
-                            <option value="MALE">Male</option>
-                            <option value="FEMALE">Female</option>
-                            <option value="OTHER">Other</option>
-                          </select>
-                        </div>
+                <AnimatePresence mode="wait">
+                  {/* SIGN IN FORM */}
+                  {mode === "login" && (
+                    <motion.div
+                      key="login-form"
+                      initial={{ opacity: 0, x: 25, scale: 0.98 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: -25, scale: 0.98 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="mb-6">
+                        <h2 className="text-2xl lg:text-3xl font-black">Welcome Back</h2>
+                        <p className={`text-xs mt-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+                          Enter your credentials to access your portal or dashboard
+                        </p>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">
-                            Date of Birth <span className="text-amber-500">*</span>
-                          </label>
-                          <input
-                            type="date"
-                            value={dob}
-                            onChange={(e) => setDob(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs focus:border-amber-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">
-                            Auto-Calculated Age
-                          </label>
-                          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 font-extrabold border border-amber-500/20 text-center text-xs">
-                            {calculatedAge > 0 ? `${calculatedAge} Years Old` : "Select Date of Birth"}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Phone Verification Box */}
-                      <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label className="font-bold uppercase text-amber-500 flex items-center gap-1.5">
-                            <Smartphone className="w-4 h-4" /> Phone Number (Indian Mobile)
-                          </label>
-                          {isPhoneVerified && (
-                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold text-[10px] flex items-center gap-1 border border-emerald-500/30">
-                              <CheckCircle className="w-3 h-3" /> Phone Verified
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="9876543210 (10 Digits)"
-                            maxLength={10}
-                            value={phone}
-                            onChange={(e) => handlePhoneInputChange(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs font-mono"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleSendPhoneOtp}
-                            disabled={!isValidPhone}
-                            className="px-4 py-3 rounded-xl bg-amber-500 text-black font-extrabold text-xs whitespace-nowrap disabled:opacity-40 cursor-pointer shadow-md hover:bg-amber-400 transition-colors"
-                          >
-                            {isPhoneOtpSent ? "Resend OTP" : "Send OTP 📲"}
-                          </button>
-                        </div>
-
-                        {isPhoneOtpSent && !isPhoneVerified && (
-                          <div className="space-y-2 pt-2">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[11px] text-amber-400 font-semibold">Enter 6-Digit OTP sent to +91 {phone}:</p>
-                            </div>
-
-                            <OTPInput
-                              length={6}
-                              value={phoneOtp}
-                              onChange={setPhoneOtp}
-                              onComplete={handleVerifyPhoneOtp}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleVerifyPhoneOtp()}
-                              className="w-full py-2.5 rounded-xl bg-emerald-500 text-black font-extrabold text-xs cursor-pointer hover:bg-emerald-400 transition-colors shadow-md"
-                            >
-                              Verify Phone OTP
-                            </button>
-                          </div>
-                        )}
-                        {phoneAuthError && <p className="text-rose-500 font-bold text-[11px]">{phoneAuthError}</p>}
-                      </div>
-
-                      {/* Email Verification Box */}
-                      <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label className="font-bold uppercase text-amber-500 flex items-center gap-1.5">
-                            <Mail className="w-4 h-4" /> Email Address
-                          </label>
-                          {isEmailVerified && (
-                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold text-[10px] flex items-center gap-1 border border-emerald-500/30">
-                              <CheckCircle className="w-3 h-3" /> Email Verified
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex gap-2">
-                          <input
-                            type="email"
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={(e) => handleEmailInputChange(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleSendEmailVerification}
-                            disabled={!isValidEmail || isEmailLoading}
-                            className="px-4 py-3 rounded-xl bg-amber-500 text-black font-extrabold text-xs whitespace-nowrap disabled:opacity-40 cursor-pointer shadow-md hover:bg-amber-400 transition-colors"
-                          >
-                            {isEmailOtpSent ? "Resend Email Code" : "Verify Email ✉️"}
-                          </button>
-                        </div>
-
-                        {isEmailOtpSent && !isEmailVerified && (
-                          <div className="space-y-2 pt-2">
-                            <p className="text-[11px] text-amber-400 font-semibold">Enter 6-Digit code sent to {email}:</p>
-                            <OTPInput
-                              length={6}
-                              value={emailOtp}
-                              onChange={setEmailOtp}
-                              onComplete={handleVerifyEmail}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleVerifyEmail()}
-                              className="w-full py-2.5 rounded-xl bg-emerald-500 text-black font-extrabold text-xs cursor-pointer hover:bg-emerald-400 transition-colors shadow-md"
-                            >
-                              Verify Email Code
-                            </button>
-                          </div>
-                        )}
-                        {emailError && <p className="text-rose-500 font-bold text-[11px]">{emailError}</p>}
-                      </div>
-
-                      {/* City, State, District, PIN */}
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">City *</label>
-                          <input
-                            type="text"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">District</label>
-                          <input
-                            type="text"
-                            value={district}
-                            onChange={(e) => setDistrict(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">State *</label>
-                          <input
-                            type="text"
-                            value={state}
-                            onChange={(e) => setState(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">PIN Code *</label>
-                          <input
-                            type="text"
-                            maxLength={6}
-                            value={pincode}
-                            onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs font-mono"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="my-2">
-                        <label className="block font-bold uppercase mb-1 text-slate-700 dark:text-slate-300">Alternate Phone (Optional)</label>
-                        <input
-                          type="text"
-                          placeholder="9876500000"
-                          value={altPhone}
-                          onChange={(e) => setAltPhone(e.target.value)}
-                          className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs font-mono"
+                      {/* Role Tabs */}
+                      <div className="mb-6">
+                        <AnimatedTabs
+                          tabs={[
+                            { id: "owner", label: "🏢 PG Owner" },
+                            { id: "resident", label: "🏠 Resident" },
+                            { id: "admin", label: "🛡️ Admin Sign In" },
+                          ]}
+                          activeTab={loginRole}
+                          onChange={(id: string) => setLoginRole(id as any)}
+                          layoutId="auth-role-tab"
                         />
                       </div>
 
-                      {/* Password Security Rules */}
-                      <div className="p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
-                        <label className="block font-bold uppercase text-amber-500 flex items-center gap-1.5">
-                          <Lock className="w-4 h-4" /> Strong Password Protection
-                        </label>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <form onSubmit={handleLoginSubmit} className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold uppercase mb-1.5">
+                            {loginRole === "resident" ? "Resident ID or Email" : loginRole === "admin" ? "Admin Email" : "Email or Phone Number"}
+                          </label>
                           <div className="relative">
-                            <input
-                              type={showPass ? "text" : "password"}
-                              placeholder="Create Password"
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPass(!showPass)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500"
-                            >
-                              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <input
-                              type={showPass ? "text" : "password"}
-                              placeholder="Confirm Password"
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPass(!showPass)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500"
-                            >
-                              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px]">
-                          <div className={`p-1.5 rounded-lg border text-center font-bold ${passLength ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "opacity-40"}`}>
-                            {passLength ? "✓" : "○"} 8+ Chars
-                          </div>
-                          <div className={`p-1.5 rounded-lg border text-center font-bold ${passUpper ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "opacity-40"}`}>
-                            {passUpper ? "✓" : "○"} Uppercase
-                          </div>
-                          <div className={`p-1.5 rounded-lg border text-center font-bold ${passLower ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "opacity-40"}`}>
-                            {passLower ? "✓" : "○"} Lowercase
-                          </div>
-                          <div className={`p-1.5 rounded-lg border text-center font-bold ${passNumber ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "opacity-40"}`}>
-                            {passNumber ? "✓" : "○"} Number
-                          </div>
-                          <div className={`p-1.5 rounded-lg border text-center font-bold ${passSpecial ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "opacity-40"}`}>
-                            {passSpecial ? "✓" : "○"} Special
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Next Step Button (Glowing state when isStep2Valid is true) */}
-                      <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
-                        <button
-                          type="button"
-                          onClick={() => setRegStep(1)}
-                          className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
-                        >
-                          <ArrowLeft className="w-4 h-4" /> Role
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setRegStep(3)}
-                          disabled={!isStep2Valid}
-                          className={`px-8 py-3.5 rounded-xl font-extrabold text-xs flex items-center gap-2 transition-all duration-300 ${
-                            isStep2Valid
-                              ? "bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-[0_0_25px_rgba(245,158,11,0.6)] hover:shadow-[0_0_35px_rgba(245,158,11,0.8)] hover:scale-105 active:scale-95 cursor-pointer"
-                              : "bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-500 cursor-not-allowed opacity-60"
-                          }`}
-                        >
-                          Next: {selectedRole === "RESIDENT" ? "Resident KYC" : "Owner Verification"} <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 3: ROLE-SPECIFIC VERIFICATION & DOCUMENTS */}
-                  {regStep === 3 && (
-                    <form onSubmit={handleRegisterSubmit} className="space-y-4 text-xs max-h-[65vh] overflow-y-auto pr-1">
-                      {selectedRole === "RESIDENT" ? (
-                        <div className="space-y-4">
-                          <h4 className="font-extrabold text-amber-500 uppercase text-xs">
-                            Resident Document &amp; Address Collection
-                          </h4>
-
-                          <UploadCard
-                            label="Aadhaar Card (PDF Only)"
-                            sublabel="Upload original Aadhaar document in PDF format"
-                            folder="RoomBae/Residents"
-                            acceptTypes="application/pdf"
-                            isDocument
-                            value={aadhaarDoc}
-                            onChange={setAadhaarDoc}
-                            required
-                          />
-
-                          <UploadCard
-                            label="Digital Signature (Image)"
-                            sublabel="Upload photo or scan of signature (JPG, PNG)"
-                            folder="RoomBae/Residents"
-                            acceptTypes="image/*"
-                            value={signatureDoc}
-                            onChange={setSignatureDoc}
-                            required
-                          />
-
-                          <div>
-                            <label className="block font-bold uppercase mb-1">Permanent Address *</label>
                             <input
                               type="text"
-                              placeholder="House No, Street Name, Sector/Locality"
-                              value={permanentAddress}
-                              onChange={(e) => setPermanentAddress(e.target.value)}
-                              className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
+                              required
+                              value={loginIdentifier}
+                              onChange={(e) => setLoginIdentifier(e.target.value)}
+                              placeholder={loginRole === "resident" ? "RES1001 or resident@example.com" : loginRole === "admin" ? "admin@roombae.com" : "you@example.com"}
+                              className={`w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                                darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                              }`}
                             />
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                              <label className="block font-bold uppercase mb-1">Landmark *</label>
-                              <input
-                                type="text"
-                                placeholder="Near Metro Station / Park"
-                                value={landmark}
-                                onChange={(e) => setLandmark(e.target.value)}
-                                className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs"
-                              />
-                            </div>
-                            <div>
-                              <label className="block font-bold uppercase mb-1">PG Reference Code (Optional)</label>
-                              <input
-                                type="text"
-                                placeholder="e.g. PG-INDIRANAGAR-101"
-                                value={pgReferenceCode}
-                                onChange={(e) => setPgReferenceCode(e.target.value)}
-                                className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-xs font-mono uppercase"
-                              />
-                            </div>
+                            <Mail className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                           </div>
                         </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <h4 className="font-extrabold text-amber-500 uppercase text-xs">
-                            PG Owner Verification &amp; Bank Settlement Details
-                          </h4>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <UploadCard
-                              label="Aadhaar Card (PDF)"
-                              isDocument
-                              folder="RoomBae/Owners"
-                              acceptTypes="application/pdf"
-                              value={ownerAadhaarPdf}
-                              onChange={setOwnerAadhaarPdf}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-bold uppercase">Password</label>
+                            <button
+                              type="button"
+                              onClick={() => switchAuthMode("forgot")}
+                              className="text-xs font-semibold text-amber-500 hover:underline cursor-pointer"
+                            >
+                              Forgot password?
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showPass ? "text" : "password"}
                               required
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              placeholder="••••••••"
+                              className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                                darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                              }`}
                             />
-                            <UploadCard
-                              label="PAN Card (PDF)"
-                              isDocument
-                              folder="RoomBae/Owners"
-                              acceptTypes="application/pdf"
-                              value={ownerPanPdf}
-                              onChange={setOwnerPanPdf}
-                              required
+                            <button
+                              type="button"
+                              onClick={() => setShowPass(!showPass)}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
+                            >
+                              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                            <input
+                              type="checkbox"
+                              checked={rememberMe}
+                              onChange={(e) => setRememberMe(e.target.checked)}
+                              className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
                             />
+                            <span>Remember Me</span>
+                          </label>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.99] cursor-pointer ${
+                            isSubmitting ? "opacity-50 pointer-events-none" : ""
+                          }`}
+                        >
+                          {isSubmitting ? "Authenticating..." : "Sign In to RoomBae"} <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </form>
+
+                      <div className="flex items-center gap-3 my-6">
+                        <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                        <span className="text-xs font-semibold text-slate-400">OR</span>
+                        <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleGoogleSignUp}
+                        className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 48 48">
+                          <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                          <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                          <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                          <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                        </svg>
+                        Continue with Google
+                      </button>
+
+                      <p className="text-center text-xs mt-6 text-slate-500 dark:text-slate-400">
+                        Don't have an account?{" "}
+                        <button
+                          type="button"
+                          onClick={() => switchAuthMode("register")}
+                          className="font-bold text-amber-500 hover:underline cursor-pointer"
+                        >
+                          Sign Up
+                        </button>
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {/* SIGN UP WIZARD FORM */}
+                  {mode === "register" && (
+                    <motion.div
+                      key="register-form"
+                      initial={{ opacity: 0, x: -25, scale: 0.98 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: 25, scale: 0.98 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="mb-6 flex justify-between items-center border-b pb-4 border-amber-500/20">
+                        <div>
+                          <h2 className="text-2xl lg:text-3xl font-black">Create Your Account</h2>
+                          <p className="text-xs text-amber-500 font-semibold mt-0.5">
+                            Step {regStep} of 3 — {regStep === 1 ? "Choose Role" : regStep === 2 ? "Personal & Security Details" : selectedRole === "RESIDENT" ? "KYC & Documents" : "Owner Verification & Bank Details"}
+                          </p>
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                          {selectedRole === "RESIDENT" ? "🏠 Resident" : "🏢 PG Owner"}
+                        </span>
+                      </div>
+
+                      {/* STEP 1: ROLE SELECTION */}
+                      {regStep === 1 && (
+                        <div className="space-y-5">
+                          <p className="text-xs font-bold uppercase tracking-wider text-amber-500">
+                            Select your platform account type:
+                          </p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                              onClick={() => setSelectedRole("RESIDENT")}
+                              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                                selectedRole === "RESIDENT"
+                                  ? "bg-amber-500/15 border-amber-500 shadow-xl"
+                                  : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500">
+                                  <Home className="w-6 h-6" />
+                                </div>
+                                <input
+                                  type="radio"
+                                  name="role-select"
+                                  checked={selectedRole === "RESIDENT"}
+                                  onChange={() => setSelectedRole("RESIDENT")}
+                                  className="w-5 h-5 accent-amber-500 cursor-pointer"
+                                />
+                              </div>
+                              <div>
+                                <h3 className="text-base font-black">🏠 Resident</h3>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                                  Live in a PG. Pay rent, log complaints &amp; view digital agreements.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div
+                              onClick={() => setSelectedRole("OWNER")}
+                              className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                                selectedRole === "OWNER"
+                                  ? "bg-amber-500/15 border-amber-500 shadow-xl"
+                                  : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
+                              }`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500">
+                                  <Building2 className="w-6 h-6" />
+                                </div>
+                                <input
+                                  type="radio"
+                                  name="role-select"
+                                  checked={selectedRole === "OWNER"}
+                                  onChange={() => setSelectedRole("OWNER")}
+                                  className="w-5 h-5 accent-amber-500 cursor-pointer"
+                                />
+                              </div>
+                              <div>
+                                <h3 className="text-base font-black">🏢 PG Owner</h3>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                                  Manage PG properties, track occupancy &amp; collect rent seamlessly.
+                                </p>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <UploadCard
-                              label="Address Proof (PDF)"
-                              isDocument
-                              folder="RoomBae/Owners"
-                              acceptTypes="application/pdf"
-                              value={addressProofPdf}
-                              onChange={setAddressProofPdf}
-                              required
-                            />
-                            <UploadCard
-                              label="Business Proof (Optional PDF)"
-                              isDocument
-                              folder="RoomBae/Owners"
-                              acceptTypes="application/pdf"
-                              value={businessProofPdf}
-                              onChange={setBusinessProofPdf}
-                            />
+                          <div className="flex items-center gap-3 my-4">
+                            <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                            <span className="text-xs font-semibold text-slate-400">OR</span>
+                            <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
                           </div>
 
-                          {/* Encrypted Bank Details */}
-                          <div className="p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
-                            <div className="flex items-center gap-2 font-bold uppercase text-amber-500 text-xs">
-                              <CreditCard className="w-4 h-4" /> Bank Account &amp; Settlement Details (Encrypted at Rest)
-                            </div>
+                          <button
+                            type="button"
+                            onClick={handleGoogleSignUp}
+                            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
+                          >
+                            <svg className="w-5 h-5" viewBox="0 0 48 48">
+                              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                              <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                              <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+                            </svg>
+                            Continue with Google
+                          </button>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                              <div>
-                                <label className="block font-bold mb-1">Account Holder Name *</label>
-                                <input
-                                  type="text"
-                                  placeholder="As printed on bank passbook"
-                                  value={accountHolderName}
-                                  onChange={(e) => setAccountHolderName(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                                />
-                              </div>
-                              <div>
-                                <label className="block font-bold mb-1">Bank Name *</label>
-                                <input
-                                  type="text"
-                                  placeholder="HDFC Bank / ICICI Bank"
-                                  value={bankName}
-                                  onChange={(e) => setBankName(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                                />
-                              </div>
-                              <div>
-                                <label className="block font-bold mb-1">Branch</label>
-                                <input
-                                  type="text"
-                                  placeholder="Indiranagar Branch"
-                                  value={branch}
-                                  onChange={(e) => setBranch(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div>
-                                <label className="block font-bold mb-1">IFSC Code *</label>
-                                <input
-                                  type="text"
-                                  placeholder="HDFC0001234"
-                                  value={ifscCode}
-                                  onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-mono uppercase"
-                                />
-                              </div>
-                              <div>
-                                <label className="block font-bold mb-1">UPI ID *</label>
-                                <input
-                                  type="text"
-                                  placeholder="owner@upi"
-                                  value={upiId}
-                                  onChange={(e) => setUpiId(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div>
-                                <label className="block font-bold mb-1">Account Number *</label>
-                                <input
-                                  type="password"
-                                  placeholder="Account Number"
-                                  value={accountNumber}
-                                  onChange={(e) => setAccountNumber(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-mono"
-                                />
-                              </div>
-                              <div>
-                                <label className="block font-bold mb-1">Confirm Account Number *</label>
-                                <input
-                                  type="text"
-                                  placeholder="Confirm Account Number"
-                                  value={confirmAccountNumber}
-                                  onChange={(e) => setConfirmAccountNumber(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-mono"
-                                />
-                              </div>
-                            </div>
+                          <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                            <button
+                              type="button"
+                              onClick={() => switchAuthMode("login")}
+                              className="text-xs font-bold text-amber-500 hover:underline cursor-pointer"
+                            >
+                              Already have an account? Sign In
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRegStep(2)}
+                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 hover:scale-105 transition-all"
+                            >
+                              Continue to Details <ArrowRight className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       )}
 
-                      <div className="p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          id="terms-check"
-                          checked={agreeTerms}
-                          onChange={(e) => setAgreeTerms(e.target.checked)}
-                          className="w-5 h-5 mt-0.5 accent-amber-500 cursor-pointer"
-                        />
-                        <label htmlFor="terms-check" className="text-xs leading-relaxed cursor-pointer text-slate-600 dark:text-slate-400">
-                          I agree to RoomBae&apos;s <strong className="text-amber-500">Terms &amp; Conditions</strong> and <strong className="text-amber-500">Privacy Policy</strong>. All uploaded financial documents are subject to zero-trust encryption.
-                        </label>
-                      </div>
+                      {/* STEP 2: PERSONAL & SECURITY DETAILS */}
+                      {regStep === 2 && (
+                        <div className="space-y-4 text-xs max-h-[60vh] overflow-y-auto pr-1">
+                          <UploadCard
+                            label="Profile Photo"
+                            sublabel="Take photo or choose file (JPG, PNG, WEBP max 5MB)"
+                            folder="RoomBae/ProfileImages"
+                            acceptTypes="image/*"
+                            value={photoUrl}
+                            onChange={setPhotoUrl}
+                          />
 
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block font-bold uppercase mb-1">
+                                Full Name <span className="text-amber-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Rajesh Kumar"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                className={`w-full p-3 rounded-xl border text-xs focus:outline-none transition-all ${
+                                  fullName && !isValidFullName
+                                    ? "border-rose-500 text-rose-500 bg-rose-500/5"
+                                    : "border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:border-amber-500"
+                                }`}
+                              />
+                            </div>
 
-                      {/* Final Submit Button (Golden Glowing when isStep3Valid is true) */}
-                      <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                            <div>
+                              <label className="block font-bold uppercase mb-1">
+                                Gender <span className="text-amber-500">*</span>
+                              </label>
+                              <select
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value)}
+                                className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                              >
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block font-bold uppercase mb-1">
+                                Email Address <span className="text-amber-500">*</span>
+                              </label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="email"
+                                  placeholder="you@example.com"
+                                  value={email}
+                                  onChange={(e) => handleEmailInputChange(e.target.value)}
+                                  className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleSendEmailVerification}
+                                  disabled={!isValidEmail || isEmailLoading || isEmailVerified}
+                                  className={`px-3 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
+                                    isEmailVerified
+                                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                      : "bg-amber-500 text-black hover:bg-amber-400"
+                                  }`}
+                                >
+                                  {isEmailVerified ? "✓ Verified" : isEmailLoading ? "Sending..." : "Verify"}
+                                </button>
+                              </div>
+                              {isEmailOtpSent && !isEmailVerified && (
+                                <div className="mt-2 flex gap-2">
+                                  <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="6-digit code"
+                                    value={emailOtp}
+                                    onChange={(e) => setEmailOtp(e.target.value)}
+                                    className="w-32 p-2 rounded-lg border text-xs font-mono tracking-widest bg-slate-900 text-white"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleVerifyEmail()}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-extrabold text-xs cursor-pointer"
+                                  >
+                                    Confirm Code
+                                  </button>
+                                </div>
+                              )}
+                              {emailError && <p className="text-rose-500 text-[10px] mt-1">{emailError}</p>}
+                            </div>
+
+                            <div>
+                              <label className="block font-bold uppercase mb-1">
+                                Mobile Number <span className="text-amber-500">*</span>
+                              </label>
+                              <div className="flex gap-2">
+                                <span className="p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 text-xs font-mono font-bold flex items-center">
+                                  +91
+                                </span>
+                                <input
+                                  type="tel"
+                                  placeholder="9876543210"
+                                  value={phone}
+                                  onChange={(e) => handlePhoneInputChange(e.target.value)}
+                                  className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleSendPhoneOtp}
+                                  disabled={!isValidPhone || isPhoneVerified}
+                                  className={`px-3 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
+                                    isPhoneVerified
+                                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                      : "bg-amber-500 text-black hover:bg-amber-400"
+                                  }`}
+                                >
+                                  {isPhoneVerified ? "✓ Verified" : "OTP"}
+                                </button>
+                              </div>
+                              {isPhoneOtpSent && !isPhoneVerified && (
+                                <div className="mt-2 flex gap-2">
+                                  <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="6-digit OTP"
+                                    value={phoneOtp}
+                                    onChange={(e) => setPhoneOtp(e.target.value)}
+                                    className="w-32 p-2 rounded-lg border text-xs font-mono tracking-widest bg-slate-900 text-white"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleVerifyPhoneOtp()}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-extrabold text-xs cursor-pointer"
+                                  >
+                                    Verify OTP
+                                  </button>
+                                </div>
+                              )}
+                              {phoneAuthError && <p className="text-rose-500 text-[10px] mt-1">{phoneAuthError}</p>}
+                            </div>
+                          </div>
+
+                          {/* Password & Strength Meter */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block font-bold uppercase mb-1">
+                                Create Password <span className="text-amber-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showPass ? "text" : "password"}
+                                  placeholder="Min 8 chars, 1 Upper, 1 Special"
+                                  value={password}
+                                  onChange={(e) => setPassword(e.target.value)}
+                                  className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPass(!showPass)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                >
+                                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block font-bold uppercase mb-1">
+                                Confirm Password <span className="text-amber-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showConfirmPass ? "text" : "password"}
+                                  placeholder="Re-enter password"
+                                  value={confirmPassword}
+                                  onChange={(e) => setConfirmPassword(e.target.value)}
+                                  className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowConfirmPass(!showConfirmPass)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                >
+                                  {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Password Strength Rules */}
+                          {password.length > 0 && (
+                            <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-700/60 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px]">
+                              <span className={passLength ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 8+ Chars</span>
+                              <span className={passUpper ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Uppercase</span>
+                              <span className={passLower ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Lowercase</span>
+                              <span className={passNumber ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Number</span>
+                              <span className={passSpecial ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Special</span>
+                            </div>
+                          )}
+
+                          <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                            <button
+                              type="button"
+                              onClick={() => setRegStep(1)}
+                              className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-4 h-4" /> Back to Role
+                            </button>
+                            <button
+                              type="button"
+                              disabled={!isStep2Valid}
+                              onClick={() => isStep2Valid && setRegStep(3)}
+                              className={`px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 transition-all ${
+                                !isStep2Valid ? "opacity-50 pointer-events-none" : ""
+                              }`}
+                            >
+                              Continue to KYC <ArrowRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* STEP 3: KYC, DOCUMENTS & SUBMIT */}
+                      {regStep === 3 && (
+                        <form onSubmit={handleRegisterSubmit} className="space-y-4 text-xs max-h-[60vh] overflow-y-auto pr-1">
+                          {selectedRole === "RESIDENT" ? (
+                            <>
+                              <UploadCard
+                                label="Aadhaar Card Photo / PDF"
+                                sublabel="Upload front/back Aadhaar card (Max 5MB)"
+                                folder="RoomBae/ResidentDocs"
+                                value={aadhaarDoc}
+                                onChange={setAadhaarDoc}
+                              />
+                              <UploadCard
+                                label="Signature Image"
+                                sublabel="Digital signature on white paper"
+                                folder="RoomBae/ResidentSignatures"
+                                value={signatureDoc}
+                                onChange={setSignatureDoc}
+                              />
+                              <div>
+                                <label className="block font-bold uppercase mb-1">Permanent Residential Address</label>
+                                <textarea
+                                  rows={2}
+                                  placeholder="House No, Street, Village/Locality"
+                                  value={permanentAddress}
+                                  onChange={(e) => setPermanentAddress(e.target.value)}
+                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="block font-bold uppercase mb-1">Landmark</label>
+                                <input
+                                  type="text"
+                                  placeholder="Near City Water Tank"
+                                  value={landmark}
+                                  onChange={(e) => setLandmark(e.target.value)}
+                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <UploadCard
+                                label="Owner Aadhaar PDF"
+                                sublabel="Aadhaar document for KYC verification"
+                                folder="RoomBae/OwnerKYC"
+                                value={ownerAadhaarPdf}
+                                onChange={setOwnerAadhaarPdf}
+                              />
+                              <UploadCard
+                                label="Owner PAN Card PDF"
+                                sublabel="PAN card for tax GST compliance"
+                                folder="RoomBae/OwnerKYC"
+                                value={ownerPanPdf}
+                                onChange={setOwnerPanPdf}
+                              />
+                              <UploadCard
+                                label="Electricity Bill / Address Proof"
+                                sublabel="Utility bill for property address proof"
+                                folder="RoomBae/OwnerKYC"
+                                value={addressProofPdf}
+                                onChange={setAddressProofPdf}
+                              />
+                              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] font-semibold text-amber-400 flex items-center gap-2">
+                                <Lock className="w-4 h-4 shrink-0" />
+                                <span>Financial &amp; Settlement Details (AES-256-GCM Encrypted Server-Side)</span>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block font-bold uppercase mb-1">Account Holder Name</label>
+                                  <input
+                                    type="text"
+                                    placeholder="Rajesh Kumar"
+                                    value={accountHolderName}
+                                    onChange={(e) => setAccountHolderName(e.target.value)}
+                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block font-bold uppercase mb-1">Bank Name</label>
+                                  <input
+                                    type="text"
+                                    placeholder="HDFC Bank"
+                                    value={bankName}
+                                    onChange={(e) => setBankName(e.target.value)}
+                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block font-bold uppercase mb-1">Bank Account Number</label>
+                                  <input
+                                    type="password"
+                                    placeholder="5010023456789"
+                                    value={accountNumber}
+                                    onChange={(e) => setAccountNumber(e.target.value)}
+                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block font-bold uppercase mb-1">Confirm Account Number</label>
+                                  <input
+                                    type="text"
+                                    placeholder="Re-enter account number"
+                                    value={confirmAccountNumber}
+                                    onChange={(e) => setConfirmAccountNumber(e.target.value)}
+                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block font-bold uppercase mb-1">IFSC Code</label>
+                                  <input
+                                    type="text"
+                                    placeholder="HDFC0001234"
+                                    value={ifscCode}
+                                    onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-mono"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block font-bold uppercase mb-1">Settlement UPI ID</label>
+                                  <input
+                                    type="text"
+                                    placeholder="owner@okaxis"
+                                    value={upiId}
+                                    onChange={(e) => setUpiId(e.target.value)}
+                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-mono"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          <div className="pt-2">
+                            <label className="flex items-start gap-2.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={agreeTerms}
+                                onChange={(e) => setAgreeTerms(e.target.checked)}
+                                className="w-4 h-4 mt-0.5 rounded accent-amber-500 cursor-pointer shrink-0"
+                              />
+                              <span className="text-[11px] leading-tight text-slate-400">
+                                I agree to the <span className="text-amber-500 font-bold hover:underline">Terms &amp; Conditions</span> and <span className="text-amber-500 font-bold hover:underline">Privacy Policy</span>. I verify that all uploaded documents and financial details are authentic.
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                            <button
+                              type="button"
+                              onClick={() => setRegStep(2)}
+                              className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-4 h-4" /> Back to Details
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={isSubmitting || !agreeTerms || !isStep3Valid}
+                              className={`px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 active:scale-[0.99] transition-all ${
+                                isSubmitting || !agreeTerms || !isStep3Valid ? "opacity-50 pointer-events-none" : ""
+                              }`}
+                            >
+                              {isSubmitting ? "Creating Account..." : "Complete Registration"} <CheckCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      <p className="text-center text-xs mt-6 text-slate-500 dark:text-slate-400">
+                        Already have an account?{" "}
                         <button
                           type="button"
-                          onClick={() => setRegStep(2)}
-                          className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                          onClick={() => switchAuthMode("login")}
+                          className="font-bold text-amber-500 hover:underline cursor-pointer"
                         >
-                          <ArrowLeft className="w-4 h-4" /> Personal Details
+                          Sign In
                         </button>
-                        <button
-                          type="submit"
-                          disabled={!agreeTerms || !isStep3Valid || isSubmitting}
-                          className={`px-8 py-3.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all duration-300 ${
-                            agreeTerms && isStep3Valid && !isSubmitting
-                              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-black shadow-[0_0_25px_rgba(16,185,129,0.6)] hover:shadow-[0_0_35px_rgba(16,185,129,0.8)] hover:scale-105 cursor-pointer"
-                              : "bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-500 cursor-not-allowed opacity-60"
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {/* FORGOT PASSWORD MODE */}
+                  {mode === "forgot" && (
+                    <motion.div
+                      key="forgot-form"
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <h2 className="text-2xl font-black">Reset Password</h2>
+                        <p className={`text-xs mt-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+                          Enter your registered email address to receive password recovery instructions.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase mb-1.5">Registered Email</label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                            darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
                           }`}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthSuccessMsg("Password reset email sent! Check your inbox.");
+                          setTimeout(() => switchAuthMode("login"), 1500);
+                        }}
+                        className="w-full py-3.5 rounded-xl bg-amber-500 text-black font-extrabold text-sm cursor-pointer hover:bg-amber-400 shadow-lg shadow-amber-500/20"
+                      >
+                        Send Reset Link
+                      </button>
+
+                      <div className="pt-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => switchAuthMode("login")}
+                          className="text-xs font-bold text-slate-400 hover:underline cursor-pointer"
                         >
-                          {isSubmitting ? "Processing Signup..." : "Complete RoomBae Signup 🚀"}
+                          Back to Sign In
                         </button>
                       </div>
-                    </form>
+                    </motion.div>
                   )}
-                </div>
-              )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
 
-              {/* FORGOT & OTP MODES */}
-              {mode === "forgot" && (
-                <>
-                  <div className="mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mb-4">
-                      <Shield className="w-6 h-6" />
-                    </div>
-                    <h2 className={`text-2xl font-black ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                      Reset Password
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Enter your email address to receive a secure password reset link
-                    </p>
-                  </div>
-                  <div className="mb-5">
-                    <input
-                      type="email"
-                      placeholder="you@example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 text-sm"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => animateSwitch("otp")}
-                    className="w-full py-3.5 rounded-xl bg-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 cursor-pointer mb-4 hover:bg-amber-400 transition-colors"
-                  >
-                    Send Reset Link
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => animateSwitch("login")}
-                    className="w-full text-center text-xs font-bold text-amber-500 hover:underline"
-                  >
-                    Back to Sign In
-                  </button>
-                </>
-              )}
-
-              {mode === "otp" && (
-                <>
-                  <div className="mb-6 text-center">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-4">
-                      <Smartphone className="w-6 h-6" />
-                    </div>
-                    <h2 className={`text-2xl font-black ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
-                      Enter Verification Code
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Enter the 6-digit OTP code sent to your email or mobile
-                    </p>
-                  </div>
-
-                  <OTPInput
-                    length={6}
-                    value={phoneOtp}
-                    onChange={setPhoneOtp}
-                    onComplete={handleLoginSubmit}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={handleLoginSubmit}
-                    className="w-full mt-4 py-3.5 rounded-xl bg-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 cursor-pointer mb-4 hover:bg-amber-400 transition-colors"
-                  >
-                    Verify &amp; Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => animateSwitch("login")}
-                    className="w-full text-center text-xs font-bold text-amber-500 hover:underline"
-                  >
-                    Back to Sign In
-                  </button>
-                </>
-              )}
-            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
-

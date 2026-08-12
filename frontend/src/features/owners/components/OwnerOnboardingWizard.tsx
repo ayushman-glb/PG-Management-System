@@ -175,20 +175,13 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
   };
 
   const resolveOwnerId = async (): Promise<string> => {
-    const storageKey = "roombaeOwnerId";
-    const storedId = localStorage.getItem(storageKey);
-    if (storedId) return storedId;
-
     try {
       const currentUser: any = await authService.getCurrentUser();
       const user = currentUser?.user || currentUser || {};
-      if (user.id) {
-        localStorage.setItem(storageKey, user.id);
-        return user.id;
-      }
-    } catch {}
-
-    return "650000000000000000000001";
+      return user.ownerId || user.id || "me";
+    } catch {
+      return "me";
+    }
   };
 
   const handleSubmitAll = async () => {

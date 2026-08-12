@@ -9,6 +9,7 @@ import loadingImg from "../assets/loading.png";
 export type Page =
   | "landing"
   | "dashboard"
+  | "admin-console"
   | "properties"
   | "residents"
   | "billing"
@@ -84,17 +85,15 @@ export default function App() {
 
     if (oauthSuccess === "success") {
       try {
-        const cookieMatch = document.cookie.match(/(?:^|; )accessToken=([^;]+)/);
-        if (cookieMatch && cookieMatch[1]) {
-          const token = decodeURIComponent(cookieMatch[1]);
-          localStorage.setItem("accessToken", token);
-          localStorage.setItem("token", token);
-          if (residentCode) {
-            localStorage.setItem("residentCode", residentCode);
-          }
+        if (residentCode) {
+          localStorage.setItem("residentCode", residentCode);
         }
         const targetPage: Page =
-          role === "RESIDENT" || role === "OWNER" ? "dashboard" : "dashboard";
+          role === "RESIDENT"
+            ? "resident-portal"
+            : role === "ADMIN" || role === "SUPER_ADMIN"
+            ? "admin-console"
+            : "dashboard";
         setPage(targetPage);
         window.history.replaceState({}, "", window.location.pathname);
       } catch (e) {

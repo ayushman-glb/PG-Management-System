@@ -1,9 +1,12 @@
 import React, { lazy, Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Page } from "./App";
 import { RoleGuard } from "@guards/RoleGuard";
+import { RouteGuard } from "@guards/RouteGuard";
 
 const Landing = lazy(() => import("@features/dashboard/pages/Landing"));
 const Dashboard = lazy(() => import("@features/dashboard/pages/Dashboard"));
+const AdminConsole = lazy(() => import("@features/dashboard/pages/AdminConsole"));
 const Properties = lazy(() => import("@features/properties/pages/Properties"));
 const Residents = lazy(() => import("@features/residents/pages/Residents"));
 const Billing = lazy(() => import("@features/billing/pages/Billing"));
@@ -28,10 +31,36 @@ interface RoutesProps {
   navigate: (page: Page) => void;
 }
 
+const OWNER_ROLES = ["OWNER", "ADMIN", "SUPER_ADMIN", "MANAGER"];
+const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"];
+const RESIDENT_ROLES = ["RESIDENT", "ADMIN", "SUPER_ADMIN"];
+
 export const AppRoutes: React.FC<RoutesProps> = ({ page, navigate }) => {
   return (
-    <Suspense fallback={<div className="p-8 text-center animate-pulse">Loading view...</div>}>
-      {renderRoute(page, navigate)}
+    <Suspense
+      fallback={
+        <div className="p-8 space-y-4 max-w-4xl mx-auto">
+          <div className="h-10 w-48 skeleton-wave" />
+          <div className="h-40 w-full skeleton-wave" />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="h-28 skeleton-wave" />
+            <div className="h-28 skeleton-wave" />
+            <div className="h-28 skeleton-wave" />
+          </div>
+        </div>
+      }
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={page}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+        >
+          {renderRoute(page, navigate)}
+        </motion.div>
+      </AnimatePresence>
     </Suspense>
   );
 };
@@ -41,20 +70,80 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
     case "landing":
       return <Landing navigate={navigate} />;
     case "dashboard":
-      return <Dashboard navigate={navigate} />;
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Dashboard navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
+    case "admin-console":
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={ADMIN_ROLES}>
+            <AdminConsole navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
+    case "resident-portal":
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={RESIDENT_ROLES}>
+            <ResidentPortal navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
     case "properties":
-      return <Properties navigate={navigate} />;
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Properties navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
     case "residents":
-      return <Residents navigate={navigate} />;
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Residents navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
     case "billing":
-      return <Billing navigate={navigate} />;
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Billing navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
     case "complaints":
-      return <Complaints navigate={navigate} />;
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Complaints navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
     case "analytics":
       return (
-        <RoleGuard allowedRoles={["admin", "ADMIN", "owner", "OWNER", "pg_owner", "PG_OWNER", "super_admin", "SUPER_ADMIN", "manager", "MANAGER"]}>
-          <Analytics navigate={navigate} />
-        </RoleGuard>
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Analytics navigate={navigate} />
+          </RoleGuard>
+        </RouteGuard>
+      );
+    case "rooms":
+    case "beds":
+    case "visitors":
+    case "notifications":
+    case "settings":
+      return (
+        <RouteGuard>
+          <RoleGuard allowedRoles={OWNER_ROLES}>
+            <Operations navigate={navigate} page={page} />
+          </RoleGuard>
+        </RouteGuard>
       );
     case "pg-listing":
       return <PGListing navigate={navigate} />;
@@ -72,21 +161,8 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
       return <Auth navigate={navigate} />;
     case "complete-profile":
       return <CompleteProfile navigate={navigate} />;
-    case "resident-portal":
-
-      return <ResidentPortal navigate={navigate} />;
     case "resident-register":
       return <ResidentRegister navigate={navigate} />;
-    case "rooms":
-      return <Operations navigate={navigate} page="rooms" />;
-    case "beds":
-      return <Operations navigate={navigate} page="beds" />;
-    case "visitors":
-      return <Operations navigate={navigate} page="visitors" />;
-    case "notifications":
-      return <Operations navigate={navigate} page="notifications" />;
-    case "settings":
-      return <Operations navigate={navigate} page="settings" />;
     case "about":
     case "blog":
     case "careers":

@@ -3,42 +3,31 @@ import type { ApiResponse } from "../types";
 import { updateSocketAuth, disconnectSocket } from "./socket";
 
 export class AuthService {
-  private getToken(): string | null {
-    try {
-      const fromStorage = localStorage.getItem("accessToken") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("roombae_access_token");
-      if (fromStorage) return fromStorage;
+  private inMemoryToken: string | null = null;
 
-      const cookieMatch = document.cookie.match(/(?:^|; )accessToken=([^;]+)/);
-      if (cookieMatch) {
-        const token = decodeURIComponent(cookieMatch[1]);
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("token", token);
-        return token;
-      }
-    } catch {
-      return null;
-    }
-    return null;
+  public getToken(): string | null {
+    return this.inMemoryToken;
   }
 
   public setToken(token: string) {
-    try {
-      localStorage.setItem("accessToken", token);
-      localStorage.setItem("token", token);
-      localStorage.setItem("roombae_access_token", token);
-      updateSocketAuth(token);
-    } catch (e) {}
-  }
-
-  public clearToken() {
+    this.inMemoryToken = token;
+    // Clean up any legacy localStorage entries
     try {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("token");
       localStorage.removeItem("roombae_access_token");
-      disconnectSocket();
-    } catch (e) {}
+    } catch {}
+    updateSocketAuth(token);
+  }
+
+  public clearToken() {
+    this.inMemoryToken = null;
+    try {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("roombae_access_token");
+    } catch {}
+    disconnectSocket();
   }
 
   private async request<T = any>(

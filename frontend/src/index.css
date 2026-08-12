@@ -921,6 +921,46 @@ html.dark-theme .hover-glow:hover {
 }
 
 /* ─── Glass Effects ──────────────────────────────── */
+/* Custom Easing & Auth Animation Utilities */
+.ease-out-cubic {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-glow-orb {
+  background: radial-gradient(circle, rgba(217, 168, 124, 0.15) 0%, rgba(29, 27, 26, 0) 70%);
+}
+
+/* 3D Perspective & Flip Card Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.glass-card {
+  background: rgba(255, 253, 251, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dark .glass-card {
+  background: rgba(43, 39, 37, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(74, 68, 63, 0.6);
+}
+
 .glass {
   background: rgba(255, 253, 251, 0.75);
   backdrop-filter: blur(16px);
@@ -1471,4 +1511,47 @@ html.dark-theme .lux-btn-ghost {
 html.dark-theme .lux-btn-ghost:hover:not(:disabled) {
   background: rgba(200, 154, 75, 0.15);
   color: #F7F3EE;
+}
+
+/* 7. Keyframe Animations & Specialty Effects */
+.glass-card {
+  background: rgba(255, 253, 251, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(230, 215, 202, 0.7);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(93, 55, 28, 0.06);
+  transition: all 0.3s ease;
+}
+
+html.dark-theme .glass-card {
+  background: rgba(43, 39, 37, 0.75);
+  border-color: rgba(74, 68, 63, 0.7);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes skeletonWave {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-wave {
+  background: linear-gradient(90deg, rgba(230, 215, 202, 0.3) 25%, rgba(255, 253, 251, 0.8) 50%, rgba(230, 215, 202, 0.3) 75%);
+  background-size: 200% 100%;
+  animation: skeletonWave 1.8s infinite ease-in-out;
+  border-radius: 12px;
+}
+
+html.dark-theme .skeleton-wave {
+  background: linear-gradient(90deg, rgba(74, 68, 63, 0.3) 25%, rgba(51, 45, 43, 0.8) 50%, rgba(74, 68, 63, 0.3) 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.04); }
+}
+
+.badge-pulse {
+  animation: badgePulse 2s infinite ease-in-out;
 }

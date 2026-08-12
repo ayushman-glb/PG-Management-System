@@ -3,6 +3,14 @@ import { PrismaClient, Role, ResidentStatus, PGStatus, OwnerKYCStatus, BusinessT
 const prisma = new PrismaClient();
 
 export async function seedSaaSData() {
+  const dbUrl = process.env.DATABASE_URL || '';
+  const isLocalDB = dbUrl.startsWith('mongodb://localhost') || dbUrl.startsWith('mongodb://127.0.0.1');
+  if (!isLocalDB) {
+    console.error('❌ SEED REFUSED: DATABASE_URL does not look like a local/dev database.');
+    console.error('   Only run seeds against localhost MongoDB. Current URL:', dbUrl.slice(0, 40) + '...');
+    process.exit(1);
+  }
+
   console.log('🌱 Starting RoomBae SaaS Platform Data Seeding...');
 
   // Create 10 Verified Owners

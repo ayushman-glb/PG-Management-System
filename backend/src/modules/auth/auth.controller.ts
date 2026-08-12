@@ -197,7 +197,8 @@ export class AuthController {
   });
 
   googleLogin = (req: Request, res: Response, next: NextFunction) => {
-    const roleParam = req.query.role ? String(req.query.role) : "OWNER";
+    const rawRole = req.query.role ? String(req.query.role).toUpperCase() : "RESIDENT";
+    const roleParam = (rawRole === "OWNER" || rawRole === "RESIDENT") ? rawRole : "RESIDENT";
     const targetFrontendUrl = resolveFrontendUrl(req);
 
     logger.info("🔑 Initiating Google OAuth Flow", {
@@ -264,28 +265,17 @@ export class AuthController {
         }
 
         try {
-          const payload = {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            residentCode: user.residentCode || undefined,
-          };
-
-          const accessToken = Container.tokenService.generateAccessToken(payload);
-          const refreshToken = Container.tokenService.generateRefreshToken(payload);
+          const { accessToken, refreshToken } = await this.authService.generateOAuthTokens(
+            user,
+            req.ip,
+            req.headers["user-agent"] as string
+          );
 
           res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-          });
-
-          res.cookie("accessToken", accessToken, {
-            httpOnly: false,
-            secure: env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 15 * 60 * 1000,
           });
 
           const targetParams = new URLSearchParams();

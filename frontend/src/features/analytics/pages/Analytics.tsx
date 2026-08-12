@@ -134,26 +134,34 @@ export default function Analytics({ navigate }: Props) {
   const { darkMode } = useTheme();
 
   useEffect(() => {
-    api
-      .get(`/analytics/revenue?period=${period}`)
-      .then((response) => {
-        const payload = Array.isArray(response)
-          ? response
-          : (response as any)?.data || (response as any)?.revenueData || null;
-        const summaryData =
-          (response as any)?.summary ||
-          (response as any)?.data?.summary ||
-          null;
-        if (Array.isArray(payload)) {
-          setRevenueData(payload);
-        } else if (Array.isArray(payload?.revenueData)) {
-          setRevenueData(payload.revenueData);
-        }
-        if (summaryData) setSummary(summaryData);
-      })
-      .catch(() => {
-        setRevenueData(fallbackRevenueData);
-      });
+    const fetchAnalytics = () => {
+      api
+        .get(`/analytics/revenue?period=${period}`)
+        .then((response) => {
+          const payload = Array.isArray(response)
+            ? response
+            : (response as any)?.data || (response as any)?.revenueData || null;
+          const summaryData =
+            (response as any)?.summary ||
+            (response as any)?.data?.summary ||
+            null;
+          if (Array.isArray(payload)) {
+            setRevenueData(payload);
+          } else if (Array.isArray(payload?.revenueData)) {
+            setRevenueData(payload.revenueData);
+          }
+          if (summaryData) setSummary(summaryData);
+        })
+        .catch(() => {
+          setRevenueData(fallbackRevenueData);
+        });
+    };
+
+    fetchAnalytics();
+
+    const handleDataChanged = () => fetchAnalytics();
+    window.addEventListener("roombae-data-changed", handleDataChanged);
+    return () => window.removeEventListener("roombae-data-changed", handleDataChanged);
   }, [period]);
 
   const totalRevenue = revenueData.reduce(

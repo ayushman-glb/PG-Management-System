@@ -12,6 +12,7 @@ import { env, resolvedPort } from "./config/env";
 import { prisma, connectPrismaWithTimeout } from "./config/prisma";
 import { logger } from "./utils/logger";
 import { SocketServer } from "./socket/socketServer";
+import { CronWorkerService } from "./jobs/cronWorkers";
 import { runInCluster } from "./cluster";
 import { ensureSparseIndexes } from "./scripts/ensureSparseIndexes";
 
@@ -82,6 +83,8 @@ async function bootstrap() {
 
       // Initialize Socket.IO Server
       SocketServer.init(httpServer);
+      // Initialize Background Cron Workers
+      CronWorkerService.init();
 
       httpServer.listen(port, "0.0.0.0", () => {
         const address = httpServer!.address() as AddressInfo;

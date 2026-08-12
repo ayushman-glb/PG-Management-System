@@ -50,6 +50,11 @@ class ApiClient {
       throw new Error(errorData.message || `HTTP Error ${res.status}`);
     }
 
+    const method = (options.method || "GET").toUpperCase();
+    if (method !== "GET" && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("roombae-data-changed", { detail: { endpoint, method } }));
+    }
+
     return res.json();
   }
 

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { IPropertyService } from '../../interfaces/services/IPropertyService';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
+import { Container } from '../../container';
 
 export class PropertyController {
   constructor(private readonly propertyService: IPropertyService) {}
@@ -30,15 +31,53 @@ export class PropertyController {
   });
 
   create = catchAsync(async (req: Request, res: Response) => {
-    const ownerId = (req as any).user?.id || req.body.ownerId || '650000000000000000000001';
-    const property = await this.propertyService.createProperty(ownerId, req.body);
+    const user = (req as any).user;
+    if (!user || !user.id) {
+      return ApiResponse.error(res, 'Unauthorized', [], 401);
+    }
+    let owner = await Container.db.owner.findFirst({ where: { userId: user.id } });
+    if (!owner) {
+      owner = await Container.db.owner.create({
+        data: {
+          userId: user.id,
+          name: user.name || "Owner",
+          email: user.email,
+          phone: user.phone || "",
+          photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+          address: "",
+          aadhaarNumber: "",
+          panNumber: "",
+          upiId: "",
+          bankName: "",
+          accountNumber: "",
+          ifscCode: "",
+          emergencyContact: "",
+        },
+      });
+    }
+    const property = await this.propertyService.createProperty(owner.id, req.body);
     return ApiResponse.success(res, 'Property created successfully with room grid', property, undefined, 201);
   });
 
   getOwnerSummary = catchAsync(async (req: Request, res: Response) => {
-    const ownerId = (req as any).user?.id || req.query.ownerId || '650000000000000000000001';
-    const summary = await this.propertyService.getOwnerSummary(ownerId as string);
-    return ApiResponse.success(res, 'Owner summary metrics retrieved', summary);
+    const user = (req as any).user;
+    if (!user || !user.id) {
+      return ApiResponse.error(res, 'Unauthorized', [], 401);
+    }
+    const owner = await Container.db.owner.findFirst({ where: { userId: user.id } });
+    if (!owner) {
+      return ApiResponse.success(res, 'Owner summary fetched', {
+        totalProperties: 0,
+        mrr: 0,
+        totalBeds: 0,
+        occupiedBeds: 0,
+        occupancyRatePercent: 0,
+        activeComplaints: 0,
+        pendingDuesAmount: 0,
+      });
+    }
+    const summary = await this.propertyService.getOwnerSummary(owner.id);
+    return ApiResponse.success(res, 'Owner summary fetched', summary);
   });
 
   getMealSchedules = catchAsync(async (req: Request, res: Response) => {

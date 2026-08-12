@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import compression from "compression";
+import mongoSanitize from "express-mongo-sanitize";
+import hpp from "hpp";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
@@ -37,12 +39,12 @@ app.use(
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
         formAction: ["'self'"],
-        upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : undefined,
+        upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : null,
       },
     },
-    crossOriginEmbedderPolicy: env.NODE_ENV === "production" ? "require-corp" : false,
-    crossOriginOpenerPolicy: env.NODE_ENV === "production" ? "same-origin" : false,
-    crossOriginResourcePolicy: env.NODE_ENV === "production" ? "same-origin" : false,
+    crossOriginEmbedderPolicy: env.NODE_ENV === "production" ? { policy: "require-corp" } : false,
+    crossOriginOpenerPolicy: env.NODE_ENV === "production" ? { policy: "same-origin" } : false,
+    crossOriginResourcePolicy: env.NODE_ENV === "production" ? { policy: "same-origin" } : false,
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     hsts: env.NODE_ENV === "production" ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
   }),
@@ -77,8 +79,17 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(passport.initialize());
 
+// ── NoSQL Injection Prevention ────────────────────────────────────────────────
+// Strips keys that begin with '$' or contain '.' from req.body, req.query, req.params.
+// Provides defense-in-depth even though Prisma parameterises most queries.
+app.use(mongoSanitize({ allowDots: false, replaceWith: '_' }));
+
+// ── HTTP Parameter Pollution Prevention ───────────────────────────────────────
+app.use(hpp());
+
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
+
 
 // Swagger Documentation Endpoints — only accessible in non-production environments
 if (env.NODE_ENV !== "production") {
