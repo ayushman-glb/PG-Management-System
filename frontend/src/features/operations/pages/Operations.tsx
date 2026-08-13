@@ -15,6 +15,8 @@ import { AvatarThemeSelector } from "@components/ui/Avatar";
 import { DeviceManagementSection } from "../../settings/components/DeviceManagementSection";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { OperationsSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -100,6 +102,18 @@ export default function Operations({ navigate, page }: Props) {
   const content = pageContent[page];
   const Icon = content.icon;
   const { darkMode } = useTheme();
+
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
+      // Simulate data fetch delay or load operations metrics
+      return content;
+    },
+    [page]
+  );
+
+  if (showSkeleton) {
+    return <OperationsSkeleton page={page} />;
+  }
 
   return (
     <DashboardLayout navigate={navigate} activePage={page}>
@@ -203,12 +217,10 @@ export default function Operations({ navigate, page }: Props) {
                 </div>
 
                 <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-900 border border-slate-700 text-center space-y-2">
-                  <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=otpauth://totp/RoomBae:User?secret=ROOMBAESECRET123&issuer=RoomBae"
-                    alt="2FA QR Code"
-                    className="w-32 h-32 rounded-xl p-1 bg-white"
-                  />
-                  <p className="text-[10px] font-mono text-amber-400">Secret: ROOMBAESECRET123</p>
+                  <div className="w-32 h-32 rounded-xl p-2 bg-white/10 flex items-center justify-center border border-white/20">
+                    <span className="text-3xl">🔑</span>
+                  </div>
+                  <p className="text-[10px] font-mono text-amber-400">Scan QR Code via Authenticator App</p>
                 </div>
               </div>
             </div>

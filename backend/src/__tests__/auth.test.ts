@@ -206,6 +206,7 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should send and verify email OTP', async () => {
     mockUserRepo.findByEmail.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
+    mockUserRepo.findByIdentifier.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
     mockOtpService.verifyEmailCode.mockResolvedValue(true);
     mockUserRepo.updateOtp.mockResolvedValue({ id: '507f1f77bcf86cd799439011' });
 
@@ -218,6 +219,7 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
 
   test('Should send and verify email verification code', async () => {
     mockUserRepo.findByEmail.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
+    mockUserRepo.findByIdentifier.mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com', accountStatus: 'ACTIVE' });
     mockOtpService.verifyEmailCode.mockResolvedValue(true);
     mockUserRepo.markEmailVerified.mockResolvedValue({ id: '507f1f77bcf86cd799439011', emailVerified: true });
 

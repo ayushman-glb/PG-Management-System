@@ -369,12 +369,16 @@ export default function Auth({ navigate }: Props) {
     }
   };
 
+  const [preAuthToken, setPreAuthToken] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState("");
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginIdentifier.trim() || !loginPassword) {
       setAuthError("Please enter your email/phone and password.");
       return;
     }
+    setIsSubmitting(true);
     setAuthError("");
     setShowSignupCta(false);
     try {
@@ -382,7 +386,8 @@ export default function Auth({ navigate }: Props) {
       const passwordVal = loginPassword;
       const loginRes = await authService.login({ identifier, password: passwordVal, rememberMe });
       if (loginRes?.requiresTwoFactor) {
-        setAuthSuccessMsg("Two-factor authentication code required. Please enter your TOTP code.");
+        setPreAuthToken(loginRes.preAuthToken || null);
+        setAuthSuccessMsg("Two-factor authentication code required. Please enter your 6-digit TOTP code.");
         setMode("otp");
         return;
       }
@@ -399,6 +404,33 @@ export default function Auth({ navigate }: Props) {
       const isSignupNudge = err?.code === "ACCOUNT_NOT_FOUND_OR_INVALID" || err?.message?.includes("couldn't find an account");
       setAuthError(err?.message || "We couldn't find an account with these details. Would you like to sign up instead?");
       setShowSignupCta(isSignupNudge);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!totpCode || totpCode.length !== 6) {
+      setAuthError("Please enter your 6-digit TOTP code.");
+      return;
+    }
+    setIsSubmitting(true);
+    setAuthError("");
+    try {
+      const tokenOrUserId = preAuthToken || "USER_CURRENT";
+      const res = await authService.verifyTwoFactor(tokenOrUserId, totpCode, rememberMe);
+      const userRole = res?.user?.role;
+      setAuthSuccessMsg("✓ Two-factor authentication verified successfully!");
+      setTimeout(() => {
+        if (userRole === "RESIDENT") {
+          navigate("resident-portal");
+        } else {
+          navigate("dashboard");
+        }
+      }, 600);
+    } catch (err: any) {
+      setAuthError(err?.message || "Invalid two-factor code. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1341,6 +1373,65 @@ export default function Auth({ navigate }: Props) {
                           Back to Sign In
                         </button>
                       </div>
+                    </motion.div>
+                  )}
+
+                  {/* 2FA TOTP OTP MODE */}
+                  {mode === "otp" && (
+                    <motion.div
+                      key="otp-form"
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <div className="text-left space-y-1">
+                        <div className="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center mb-2 border border-amber-500/30">
+                          <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <h2 className="text-2xl font-black">Two-Factor Verification</h2>
+                        <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+                          Enter the 6-digit verification code from your Authenticator app (Google Authenticator, Authy, etc.).
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleVerifyTwoFactorSubmit} className="space-y-4 pt-2">
+                        <div>
+                          <label className="block text-xs font-bold uppercase mb-1.5">6-Digit Authenticator Code</label>
+                          <input
+                            type="text"
+                            maxLength={6}
+                            required
+                            value={totpCode}
+                            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+                            placeholder="123456"
+                            className={`w-full px-4 py-3 rounded-xl border text-center text-xl tracking-[0.5em] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                              darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                            }`}
+                          />
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmitting || totpCode.length !== 6}
+                          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer ${
+                            isSubmitting || totpCode.length !== 6 ? "opacity-50 pointer-events-none" : ""
+                          }`}
+                        >
+                          {isSubmitting ? "Verifying Code..." : "Verify & Complete Sign In"} <ArrowRight className="w-4 h-4" />
+                        </button>
+
+                        <div className="pt-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => switchAuthMode("login")}
+                            className="text-xs font-bold text-slate-400 hover:underline cursor-pointer"
+                          >
+                            Back to Sign In
+                          </button>
+                        </div>
+                      </form>
                     </motion.div>
                   )}
                 </AnimatePresence>

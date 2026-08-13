@@ -11,11 +11,15 @@ const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image
 export class AuthRepository implements IUserRepository {
   constructor(private readonly db: PrismaClient) { }
 
+  private get client(): any {
+    return (global as any).prismaSingleton || this.db;
+  }
+
   async findByIdentifier(identifier: string): Promise<User | null> {
     const clean = identifier.trim();
     const lower = clean.toLowerCase();
 
-    return await this.db.user.findFirst({
+    return await this.client.user.findFirst({
       where: {
         OR: [
           { email: { equals: lower, mode: "insensitive" } },
@@ -32,7 +36,7 @@ export class AuthRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     const clean = email.trim().toLowerCase();
-    return await this.db.user.findFirst({
+    return await this.client.user.findFirst({
       where: {
         OR: [
           { email: { equals: clean, mode: "insensitive" } },
@@ -44,7 +48,7 @@ export class AuthRepository implements IUserRepository {
 
   async findById(id: string): Promise<User | null> {
     try {
-      return await this.db.user.findUnique({ where: { id } });
+      return await this.client.user.findUnique({ where: { id } });
     } catch {
       return null;
     }
@@ -52,7 +56,7 @@ export class AuthRepository implements IUserRepository {
 
   async findByGoogleSubId(googleSubId: string): Promise<User | null> {
     try {
-      return await this.db.user.findFirst({ where: { googleSubId } });
+      return await this.client.user.findFirst({ where: { googleSubId } });
     } catch {
       return null;
     }
@@ -60,7 +64,7 @@ export class AuthRepository implements IUserRepository {
 
   async findByPhone(phone: string): Promise<User | null> {
     try {
-      return await this.db.user.findFirst({ where: { phone } });
+      return await this.client.user.findFirst({ where: { phone } });
     } catch {
       return null;
     }
@@ -83,7 +87,7 @@ export class AuthRepository implements IUserRepository {
     // 2. Try to find by email and link the google sub id (preserves user's existing role!)
     const byEmail = await this.findByEmail(data.email);
     if (byEmail) {
-      const updatedUser = await this.db.user.update({
+      const updatedUser = await this.client.user.update({
         where: { id: byEmail.id },
         data: {
           googleSubId: data.googleSubId,
@@ -101,7 +105,7 @@ export class AuthRepository implements IUserRepository {
       ? data.role
       : Role.RESIDENT;
 
-    const newUser = await this.db.user.create({
+    const newUser = await this.client.user.create({
       data: {
         name: data.name,
         email: data.email,
@@ -122,9 +126,9 @@ export class AuthRepository implements IUserRepository {
   private async ensureUserProfile(user: User): Promise<void> {
     try {
       if (user.role === Role.OWNER) {
-        const existingOwner = await this.db.owner.findFirst({ where: { userId: user.id } });
+        const existingOwner = await this.client.owner.findFirst({ where: { userId: user.id } });
         if (!existingOwner) {
-          await this.db.owner.create({
+          await this.client.owner.create({
             data: {
               userId: user.id,
               name: user.name,
@@ -143,9 +147,9 @@ export class AuthRepository implements IUserRepository {
           });
         }
       } else if (user.role === Role.RESIDENT) {
-        const existingResident = await this.db.resident.findFirst({ where: { userId: user.id } });
+        const existingResident = await this.client.resident.findFirst({ where: { userId: user.id } });
         if (!existingResident) {
-          await this.db.resident.create({
+          await this.client.resident.create({
             data: {
               userId: user.id,
               name: user.name,
@@ -167,12 +171,12 @@ export class AuthRepository implements IUserRepository {
     name?: string;
     role?: Role;
   }): Promise<User> {
-    const existing = await this.db.user.findFirst({
+    const existing = await this.client.user.findFirst({
       where: { phone: data.phone },
     });
 
     if (existing) {
-      return this.db.user.update({
+      return this.client.user.update({
         where: { id: existing.id },
         data: {
           phoneVerified: true,
@@ -184,12 +188,12 @@ export class AuthRepository implements IUserRepository {
     const cleanPhoneDigits = data.phone.replace(/\D/g, "");
     const generatedEmail = `phone_${cleanPhoneDigits}@roombae.user`;
 
-    const byEmail = await this.db.user.findUnique({
+    const byEmail = await this.client.user.findUnique({
       where: { email: generatedEmail },
     });
 
     if (byEmail) {
-      return this.db.user.update({
+      return this.client.user.update({
         where: { id: byEmail.id },
         data: {
           phone: data.phone,
@@ -199,7 +203,7 @@ export class AuthRepository implements IUserRepository {
       });
     }
 
-    const newUser = await this.db.user.create({
+    const newUser = await this.client.user.create({
       data: {
         name: data.name || `User ${cleanPhoneDigits.slice(-4)}`,
         email: generatedEmail,
@@ -212,7 +216,7 @@ export class AuthRepository implements IUserRepository {
 
     try {
       if (newUser.role === Role.RESIDENT) {
-        await this.db.resident.create({
+        await this.client.resident.create({
           data: {
             userId: newUser.id,
             name: newUser.name,
@@ -230,7 +234,7 @@ export class AuthRepository implements IUserRepository {
   }
 
   async create(data: ICreateUserData): Promise<User> {
-    const newUser = await this.db.user.create({
+    const newUser = await this.client.user.create({
       data: {
         name: data.name,
         email: data.email,
@@ -243,7 +247,7 @@ export class AuthRepository implements IUserRepository {
 
     try {
       if (newUser.role === Role.OWNER) {
-        await this.db.owner.create({
+        await this.client.owner.create({
           data: {
             userId: newUser.id,
             name: newUser.name,
@@ -261,7 +265,7 @@ export class AuthRepository implements IUserRepository {
           },
         });
       } else if (newUser.role === Role.RESIDENT) {
-        await this.db.resident.create({
+        await this.client.resident.create({
           data: {
             userId: newUser.id,
             name: newUser.name,
@@ -283,26 +287,26 @@ export class AuthRepository implements IUserRepository {
     otpSecret: string | null,
     otpExpiresAt: Date | null,
   ): Promise<User> {
-    return this.db.user.update({
+    return this.client.user.update({
       where: { id },
       data: { otpSecret, otpExpiresAt },
     });
   }
 
   async updateOtpForPhone(phone: string, verified: boolean): Promise<User> {
-    const user = await this.db.user.findFirst({
+    const user = await this.client.user.findFirst({
       where: { phone },
     });
     if (!user) throw new AppError("User not found", 404);
 
-    return this.db.user.update({
+    return this.client.user.update({
       where: { id: user.id },
       data: { phoneVerified: verified, otpSecret: null, otpExpiresAt: null },
     });
   }
 
   async markEmailVerified(email: string): Promise<User> {
-    const user = await this.db.user.findFirst({
+    const user = await this.client.user.findFirst({
       where: {
         OR: [
           { email: { equals: email, mode: "insensitive" } },
@@ -312,7 +316,7 @@ export class AuthRepository implements IUserRepository {
     });
     if (!user) throw new AppError("User not found", 404);
 
-    return this.db.user.update({
+    return this.client.user.update({
       where: { id: user.id },
       data: { emailVerified: true },
     });

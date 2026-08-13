@@ -77,8 +77,18 @@ export function useSocketRoom(
   useEffect(() => {
     if (!id) return;
     const s = getSocket();
-    if (s.connected) {
+
+    const joinRoom = () => {
       s.emit(`join_${roomType}`, id);
+    };
+
+    if (s.connected) {
+      joinRoom();
     }
+
+    s.on("connect", joinRoom);
+    return () => {
+      s.off("connect", joinRoom);
+    };
   }, [roomType, id]);
 }

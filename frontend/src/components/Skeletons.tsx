@@ -26,6 +26,38 @@ export function SkeletonBlock({
   );
 }
 
+// Text line primitive
+export function SkeletonText({
+  className = "w-full h-4",
+  style = {},
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return <SkeletonBlock className={`rounded-md ${className}`} style={style} />;
+}
+
+// Avatar / Circle primitive
+export function SkeletonAvatar({
+  size = "md",
+  className = "",
+}: {
+  size?: "sm" | "md" | "lg" | "xl";
+  className?: string;
+}) {
+  const sizeMap = {
+    sm: "w-8 h-8",
+    md: "w-10 h-10",
+    lg: "w-14 h-14",
+    xl: "w-20 h-20",
+  };
+  return <SkeletonBlock className={`rounded-full shrink-0 ${sizeMap[size]} ${className}`} />;
+}
+
+export function SkeletonCircle({ className = "w-10 h-10" }: { className?: string }) {
+  return <SkeletonBlock className={`rounded-full shrink-0 ${className}`} />;
+}
+
 // ----------------------------------------------------------------------------
 // 1. Dashboard Skeleton
 // ----------------------------------------------------------------------------

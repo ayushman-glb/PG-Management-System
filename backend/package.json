@@ -13,7 +13,10 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:seed:demo": "ts-node prisma/seedDemoData.ts",
-    "test": "jest --detectOpenHandles"
+    "test": "jest --detectOpenHandles",
+    "test:unit": "jest src/__tests__/unit --detectOpenHandles",
+    "test:integration": "jest src/__tests__/integration --detectOpenHandles",
+    "test:regression": "jest src/__tests__/regression --detectOpenHandles"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -77,6 +80,7 @@
     "@types/jest": "^30.0.0",
     "@types/supertest": "^7.2.1",
     "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.2.0",
     "prisma": "^5.22.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.12",

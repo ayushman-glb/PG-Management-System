@@ -11,11 +11,11 @@ export class PrismaPropertyRepository implements IPropertyRepository {
 
     const whereClause: any = {};
     if (query.city) {
-      whereClause.city = { contains: query.city, mode: 'insensitive' };
+      whereClause.city = { contains: query.city };
     }
 
     try {
-      const fetchPromise = Promise.all([
+      const [properties, total] = await Promise.all([
         this.db.pG.findMany({
           where: whereClause,
           include: {
@@ -36,12 +36,6 @@ export class PrismaPropertyRepository implements IPropertyRepository {
         }),
         this.db.pG.count({ where: whereClause })
       ]);
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Prisma Query Timeout')), 1500)
-      );
-
-      const [properties, total] = await Promise.race([fetchPromise, timeoutPromise]);
       return { properties, total };
     } catch (e) {
       return {
@@ -133,14 +127,20 @@ export class PrismaPropertyRepository implements IPropertyRepository {
       }
     });
 
+    const bedCreations = [];
     for (let b = 1; b <= bedsCount; b++) {
-      await this.db.bed.create({
-        data: {
-          roomId: createdRoom.id,
-          bedNumber: `${roomNumber}-${String.fromCharCode(64 + b)}`,
-          isOccupied: false
-        }
-      });
+      bedCreations.push(
+        this.db.bed.create({
+          data: {
+            roomId: createdRoom.id,
+            bedNumber: `${roomNumber}-${String.fromCharCode(64 + b)}`,
+            isOccupied: false
+          }
+        })
+      );
+    }
+    if (bedCreations.length > 0) {
+      await this.db.$transaction(bedCreations);
     }
 
     return createdRoom;

@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../config/prisma';
 import { SearchService } from './search.service';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
 
-const prisma = new PrismaClient();
 const searchService = new SearchService(prisma);
 
 export class SearchController {

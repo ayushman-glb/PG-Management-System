@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Building2,
   Plus,
@@ -12,6 +12,8 @@ import DashboardLayout from "@components/layouts/DashboardLayout";
 import type { Page } from "../../../App";
 import { useTheme } from "../../../theme";
 import { api } from "@services/api";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { PropertiesSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -121,28 +123,28 @@ export default function Properties({ navigate }: Props) {
     });
   };
 
-  useEffect(() => {
-    let mounted = true;
-    api
-      .getPublicProperties({ limit: 10 })
-      .then((response) => {
-        if (!mounted) return;
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
+      try {
+        const response = await api.getPublicProperties({ limit: 10 });
         const list = Array.isArray(response?.properties) && response.properties.length > 0
           ? response.properties
           : MOCK_FALLBACK_PROPERTIES;
         setProperties(list);
-        setSelectedProperty(list[0]);
-      })
-      .catch(() => {
-        if (!mounted) return;
+        if (!selectedProperty) setSelectedProperty(list[0]);
+        return list;
+      } catch {
         setProperties(MOCK_FALLBACK_PROPERTIES);
-        setSelectedProperty(MOCK_FALLBACK_PROPERTIES[0]);
-      });
+        if (!selectedProperty) setSelectedProperty(MOCK_FALLBACK_PROPERTIES[0]);
+        return MOCK_FALLBACK_PROPERTIES;
+      }
+    },
+    []
+  );
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  if (showSkeleton) {
+    return <PropertiesSkeleton />;
+  }
 
   const handleDrop = (targetId: string) => {
     setDragOver(null);

@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "format": "oxfmt",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^5.2.0",
@@ -29,6 +30,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",

@@ -45,35 +45,40 @@ export class CronWorkerService {
       for (const res of activeResidents) {
         if (!res.pgId) continue;
 
-        const existingInvoice = await prisma.payment.findFirst({
-          where: {
-            residentId: res.id,
-            invoiceNumber: { contains: currentMonth }
-          }
-        });
-
-        if (!existingInvoice) {
-          const rentAmount = 12000; // Standard monthly rent base
-          const invoiceNumber = `INV-${currentMonth}-${res.id.slice(-4).toUpperCase()}`;
-          const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + 5);
-
-          await prisma.payment.create({
-            data: {
-              invoiceNumber,
+        try {
+          const existingInvoice = await prisma.payment.findFirst({
+            where: {
               residentId: res.id,
-              pgId: res.pgId,
-              baseAmount: rentAmount,
-              cgstAmount: parseFloat((rentAmount * 0.09).toFixed(2)),
-              sgstAmount: parseFloat((rentAmount * 0.09).toFixed(2)),
-              igstAmount: 0,
-              totalAmount: parseFloat((rentAmount * 1.18).toFixed(2)),
-              paymentMethod: "SCHEDULED_AUTOMATED",
-              status: PaymentStatus.PENDING,
-              dueDate,
+              invoiceNumber: { contains: currentMonth }
             }
           });
-          generatedCount++;
+
+          if (!existingInvoice) {
+            const rentAmount = 12000; // Standard monthly rent base
+            const uniqueSuffix = res.id.slice(-6).toUpperCase();
+            const invoiceNumber = `INV-${currentMonth}-${uniqueSuffix}`;
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 5);
+
+            await prisma.payment.create({
+              data: {
+                invoiceNumber,
+                residentId: res.id,
+                pgId: res.pgId,
+                baseAmount: rentAmount,
+                cgstAmount: parseFloat((rentAmount * 0.09).toFixed(2)),
+                sgstAmount: parseFloat((rentAmount * 0.09).toFixed(2)),
+                igstAmount: 0,
+                totalAmount: parseFloat((rentAmount * 1.18).toFixed(2)),
+                paymentMethod: "SCHEDULED_AUTOMATED",
+                status: PaymentStatus.PENDING,
+                dueDate,
+              }
+            });
+            generatedCount++;
+          }
+        } catch (resErr: any) {
+          logger.error(`❌ [Monthly Invoice Cron] Failed for resident ${res.id}: ${resErr.message}`);
         }
       }
 
@@ -95,18 +100,34 @@ export class CronWorkerService {
 
       let updatedCount = 0;
       const LATE_FEE_FLAT = 250;
+      const MAX_LATE_FEE = 1000; // Cap penalty at ₹1,000 max
 
       for (const pay of overduePayments) {
-        const newLateFee = pay.lateFee + LATE_FEE_FLAT;
-        const newTotal = pay.totalAmount + LATE_FEE_FLAT;
-        await prisma.payment.update({
-          where: { id: pay.id },
-          data: {
-            lateFee: newLateFee,
-            totalAmount: newTotal
+        try {
+          // Check if late fee was already updated today (idempotency check)
+          const lastUpdatedDate = pay.createdAt ? new Date(pay.createdAt).toDateString() : '';
+          const todayDate = now.toDateString();
+
+          if (pay.lateFee >= MAX_LATE_FEE || lastUpdatedDate === todayDate) {
+            continue;
           }
-        });
-        updatedCount++;
+
+          const newLateFee = Math.min(pay.lateFee + LATE_FEE_FLAT, MAX_LATE_FEE);
+          const feeDifference = newLateFee - pay.lateFee;
+
+          if (feeDifference > 0) {
+            await prisma.payment.update({
+              where: { id: pay.id },
+              data: {
+                lateFee: newLateFee,
+                totalAmount: pay.totalAmount + feeDifference
+              }
+            });
+            updatedCount++;
+          }
+        } catch (payErr: any) {
+          logger.error(`❌ [Late Fee Cron] Failed for payment ${pay.id}: ${payErr.message}`);
+        }
       }
 
       logger.info(`✅ [Late Fee Cron] Applied late fee penalties to ${updatedCount} overdue invoices.`);

@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import { Container } from "../../container";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../config/prisma";
 import { OwnerService } from "./owner.service";
 
-const prisma = new PrismaClient();
 const onboardingService = new OwnerService(prisma);
 
 export class OwnerController {
@@ -268,10 +267,10 @@ export class OwnerController {
     try {
       const { ownerId } = req.params;
       const pgs = await Container.db.pG.findMany({ where: { ownerId } });
-      const pgIds = pgs.map(p => p.id);
+      const pgIds = pgs.map((p: any) => p.id);
 
-      const totalBeds = pgs.reduce((acc, p) => acc + (p.totalBedsCount || p.capacity || 0), 0);
-      const occupiedBeds = pgs.reduce((acc, p) => acc + (p.currentOccupancy || 0), 0);
+      const totalBeds = pgs.reduce((acc: number, p: any) => acc + (p.totalBedsCount || p.capacity || 0), 0);
+      const occupiedBeds = pgs.reduce((acc: number, p: any) => acc + (p.currentOccupancy || 0), 0);
       const occupancyRatePercent = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 0;
 
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -279,7 +278,7 @@ export class OwnerController {
         where: { pgId: { in: pgIds }, status: 'PAID', paymentDate: { gte: startOfMonth } },
         select: { totalAmount: true }
       });
-      const mrr = paidPayments.reduce((sum, p) => sum + p.totalAmount, 0);
+      const mrr = paidPayments.reduce((sum: number, p: any) => sum + p.totalAmount, 0);
 
       const activeComplaints = await Container.db.complaint.count({
         where: { pgId: { in: pgIds }, status: { in: ['OPEN', 'IN_PROGRESS'] } }
@@ -289,7 +288,7 @@ export class OwnerController {
         where: { pgId: { in: pgIds }, status: 'PENDING' },
         select: { totalAmount: true }
       });
-      const pendingDuesAmount = pendingPayments.reduce((sum, p) => sum + p.totalAmount, 0);
+      const pendingDuesAmount = pendingPayments.reduce((sum: number, p: any) => sum + p.totalAmount, 0);
 
       const metrics = {
         totalProperties: pgs.length,

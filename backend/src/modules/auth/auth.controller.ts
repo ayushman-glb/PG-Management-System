@@ -103,26 +103,20 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return ApiResponse.success(
-      res,
-      "Registration successful",
-      {
-        user: result.user,
-        accessToken: result.accessToken,
-      },
-      201,
-    );
+    return ApiResponse.success(res, "User registered successfully", result, 201);
   });
 
   sendOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const result = await this.authService.sendOtp(email);
+    const { email, phone } = req.body;
+    const target = email || phone;
+    const result = await this.authService.sendOtp(target);
     return ApiResponse.success(res, result.message, {});
   });
 
   verifyOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email, otp } = req.body;
-    const result = await this.authService.verifyOtp(email, otp);
+    const { email, phone, otp } = req.body;
+    const target = email || phone;
+    const result = await this.authService.verifyOtp(target, otp);
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
@@ -132,6 +126,26 @@ export class AuthController {
     });
 
     return ApiResponse.success(res, "OTP verified successfully", result);
+  });
+
+  sendPhoneOtp = catchAsync(async (req: Request, res: Response) => {
+    const { phone } = req.body;
+    const result = await this.authService.sendOtp(phone);
+    return ApiResponse.success(res, result.message, {});
+  });
+
+  verifyPhoneOtp = catchAsync(async (req: Request, res: Response) => {
+    const { phone, otp } = req.body;
+    const result = await this.authService.verifyOtp(phone, otp);
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return ApiResponse.success(res, "Phone OTP verified successfully", result);
   });
 
   logout = catchAsync(async (req: Request, res: Response) => {
@@ -163,17 +177,7 @@ export class AuthController {
     return res.status(500).json({ success: false, message: "Failed to send test email via Brevo SMTP" });
   });
 
-  sendPhoneOtp = catchAsync(async (req: Request, res: Response) => {
-    const { phone } = req.body;
-    const result = await this.authService.sendPhoneOtp(phone);
-    return ApiResponse.success(res, result.message, result);
-  });
 
-  verifyPhoneOtp = catchAsync(async (req: Request, res: Response) => {
-    const { phone, otp } = req.body;
-    const result = await this.authService.verifyPhoneOtp(phone, otp);
-    return ApiResponse.success(res, result.message, result);
-  });
 
   sendEmailVerification = catchAsync(async (req: Request, res: Response) => {
     const { email } = req.body;

@@ -627,6 +627,8 @@ model Building {
   floorsCount Int
   floors      Floor[]
   createdAt   DateTime @default(now())
+
+  @@index([pgId])
 }
 
 model Floor {
@@ -636,6 +638,8 @@ model Floor {
   floorNumber Int
   rooms       Room[]
   createdAt   DateTime @default(now())
+
+  @@index([buildingId])
 }
 
 model Room {
@@ -649,6 +653,8 @@ model Room {
   rentAmount   Float
   beds         Bed[]
   createdAt    DateTime     @default(now())
+
+  @@index([floorId])
 }
 
 model Bed {
@@ -665,6 +671,9 @@ model Bed {
   transferFrom  RoomTransferRequest[] @relation("FromBed")
   transferTo    RoomTransferRequest[] @relation("ToBed")
   createdAt     DateTime              @default(now())
+
+  @@index([roomId])
+  @@index([status])
 }
 
 // ==========================================
@@ -715,6 +724,9 @@ model Resident {
   fines             Fine[]
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
+
+  @@index([pgId])
+  @@index([status])
 }
 
 model Guardian {
@@ -794,6 +806,11 @@ model Agreement {
   verifications         Verification[]
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
+
+  @@index([residentId])
+  @@index([ownerId])
+  @@index([pgId])
+  @@index([status])
 }
 
 model AgreementVersion {
@@ -915,6 +932,11 @@ model Complaint {
   replies       ComplaintReply[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+
+  @@index([residentId])
+  @@index([pgId])
+  @@index([status])
+  @@index([priority])
 }
 
 model ComplaintReply {
@@ -1024,6 +1046,10 @@ model Payment {
   razorpayPaymentId String?
   invoice           Invoice?
   createdAt         DateTime      @default(now())
+
+  @@index([residentId])
+  @@index([pgId])
+  @@index([status])
 }
 
 model Invoice {

@@ -31,6 +31,10 @@ const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image
  *  - 2FA TOTP
  */
 export class AuthService implements IAuthService {
+  private get db(): any {
+    return (global as any).prismaSingleton || prisma;
+  }
+
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly cryptoService: ICryptoService,
@@ -74,7 +78,7 @@ export class AuthService implements IAuthService {
     const days = rememberMe ? 30 : 7;
     expiresAt.setDate(expiresAt.getDate() + days);
 
-    await prisma.refreshToken.create({
+    await this.db.refreshToken.create({
       data: {
         userId,
         tokenHash: this.hashRefreshToken(refreshToken),
@@ -105,14 +109,14 @@ export class AuthService implements IAuthService {
 
     // Check stored token record
     const tokenHash = this.hashRefreshToken(token);
-    const storedToken = await prisma.refreshToken.findUnique({
+    const storedToken = await this.db.refreshToken.findUnique({
       where: { tokenHash },
     });
 
     if (!storedToken) {
       // Possibly a token from before rotation tracking - revoke all user tokens if we can identify user
       if (decoded?.id) {
-        await prisma.refreshToken.updateMany({
+        await this.db.refreshToken.updateMany({
           where: { userId: decoded.id, revokedAt: null },
           data: { revokedAt: new Date() },
         });
@@ -123,7 +127,7 @@ export class AuthService implements IAuthService {
     if (storedToken.revokedAt) {
       // Token reuse detected - revoke entire token family
       logger.warn("Refresh token reuse detected, revoking all tokens", { userId: storedToken.userId });
-      await prisma.refreshToken.updateMany({
+      await this.db.refreshToken.updateMany({
         where: { userId: storedToken.userId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
@@ -145,7 +149,7 @@ export class AuthService implements IAuthService {
     }
 
     // Revoke current token (rotation)
-    await prisma.refreshToken.update({
+    await this.db.refreshToken.update({
       where: { id: storedToken.id },
       data: { revokedAt: new Date() },
     });
@@ -168,7 +172,7 @@ export class AuthService implements IAuthService {
     if (!token) return;
     const tokenHash = this.hashRefreshToken(token);
     try {
-      await prisma.refreshToken.updateMany({
+      await this.db.refreshToken.updateMany({
         where: { tokenHash, revokedAt: null },
         data: { revokedAt: new Date() },
       });
@@ -446,24 +450,39 @@ export class AuthService implements IAuthService {
     };
   }
 
-  async sendOtp(email: string): Promise<{ message: string }> {
-    const user = await this.userRepository.findByEmail(email);
+  async sendOtp(identifier: string): Promise<{ message: string }> {
+    if (!identifier) {
+      return { message: "If an account with that contact details exists, an OTP code has been sent." };
+    }
+    const isEmail = identifier.includes("@");
+    const user = await this.userRepository.findByIdentifier(identifier);
+
     if (!user) {
-      return { message: "If an account with that email exists, an OTP code has been sent." };
+      return { message: "If an account with that contact details exists, an OTP code has been sent." };
     }
 
-    const { message } = await this.otpService.generateAndSendOtp(email);
+    const { message } = isEmail
+      ? await this.otpService.generateAndSendOtp(identifier)
+      : await this.otpService.generateAndSendPhoneOtp(identifier);
 
     return { message };
   }
 
-  async verifyOtp(email: string, otp: string): Promise<IAuthUserResult> {
-    const user = await this.userRepository.findByEmail(email);
+  async verifyOtp(identifier: string, otp: string): Promise<IAuthUserResult> {
+    if (!identifier) {
+      throw new AppError("Email or phone number is required for OTP verification.", 400);
+    }
+    const isEmail = identifier.includes("@");
+    const user = await this.userRepository.findByIdentifier(identifier);
+
     if (!user) {
-      throw new AppError("User not found with provided email", 404);
+      throw new AppError("User not found with provided contact details", 404);
     }
 
-    const isValid = await this.otpService.verifyEmailCode(email, otp);
+    const isValid = isEmail
+      ? await this.otpService.verifyEmailCode(identifier, otp)
+      : await this.otpService.verifyPhoneOtp(identifier, otp);
+
     if (!isValid) {
       throw new AppError("Invalid OTP verification code.", 400);
     }

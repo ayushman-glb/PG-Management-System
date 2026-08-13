@@ -16,9 +16,17 @@ export class ResidentManagementRepository implements IResidentManagementReposito
   constructor(private readonly db: PrismaClient) {}
 
   async updateResidentStatus(
-    payload: IUpdateResidentStatusPayload,
+    payload: IUpdateResidentStatusPayload & { pgId?: string },
   ): Promise<any> {
-    const { residentId, status, reason, updatedBy } = payload;
+    const { residentId, status, reason, updatedBy, pgId } = payload;
+
+    const existingResident = await this.db.resident.findUnique({
+      where: { id: residentId },
+    });
+    if (!existingResident) throw new Error("Resident not found");
+    if (pgId && existingResident.pgId !== pgId) {
+      throw new Error("Unauthorized: Resident does not belong to specified PG tenant");
+    }
 
     const [updatedResident, history] = await this.db.$transaction([
       this.db.resident.update({
@@ -394,29 +402,35 @@ export class ResidentManagementRepository implements IResidentManagementReposito
       return room;
     }
 
-    // Adjust beds in room
+    // Adjust beds in room atomically
     if (currentBeds.length < targetBedCount) {
-      // Add extra beds
+      const ops = [];
       for (let i = currentBeds.length + 1; i <= targetBedCount; i++) {
         const bedLetter = String.fromCharCode(64 + i);
-        await this.db.bed.create({
-          data: {
-            roomId: room.id,
-            bedNumber: `${room.roomNumber}-${bedLetter}`,
-            status: BedStatus.AVAILABLE,
-            isOccupied: false,
-          },
-        });
+        ops.push(
+          this.db.bed.create({
+            data: {
+              roomId: room.id,
+              bedNumber: `${room.roomNumber}-${bedLetter}`,
+              status: BedStatus.AVAILABLE,
+              isOccupied: false,
+            },
+          })
+        );
+      }
+      if (ops.length > 0) {
+        await this.db.$transaction(ops);
       }
     } else if (currentBeds.length > targetBedCount) {
-      // Remove unoccupied beds
       const unoccupiedBeds = currentBeds.filter((b) => !b.isOccupied);
       const bedsToRemove = unoccupiedBeds.slice(
         0,
         currentBeds.length - targetBedCount,
       );
-      for (const bed of bedsToRemove) {
-        await this.db.bed.delete({ where: { id: bed.id } });
+      if (bedsToRemove.length > 0) {
+        await this.db.$transaction(
+          bedsToRemove.map((bed) => this.db.bed.delete({ where: { id: bed.id } }))
+        );
       }
     }
 

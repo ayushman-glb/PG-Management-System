@@ -258,6 +258,26 @@ export class AuthService {
     return res.data || res;
   }
 
+  async verifyTwoFactor(preAuthTokenOrUserId: string, token: string, rememberMe: boolean = false) {
+    const isPreAuth = preAuthTokenOrUserId.length > 50;
+    const body = isPreAuth
+      ? { preAuthToken: preAuthTokenOrUserId, token, rememberMe }
+      : { userId: preAuthTokenOrUserId, token, rememberMe };
+
+    const res = await this.request("/auth/2fa/verify", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+
+    if (res.data?.accessToken) {
+      this.setToken(res.data.accessToken);
+    }
+    if (res.data?.refreshToken) {
+      this.setRefreshToken(res.data.refreshToken, rememberMe);
+    }
+    return res.data || res;
+  }
+
   async logout() {
     try {
       await this.request("/auth/logout", { method: "POST" });

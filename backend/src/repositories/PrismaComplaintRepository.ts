@@ -44,15 +44,25 @@ export class PrismaComplaintRepository implements IComplaintRepository {
     }
   }
 
-  async findById(id: string): Promise<Complaint | null> {
+  async findById(id: string, propertyId?: string): Promise<Complaint | null> {
     try {
-      return await this.db.complaint.findUnique({ where: { id } });
+      const complaint = await this.db.complaint.findUnique({ where: { id } });
+      if (complaint && propertyId && complaint.pgId !== propertyId) {
+        throw new Error("Unauthorized: Complaint does not belong to specified PG tenant");
+      }
+      return complaint;
     } catch (e) {
       return null;
     }
   }
 
-  async updateStatus(id: string, status: TicketStatus): Promise<Complaint> {
+  async updateStatus(id: string, status: TicketStatus, propertyId?: string): Promise<Complaint> {
+    if (propertyId) {
+      const complaint = await this.db.complaint.findUnique({ where: { id } });
+      if (!complaint || complaint.pgId !== propertyId) {
+        throw new Error("Unauthorized: Complaint does not belong to specified PG tenant");
+      }
+    }
     return this.db.complaint.update({
       where: { id },
       data: { status }

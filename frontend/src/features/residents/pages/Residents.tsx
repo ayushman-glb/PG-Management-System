@@ -18,6 +18,8 @@ import { Avatar, AvatarThemeSelector } from "@components/ui/Avatar";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 import { api } from "@services/api";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { ResidentsSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -33,32 +35,23 @@ export default function Residents({ navigate }: Props) {
   const [residents, setResidents] = useState<any[]>([]);
   const [timeline, setTimeline] = useState<any[]>([]);
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
-  const [_loading, setLoading] = useState(true);
-  const [_error, setError] = useState<string | null>(null);
   const { darkMode } = useTheme();
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await api.get("/residents");
-        const data = (res as any).data || res || [];
-        const list = Array.isArray(data) ? data : [];
-        if (!cancelled) {
-          setResidents(list);
-          if (list.length > 0 && !selected) setSelected(list[0]);
-        }
-      } catch (e: any) {
-        if (!cancelled) setError(e.message || "Failed to load residents");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
+      const res = await api.get("/residents");
+      const data = (res as any).data || res || [];
+      const list = Array.isArray(data) ? data : [];
+      setResidents(list);
+      if (list.length > 0 && !selected) setSelected(list[0]);
+      return list;
+    },
+    []
+  );
+
+  if (showSkeleton) {
+    return <ResidentsSkeleton />;
+  }
 
   useEffect(() => {
     if (!selected) return;

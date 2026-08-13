@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -27,6 +27,8 @@ import DashboardLayout from "@components/layouts/DashboardLayout";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 import { api } from "@services/api";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { AnalyticsSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -133,36 +135,29 @@ export default function Analytics({ navigate }: Props) {
   const [summary, setSummary] = useState<any>(null);
   const { darkMode } = useTheme();
 
-  useEffect(() => {
-    const fetchAnalytics = () => {
-      api
-        .get(`/analytics/revenue?period=${period}`)
-        .then((response) => {
-          const payload = Array.isArray(response)
-            ? response
-            : (response as any)?.data || (response as any)?.revenueData || null;
-          const summaryData =
-            (response as any)?.summary ||
-            (response as any)?.data?.summary ||
-            null;
-          if (Array.isArray(payload)) {
-            setRevenueData(payload);
-          } else if (Array.isArray(payload?.revenueData)) {
-            setRevenueData(payload.revenueData);
-          }
-          if (summaryData) setSummary(summaryData);
-        })
-        .catch(() => {
-          setRevenueData(fallbackRevenueData);
-        });
-    };
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
+      try {
+        const response = await api.get(`/analytics/revenue?period=${period}`);
+        const payload = Array.isArray(response)
+          ? response
+          : (response as any)?.data || (response as any)?.revenueData || null;
+        const summaryData = (response as any)?.summary || (response as any)?.data?.summary || null;
+        if (summaryData) setSummary(summaryData);
+        if (Array.isArray(payload)) {
+          setRevenueData(payload);
+          return payload;
+        }
+      } catch {}
+      setRevenueData(fallbackRevenueData);
+      return fallbackRevenueData;
+    },
+    [period]
+  );
 
-    fetchAnalytics();
-
-    const handleDataChanged = () => fetchAnalytics();
-    window.addEventListener("roombae-data-changed", handleDataChanged);
-    return () => window.removeEventListener("roombae-data-changed", handleDataChanged);
-  }, [period]);
+  if (showSkeleton) {
+    return <AnalyticsSkeleton />;
+  }
 
   const totalRevenue = revenueData.reduce(
     (sum, item) => sum + (item.revenue || 0),

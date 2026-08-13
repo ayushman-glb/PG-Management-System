@@ -23,17 +23,21 @@ export class PrismaBillingRepository implements IBillingRepository {
     });
   }
 
-  async findPaymentById(id: string): Promise<Payment | null> {
+  async findPaymentById(id: string, propertyId?: string): Promise<Payment | null> {
     try {
-      return await this.db.payment.findUnique({ where: { id } });
+      const payment = await this.db.payment.findUnique({ where: { id } });
+      if (payment && propertyId && payment.pgId !== propertyId) {
+        throw new Error("Unauthorized: Payment does not belong to specified PG tenant");
+      }
+      return payment;
     } catch (e) {
       return null;
     }
   }
 
-  async findPaymentWithDetails(id: string): Promise<any | null> {
+  async findPaymentWithDetails(id: string, propertyId?: string): Promise<any | null> {
     try {
-      return await this.db.payment.findUnique({
+      const payment = await this.db.payment.findUnique({
         where: { id },
         include: {
           resident: {
@@ -42,6 +46,10 @@ export class PrismaBillingRepository implements IBillingRepository {
           pg: true
         }
       });
+      if (payment && propertyId && payment.pgId !== propertyId) {
+        throw new Error("Unauthorized: Payment does not belong to specified PG tenant");
+      }
+      return payment;
     } catch (e) {
       return null;
     }
@@ -60,8 +68,15 @@ export class PrismaBillingRepository implements IBillingRepository {
   async updatePaymentStatus(
     id: string,
     status: PaymentStatus,
-    details?: { razorpayPaymentId?: string; razorpaySignature?: string; clientIp?: string }
+    details?: { razorpayPaymentId?: string; razorpaySignature?: string; clientIp?: string },
+    propertyId?: string
   ): Promise<Payment> {
+    if (propertyId) {
+      const payment = await this.db.payment.findUnique({ where: { id } });
+      if (!payment || payment.pgId !== propertyId) {
+        throw new Error("Unauthorized: Payment does not belong to specified PG tenant");
+      }
+    }
     return this.db.payment.update({
       where: { id },
       data: {

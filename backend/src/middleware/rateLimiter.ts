@@ -4,6 +4,7 @@ const createLimiter = (windowMs: number, max: number, message: string, code: str
   rateLimit({
     windowMs,
     max,
+    skip: () => process.env.NODE_ENV === 'test',
     standardHeaders: true,
     legacyHeaders: true,
     statusCode: 429,

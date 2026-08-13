@@ -1,11 +1,11 @@
 import { Router, Request, Response } from "express";
-import { PrismaClient, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
+import { prisma } from "../config/prisma";
 import { FineEngineService } from "../services/FineEngineService";
 import { SearchService } from "../services/SearchService";
 import { authenticate, authorize } from "../middleware/authMiddleware";
 
 const router = Router();
-const prisma = new PrismaClient();
 const fineEngine = new FineEngineService(prisma);
 const searchService = new SearchService(prisma);
 

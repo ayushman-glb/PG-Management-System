@@ -6,7 +6,6 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  CreditCard,
   Zap,
 } from "lucide-react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
@@ -16,6 +15,8 @@ import { FintechCardCarousel } from "../components/FintechCardCarousel";
 import { PayRentModal } from "../components/PayRentModal";
 import { SpendBreakdownChart } from "../components/SpendBreakdownChart";
 import { TransactionTimeline } from "../components/TransactionTimeline";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { BillingSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -77,6 +78,17 @@ export default function Billing({ navigate }: Props) {
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedPayAmount, setSelectedPayAmount] = useState(8500);
   const { darkMode } = useTheme();
+
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
+      return invoices;
+    },
+    []
+  );
+
+  if (showSkeleton) {
+    return <BillingSkeleton />;
+  }
 
   const filtered = invoices.filter((inv) => {
     const matchSearch =
@@ -157,235 +169,168 @@ export default function Billing({ navigate }: Props) {
               bg: "bg-rose-500/10 border-rose-500/20",
             },
             {
-              label: "Total Invoices",
-              value: invoices.length.toString(),
-              icon: CreditCard,
-              color: "text-[#C58B63] dark:text-[#C89A4B]",
-              bg: "bg-[#D9A87C]/10 border-[#D9A87C]/20",
+              label: "Collection Efficiency",
+              value: "94.2%",
+              icon: TrendingUp,
+              color: "text-blue-600 dark:text-blue-400",
+              bg: "bg-blue-500/10 border-blue-500/20",
             },
-          ].map((s) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.label}
-                className={`glass-panel rounded-2xl p-4 md:p-5 border ${s.bg}`}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/40 dark:bg-black/20 backdrop-blur-md"
-                  >
-                    <Icon className={`w-4 h-4 ${s.color}`} />
-                  </div>
-                  <TrendingUp
-                    className={`w-4 h-4 ml-auto ${darkMode ? "text-slate-500" : "text-slate-400"}`}
-                  />
-                </div>
-                <p
-                  className={`text-xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
-                >
-                  {s.value}
-                </p>
-                <p
-                  className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}
-                >
-                  {s.label}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Mockup Fintech Layout Section (Cards + Spend Chart) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <FintechCardCarousel onPayClick={() => setIsPayModalOpen(true)} />
-          <SpendBreakdownChart />
-        </div>
-
-        {/* Main Tabbed Data Panel */}
-        <div className="glass-panel rounded-3xl overflow-hidden border border-[#E6D7CA]/80 dark:border-[#4A443F]/80 shadow-xl">
-          <div
-            className={`flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 border-b ${darkMode ? "border-slate-800" : "border-slate-100"}`}
-          >
+          ].map((stat) => (
             <div
-              className={`flex gap-1 p-1 rounded-2xl ${darkMode ? "bg-slate-900/60" : "bg-slate-100"}`}
+              key={stat.label}
+              className={`p-4 rounded-2xl border ${
+                darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+              }`}
             >
-              {(["overview", "invoices", "transactions"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  aria-pressed={activeTab === tab}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
-                    activeTab === tab
-                      ? darkMode
-                        ? "bg-[#332D2B] text-white shadow-md border border-[#4A443F]"
-                        : "bg-white shadow-md text-slate-900"
-                      : darkMode
-                        ? "text-slate-400"
-                        : "text-slate-500"
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-xs font-semibold ${
+                    darkMode ? "text-slate-400" : "text-slate-500"
                   }`}
                 >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            {activeTab === "invoices" && (
-              <div className="flex flex-wrap items-center gap-2">
-                <div
-                  className={`flex items-center gap-2 rounded-xl px-3 py-1.5 ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}
-                >
-                  <Search
-                    className={`w-3.5 h-3.5 ${darkMode ? "text-slate-400" : "text-slate-400"}`}
-                  />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search invoices..."
-                    aria-label="Search invoices"
-                    className={`bg-transparent text-xs outline-none placeholder:text-slate-400 w-36 ${darkMode ? "text-white" : "text-slate-700"}`}
-                  />
-                </div>
-                <div className="flex gap-1.5">
-                  {(["all", "paid", "due", "late"] as const).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setFilter(f)}
-                      aria-pressed={filter === f}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
-                        filter === f
-                          ? "bg-amber-500 text-black font-bold"
-                          : darkMode
-                            ? "bg-slate-800 text-slate-400 hover:bg-slate-700"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
+                  {stat.label}
+                </span>
+                <stat.icon className={`w-4 h-4 ${stat.color}`} />
               </div>
-            )}
-          </div>
-
-          {activeTab === "overview" && (
-            <div className="p-4 md:p-6">
-              <TransactionTimeline onPayRetry={() => setIsPayModalOpen(true)} />
+              <p
+                className={`text-xl font-black mt-2 ${
+                  darkMode ? "text-white" : "text-slate-900"
+                }`}
+              >
+                {stat.value}
+              </p>
             </div>
-          )}
+          ))}
+        </div>
 
-          {activeTab === "invoices" && (
+        {/* Tab Navigation */}
+        <div className="flex border-b border-slate-200/20">
+          {(["overview", "invoices", "transactions"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2.5 text-xs font-bold capitalize border-b-2 transition-all ${
+                activeTab === tab
+                  ? "border-amber-500 text-amber-500"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Overview Tab Content */}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            <FintechCardCarousel onSelectCardAmount={(amt) => setSelectedPayAmount(amt)} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SpendBreakdownChart />
+              <TransactionTimeline />
+            </div>
+          </div>
+        )}
+
+        {/* Invoices Tab */}
+        {activeTab === "invoices" && (
+          <div
+            className={`rounded-2xl border overflow-hidden ${
+              darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+            }`}
+          >
+            <div className="p-4 border-b border-slate-200/20 flex flex-col sm:flex-row gap-3 justify-between items-center">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search resident or invoice..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={`w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
+                    darkMode
+                      ? "bg-[#1D1B1A] border-[#4A443F] text-white"
+                      : "bg-[#FFF8F2] border-[#E6D7CA] text-slate-900"
+                  }`}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                {(["all", "paid", "due", "late"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                      filter === f
+                        ? "bg-amber-500 text-black shadow-sm"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px]">
-                <thead className={darkMode ? "bg-slate-900/50" : "bg-slate-50"}>
-                  <tr className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? "text-slate-400" : "text-slate-400"}`}>
-                    <th className="text-left px-6 py-3">Invoice</th>
-                    <th className="text-left px-6 py-3">Resident</th>
-                    <th className="text-left px-6 py-3">Property</th>
-                    <th className="text-left px-6 py-3">Room</th>
-                    <th className="text-left px-6 py-3">Amount</th>
-                    <th className="text-left px-6 py-3">Due Date</th>
-                    <th className="text-left px-6 py-3">Status</th>
-                    <th className="text-left px-6 py-3">Actions</th>
+              <table className="w-full text-left text-xs">
+                <thead
+                  className={`uppercase font-bold tracking-wider border-b ${
+                    darkMode ? "bg-[#2B2725] border-[#4A443F] text-slate-400" : "bg-[#FFF8F2] border-[#E6D7CA] text-slate-500"
+                  }`}
+                >
+                  <tr>
+                    <th className="p-3.5">Invoice ID</th>
+                    <th className="p-3.5">Resident</th>
+                    <th className="p-3.5">Room</th>
+                    <th className="p-3.5">PG</th>
+                    <th className="p-3.5">Amount</th>
+                    <th className="p-3.5">Due Date</th>
+                    <th className="p-3.5">Status</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${darkMode ? "divide-slate-800" : "divide-slate-100"}`}>
+                <tbody className="divide-y divide-slate-200/10">
                   {filtered.map((inv) => (
-                    <tr key={inv.id} className={`transition-colors ${darkMode ? "hover:bg-slate-800/50" : "hover:bg-slate-50"}`}>
-                      <td className={`px-6 py-3.5 text-sm font-mono ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}>
-                        {inv.id}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                          >
-                            {inv.resident.split(" ").map((n) => n[0]).join("")}
-                          </div>
-                          <span className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
-                            {inv.resident}
-                          </span>
-                        </div>
-                      </td>
-                      <td className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                        {inv.pg}
-                      </td>
-                      <td className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                        {inv.room}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <span className={`text-sm font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                          ₹{inv.amount.toLocaleString()}
-                        </span>
-                        {inv.lateFee && (
-                          <span className="text-xs text-red-500 ml-1">
-                            +₹{inv.lateFee}
-                          </span>
-                        )}
-                      </td>
-                      <td className={`px-6 py-3.5 text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                        {inv.due}
-                      </td>
-                      <td className="px-6 py-3.5">
+                    <tr
+                      key={inv.id}
+                      className={`hover:bg-amber-500/5 transition-colors ${
+                        darkMode ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      <td className="p-3.5 font-mono font-bold">{inv.id}</td>
+                      <td className="p-3.5 font-semibold">{inv.resident}</td>
+                      <td className="p-3.5">{inv.room}</td>
+                      <td className="p-3.5">{inv.pg}</td>
+                      <td className="p-3.5 font-bold">₹{inv.amount.toLocaleString()}</td>
+                      <td className="p-3.5">{inv.due}</td>
+                      <td className="p-3.5">
                         <span
-                          className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
                             inv.status === "Paid"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                               : inv.status === "Due"
-                              ? "bg-orange-100 text-orange-700"
-                              : "bg-red-100 text-red-700"
+                              ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
                           }`}
                         >
                           {inv.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-3">
-                          {inv.status !== "Paid" && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedPayAmount(inv.amount + (inv.lateFee || 0));
-                                setIsPayModalOpen(true);
-                              }}
-                              className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
-                            >
-                              Pay Now
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => window.open(`https://pg-management-system-boxb.onrender.com/api/v1/billing/invoices/${inv.id}/pdf`, "_blank")}
-                            className={`text-xs hover:underline font-medium ${darkMode ? "text-[#C89A4B]" : "text-[#C58B63]"}`}
-                          >
-                            PDF Invoice
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === "transactions" && (
-            <div className="p-4 md:p-6">
-              <TransactionTimeline onPayRetry={() => setIsPayModalOpen(true)} />
-            </div>
-          )}
-        </div>
+        {/* Transactions Tab */}
+        {activeTab === "transactions" && <TransactionTimeline />}
       </div>
 
       <PayRentModal
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}
         defaultAmount={selectedPayAmount}
-        itemTitle="Monthly PG Accommodation Rent"
-        itemCategory="RENT"
       />
     </DashboardLayout>
   );

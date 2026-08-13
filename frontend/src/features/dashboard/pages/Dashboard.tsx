@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
 import { BentoDashboard } from "@features/dashboard/components/BentoDashboard";
 import { KanbanBoards } from "@features/complaints/components/KanbanBoards";
@@ -9,6 +9,9 @@ import { api } from "@services/api";
 import { LayoutGrid, Kanban, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { DashboardSkeleton } from "@components/Skeletons";
+
 interface Props {
   navigate: (p: Page) => void;
 }
@@ -18,9 +21,14 @@ export default function Dashboard({ navigate }: Props) {
   const [viewMode, setViewMode] = useState<"bento" | "kanban">("bento");
   const [selectedResidentId, setSelectedResidentId] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.getOwnerSummary().catch(() => {});
-  }, []);
+  const { showSkeleton } = useAdaptiveLoading(
+    () => api.getOwnerSummary(),
+    []
+  );
+
+  if (showSkeleton) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <DashboardLayout navigate={navigate} activePage="dashboard">

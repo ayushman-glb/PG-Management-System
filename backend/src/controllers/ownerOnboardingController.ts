@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/prisma';
 import { OwnerOnboardingService } from '../services/OwnerOnboardingService';
 
-const prisma = new PrismaClient();
 const onboardingService = new OwnerOnboardingService(prisma);
 
 export class OwnerOnboardingController {

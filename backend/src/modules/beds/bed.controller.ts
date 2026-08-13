@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../config/prisma';
 import { BedService } from './bed.service';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
 
-const prisma = new PrismaClient();
 const bedService = new BedService(prisma);
 
 export class BedController {

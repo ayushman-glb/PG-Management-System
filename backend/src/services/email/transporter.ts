@@ -14,11 +14,13 @@ export const transporter = nodemailer.createTransport({
   socketTimeout: 10000,
 });
 
-// Verify SMTP Connection on Startup
-transporter.verify((error) => {
-  if (error) {
-    console.error('❌ Unable to connect to Brevo SMTP:', error.message);
-  } else {
-    console.log('✅ Brevo SMTP Connected successfully');
-  }
-});
+// Verify SMTP Connection on Startup (skipped in test mode)
+if (env.NODE_ENV !== 'test') {
+  transporter.verify((error) => {
+    if (error) {
+      console.error('❌ Unable to connect to Brevo SMTP:', error.message);
+    } else {
+      console.log('✅ Brevo SMTP Connected successfully');
+    }
+  });
+}

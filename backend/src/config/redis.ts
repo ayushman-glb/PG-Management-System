@@ -5,11 +5,11 @@ export const redisClient = createClient({
   url: env.REDIS_URL,
   socket: {
     reconnectStrategy: (retries) => {
-      if (retries > 5) {
+      if (retries > 10) {
         console.warn('⚠️ Redis max reconnect attempts reached. Operating in memory-fallback mode.');
-        return new Error('Redis max retries reached');
+        return false;
       }
-      return Math.min(retries * 100, 3000);
+      return Math.min(retries * 200, 3000);
     },
   },
 });
@@ -24,13 +24,15 @@ redisClient.on('connect', () => {
 });
 
 // Self-executing connection attempt — non-blocking, idempotent
-// Guards against duplicate connect() calls if module is re-evaluated
-(async () => {
-  try {
-    if (!redisClient.isOpen && !redisClient.isReady) {
-      await redisClient.connect();
+// Guards against duplicate connect() calls if module is re-evaluated (skipped in test mode)
+if (env.NODE_ENV !== 'test') {
+  (async () => {
+    try {
+      if (!redisClient.isOpen && !redisClient.isReady) {
+        await redisClient.connect();
+      }
+    } catch (err: any) {
+      console.warn('⚠️ Could not establish Redis connection. Fallbacks active.', err?.message ?? '');
     }
-  } catch (err: any) {
-    console.warn('⚠️ Could not establish Redis connection. Fallbacks active.', err?.message ?? '');
-  }
-})();
+  })();
+}

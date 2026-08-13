@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../config/prisma';
 import { RoomService } from './room.service';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
 
-const prisma = new PrismaClient();
 const roomService = new RoomService(prisma);
 
 export class RoomController {

@@ -15,6 +15,7 @@ export const globalErrorHandler = (
   err.message = err.message || 'Internal Server Error';
 
   logger.error(`Error on ${req.method} ${req.originalUrl}:`, err);
+  process.stderr.write(`\n\n>>> EXACT ERROR: ${err?.message}\n${err?.stack}\n\n`);
 
   if (err instanceof AppError) {
     const action = err.statusCode === 401 ? (err.errorCode === 'TOKEN_EXPIRED' ? 'refresh' : 'login') : err.statusCode === 403 ? 'contact_admin' : 'retry';

@@ -37,11 +37,16 @@ class ApiClient {
       // Ignore device identity error if blocked
     }
 
-    const res = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: "include",
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: "include",
+      });
+    } catch (networkErr: any) {
+      throw new Error(networkErr?.message?.includes("Failed to fetch") ? "Network connection unavailable. Please check your internet connection." : (networkErr?.message || "Network request failed"));
+    }
 
     if (res.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
       try {

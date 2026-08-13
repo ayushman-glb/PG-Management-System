@@ -11,6 +11,8 @@ import { AnimatedBadge } from "@components/animations/MotionPrimitives";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 import { api } from "@services/api";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { ComplaintsSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -172,6 +174,24 @@ export default function Complaints({ navigate }: Props) {
     from: string;
   } | null>(null);
   const { darkMode } = useTheme();
+
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
+      try {
+        const res = await api.listComplaints();
+        if (res && typeof res === "object") {
+          // Normalize if res returns categorized or array
+          return res;
+        }
+      } catch {}
+      return initialComplaints;
+    },
+    []
+  );
+
+  if (showSkeleton) {
+    return <ComplaintsSkeleton />;
+  }
 
   const handleCreateComplaint = async (title: string, category: string, description: string, priority: string) => {
     try {

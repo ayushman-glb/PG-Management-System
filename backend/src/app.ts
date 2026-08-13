@@ -118,6 +118,7 @@ app.use(hpp());
 
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
+app.use("/soap/billing", generalLimiter);
 
 
 // Swagger Documentation Endpoints — only accessible in non-production environments

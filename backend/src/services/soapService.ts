@@ -51,8 +51,9 @@ const soapServiceImplementation = {
         args: { invoiceNumber: string },
         callback?: (res: any) => void,
       ) => {
+        const invNum = (args && typeof args.invoiceNumber === "string") ? args.invoiceNumber.trim() : "";
         Container.billingRepository
-          .findPaymentByInvoiceNumber(args.invoiceNumber)
+          .findPaymentByInvoiceNumber(invNum)
           .then((invoice) => {
             if (invoice) {
               const result = {

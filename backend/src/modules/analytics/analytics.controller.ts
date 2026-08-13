@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../config/prisma';
 import { AnalyticsService } from './analytics.service';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
 
-const prisma = new PrismaClient();
 const analyticsService = new AnalyticsService(prisma);
 
 export class AnalyticsController {

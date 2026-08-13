@@ -49,10 +49,12 @@ const DEFAULT_CARDS: VirtualCard[] = [
 
 interface FintechCardCarouselProps {
   onPayClick?: () => void;
+  onSelectCardAmount?: (amt: number) => void;
 }
 
 export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
   onPayClick,
+  onSelectCardAmount: _onSelectCardAmount,
 }) => {
   const { darkMode } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);

@@ -72,8 +72,8 @@ export class PrismaAgreementRepository implements IAgreementRepository {
     });
   }
 
-  async findById(id: string): Promise<any> {
-    return this.prisma.agreement.findUnique({
+  async findById(id: string, pgId?: string): Promise<any> {
+    const agreement = await this.prisma.agreement.findUnique({
       where: { id },
       include: {
         resident: true,
@@ -83,6 +83,10 @@ export class PrismaAgreementRepository implements IAgreementRepository {
         versions: true,
       },
     });
+    if (agreement && pgId && agreement.pgId !== pgId) {
+      throw new Error("Unauthorized: Agreement does not belong to specified PG tenant");
+    }
+    return agreement;
   }
 
   async findByAgreementNumber(agreementNumber: string): Promise<any> {
@@ -133,7 +137,13 @@ export class PrismaAgreementRepository implements IAgreementRepository {
     });
   }
 
-  async updateStatus(agreementId: string, status: any): Promise<any> {
+  async updateStatus(agreementId: string, status: any, pgId?: string): Promise<any> {
+    if (pgId) {
+      const existing = await this.findById(agreementId);
+      if (!existing || existing.pgId !== pgId) {
+        throw new Error("Unauthorized: Agreement does not belong to specified PG tenant");
+      }
+    }
     return this.prisma.agreement.update({
       where: { id: agreementId },
       data: { status },

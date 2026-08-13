@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Home,
   User,
@@ -29,6 +29,8 @@ import { RoomTransferModal } from "@features/rooms/components/RoomTransferModal"
 
 import { Logo } from "@components/ui/Logo";
 import { useAuth } from "@hooks/useAuth";
+import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { ResidentPortalSkeleton } from "@components/Skeletons";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -94,8 +96,8 @@ export default function ResidentPortal({ navigate }: Props) {
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [mockAgreement, setMockAgreement] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadPortalData() {
+  const { showSkeleton } = useAdaptiveLoading(
+    async () => {
       try {
         const portalRes = await api.getPortalMe();
         if (portalRes?.profile?.status) {
@@ -121,12 +123,18 @@ export default function ResidentPortal({ navigate }: Props) {
           setResidentProfile(portalRes.profile);
         }
         setPortalData(portalRes);
+        return portalRes;
       } catch (e) {
         console.warn("Portal data load fallback:", e);
+        return null;
       }
-    }
-    loadPortalData();
-  }, []);
+    },
+    []
+  );
+
+  if (showSkeleton) {
+    return <ResidentPortalSkeleton />;
+  }
 
   const handleCreateComplaint = async (e: React.FormEvent) => {
     e.preventDefault();

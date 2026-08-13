@@ -16,18 +16,32 @@ import { DocumentController } from '../modules/documents/documents.controller';
 import { DocumentStorageService } from '../services/documents/DocumentStorageService';
 
 // Modular Feature Repositories, Services, and Controllers
-import { AuthRepository, AuthService, AuthController } from '../modules/auth';
-import { PropertyRepository, PropertyService, PropertyController } from '../modules/properties';
-import { ResidentRepository, ResidentService, ResidentController } from '../modules/residents';
-import { BillingRepository, BillingService, BillingController } from '../modules/billing';
-import { ComplaintRepository, ComplaintService, ComplaintController } from '../modules/complaints';
-import { AgreementRepository, AgreementService, AgreementController } from '../modules/agreements';
+import { AuthRepository } from '../modules/auth/auth.repository';
+import { AuthService } from '../modules/auth/auth.service';
+import { AuthController } from '../modules/auth/auth.controller';
+import { PropertyRepository } from '../modules/properties/property.repository';
+import { PropertyService } from '../modules/properties/property.service';
+import { PropertyController } from '../modules/properties/property.controller';
+import { ResidentRepository } from '../modules/residents/resident.repository';
+import { ResidentService } from '../modules/residents/resident.service';
+import { ResidentController } from '../modules/residents/resident.controller';
+import { BillingRepository } from '../modules/billing/billing.repository';
+import { BillingService } from '../modules/billing/billing.service';
+import { BillingController } from '../modules/billing/billing.controller';
+import { ComplaintRepository } from '../modules/complaints/complaint.repository';
+import { ComplaintService } from '../modules/complaints/complaint.service';
+import { ComplaintController } from '../modules/complaints/complaint.controller';
+import { AgreementRepository } from '../modules/agreements/agreement.repository';
+import { AgreementService } from '../modules/agreements/agreement.service';
+import { AgreementController } from '../modules/agreements/agreement.controller';
 import { ResidentManagementRepository } from '../repositories/ResidentManagementRepository';
 import { ResidentManagementService } from '../services/ResidentManagementService';
 import { ResidentManagementController } from '../controllers/residentManagementController';
 
 // Device Security Subsystem
-import { DeviceRepository, DeviceService, DeviceController } from '../modules/devices';
+import { DeviceRepository } from '../modules/devices/device.repository';
+import { DeviceService } from '../modules/devices/device.service';
+import { DeviceController } from '../modules/devices/device.controller';
 
 import { PaymentStrategyContext } from '../core/patterns/payment/PaymentStrategy';
 import { EventDispatcher } from '../core/patterns/events/EventDispatcher';
@@ -75,7 +89,7 @@ export class Container {
 
   // Database Client
   public static get db() {
-    return prisma;
+    return (global as any).prismaSingleton || prisma;
   }
 
   // Pattern Services & Enterprise Architecture Contexts
@@ -137,6 +151,18 @@ export class Container {
   }
 
   // Feature Repositories
+  public static set userRepository(repo: any) {
+    this._userRepository = repo;
+  }
+
+  public static set authService(service: any) {
+    this._authService = service;
+  }
+
+  public static set authController(controller: any) {
+    this._authController = controller;
+  }
+
   public static get userRepository() {
     if (!this._userRepository) {
       this._userRepository = new AuthRepository(Container.db);
@@ -203,12 +229,16 @@ export class Container {
   // Domain Services
   public static get authService() {
     if (!this._authService) {
-      this._authService = new AuthService(
-        Container.userRepository,
-        Container.cryptoService,
-        Container.tokenService,
-        Container.otpService
-      );
+      try {
+        this._authService = new AuthService(
+          Container.userRepository,
+          Container.cryptoService,
+          Container.tokenService,
+          Container.otpService
+        );
+      } catch (err: any) {
+        process.stderr.write(`\n\n>>> ERROR CREATING AUTH SERVICE: ${err?.message}\n${err?.stack}\n\n`);
+      }
     }
     return this._authService;
   }
