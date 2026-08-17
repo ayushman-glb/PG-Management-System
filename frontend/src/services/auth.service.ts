@@ -52,6 +52,14 @@ export class AuthService {
     disconnectSocket();
   }
 
+  public hasStoredSession(): boolean {
+    return Boolean(
+      this.inMemoryToken ||
+      this.getStoredRefreshToken() ||
+      (typeof document !== "undefined" && document.cookie.includes("refreshToken"))
+    );
+  }
+
   private async request<T = any>(
     endpoint: string,
     options: RequestInit = {},
@@ -73,7 +81,13 @@ export class AuthService {
       credentials: "include",
     });
 
-    if (response.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
+    if (
+      response.status === 401 &&
+      !isRetry &&
+      !endpoint.includes("/auth/login") &&
+      !endpoint.includes("/auth/refresh") &&
+      this.hasStoredSession()
+    ) {
       try {
         const storedRefreshToken = this.getStoredRefreshToken();
         const refreshRes = await fetch(`${env.API_URL}/auth/refresh-token`, {

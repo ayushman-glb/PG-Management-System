@@ -8,6 +8,7 @@ import hpp from "hpp";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
+import { pingRedis, isRedisReady } from "./config/redis";
 import { swaggerSpec } from "./config/swagger";
 import apiRouter from "./routes/apiRouter";
 import { globalErrorHandler } from "./middleware/errorMiddleware";
@@ -159,30 +160,52 @@ app.get("/health", async (req, res) => {
   const startTime = Date.now();
   let dbStatus = "CONNECTED";
   let dbLatency = 0;
+  let isDbHealthy = true;
 
   try {
     const dbStart = Date.now();
     const pingPromise = prisma.$runCommandRaw({ ping: 1 });
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("DB Ping Timeout")), 500),
+      setTimeout(() => reject(new Error("DB Ping Timeout")), 2000),
     );
     await Promise.race([pingPromise, timeoutPromise]);
     dbLatency = Date.now() - dbStart;
   } catch (error) {
-    dbStatus = "DISCONNECTED_OR_MOCK_FALLBACK";
+    dbStatus = "DISCONNECTED";
+    isDbHealthy = false;
   }
 
-  const memoryUsage = process.memoryUsage();
+  const redisLatency = await pingRedis();
+  const redisConnected = isRedisReady();
 
-  res.status(200).json({
-    success: true,
-    status: "UP",
+  const memoryUsage = process.memoryUsage();
+  const isHealthy = isDbHealthy;
+  const statusCode = isHealthy ? 200 : (env.NODE_ENV === "production" ? 503 : 200);
+
+  res.status(statusCode).json({
+    success: isHealthy,
+    status: isHealthy ? "UP" : "DEGRADED",
     version: "1.0.0",
     environment: env.NODE_ENV,
     correlationId: req.correlationId,
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime()),
     latencyMs: Date.now() - startTime,
+    redis: {
+      status: redisConnected ? "CONNECTED" : "DISCONNECTED_MEMORY_FALLBACK",
+      latencyMs: redisLatency >= 0 ? redisLatency : "N/A",
+      readyState: redisConnected,
+    },
+    database: {
+      provider: "mongodb",
+      status: dbStatus,
+      latencyMs: dbLatency,
+    },
+    mongodb: {
+      provider: "mongodb",
+      status: dbStatus,
+      latencyMs: env.NODE_ENV === "production" ? "N/A" : dbLatency,
+    },
     memory: env.NODE_ENV === "production"
       ? { rssMB: "N/A", heapTotalMB: "N/A", heapUsedMB: "N/A" }
       : {
@@ -190,13 +213,8 @@ app.get("/health", async (req, res) => {
           heapTotalMB: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
           heapUsedMB: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
         },
-    database: {
-      provider: "mongodb",
-      status: dbStatus,
-      latencyMs: env.NODE_ENV === "production" ? "N/A" : dbLatency,
-    },
     services: {
-      restApi: "READY",
+      restApi: isHealthy ? "READY" : "DEGRADED",
       soapERP: "READY",
       webSocket: "READY",
       swaggerDocs: env.NODE_ENV !== "production" ? "READY" : "DISABLED_IN_PROD",
@@ -206,15 +224,35 @@ app.get("/health", async (req, res) => {
 });
 
 app.get("/ready", async (req, res) => {
+  let dbConnected = false;
   try {
-    res.status(200).json({
-      status: "READY",
-      message: "Backend is accepting incoming traffic.",
-    });
+    const pingPromise = prisma.$runCommandRaw({ ping: 1 });
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("DB Ping Timeout")), 2000),
+    );
+    await Promise.race([pingPromise, timeoutPromise]);
+    dbConnected = true;
   } catch (e) {
-    res.status(503).json({
+    dbConnected = false;
+  }
+
+  const redisConnected = isRedisReady();
+
+  if (dbConnected) {
+    return res.status(200).json({
+      status: "READY",
+      message: "Backend and database are accepting incoming traffic.",
+      database: "CONNECTED",
+      redis: redisConnected ? "CONNECTED" : "DISCONNECTED_MEMORY_FALLBACK",
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    return res.status(503).json({
       status: "NOT_READY",
-      message: "Backend dependencies initializing.",
+      message: "Database connection unreachable. Backend cannot process transactional requests.",
+      database: "DISCONNECTED",
+      redis: redisConnected ? "CONNECTED" : "DISCONNECTED",
+      timestamp: new Date().toISOString(),
     });
   }
 });

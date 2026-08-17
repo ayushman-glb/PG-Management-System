@@ -38,7 +38,7 @@ async function bootstrap() {
 
     const connectStart = Date.now();
     try {
-      await connectPrismaWithTimeout(5000);
+      await connectPrismaWithTimeout(10000);
       connectionTimeMs = Date.now() - connectStart;
       mongoStatus = `Connected (${connectionTimeMs}ms)`;
       logger.info(
@@ -47,10 +47,18 @@ async function bootstrap() {
       // Initialize MongoDB partial/sparse unique indexes for optional fields
       await ensureSparseIndexes();
     } catch (e: any) {
-      mongoStatus = "Connection Pending / In-Memory Seed Fallback";
-      logger.warn(
-        `⚠️ MongoDB Connection Warning: ${e.message}. Using Repository Mock Fallbacks.`,
-      );
+      mongoStatus = "Disconnected / Connection Failed";
+      if (env.NODE_ENV === "production") {
+        logger.error(
+          `❌ FATAL: MongoDB Connection Failed in Production environment! Error: ${e.message}`,
+        );
+        logger.error("❌ Process exiting with code 1. Check your DATABASE_URL / MONGODB_URI connection string and replicaSet settings.");
+        process.exit(1);
+      } else {
+        logger.warn(
+          `⚠️ MongoDB Connection Warning: ${e.message}. Falling back to dev mode mocks where applicable.`,
+        );
+      }
     }
 
     const PORT = resolvedPort;

@@ -259,8 +259,6 @@ export default function Auth({ navigate }: Props) {
     isValidEmail &&
     isValidPhone &&
     isValidPincode &&
-    isPhoneVerified &&
-    isEmailVerified &&
     isPasswordStrong &&
     isPasswordMatch &&
     city.trim().length > 0 &&
@@ -371,13 +369,16 @@ export default function Auth({ navigate }: Props) {
 
   const [preAuthToken, setPreAuthToken] = useState<string | null>(null);
   const [totpCode, setTotpCode] = useState("");
+  const isSubmittingRef = React.useRef(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current || isSubmitting) return;
     if (!loginIdentifier.trim() || !loginPassword) {
       setAuthError("Please enter your email/phone and password.");
       return;
     }
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     setAuthError("");
     setShowSignupCta(false);
@@ -405,16 +406,19 @@ export default function Auth({ navigate }: Props) {
       setAuthError(err?.message || "We couldn't find an account with these details. Would you like to sign up instead?");
       setShowSignupCta(isSignupNudge);
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleVerifyTwoFactorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current || isSubmitting) return;
     if (!totpCode || totpCode.length !== 6) {
       setAuthError("Please enter your 6-digit TOTP code.");
       return;
     }
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     setAuthError("");
     try {
@@ -432,17 +436,20 @@ export default function Auth({ navigate }: Props) {
     } catch (err: any) {
       setAuthError(err?.message || "Invalid two-factor code. Please try again.");
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current || isSubmitting) return;
     if (!agreeTerms) {
       setAuthError("You must agree to the Terms & Conditions and Privacy Policy.");
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     setAuthError("");
 
@@ -471,6 +478,7 @@ export default function Auth({ navigate }: Props) {
     } catch (err: any) {
       setAuthError(err?.message || "Registration failed. Please try again.");
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };

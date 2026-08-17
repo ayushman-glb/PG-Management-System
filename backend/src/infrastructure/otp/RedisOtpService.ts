@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { IOtpService } from "../../interfaces/infrastructure/IOtpService";
 import { emailService } from "../../services/email";
 import { logger } from "../../utils/logger";
-import { redisClient } from "../../config/redis";
+import { redisClient, isRedisReady } from "../../config/redis";
 import { prisma } from "../../config/prisma";
 
 export class RedisOtpService implements IOtpService {
@@ -96,6 +96,7 @@ export class RedisOtpService implements IOtpService {
     const attemptsKey = `${key}:attempts`;
 
     try {
+      if (!isRedisReady()) throw new Error("Redis connection offline");
       await redisClient.set(key, otp, { EX: ttlSeconds });
       await redisClient.set(attemptsKey, "0", { EX: ttlSeconds });
       logger.debug("OTP stored in Redis", { key });
@@ -122,6 +123,7 @@ export class RedisOtpService implements IOtpService {
     const attemptsKey = `${key}:attempts`;
 
     try {
+      if (!isRedisReady()) throw new Error("Redis connection offline");
       const currentAttempts = parseInt((await redisClient.get(attemptsKey)) || "0", 10);
 
       if (currentAttempts >= RedisOtpService.MAX_ATTEMPTS) {

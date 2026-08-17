@@ -49,6 +49,15 @@ if (!process.env.CSRF_SECRET && process.env.SESSION_SECRET) {
   process.env.CSRF_SECRET = process.env.SESSION_SECRET;
 }
 
+// Auto-construct REDIS_URL from REDIS_HOST, REDIS_PORT, REDIS_PASSWORD if provided
+if (!process.env.REDIS_URL && (process.env.REDIS_HOST || process.env.REDIS_PORT)) {
+  const host = process.env.REDIS_HOST || "localhost";
+  const port = process.env.REDIS_PORT || "6379";
+  const auth = process.env.REDIS_PASSWORD ? `:${encodeURIComponent(process.env.REDIS_PASSWORD)}@` : "";
+  const scheme = process.env.REDIS_TLS === "true" ? "rediss" : "redis";
+  process.env.REDIS_URL = `${scheme}://${auth}${host}:${port}`;
+}
+
 // Fallback defaults for local development / testing when env secrets are unpopulated or contain placeholders
 const isDevOrTest = (process.env.NODE_ENV || "development") !== "production";
 
@@ -111,6 +120,12 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   MONGODB_URI: z.string().optional(),
   REDIS_URL: z.string().default("redis://localhost:6379"),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.string().default("6379"),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_TLS: z.string().default("false"),
+  CACHE_TTL: z.string().default("3600"),
+  SESSION_TTL: z.string().default("86400"),
 
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters long"),
   JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET must be at least 16 characters long"),

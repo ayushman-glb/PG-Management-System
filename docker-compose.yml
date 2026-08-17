@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   frontend:
     build:
@@ -6,6 +8,8 @@ services:
     container_name: roombae-frontend
     ports:
       - "80:80"
+    networks:
+      - roombae-network
     depends_on:
       backend:
         condition: service_healthy
@@ -15,7 +19,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    restart: always
+    restart: unless-stopped
 
   backend:
     build:
@@ -25,8 +29,15 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - DATABASE_URL=mongodb://mongo:27017/roombae-db?replicaSet=rs0
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL:-mongodb://roombae-mongo:27017/roombae-db?replicaSet=rs0}
+      - REDIS_HOST=roombae-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-roombae_secure_redis_password_2026}
+      - REDIS_URL=${REDIS_URL:-redis://:roombae_secure_redis_password_2026@roombae-redis:6379}
+    networks:
+      - roombae-network
+    ports:
+      - "5000:5000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -38,29 +49,44 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-    restart: always
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: roombae-redis
+    hostname: redis
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-roombae_secure_redis_password_2026}
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
+    networks:
+      - roombae-network
+    volumes:
+      - redis-data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-roombae_secure_redis_password_2026} ping | grep PONG || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 5s
-    volumes:
-      - redis-data:/data
-    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
+    restart: unless-stopped
 
   mongo:
     image: mongo:7.0
     container_name: roombae-mongo
+    hostname: mongo
     ports:
       - "27017:27017"
+    networks:
+      - roombae-network
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     healthcheck:
       test: ["CMD-SHELL", "mongod --eval \"db.adminCommand('ping')\" || exit 1"]
@@ -70,8 +96,15 @@ services:
       start_period: 10s
     volumes:
       - mongo-data:/data/db
-    restart: always
+    restart: unless-stopped
+
+networks:
+  roombae-network:
+    name: roombae-network
+    driver: bridge
 
 volumes:
   redis-data:
+    name: roombae-redis-data
   mongo-data:
+    name: roombae-mongo-data

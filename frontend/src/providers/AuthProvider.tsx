@@ -54,6 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const checkSession = async () => {
+      if (!authService.hasStoredSession()) {
+        if (!cancelled) {
+          setUserState(null);
+          setStatus("unauthenticated");
+        }
+        return;
+      }
       try {
         const res = await authService.getCurrentUser();
         if (!cancelled) {

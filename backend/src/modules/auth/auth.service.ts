@@ -14,6 +14,8 @@ import { env } from "../../config/env";
 import { prisma } from "../../config/prisma";
 import { logger } from "../../utils/logger";
 import { TotpService } from "../../infrastructure/crypto/TotpService";
+import { cacheService } from "../../services/cache.service";
+import { tokenBlacklistService } from "../../services/tokenBlacklistService";
 import * as crypto from "crypto";
 
 const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
@@ -78,15 +80,22 @@ export class AuthService implements IAuthService {
     const days = rememberMe ? 30 : 7;
     expiresAt.setDate(expiresAt.getDate() + days);
 
+    const tokenHash = this.hashRefreshToken(refreshToken);
+    const ttlSeconds = days * 24 * 60 * 60;
+
+    // Persist in DB
     await this.db.refreshToken.create({
       data: {
         userId,
-        tokenHash: this.hashRefreshToken(refreshToken),
+        tokenHash,
         expiresAt,
         ipAddress: actualIp,
         userAgent: actualUserAgent,
       },
     });
+
+    // Cache active session token in Redis
+    await cacheService.set(`refresh_token:${tokenHash}`, { userId, expiresAt: expiresAt.toISOString() }, ttlSeconds);
   }
 
   /**
@@ -121,6 +130,7 @@ export class AuthService implements IAuthService {
           data: { revokedAt: new Date() },
         });
       }
+      await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Invalid refresh token. Please log in again.", 401, "INVALID_REFRESH_TOKEN", "login");
     }
 
@@ -131,10 +141,12 @@ export class AuthService implements IAuthService {
         where: { userId: storedToken.userId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
+      await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Refresh token has been revoked. Please log in again.", 401, "REFRESH_TOKEN_REVOKED", "login");
     }
 
     if (storedToken.expiresAt < new Date()) {
+      await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Refresh token has expired. Please log in again.", 401, "REFRESH_TOKEN_EXPIRED", "login");
     }
 
@@ -148,11 +160,12 @@ export class AuthService implements IAuthService {
       throw new AppError("This account has been deactivated.", 403, "ACCOUNT_INACTIVE", "login");
     }
 
-    // Revoke current token (rotation)
+    // Revoke current token (rotation) in DB and clear cache
     await this.db.refreshToken.update({
       where: { id: storedToken.id },
       data: { revokedAt: new Date() },
     });
+    await cacheService.del(`refresh_token:${tokenHash}`);
 
     // Generate new tokens
     const payload = this.buildAccessPayload(user);
@@ -166,18 +179,27 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * Logout - revoke the provided refresh token.
+   * Logout - revoke the provided refresh token and optionally blacklist access token.
    */
-  async logout(token: string): Promise<void> {
-    if (!token) return;
-    const tokenHash = this.hashRefreshToken(token);
-    try {
-      await this.db.refreshToken.updateMany({
-        where: { tokenHash, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-    } catch (err) {
-      logger.warn("Failed to revoke refresh token during logout", { error: err });
+  async logout(token: string, accessTokenOrUserId?: string): Promise<void> {
+    if (!token && !accessTokenOrUserId) return;
+
+    if (token) {
+      const tokenHash = this.hashRefreshToken(token);
+      try {
+        await this.db.refreshToken.updateMany({
+          where: { tokenHash, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+        await cacheService.del(`refresh_token:${tokenHash}`);
+      } catch (err) {
+        logger.warn("Failed to revoke refresh token during logout", { error: err });
+      }
+    }
+
+    // If an access token is passed as second arg, blacklist it in Redis
+    if (accessTokenOrUserId && accessTokenOrUserId.startsWith("ey")) {
+      await tokenBlacklistService.blacklistToken(accessTokenOrUserId);
     }
   }
 

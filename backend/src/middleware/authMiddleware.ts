@@ -6,6 +6,8 @@ import { logger } from '../utils/logger';
 
 import { prisma } from '../config/prisma';
 
+import { tokenBlacklistService } from '../services/tokenBlacklistService';
+
 export interface AuthUserPayload {
   id: string;
   email: string;
@@ -33,6 +35,12 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   if (!token) {
     logger.warn("Auth Warning: No token provided on request", { path: `${req.method} ${req.originalUrl}` });
     return next(new AppError('Authentication token required.', 401, 'TOKEN_REQUIRED'));
+  }
+
+  const isBlacklisted = await tokenBlacklistService.isTokenBlacklisted(token);
+  if (isBlacklisted) {
+    logger.warn("Auth Warning: Blacklisted token presented", { path: `${req.method} ${req.originalUrl}` });
+    return next(new AppError('Authentication token has been revoked. Please log in again.', 401, 'TOKEN_INVALIDATED'));
   }
 
   try {
@@ -82,7 +90,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
           return next(new AppError('Permission denied. Invalid role.', 403, 'FORBIDDEN'));
         }
 
-        const isVerificationRoute = req.originalUrl.includes('/verify-') || req.originalUrl.includes('/send-') || req.originalUrl.includes('/logout');
+        const isVerificationRoute = req.originalUrl.includes('/verify-') || req.originalUrl.includes('/send-') || req.originalUrl.includes('/logout') || req.originalUrl.includes('/me');
         if (dbUser.emailVerified === false && !isVerificationRoute) {
           return next(new AppError('Please verify your email address before continuing.', 403, 'ACCOUNT_UNVERIFIED'));
         }

@@ -31,7 +31,7 @@ interface RoutesProps {
   navigate: (page: Page) => void;
 }
 
-const OWNER_ROLES = ["OWNER", "ADMIN", "SUPER_ADMIN", "MANAGER"];
+const OWNER_ROLES = ["OWNER", "ADMIN", "SUPER_ADMIN", "MANAGER", "STAFF"];
 const ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN"];
 const RESIDENT_ROLES = ["RESIDENT", "ADMIN", "SUPER_ADMIN"];
 

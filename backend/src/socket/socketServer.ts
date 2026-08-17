@@ -15,6 +15,8 @@ import { registerComplaintSocketHandlers } from "../modules/complaints";
 import { registerAgreementSocketHandlers } from "../modules/agreements";
 import { registerNotificationSocketHandlers } from "../modules/notifications";
 
+import { redisClient, isRedisReady } from "../config/redis";
+
 const tokenService = new JwtTokenService();
 
 function extractSocketUser(
@@ -60,6 +62,23 @@ export class SocketServer {
         credentials: true,
       },
     });
+
+    // Initialize Redis adapter for multi-node WebSocket scalability if Redis is active
+    if (isRedisReady()) {
+      try {
+        const { createAdapter } = require("@socket.io/redis-adapter");
+        const pubClient = redisClient.duplicate();
+        const subClient = redisClient.duplicate();
+        Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+          SocketServer.io?.adapter(createAdapter(pubClient, subClient));
+          logger.info("✅ Socket.IO Redis adapter attached for multi-instance scaling");
+        }).catch((adapterErr: any) => {
+          logger.warn("⚠️ Socket.IO Redis adapter connection skipped:", adapterErr.message);
+        });
+      } catch (err: any) {
+        logger.info("ℹ️ Socket.IO operating in single-node mode");
+      }
+    }
 
     // Pre-connection Handshake Authentication Middleware
     SocketServer.io.use((socket: Socket, next: (err?: Error) => void) => {

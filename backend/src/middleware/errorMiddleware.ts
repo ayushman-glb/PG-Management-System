@@ -14,8 +14,12 @@ export const globalErrorHandler = (
   err.statusCode = err.statusCode || 500;
   err.message = err.message || 'Internal Server Error';
 
-  logger.error(`Error on ${req.method} ${req.originalUrl}:`, err);
-  process.stderr.write(`\n\n>>> EXACT ERROR: ${err?.message}\n${err?.stack}\n\n`);
+  // In production: log message only (no stack). In development: log full error object.
+  if (env.NODE_ENV === 'production') {
+    logger.error(`Error on ${req.method} ${req.originalUrl}: [${err?.name || 'Error'}] ${err?.message}`);
+  } else {
+    logger.error(`Error on ${req.method} ${req.originalUrl}:`, err);
+  }
 
   if (err instanceof AppError) {
     const action = err.statusCode === 401 ? (err.errorCode === 'TOKEN_EXPIRED' ? 'refresh' : 'login') : err.statusCode === 403 ? 'contact_admin' : 'retry';
