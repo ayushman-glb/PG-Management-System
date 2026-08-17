@@ -14,12 +14,14 @@ async function testRedisDevPipeline() {
   console.log("-------------------------------------------------");
 
   // Create isolated test client using development configuration
+  const isTLS = (env.REDIS_URL || "").startsWith("rediss://");
   const testClient = createClient({
     url: env.REDIS_URL,
     password: env.REDIS_PASSWORD || undefined,
     database: env.REDIS_DB ? parseInt(env.REDIS_DB, 10) : 0,
     socket: {
       connectTimeout: 3000,
+      ...(isTLS ? { tls: true } : {}),
     },
   });
 

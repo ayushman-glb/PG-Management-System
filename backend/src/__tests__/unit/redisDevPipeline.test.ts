@@ -1,6 +1,6 @@
 import { env } from '../../config/env';
 import { cacheService } from '../../services/cache.service';
-import { redisClient, isRedisReady, pingRedis } from '../../config/redis';
+import { redisClient, redis, isRedisReady, pingRedis, getRedisConfig } from '../../config/redis';
 
 describe('RoomBae Redis Development Configuration & Pipeline Suite', () => {
   describe('1. Environment & Credentials Validation', () => {
@@ -26,10 +26,19 @@ describe('RoomBae Redis Development Configuration & Pipeline Suite', () => {
   });
 
   describe('2. Redis Client Lifecycle & Ready Checks', () => {
-    it('should export singleton redisClient instance', () => {
+    it('should export singleton redisClient and redis instances', () => {
       expect(redisClient).toBeDefined();
+      expect(redis).toBe(redisClient);
       expect(typeof redisClient.connect).toBe('function');
       expect(typeof redisClient.ping).toBe('function');
+    });
+
+    it('should generate protocol-safe Redis config without TLS mismatch for redis://', () => {
+      const config = getRedisConfig();
+      expect(config).toBeDefined();
+      if (env.REDIS_URL?.startsWith('redis://')) {
+        expect((config.socket as any)?.tls).toBeUndefined();
+      }
     });
 
     it('should safely report Redis readiness state without crashing', () => {

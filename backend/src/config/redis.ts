@@ -5,52 +5,86 @@ import { logger } from "../utils/logger";
 const REDIS_CONNECT_TIMEOUT_MS = 5000;
 
 /**
- * Builds resilient Redis connection options with URL priority and parameter fallback
+ * Builds resilient Redis connection options with protocol-aware TLS handling:
+ * - If REDIS_URL starts with rediss:// -> Enable TLS on socket
+ * - If REDIS_URL starts with redis://  -> Plain TCP, NEVER force tls: true (prevents Node-Redis mismatch TypeError)
+ * - If connecting via host/port without URL -> Respect REDIS_TLS boolean flag
  */
 export function getRedisConfig(): RedisClientOptions {
-  const isDev = (env.NODE_ENV || "development") === "development";
-  const tlsEnabled = env.REDIS_TLS === "true" || env.REDIS_URL.startsWith("rediss://");
+  const rawUrl = (env.REDIS_URL || process.env.REDIS_URL || "").trim();
+  const isDev = (env.NODE_ENV || process.env.NODE_ENV || "development") === "development";
+  const isTLS = rawUrl.startsWith("rediss://");
 
-  let config: RedisClientOptions = {
-    socket: {
-      connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
-      ...(tlsEnabled ? { tls: true } : {}),
-      reconnectStrategy: (retries: number) => {
-        // In development, avoid noisy endless retry loops if Docker Redis is not started
-        if (isDev && retries > 3) {
-          return new Error("Dev Redis max reconnect attempts reached. Active fallbacks running in-memory.");
-        }
-        if (retries > 10) {
-          return new Error("Production Redis max reconnect attempts reached. Active fallbacks running in-memory.");
-        }
-        // Exponential backoff with jitter
-        const baseDelay = Math.min(Math.pow(2, retries) * 100, 3000);
-        const jitter = Math.floor(Math.random() * 200);
-        return baseDelay + jitter;
+  const reconnectStrategy = (retries: number) => {
+    // In development, avoid noisy endless retry loops if Docker Redis is not started
+    if (isDev && retries > 3) {
+      return new Error("Dev Redis max reconnect attempts reached. Active fallbacks running in-memory.");
+    }
+    if (retries > 10) {
+      return new Error("Production Redis max reconnect attempts reached. Active fallbacks running in-memory.");
+    }
+    // Exponential backoff with jitter
+    const baseDelay = Math.min(Math.pow(2, retries) * 100, 3000);
+    const jitter = Math.floor(Math.random() * 200);
+    return baseDelay + jitter;
+  };
+
+  if (rawUrl && rawUrl !== "") {
+    return {
+      url: rawUrl,
+      socket: {
+        connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
+        reconnectStrategy,
+        ...(isTLS ? { tls: true } : {}),
       },
+    };
+  }
+
+  // Fallback configuration if no URL string is provided
+  const host = env.REDIS_HOST || process.env.REDIS_HOST || "localhost";
+  const port = parseInt(env.REDIS_PORT || process.env.REDIS_PORT || "6379", 10);
+  const hostTls = env.REDIS_TLS === "true" || process.env.REDIS_TLS === "true";
+
+  const config: RedisClientOptions = {
+    socket: {
+      host,
+      port,
+      connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
+      reconnectStrategy,
+      ...(hostTls ? { tls: true } : {}),
     },
   };
 
-  if (env.REDIS_URL && env.REDIS_URL.trim() !== "") {
-    config.url = env.REDIS_URL.trim();
-  } else {
-    config.socket = {
-      ...config.socket,
-      host: env.REDIS_HOST || "localhost",
-      port: parseInt(env.REDIS_PORT || "6379", 10),
-    };
-    if (env.REDIS_PASSWORD) {
-      config.password = env.REDIS_PASSWORD;
-    }
-    if (env.REDIS_DB) {
-      config.database = parseInt(env.REDIS_DB, 10);
-    }
+  if (env.REDIS_PASSWORD || process.env.REDIS_PASSWORD) {
+    config.password = env.REDIS_PASSWORD || process.env.REDIS_PASSWORD;
+  }
+  if (env.REDIS_DB || process.env.REDIS_DB) {
+    config.database = parseInt(env.REDIS_DB || process.env.REDIS_DB || "0", 10);
   }
 
   return config;
 }
 
-export const redisClient: RedisClientType = createClient(getRedisConfig());
+/**
+ * Safe initializer for the primary Redis client instance
+ */
+function initRedisClient(): RedisClientType {
+  try {
+    const config = getRedisConfig();
+    return createClient(config);
+  } catch (err: any) {
+    logger.warn(`⚠️ Failed to initialize Redis client with config: ${err.message}. Operating in fallback mode.`);
+    return createClient({
+      url: "redis://localhost:6379",
+      socket: {
+        reconnectStrategy: () => new Error("Fallback Redis client offline"),
+      },
+    });
+  }
+}
+
+export const redisClient: RedisClientType = initRedisClient();
+export const redis: RedisClientType = redisClient;
 
 let hasLoggedConnectError = false;
 let isConnecting = false;
@@ -58,11 +92,14 @@ let isConnecting = false;
 redisClient.on("error", (err: Error) => {
   if (!hasLoggedConnectError) {
     hasLoggedConnectError = true;
-    const isLocalhost = env.REDIS_HOST === "localhost" || env.REDIS_URL.includes("localhost") || env.REDIS_URL.includes("127.0.0.1");
+    const isLocalhost = (env.REDIS_HOST || "").includes("localhost") || 
+      (env.REDIS_URL || "").includes("localhost") || 
+      (env.REDIS_URL || "").includes("127.0.0.1") ||
+      (env.REDIS_URL || "").includes("redis://redis:6379");
     if (isLocalhost && (env.NODE_ENV || "development") === "development") {
       logger.warn(`⚠️ Redis not reachable at ${env.REDIS_HOST}:${env.REDIS_PORT}. (Run 'docker compose -f docker-compose.dev.yml up -d redis' to start Docker Redis). Operating with active in-memory fallback.`);
     } else {
-      logger.warn(`⚠️ Redis Connection Warning: ${err.message}`);
+      logger.warn(`⚠️ Redis Connection Warning: ${err.message}. Operating with active in-memory fallback.`);
     }
   }
 });
@@ -98,6 +135,7 @@ export async function connectRedis(): Promise<boolean> {
     }
     return true;
   } catch (err: any) {
+    logger.warn(`⚠️ Redis connection could not be established (${err.message}). In-memory fallback is active.`);
     return false;
   } finally {
     isConnecting = false;
@@ -108,7 +146,11 @@ export async function connectRedis(): Promise<boolean> {
  * Returns true if Redis connection is ready and healthy
  */
 export function isRedisReady(): boolean {
-  return redisClient.isOpen && redisClient.isReady;
+  try {
+    return Boolean(redisClient && redisClient.isOpen && redisClient.isReady);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -122,9 +164,18 @@ export async function verifyRedisConnection(): Promise<{
   latencyMs: number;
   error?: string;
 }> {
-  const host = env.REDIS_HOST || "localhost";
-  const port = env.REDIS_PORT || "6379";
-  const database = env.REDIS_DB || "0";
+  const rawUrl = env.REDIS_URL || process.env.REDIS_URL || "";
+  let host = env.REDIS_HOST || process.env.REDIS_HOST || "localhost";
+  let port = env.REDIS_PORT || process.env.REDIS_PORT || "6379";
+  const database = env.REDIS_DB || process.env.REDIS_DB || "0";
+
+  if (rawUrl) {
+    try {
+      const parsed = new URL(rawUrl);
+      host = parsed.hostname || host;
+      port = parsed.port || port;
+    } catch {}
+  }
 
   try {
     const isConnected = await connectRedis();
