@@ -1,4 +1,4 @@
-﻿# 01 External Services and Setup
+# 01 External Services and Setup
 
 > Consolidated documentation chapter for **backend**
 
@@ -219,37 +219,6 @@ When an entity (e.g. Property, Resident, Complaint) is deleted from RoomBae:
 
 ## Source: $relSource
 
-# RoomBae — Firebase Authentication & Setup Guide
-
-This document describes the setup, configuration, and environment rules for Firebase Authentication and Firebase Admin SDK in RoomBae.
-
----
-
-## 1. Environment Configurations
-
-### Backend Credentials (`backend/.env`)
-- `FIREBASE_PROJECT_ID="roombae-cff13"`
-- `FIREBASE_CLIENT_EMAIL="firebase-adminsdk-fbsvc@roombae-cff13.iam.gserviceaccount.com"`
-- `FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."`
-
-### Frontend Credentials (`frontend/.env`)
-- `VITE_FIREBASE_API_KEY="..."`
-- `VITE_FIREBASE_AUTH_DOMAIN="roombae-cff13.firebaseapp.com"`
-- `VITE_FIREBASE_PROJECT_ID="roombae-cff13"`
-- `VITE_FIREBASE_STORAGE_BUCKET="roombae-cff13.firebasestorage.app"`
-
----
-
-## 2. Firebase Billing & Phone Authentication Rules
-
-1. **Firebase Blaze Plan Requirement**: Real SMS OTP delivery requires the Firebase Project (`roombae-cff13`) to be upgraded to the **Blaze (Pay-As-You-Go)** plan in the Firebase Console. On the Spark plan, Firebase returns `auth/billing-not-enabled`.
-2. **Local/Dev Verification Fallback**: In development or test environments, mock code `123456` or test phone numbers configured in Firebase Console can be used to bypass SMS charges.
-3. **reCAPTCHA Verifier**: Initialized on invisible containers (`#recaptcha-container`) attached to the DOM before `signInWithPhoneNumber` is invoked.
-
-
-
----
-
 ## Source: $relSource
 
 # 🛠️ RoomBae Environment Setup & Deployment Guide
@@ -459,21 +428,11 @@ https://your-backend-domain/api/v1/auth/google/callback
 
 ---
 
-# 📧 Email Provider
+# 📧 Email Configuration
 
-Configure your preferred email provider.
-
-Example variables
+Configure your email sender settings:
 
 ```env
-SMTP_HOST=<smtp_host>
-
-SMTP_PORT=<smtp_port>
-
-SMTP_USER=<smtp_username>
-
-SMTP_PASS=<smtp_password>
-
 EMAIL_FROM=<display_name_and_email>
 ```
 
@@ -487,18 +446,6 @@ CLOUDINARY_CLOUD_NAME=<cloud_name>
 CLOUDINARY_API_KEY=<api_key>
 
 CLOUDINARY_API_SECRET=<api_secret>
-```
-
----
-
-# 🔥 Firebase Admin
-
-```env
-FIREBASE_PROJECT_ID=<project_id>
-
-FIREBASE_CLIENT_EMAIL=<client_email>
-
-FIREBASE_PRIVATE_KEY=<private_key>
 ```
 
 ---
@@ -520,17 +467,10 @@ FIREBASE_PRIVATE_KEY=<private_key>
 | GOOGLE_CLIENT_ID | Yes | Google OAuth Client ID |
 | GOOGLE_CLIENT_SECRET | Yes | Google OAuth Client Secret |
 | GOOGLE_CALLBACK_URL | Yes | OAuth callback URL |
-| SMTP_HOST | Yes | SMTP server |
-| SMTP_PORT | Yes | SMTP port |
-| SMTP_USER | Yes | SMTP username |
-| SMTP_PASS | Yes | SMTP password |
 | EMAIL_FROM | Yes | Sender email |
 | CLOUDINARY_CLOUD_NAME | Yes | Cloudinary cloud name |
 | CLOUDINARY_API_KEY | Yes | Cloudinary API key |
 | CLOUDINARY_API_SECRET | Yes | Cloudinary API secret |
-| FIREBASE_PROJECT_ID | Yes | Firebase project |
-| FIREBASE_CLIENT_EMAIL | Yes | Firebase service account email |
-| FIREBASE_PRIVATE_KEY | Yes | Firebase private key |
 
 ---
 
@@ -550,8 +490,6 @@ DATABASE_URL is required
 JWT_SECRET must contain at least 32 characters
 
 GOOGLE_CLIENT_SECRET is missing
-
-SMTP_PASS is required
 ```
 
 ---
@@ -565,7 +503,7 @@ SMTP_PASS is required
 - Store production secrets only in your hosting provider (e.g. Render Environment Variables).
 - Use `.env.example` with placeholders for documentation.
 - Enable GitHub Secret Scanning and Push Protection.
-- Periodically rotate OAuth client secrets, JWT secrets, and SMTP credentials.
+- Periodically rotate OAuth client secrets and JWT secrets.
 
 ---
 
@@ -574,8 +512,7 @@ SMTP_PASS is required
 - MongoDB Atlas configured
 - Redis configured
 - Google OAuth configured
-- Firebase configured
-- SMTP configured
+- Email notifications configured
 - Cloudinary configured
 - Render environment variables added
 - Frontend environment variables added

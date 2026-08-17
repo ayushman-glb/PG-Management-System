@@ -30,6 +30,3 @@ All backend environment variables are validated at startup using Zod in `backend
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary | Asset upload cloud account name |
 | `CLOUDINARY_API_KEY` | Cloudinary | Asset upload API key |
 | `CLOUDINARY_API_SECRET` | Cloudinary | Asset upload API secret |
-| `SMTP_HOST` | Brevo / Email | Mail transfer agent host (`smtp-relay.brevo.com`) |
-| `SMTP_USER` | Brevo / Email | SMTP login username |
-| `SMTP_PASS` | Brevo / Email | SMTP login password |

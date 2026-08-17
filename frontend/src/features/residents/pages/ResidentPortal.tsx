@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Home,
   User,
@@ -26,6 +26,7 @@ import { env } from "@config/env";
 import { AgreementViewerModal } from "@features/documents/components/AgreementViewerModal";
 import { DocumentUploadPortal } from "@components/DocumentUploadPortal";
 import { RoomTransferModal } from "@features/rooms/components/RoomTransferModal";
+import { PayRentModal } from "@features/billing/components/PayRentModal";
 
 import { Logo } from "@components/ui/Logo";
 import { useAuth } from "@hooks/useAuth";
@@ -60,6 +61,12 @@ export default function ResidentPortal({ navigate }: Props) {
   const [portalData, setPortalData] = useState<any>(null);
   const [_agreementsList, setAgreementsList] = useState<any[]>([]);
   const [residentProfile, setResidentProfile] = useState<any>(null);
+
+  // Pay Rent Modal State
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payModalAmount, setPayModalAmount] = useState(8500);
+  const [payModalTitle, setPayModalTitle] = useState("Monthly PG Rent");
+  const [payModalCategory, setPayModalCategory] = useState("RENT");
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -96,41 +103,50 @@ export default function ResidentPortal({ navigate }: Props) {
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [mockAgreement, setMockAgreement] = useState<any>(null);
 
-  const { showSkeleton } = useAdaptiveLoading(
-    async () => {
-      try {
-        const portalRes = await api.getPortalMe();
-        if (portalRes?.profile?.status) {
-          setResidentStatus(portalRes.profile.status);
-        }
-        if (portalRes?.complaints?.length) {
-          setComplaintsList(portalRes.complaints);
-        }
-        if (portalRes?.visitorPasses?.length) {
-          setVisitorPassesList(portalRes.visitorPasses);
-        }
-        if (portalRes?.gatePasses?.length) {
-          setGatePassesList(portalRes.gatePasses);
-        }
-        if (portalRes?.payments?.length) {
-          setPaymentsList(portalRes.payments);
-        }
-        if (portalRes?.agreements?.length) {
-          setAgreementsList(portalRes.agreements);
-          setMockAgreement(portalRes.agreements[0]);
-        }
-        if (portalRes?.profile) {
-          setResidentProfile(portalRes.profile);
-        }
-        setPortalData(portalRes);
-        return portalRes;
-      } catch (e) {
-        console.warn("Portal data load fallback:", e);
-        return null;
+  const loadPortalData = useCallback(async () => {
+    try {
+      const portalRes = await api.getPortalMe();
+      if (portalRes?.profile?.status) {
+        setResidentStatus(portalRes.profile.status);
       }
-    },
-    []
-  );
+      if (portalRes?.complaints?.length) {
+        setComplaintsList(portalRes.complaints);
+      }
+      if (portalRes?.visitorPasses?.length) {
+        setVisitorPassesList(portalRes.visitorPasses);
+      }
+      if (portalRes?.gatePasses?.length) {
+        setGatePassesList(portalRes.gatePasses);
+      }
+      if (portalRes?.payments?.length) {
+        setPaymentsList(portalRes.payments);
+      }
+      if (portalRes?.agreements?.length) {
+        setAgreementsList(portalRes.agreements);
+        setMockAgreement(portalRes.agreements[0]);
+      }
+      if (portalRes?.profile) {
+        setResidentProfile(portalRes.profile);
+      }
+      setPortalData(portalRes);
+      return portalRes;
+    } catch (e) {
+      console.warn("Portal data load fallback:", e);
+      return null;
+    }
+  }, []);
+
+  const { showSkeleton } = useAdaptiveLoading(loadPortalData, [loadPortalData]);
+
+  useEffect(() => {
+    const handleDataChange = () => {
+      loadPortalData();
+    };
+    window.addEventListener("roombae-data-changed", handleDataChange);
+    return () => {
+      window.removeEventListener("roombae-data-changed", handleDataChange);
+    };
+  }, [loadPortalData]);
 
   if (showSkeleton) {
     return <ResidentPortalSkeleton />;
@@ -292,8 +308,13 @@ export default function ResidentPortal({ navigate }: Props) {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setActiveTab("billing")}
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 shadow-md"
+                    onClick={() => {
+                      setPayModalAmount(portalData?.rentAmount || 8500);
+                      setPayModalTitle(`Monthly Rent - ${portalData?.currentMonth || "Current Month"}`);
+                      setPayModalCategory("RENT");
+                      setIsPayModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 shadow-md cursor-pointer"
                   >
                     Pay Rent Now
                   </button>
@@ -523,17 +544,12 @@ export default function ResidentPortal({ navigate }: Props) {
                   <button
                     onClick={() => {
                       const pendingPayment = paymentsList.find(p => p.status === 'PENDING');
-                      if (pendingPayment) {
-                        api.createBillingOrder(pendingPayment.id, pendingPayment.totalAmount).then(() => {
-                          alert("✓ Launching Secure Razorpay Gateway...");
-                        }).catch((err: any) => {
-                          alert(`Payment initiation failed: ${err.message}`);
-                        });
-                      } else {
-                        alert("No pending payments found.");
-                      }
+                      setPayModalAmount(pendingPayment?.totalAmount || portalData?.rentAmount || 8500);
+                      setPayModalTitle(pendingPayment ? `Invoice ${pendingPayment.invoiceNumber}` : `Monthly Rent - ${portalData?.currentMonth || "Current Month"}`);
+                      setPayModalCategory(pendingPayment?.category || "RENT");
+                      setIsPayModalOpen(true);
                     }}
-                    className="px-6 py-3 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 shadow-lg shadow-amber-500/20"
+                    className="px-6 py-3 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400 shadow-lg shadow-amber-500/20 cursor-pointer"
                   >
                     Pay Rent Now
                   </button>
@@ -844,6 +860,20 @@ export default function ResidentPortal({ navigate }: Props) {
             bedNumber: portalData?.bed?.bedNumber || ""
           }}
         onSuccess={() => setIsRoomTransferModalOpen(false)}
+      />
+
+      <PayRentModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        defaultAmount={payModalAmount}
+        itemTitle={payModalTitle}
+        itemCategory={payModalCategory}
+        residentId={residentProfile?.id}
+        roomId={portalData?.room?.id}
+        onSuccess={() => {
+          setIsPayModalOpen(false);
+          loadPortalData();
+        }}
       />
     </div>
   );

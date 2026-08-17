@@ -7,7 +7,7 @@ module.exports = {
     '^.+\\.(ts|js)$': ['ts-jest', { tsconfig: { allowJs: true } }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(jose|jwks-rsa|firebase-admin)/)',
+    'node_modules/(?!(jose|jwks-rsa)/)',
   ],
   forceExit: true,
   clearMocks: true,

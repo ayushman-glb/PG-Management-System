@@ -26,4 +26,9 @@ router.patch('/:id/status',
   authorize(Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
   (req, res, next) => Container.complaintController.updateStatus(req, res, next));
 
+// ── Send support reply email to ticket creator ─────────────────────────────────
+router.post('/send-reply',
+  authorize(Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.complaintController.sendSupportReply(req, res, next));
+
 export default router;

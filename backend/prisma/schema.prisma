@@ -273,6 +273,8 @@ model User {
   role               Role            @default(PUBLIC)
   phone              String?
   phoneVerified      Boolean         @default(false)
+  isPhoneVerified    Boolean         @default(false)
+  phoneVerifiedAt    DateTime?
   emailVerified      Boolean         @default(false)
   twoFactorEnabled   Boolean         @default(false)
   twoFactorMethod    String?         @default("NONE")
@@ -309,6 +311,21 @@ model User {
 
   @@index([residentCode])
   @@index([phone])
+}
+
+model PhoneOTP {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  phone       String
+  hashedOtp   String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  resendCount Int      @default(0)
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
 }
 
 model RefreshToken {
@@ -1029,27 +1046,45 @@ model Payment {
   id                String        @id @default(auto()) @map("_id") @db.ObjectId
   residentId        String        @db.ObjectId
   resident          Resident      @relation(fields: [residentId], references: [id])
+  ownerId           String?       @db.ObjectId
   pgId              String        @db.ObjectId
   pg                PG            @relation(fields: [pgId], references: [id])
+  roomId            String?       @db.ObjectId
+  bookingId         String?       @db.ObjectId
+  orderId           String?
+  paymentId         String?
+  signature         String?
+  receiptNumber     String?
   invoiceNumber     String        @unique
   baseAmount        Float
-  cgstAmount        Float
-  sgstAmount        Float
-  igstAmount        Float
+  cgstAmount        Float         @default(0)
+  sgstAmount        Float         @default(0)
+  igstAmount        Float         @default(0)
   lateFee           Float         @default(0)
   totalAmount       Float
+  currency          String        @default("INR")
   paymentDate       DateTime      @default(now())
-  dueDate           DateTime
+  dueDate           DateTime?
   paymentMethod     String
   status            PaymentStatus @default(PAID)
+  description       String?
   razorpayOrderId   String?
   razorpayPaymentId String?
+  razorpaySignature String?
+  paidAt            DateTime?
   invoice           Invoice?
   createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @default(now()) @updatedAt
 
   @@index([residentId])
+  @@index([ownerId])
   @@index([pgId])
   @@index([status])
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+  @@index([createdAt])
 }
 
 model Invoice {
@@ -1062,7 +1097,53 @@ model Invoice {
   pg            PG       @relation(fields: [pgId], references: [id])
   invoiceNumber String   @unique
   pdfUrl        String
+  subtotal      Float?
+  gst           Float?
+  total         Float?
   generatedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([residentId])
+  @@index([pgId])
+  @@index([generatedAt])
+}
+
+model PaymentAnalytics {
+  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  pgId                    String?  @db.ObjectId
+  ownerId                 String?  @db.ObjectId
+  totalRevenue            Float    @default(0)
+  monthlyRevenue          Float    @default(0)
+  dailyRevenue            Float    @default(0)
+  pendingAmount           Float    @default(0)
+  successfulPaymentsCount Int      @default(0)
+  failedPaymentsCount     Int      @default(0)
+  refundedAmount          Float    @default(0)
+  collectionRatePercent   Float    @default(0)
+  date                    DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([pgId])
+  @@index([date])
+}
+
+model PaymentWebhookLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String?
+  event     String
+  orderId   String?
+  paymentId String?
+  payload   Json?
+  status    String   @default("PROCESSED") // "PROCESSED", "FAILED", "IGNORED"
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([event])
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([createdAt])
 }
 
 // ==========================================
@@ -1479,3 +1560,69 @@ model MoveInInfo {
   gateCode           String?
   updatedAt          DateTime @updatedAt
 }
+
+// ==========================================
+// EMAIL & NOTIFICATION SUBSYSTEM
+// ==========================================
+
+model EmailOTP {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  email       String
+  hashedOtp   String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  resendCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model EmailLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  recipient  String
+  subject    String
+  template   String
+  status     String   // "DELIVERED", "FAILED", "QUEUED"
+  sentAt     DateTime @default(now())
+  messageId  String?
+  error      String?
+  metadata   Json?
+
+  @@index([recipient])
+  @@index([status])
+  @@index([sentAt])
+}
+
+model EmailTemplate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  category  String   // "AUTH", "PAYMENT", "SUPPORT", "MARKETING"
+  subject   String
+  html      String
+  variables String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
+model MarketingCampaign {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  title                String
+  subject              String
+  audience             String    // "ALL_USERS", "RESIDENTS", "OWNERS", "CUSTOM"
+  html                 String
+  status               String    @default("DRAFT") // "DRAFT", "SCHEDULED", "SENDING", "SENT", "FAILED"
+  scheduledAt          DateTime?
+  sentAt               DateTime?
+  totalRecipients      Int       @default(0)
+  successfulDeliveries Int       @default(0)
+  failedDeliveries     Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([status])
+  @@index([scheduledAt])
+}

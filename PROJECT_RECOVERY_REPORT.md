@@ -42,7 +42,7 @@ RoomBae Monorepo
 - **Database Layer**: Prisma ORM v5.22 connected to MongoDB Atlas.
 - **Auth System**: Dual-role JWT authentication (Owner & Resident), OTP email/phone verification, bcrypt password hashing, 2FA/TOTP support, and Google OAuth 2.0.
 - **REST & SOAP APIs**: RESTful API endpoints under `/api/v1/` alongside a legacy SOAP ERP billing service at `/soap/billing`.
-- **External Integrations**: Cloudinary (image processing & upload), Razorpay (payments & subscriptions), Brevo SMTP (email notifications), Socket.IO (real-time chat & notifications).
+- **External Integrations**: Cloudinary (image processing & upload), Razorpay (payments & subscriptions), Transactional Notifications, Socket.IO (real-time chat & notifications).
 
 ---
 
@@ -76,4 +76,4 @@ To complete production deployment:
 
 1. **Environment Variables**: Populate `.env.production` files in `frontend` and `backend` using `.env.example` as a template.
 2. **MongoDB Atlas Replica Set**: Ensure the production MongoDB Atlas connection string uses `mongodb+srv://` to enable Prisma transaction support.
-3. **Third-Party Credentials**: Supply production credentials for Cloudinary, Razorpay, and Brevo SMTP in backend environment variables.
+3. **Third-Party Credentials**: Supply production credentials for Cloudinary and Razorpay in backend environment variables.

@@ -289,13 +289,12 @@ Detailed specification documents are available inside the [docs/](./docs) direct
 
 ## 🛡️ Enterprise Security & Integrations Architecture
 
-### 1. Firebase Phone Authentication
-- **Identity Provider**: Firebase Web Auth SDK (`usePhoneAuth` hook with invisible reCAPTCHA).
-- **Server Verification**: `POST /api/v1/auth/firebase-login` verifies ID tokens via `firebase-admin` server-side before issuing backend JWT access/refresh tokens.
+### 1. Authentication & Session Security
+- **Identity Provider**: Secure JWT access & refresh token rotation with multi-factor authentication and Google OAuth 2.0.
+- **Verification**: Cryptographic OTP verification for phone and email addresses.
 
-### 2. Brevo SMTP Transactional Email
-- **Relay Server**: `smtp-relay.brevo.com:587` via Nodemailer transporter singleton with startup verification.
-- **Templates**: Standardized HTML email templates for OTP verification, Password Resets, Welcome Greetings, System Notifications, and Digital Agreements.
+### 2. Transactional Notifications & Communication
+- **Notification Relay**: Standardized HTML email templates for OTP verification, Password Resets, Welcome Greetings, System Notifications, and Digital Agreements.
 
 ### 3. Cloudinary Media Storage & Security Pipeline
 - **Upload Endpoint**: `POST /api/v1/upload/image` & `POST /api/v1/upload/document`.
@@ -317,14 +316,9 @@ Detailed specification documents are available inside the [docs/](./docs) direct
 
 ```env
 # Frontend (.env)
-VITE_FIREBASE_API_KEY
-VITE_FIREBASE_AUTH_DOMAIN
-VITE_FIREBASE_PROJECT_ID
-VITE_FIREBASE_STORAGE_BUCKET
-VITE_FIREBASE_MESSAGING_SENDER_ID
-VITE_FIREBASE_APP_ID
-VITE_FIREBASE_MEASUREMENT_ID
 VITE_API_BASE_URL
+VITE_GOOGLE_CLIENT_ID
+VITE_RAZORPAY_KEY_ID
 
 # Backend (.env)
 PORT=5000
@@ -333,13 +327,6 @@ DATABASE_URL
 JWT_SECRET
 JWT_REFRESH_SECRET
 ENCRYPTION_KEY
-FIREBASE_PROJECT_ID
-FIREBASE_CLIENT_EMAIL
-FIREBASE_PRIVATE_KEY
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USER
-SMTP_PASS
 EMAIL_FROM
 CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY

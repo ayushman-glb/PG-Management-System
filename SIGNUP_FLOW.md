@@ -13,8 +13,8 @@ This document details RoomBae's multi-step registration wizard for both **PG Own
 ### Step 2: Personal Details & Verification
 - **Fields**: Profile Photo, Full Name, Gender, Date of Birth, Age, Phone Number, Email, City, District, State, PIN Code, Password.
 - **Verification**:
-  - **Phone Verification**: Firebase Phone Auth SMS OTP.
-  - **Email Verification**: Brevo SMTP 6-digit email OTP.
+  - **Phone Verification**: SMS OTP verification.
+  - **Email Verification**: Transactional 6-digit email OTP verification.
 - **Validation**: Strict real-time Zod & regex validation (full name format, age checks, password strength rules).
 
 ### Step 3: KYC & Role-Specific Verification

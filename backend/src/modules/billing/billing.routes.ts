@@ -5,7 +5,11 @@ import { Role } from '@prisma/client';
 
 const router = Router();
 
-// All billing routes require authentication
+// ── Webhook: no authenticate — Razorpay is external; signature validated via HMAC SHA256 ─
+router.post('/webhook',
+  (req, res, next) => Container.billingController.handleWebhook(req, res, next));
+
+// All subsequent billing routes require authentication
 router.use(authenticate);
 
 // ── Fine management: OWNER / ADMIN only ──────────────────────────────────────
@@ -65,6 +69,15 @@ router.get('/receipts/:paymentId/download',
   authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
   (req, res, next) => Container.billingController.getReceiptPdf(req, res, next));
 
+// ── Email dispatch for receipts and invoices ──────────────────────────────────
+router.post('/send-receipt',
+  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.billingController.sendReceipt(req, res, next));
+
+router.post('/send-invoice',
+  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.billingController.sendInvoice(req, res, next));
+
 // ── Payment listing (owner / admin only) ─────────────────────────────────────
 router.get('/payments',
   authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN),
@@ -79,9 +92,5 @@ router.post('/refunds',
 router.get('/analytics',
   authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN),
   (req, res, next) => Container.billingController.getAnalytics(req, res, next));
-
-// ── Webhook: no authenticate — Razorpay is external; signature validated in service ─
-router.post('/webhook',
-  (req, res, next) => Container.billingController.handleWebhook(req, res, next));
 
 export default router;

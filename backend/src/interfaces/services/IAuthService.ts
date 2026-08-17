@@ -54,10 +54,19 @@ export interface IAuthService {
   ): Promise<{ success: boolean; message: string }>;
   sendEmailVerification(
     email: string,
-  ): Promise<{ success: boolean; message: string }>;
+    name?: string,
+  ): Promise<{ success: boolean; message: string; cooldownSeconds?: number }>;
   verifyEmail(
     email: string,
     code: string,
+  ): Promise<{ success: boolean; message: string }>;
+  sendPasswordReset?(
+    email: string,
+  ): Promise<{ success: boolean; message: string }>;
+  verifyPasswordReset?(
+    email: string,
+    otp: string,
+    newPassword?: string,
   ): Promise<{ success: boolean; message: string }>;
   enableTwoFactor(
     userId: string,

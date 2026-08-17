@@ -29,8 +29,18 @@ export class ComplaintController {
 
   updateStatus = catchAsync(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
-    const { status } = req.body;
-    const updated = await this.complaintService.updateStatus(id, status);
+    const { status, resolutionNotes } = req.body;
+    const updated = await this.complaintService.updateStatus(id, status, resolutionNotes);
     return ApiResponse.success(res, 'Complaint status updated', updated);
+  });
+
+  sendSupportReply = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { ticketCode, message } = req.body;
+    const repliedBy = req.user?.name || req.user?.email || 'Support Team';
+    if (this.complaintService.sendSupportReply) {
+      const result = await this.complaintService.sendSupportReply(ticketCode, message, repliedBy);
+      return ApiResponse.success(res, 'Support reply sent successfully', result);
+    }
+    return ApiResponse.success(res, 'Support reply recorded', {});
   });
 }

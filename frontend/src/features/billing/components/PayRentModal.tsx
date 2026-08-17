@@ -15,10 +15,11 @@ import {
   Wallet,
   Smartphone,
   Check,
+  Mail,
 } from "lucide-react";
 import { useTheme } from "../../../theme";
 import { useAuth } from "../../../hooks/useAuth";
-import { billingService } from "../../../services/billing.service";
+import { billingService, VerifiedPaymentResult } from "../../../services/billing.service";
 
 export type PaymentMethod = "CARD" | "UPI" | "WALLET" | "NET_BANKING";
 
@@ -38,6 +39,8 @@ interface PayRentModalProps {
   defaultAmount?: number;
   itemTitle?: string;
   itemCategory?: string;
+  residentId?: string;
+  roomId?: string;
 }
 
 const POPULAR_BANKS = [
@@ -62,6 +65,8 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
   defaultAmount = 8500,
   itemTitle = "Monthly PG Rent",
   itemCategory = "RENT",
+  residentId,
+  roomId,
 }) => {
   const { darkMode } = useTheme();
   const { user } = useAuth();
@@ -96,10 +101,12 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
   const [selectedWallet, setSelectedWallet] = useState("amazonpay");
   const [selectedBank, setSelectedBank] = useState("hdfc");
 
-  // Processing & Success State Payload
+  // Processing, Success & Error State Payload
   const [errorMessage, setErrorMessage] = useState("");
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [successPaymentId, setSuccessPaymentId] = useState("");
-  const [txnSignature, setTxnSignature] = useState("");
+  const [verifiedResult, setVerifiedResult] = useState<VerifiedPaymentResult | null>(null);
 
   // Sync default amount
   useEffect(() => {
@@ -154,34 +161,68 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
   const handleExecutePayment = async () => {
     setPaymentState("PROCESSING");
     setErrorMessage("");
+    setEmailStatus(null);
 
     try {
-      const residentId = (user as any)?.residentId || (user as any)?.id || "dev_resident_123";
-      const orderData = await billingService.createBillingOrder(residentId, grandTotal);
+      const targetResidentId = residentId || (user as any)?.residentId || (user as any)?.id || "dev_resident_123";
+      const orderData = await billingService.createBillingOrder(targetResidentId, grandTotal, {
+        roomId,
+        itemCategory,
+        description: `${itemCategory} - ${itemTitle}`,
+      });
+
+      const finalizeVerification = async (
+        paymentId: string,
+        orderId: string,
+        paymentTxnId: string,
+        signature: string
+      ) => {
+        try {
+          const verified = await billingService.verifyPayment(
+            paymentId,
+            orderId,
+            paymentTxnId,
+            signature
+          );
+          setSuccessPaymentId(paymentId);
+          setVerifiedResult(verified);
+          setPaymentState("SUCCESS");
+
+          // Dispatch global custom event so all realtime dashboards refresh
+          window.dispatchEvent(
+            new CustomEvent("roombae-data-changed", {
+              detail: { type: "payment", paymentId },
+            })
+          );
+
+          onSuccess?.();
+        } catch (err: any) {
+          setErrorMessage(err.message || "Payment verification failed.");
+          setPaymentState("FAILED");
+        }
+      };
 
       const rzpOptions = {
         key: orderData.keyId,
-        amount: orderData.totalAmount * 100,
+        amount: Math.round(orderData.totalAmount * 100),
         currency: orderData.currency || "INR",
         name: "RoomBae Enterprise Stays",
         description: `${itemCategory} - ${orderData.invoiceNumber}`,
         order_id: orderData.razorpayOrderId,
         handler: async (resp: any) => {
-          try {
-            await billingService.verifyPayment(
-              orderData.paymentId,
-              resp.razorpay_order_id || orderData.razorpayOrderId,
-              resp.razorpay_payment_id || `pay_${Date.now()}`,
-              resp.razorpay_signature || "valid_signature"
-            );
-            setSuccessPaymentId(orderData.paymentId);
-            setTxnSignature(resp.razorpay_payment_id || `PAY_RB_${Math.floor(100000 + Math.random() * 900000)}`);
-            setPaymentState("SUCCESS");
-            onSuccess?.();
-          } catch (err: any) {
-            setErrorMessage(err.message || "Payment verification failed.");
-            setPaymentState("FAILED");
-          }
+          await finalizeVerification(
+            orderData.paymentId,
+            resp.razorpay_order_id || orderData.razorpayOrderId,
+            resp.razorpay_payment_id || `pay_${Date.now()}`,
+            resp.razorpay_signature || "valid_signature"
+          );
+        },
+        modal: {
+          ondismiss: () => {
+            if (paymentState === "PROCESSING") {
+              setPaymentState("IDLE");
+            }
+          },
         },
         prefill: {
           name: (user as any)?.name || cardHolder || "Resident",
@@ -197,23 +238,14 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
         const rzp = new (window as any).Razorpay(rzpOptions);
         rzp.open();
       } else {
-        // Fallback test verification when script is loading in local dev
+        // Safe fallback in dev if script is blocked or offline
         setTimeout(async () => {
-          try {
-            await billingService.verifyPayment(
-              orderData.paymentId,
-              orderData.razorpayOrderId,
-              `pay_dev_${Date.now()}`,
-              "mock_signature_valid"
-            );
-            setSuccessPaymentId(orderData.paymentId);
-            setTxnSignature(`PAY_RB_${Math.floor(100000 + Math.random() * 900000)}`);
-            setPaymentState("SUCCESS");
-            onSuccess?.();
-          } catch (err: any) {
-            setErrorMessage(err.message || "Failed to complete payment transaction");
-            setPaymentState("FAILED");
-          }
+          await finalizeVerification(
+            orderData.paymentId,
+            orderData.razorpayOrderId,
+            `pay_dev_${Date.now()}`,
+            "mock_signature_valid"
+          );
         }, 1200);
       }
     } catch (err: any) {
@@ -222,10 +254,26 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
     }
   };
 
+  // Resend Email Receipt Action
+  const handleEmailReceipt = async () => {
+    if (!successPaymentId) return;
+    setIsSendingEmail(true);
+    setEmailStatus(null);
+    try {
+      await billingService.sendReceiptEmail(successPaymentId, (user as any)?.email);
+      setEmailStatus("Receipt sent to your registered Gmail address!");
+    } catch (err: any) {
+      setEmailStatus("Could not send email receipt. Please try again.");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   // Reset to Try Again
   const handleRetryPayment = () => {
     setPaymentState("IDLE");
     setErrorMessage("");
+    setEmailStatus(null);
   };
 
   return (
@@ -263,12 +311,14 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
             </button>
           </div>
 
-          {/* SUCCESS VIEW */}
+          {/* ========================================================================= */}
+          {/* PHASE 7: COMPLETE PAYMENT SUCCESS SCREEN                                  */}
+          {/* ========================================================================= */}
           {paymentState === "SUCCESS" ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-8 sm:p-12 text-center max-w-lg mx-auto space-y-6"
+              className="p-8 sm:p-12 text-center max-w-xl mx-auto space-y-6"
             >
               <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/20">
                 <motion.div
@@ -283,263 +333,315 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
               <div>
                 <h3 className="text-2xl font-black text-emerald-400">Payment Successful!</h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Your transaction has been processed and verified via Razorpay.
+                  Your rent payment has been verified and recorded to your RoomBae account.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs font-mono text-left">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Transaction ID:</span>
-                  <span className="text-amber-400 font-bold">{txnSignature}</span>
+              {/* Complete Payment Metadata Breakdown */}
+              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5 text-xs font-mono text-left">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-slate-400 font-sans">Amount Paid:</span>
+                  <span className="text-emerald-400 font-black text-base">₹{grandTotal.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Amount Paid:</span>
-                  <span className="text-emerald-400 font-bold">₹{grandTotal.toLocaleString("en-IN")}</span>
+                  <span className="text-slate-400 font-sans">Resident Name:</span>
+                  <span className="text-slate-200 font-bold">{verifiedResult?.residentName || (user as any)?.name || "Resident"}</span>
+                </div>
+                {verifiedResult?.propertyName && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-sans">PG Property:</span>
+                    <span className="text-slate-200">{verifiedResult.propertyName}</span>
+                  </div>
+                )}
+                {verifiedResult?.roomNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-sans">Room / Bed:</span>
+                    <span className="text-slate-200">{verifiedResult.roomNumber}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-sans">Invoice Number:</span>
+                  <span className="text-amber-400 font-bold">{verifiedResult?.invoiceNumber || "INV-2026-RECENT"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Item:</span>
-                  <span className="text-white font-bold">{itemTitle}</span>
+                  <span className="text-slate-400 font-sans">Receipt Number:</span>
+                  <span className="text-amber-400 font-bold">{verifiedResult?.receiptNumber || "REC-2026-RECENT"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-sans">Transaction ID:</span>
+                  <span className="text-slate-300 font-mono text-[11px]">{verifiedResult?.transactionId || "TXN_RZP_VERIFIED"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-sans">Date & Time:</span>
+                  <span className="text-slate-300">{new Date().toLocaleString("en-IN")}</span>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              {/* Status banner for email */}
+              {emailStatus && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-sans">
+                  {emailStatus}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <a
                   href={billingService.getInvoicePdfUrl(successPaymentId)}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex-1 py-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  className="py-3 px-4 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
-                  <Download className="w-4 h-4" /> Download Receipt
+                  <Download className="w-4 h-4" /> Download PDF
                 </a>
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="flex-1 py-3.5 rounded-xl bg-amber-500 text-black font-extrabold text-xs shadow-lg hover:bg-amber-400 cursor-pointer transition-colors"
+                  disabled={isSendingEmail}
+                  onClick={handleEmailReceipt}
+                  className="py-3 px-4 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
-                  Done
+                  <Mail className="w-4 h-4 text-amber-400" />
+                  {isSendingEmail ? "Sending..." : "Email Receipt"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="py-3 px-4 rounded-xl bg-amber-500 text-black font-extrabold text-xs shadow-lg hover:bg-amber-400 cursor-pointer transition-colors"
+                >
+                  Dashboard
+                </button>
+              </div>
+            </motion.div>
+          ) : paymentState === "FAILED" ? (
+            /* ========================================================================= */
+            /* PHASE 8: COMPLETE PAYMENT FAILED SCREEN                                   */
+            /* ========================================================================= */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-8 sm:p-12 text-center max-w-md mx-auto space-y-6"
+            >
+              <div className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 text-red-400 flex items-center justify-center mx-auto shadow-xl shadow-red-500/20">
+                <AlertCircle className="w-12 h-12" />
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-black text-red-400">Payment Failed</h3>
+                <p className="text-xs text-slate-400 mt-2">
+                  {errorMessage || "The transaction could not be completed. No money was deducted."}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs font-mono text-left space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Attempted Amount:</span>
+                  <span className="text-red-400 font-bold">₹{grandTotal.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Status:</span>
+                  <span className="text-red-400 font-bold">FAILED</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleRetryPayment}
+                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-black font-extrabold text-xs shadow-lg hover:from-amber-400 hover:to-amber-500 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  <RotateCcw className="w-4 h-4" /> Try Again
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
                 </button>
               </div>
             </motion.div>
           ) : (
-            /* ACTIVE CHECKOUT VIEW (2-SECTION LAYOUT) */
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              
-              {/* LEFT SECTION — PRIMARY PAYMENT INTERACTION */}
+            /* ========================================================================= */
+            /* CHECKOUT FORM VIEW                                                        */
+            /* ========================================================================= */
+            <div className="grid grid-cols-1 lg:grid-cols-12">
+              {/* LEFT SECTION — PAYMENT METHOD SELECTOR & INPUTS */}
               <div className="lg:col-span-7 p-6 sm:p-8 space-y-6 border-b lg:border-b-0 lg:border-r border-amber-500/20">
-                {/* Header Amount Display */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Payable Amount</span>
-                    <h3 className="text-3xl sm:text-4xl font-black text-amber-500 tracking-tight mt-0.5">
-                      ₹{grandTotal.toLocaleString("en-IN")}
-                    </h3>
-                  </div>
-                  <div className="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5" /> 100% Guaranteed
-                  </div>
-                </div>
-
-                {/* Payment Method Selector Tabs */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { id: "CARD", label: "Card", icon: CreditCard },
-                    { id: "UPI", label: "UPI / QR", icon: Smartphone },
-                    { id: "WALLET", label: "Wallet", icon: Wallet },
-                    { id: "NET_BANKING", label: "NetBanking", icon: Building },
-                  ].map((m) => {
-                    const Icon = m.icon;
-                    const isSel = selectedMethod === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedMethod(m.id as PaymentMethod);
-                          setPaymentState("METHOD_SELECTED");
-                        }}
-                        className={`p-3 rounded-2xl border text-xs font-extrabold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                          isSel
-                            ? "bg-amber-500/20 border-amber-500 text-amber-400 shadow-lg shadow-amber-500/10 scale-[1.02]"
-                            : "border-slate-300 dark:border-slate-700/70 hover:border-amber-500/40 text-slate-600 dark:text-slate-300"
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span>{m.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* ERROR FEEDBACK BAR */}
-                {errorMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-3.5 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center justify-between gap-2"
+                {/* Method Navigation Tabs */}
+                <div className="grid grid-cols-4 gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod("CARD")}
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      selectedMethod === "CARD"
+                        ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                        : "text-slate-400 hover:text-white"
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{errorMessage}</span>
-                    </div>
-                    {paymentState === "FAILED" && (
-                      <button
-                        type="button"
-                        onClick={handleRetryPayment}
-                        className="px-2.5 py-1 bg-rose-500 text-white rounded-lg text-[10px] font-extrabold flex items-center gap-1 cursor-pointer hover:bg-rose-600"
-                      >
-                        <RotateCcw className="w-3 h-3" /> Retry
-                      </button>
-                    )}
-                  </motion.div>
+                    <CreditCard className="w-4 h-4" />
+                    <span>Card</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod("UPI")}
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      selectedMethod === "UPI"
+                        ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <QrCode className="w-4 h-4" />
+                    <span>UPI / QR</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod("WALLET")}
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      selectedMethod === "WALLET"
+                        ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Wallet className="w-4 h-4" />
+                    <span>Wallets</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod("NET_BANKING")}
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      selectedMethod === "NET_BANKING"
+                        ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Building className="w-4 h-4" />
+                    <span>NetBanking</span>
+                  </button>
+                </div>
+
+                {/* Error Banner */}
+                {errorMessage && (
+                  <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
                 )}
 
-                {/* MORPHING PAYMENT FORM CONTAINER */}
+                {/* TAB 1: CREDIT / DEBIT CARD WITH 3D PREVIEW */}
                 <AnimatePresence mode="wait">
-                  {/* METHOD 1: CREDIT / DEBIT CARD WITH 3D FLIP */}
                   {selectedMethod === "CARD" && (
                     <motion.div
-                      key="card-form"
-                      initial={{ opacity: 0, y: 15 }}
+                      key="card-tab"
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                      className="space-y-5"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-6"
                     >
-                      {/* REALISTIC 3D VIRTUAL PAYMENT CARD */}
-                      <div className="perspective-1000 w-full max-w-sm mx-auto h-48 sm:h-52">
+                      {/* Interactive 3D Card Preview */}
+                      <div className="perspective-1000">
                         <div
-                          className={`w-full h-full relative transition-transform duration-700 transform-style-3d ${
+                          className={`w-full max-w-sm mx-auto h-44 sm:h-48 rounded-2xl p-5 sm:p-6 bg-gradient-to-tr from-[#1E1B18] via-[#2E2823] to-[#453B34] border border-amber-500/30 text-white shadow-2xl relative flex flex-col justify-between transition-transform duration-500 ${
                             focusedCardField === "cvv" ? "rotate-y-180" : ""
                           }`}
                         >
-                          {/* CARD FRONT FACE */}
-                          <div className="absolute inset-0 rounded-2xl p-5 bg-gradient-to-tr from-slate-900 via-amber-950 to-slate-900 border border-amber-500/30 text-white shadow-2xl flex flex-col justify-between backface-hidden overflow-hidden">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-
-                            <div className="flex items-center justify-between relative z-10">
-                              <div className="w-10 h-7 rounded-md bg-gradient-to-r from-amber-300 to-amber-500 opacity-90 flex items-center justify-center text-[9px] font-bold text-black font-mono">
-                                CHIP
+                          {focusedCardField !== "cvv" ? (
+                            <>
+                              <div className="flex justify-between items-start">
+                                <div className="w-10 h-8 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500/80 shadow-sm flex items-center justify-center font-bold text-black text-[9px]">
+                                  CHIP
+                                </div>
+                                <span className="font-mono text-xs text-amber-400/80 tracking-widest font-black">
+                                  ROOMBAE BLACK
+                                </span>
                               </div>
-                              <span className="font-mono text-xs tracking-widest font-extrabold text-amber-400">
-                                ROOMBAE FINTECH
-                              </span>
-                            </div>
 
-                            {/* Card Number Display */}
-                            <div
-                              className={`py-1.5 px-2 rounded-lg transition-all relative z-10 ${
-                                focusedCardField === "number" ? "ring-2 ring-amber-400 bg-amber-500/10" : ""
-                              }`}
-                            >
-                              <p className="font-mono text-base sm:text-lg tracking-[0.2em] font-extrabold text-shadow">
+                              <div className="font-mono text-base sm:text-lg tracking-widest text-slate-200">
                                 {cardNumber || "•••• •••• •••• ••••"}
-                              </p>
-                            </div>
-
-                            {/* Card Footer Details */}
-                            <div className="flex items-end justify-between relative z-10 text-xs">
-                              <div
-                                className={`py-1 px-2 rounded-lg transition-all ${
-                                  focusedCardField === "holder" ? "ring-2 ring-amber-400 bg-amber-500/10" : ""
-                                }`}
-                              >
-                                <p className="text-[9px] uppercase tracking-wider text-slate-400">Card Holder</p>
-                                <p className="font-bold tracking-wide uppercase truncate max-w-[150px]">
-                                  {cardHolder || "YOUR NAME"}
-                                </p>
                               </div>
 
-                              <div
-                                className={`py-1 px-2 rounded-lg transition-all ${
-                                  focusedCardField === "expiry" ? "ring-2 ring-amber-400 bg-amber-500/10" : ""
-                                }`}
-                              >
-                                <p className="text-[9px] uppercase tracking-wider text-slate-400">Expires</p>
-                                <p className="font-mono font-bold">{expiryDate || "MM/YY"}</p>
+                              <div className="flex justify-between items-end">
+                                <div>
+                                  <div className="text-[8px] uppercase tracking-wider text-slate-400">Card Holder</div>
+                                  <div className="text-xs font-bold uppercase tracking-wide truncate max-w-[150px]">
+                                    {cardHolder || (user as any)?.name || "RESIDENT NAME"}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-[8px] uppercase tracking-wider text-slate-400">Expires</div>
+                                  <div className="text-xs font-mono font-bold">{expiryDate || "MM/YY"}</div>
+                                </div>
                               </div>
-
-                              <div className="flex items-center">
-                                <div className="w-6 h-6 rounded-full bg-red-500/90" />
-                                <div className="w-6 h-6 rounded-full bg-amber-400/90 -ml-3" />
+                            </>
+                          ) : (
+                            <div className="flex flex-col justify-between h-full pt-2">
+                              <div className="h-9 bg-black/60 -mx-6 mb-2"></div>
+                              <div className="text-right pr-4">
+                                <div className="text-[9px] uppercase tracking-wider text-slate-400">CVV Security Code</div>
+                                <div className="font-mono font-bold text-base text-amber-400 tracking-widest">
+                                  {cvv || "•••"}
+                                </div>
+                              </div>
+                              <div className="text-[9px] text-slate-400">
+                                Protected by Razorpay 256-bit encryption.
                               </div>
                             </div>
-                          </div>
-
-                          {/* CARD BACK FACE (SHOWN ON CVV FOCUS) */}
-                          <div className="absolute inset-0 rounded-2xl p-5 bg-gradient-to-tr from-slate-950 via-slate-900 to-amber-950 border border-amber-500/30 text-white shadow-2xl flex flex-col justify-between rotate-y-180 backface-hidden">
-                            <div className="w-full h-10 bg-slate-950 border-y border-slate-800 -mx-5 mt-2" />
-
-                            <div className="space-y-1">
-                              <p className="text-[9px] uppercase tracking-wider text-slate-400 text-right">
-                                Security CVV
-                              </p>
-                              <div className="w-full p-2.5 rounded-lg bg-white/10 border border-amber-500/40 font-mono text-sm tracking-widest text-right font-extrabold text-amber-400">
-                                {cvv || "•••"}
-                              </div>
-                            </div>
-
-                            <p className="text-[9px] text-slate-400 text-center font-mono">
-                              256-BIT ENCRYPTED CARD TOKENIZATION
-                            </p>
-                          </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* CARD INPUT FIELDS */}
-                      <div className="space-y-3 text-xs">
+                      {/* Card Input Fields */}
+                      <div className="space-y-4">
                         <div>
-                          <label className="block font-bold uppercase mb-1">Card Number</label>
+                          <label className="block text-xs font-bold mb-1.5 text-slate-400">Card Number</label>
                           <input
                             type="text"
-                            maxLength={19}
                             placeholder="4532 8901 2345 6789"
+                            maxLength={19}
                             value={cardNumber}
                             onFocus={() => setFocusedCardField("number")}
-                            onBlur={() => setFocusedCardField(null)}
                             onChange={(e) => formatCardNumberInput(e.target.value)}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 font-mono focus:border-amber-500 focus:outline-none"
+                            className="w-full p-3 rounded-xl border border-slate-700 bg-slate-900/60 text-xs font-mono tracking-wider focus:border-amber-500 focus:outline-none"
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold uppercase mb-1">Card Holder Name</label>
+                          <label className="block text-xs font-bold mb-1.5 text-slate-400">Cardholder Name</label>
                           <input
                             type="text"
-                            placeholder="RAJESH KUMAR"
+                            placeholder="AYUSHMAN MISHRA"
                             value={cardHolder}
                             onFocus={() => setFocusedCardField("holder")}
-                            onBlur={() => setFocusedCardField(null)}
-                            onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                            className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 focus:border-amber-500 focus:outline-none"
+                            onChange={(e) => setCardHolder(e.target.value)}
+                            className="w-full p-3 rounded-xl border border-slate-700 bg-slate-900/60 text-xs uppercase tracking-wide focus:border-amber-500 focus:outline-none"
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block font-bold uppercase mb-1">Expiry Date</label>
+                            <label className="block text-xs font-bold mb-1.5 text-slate-400">Expiry (MM/YY)</label>
                             <input
                               type="text"
+                              placeholder="08/28"
                               maxLength={5}
-                              placeholder="12/28"
                               value={expiryDate}
                               onFocus={() => setFocusedCardField("expiry")}
-                              onBlur={() => setFocusedCardField(null)}
                               onChange={(e) => formatExpiryInput(e.target.value)}
-                              className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 font-mono focus:border-amber-500 focus:outline-none"
+                              className="w-full p-3 rounded-xl border border-slate-700 bg-slate-900/60 text-xs font-mono tracking-wider focus:border-amber-500 focus:outline-none"
                             />
                           </div>
-
                           <div>
-                            <label className="block font-bold uppercase mb-1">Security CVV</label>
+                            <label className="block text-xs font-bold mb-1.5 text-slate-400">CVV Code</label>
                             <input
                               type="password"
+                              placeholder="123"
                               maxLength={4}
-                              placeholder="•••"
                               value={cvv}
                               onFocus={() => setFocusedCardField("cvv")}
-                              onBlur={() => setFocusedCardField(null)}
                               onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-                              className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 font-mono focus:border-amber-500 focus:outline-none"
+                              className="w-full p-3 rounded-xl border border-slate-700 bg-slate-900/60 text-xs font-mono tracking-wider focus:border-amber-500 focus:outline-none"
                             />
                           </div>
                         </div>
@@ -547,91 +649,94 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                     </motion.div>
                   )}
 
-                  {/* METHOD 2: UPI / QR PAYMENT */}
+                  {/* TAB 2: UPI / QR CODE */}
                   {selectedMethod === "UPI" && (
                     <motion.div
-                      key="upi-form"
-                      initial={{ opacity: 0, y: 15 }}
+                      key="upi-tab"
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                      className="space-y-5"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-6"
                     >
-                      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs">
-                        <label className="block font-bold uppercase mb-1.5">Enter Virtual Payment Address (VPA)</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="username@okaxis or name@upi"
-                            value={upiId}
-                            onChange={(e) => {
-                              setUpiId(e.target.value);
-                              setIsUpiVerified(false);
-                            }}
-                            className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-900 text-white font-mono text-xs focus:outline-none focus:border-amber-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleVerifyUpi}
-                            disabled={isVerifyingUpi || isUpiVerified}
-                            className={`px-4 py-3 rounded-xl font-extrabold text-xs cursor-pointer transition-colors ${
-                              isUpiVerified
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                : "bg-amber-500 text-black hover:bg-amber-400"
-                            }`}
-                          >
-                            {isUpiVerified ? "✓ Verified" : isVerifyingUpi ? "Checking..." : "Verify VPA"}
-                          </button>
-                        </div>
-
-                        {isUpiVerified && (
-                          <p className="text-emerald-400 text-[11px] font-bold mt-2 flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" /> UPI ID verified &amp; ready for instant debit.
-                          </p>
-                        )}
-                      </div>
-
-                      {/* QR CODE TOGGLE */}
-                      <div className="text-center">
+                      <div className="flex gap-2 p-1 rounded-xl bg-white/5 border border-white/10">
                         <button
                           type="button"
-                          onClick={() => setShowQrCode(!showQrCode)}
-                          className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold inline-flex items-center gap-2 hover:bg-slate-800 transition-colors cursor-pointer"
+                          onClick={() => setShowQrCode(false)}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                            !showQrCode ? "bg-amber-500 text-black font-black" : "text-slate-400 hover:text-white"
+                          }`}
                         >
-                          <QrCode className="w-4 h-4 text-amber-500" />
-                          <span>{showQrCode ? "Hide UPI QR Code" : "Pay via Dynamic UPI QR Code"}</span>
+                          UPI VPA ID
                         </button>
-
-                        <AnimatePresence>
-                          {showQrCode && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              className="mt-4 p-4 rounded-2xl bg-white text-black inline-block shadow-2xl border-2 border-amber-500"
-                            >
-                              <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=roombae@okaxis&pn=RoomBaeStays&am=${grandTotal}&cu=INR`}
-                                alt="UPI Payment QR Code"
-                                className="w-40 h-40 mx-auto"
-                              />
-                              <p className="text-[11px] font-mono font-bold mt-2">Scan with GPay, PhonePe, Paytm</p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        <button
+                          type="button"
+                          onClick={() => setShowQrCode(true)}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                            showQrCode ? "bg-amber-500 text-black font-black" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Dynamic UPI QR
+                        </button>
                       </div>
+
+                      {!showQrCode ? (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-bold mb-1.5 text-slate-400">
+                              Enter UPI ID / VPA
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="resident@okhdfcbank"
+                                value={upiId}
+                                onChange={(e) => {
+                                  setUpiId(e.target.value);
+                                  setIsUpiVerified(false);
+                                }}
+                                className="flex-1 p-3 rounded-xl border border-slate-700 bg-slate-900/60 text-xs font-mono focus:border-amber-500 focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleVerifyUpi}
+                                disabled={isVerifyingUpi || !upiId}
+                                className="px-4 py-3 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 transition-colors disabled:opacity-50 cursor-pointer"
+                              >
+                                {isVerifyingUpi ? "Verifying..." : isUpiVerified ? "Verified ✓" : "Verify VPA"}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                            <Smartphone className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Supported: GPay, PhonePe, Paytm, BHIM, Amazon Pay</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center space-y-3">
+                          <div className="w-40 h-40 bg-white rounded-xl p-2 mx-auto flex items-center justify-center shadow-lg">
+                            {/* Visual QR Simulator */}
+                            <div className="w-full h-full border-2 border-dashed border-black flex flex-col items-center justify-center">
+                              <QrCode className="w-24 h-24 text-black" />
+                              <span className="text-[9px] font-mono text-black font-bold">UPI 2.0 QR</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            Scan with any UPI app to pay <strong className="text-amber-400">₹{grandTotal.toLocaleString("en-IN")}</strong>
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
 
-                  {/* METHOD 3: WALLET SELECTION */}
+                  {/* TAB 3: WALLETS */}
                   {selectedMethod === "WALLET" && (
                     <motion.div
-                      key="wallet-form"
-                      initial={{ opacity: 0, y: 15 }}
+                      key="wallet-tab"
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-3"
                     >
                       {WALLET_PROVIDERS.map((w) => {
                         const isSel = selectedWallet === w.id;
@@ -639,38 +744,37 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                           <div
                             key={w.id}
                             onClick={() => setSelectedWallet(w.id)}
-                            className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between text-xs ${
                               isSel
-                                ? "bg-amber-500/15 border-amber-500 shadow-lg"
+                                ? "bg-amber-500/15 border-amber-500 font-bold"
                                 : "border-slate-300 dark:border-slate-700 hover:border-amber-500/40"
                             }`}
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">{w.logo}</span>
+                              <span className="text-lg">{w.logo}</span>
                               <div>
-                                <h4 className="font-extrabold text-xs">{w.name}</h4>
-                                <p className="text-[10px] text-slate-400">{w.desc}</p>
+                                <div>{w.name}</div>
+                                <div className="text-[10px] text-slate-400 font-normal">{w.desc}</div>
                               </div>
                             </div>
-                            {isSel && <Check className="w-4 h-4 text-amber-500 shrink-0" />}
+                            {isSel && <Check className="w-4 h-4 text-amber-500" />}
                           </div>
                         );
                       })}
                     </motion.div>
                   )}
 
-                  {/* METHOD 4: NET BANKING */}
+                  {/* TAB 4: NET BANKING */}
                   {selectedMethod === "NET_BANKING" && (
                     <motion.div
-                      key="netbanking-form"
-                      initial={{ opacity: 0, y: 15 }}
+                      key="bank-tab"
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      exit={{ opacity: 0, y: -10 }}
                       className="space-y-3"
                     >
-                      <label className="block text-xs font-bold uppercase">Select Banking Partner</label>
-                      <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-400 mb-2">Select Your Bank</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {POPULAR_BANKS.map((b) => {
                           const isSel = selectedBank === b.id;
                           return (
@@ -789,7 +893,6 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                   </div>
                 </div>
               </div>
-
             </div>
           )}
         </motion.div>
@@ -797,3 +900,5 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
     </AnimatePresence>
   );
 };
+
+export default PayRentModal;

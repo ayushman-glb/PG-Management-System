@@ -1,4 +1,4 @@
-﻿# 03 Authentication and Security
+# 03 Authentication and Security
 
 > Consolidated documentation chapter for **backend**
 
@@ -8,7 +8,7 @@
 
 # RoomBae — Centralized Authentication & Authorization Architecture
 
-This document outlines RoomBae's hybrid authentication architecture combining Firebase Phone Authentication, Google OAuth 2.0 Sign-In, and Node.js JWT Access & Refresh Token Sessions.
+This document outlines RoomBae's authentication architecture combining Phone / Email OTP verification, Google OAuth 2.0 Sign-In, and Node.js JWT Access & Refresh Token Sessions.
 
 ---
 
@@ -17,14 +17,10 @@ This document outlines RoomBae's hybrid authentication architecture combining Fi
 ```
 Frontend Client (React)
    │
-   ├─► Firebase Web SDK (Phone Auth SMS OTP / Google Sign-In)
-   │      │
-   │      └─► Obtains Firebase ID Token
+   ├─► Phone / Email OTP Verification & Google OAuth 2.0
    │
    ▼
-Express Backend (/api/v1/auth/firebase-login or /auth/google)
-   │
-   ├─► Firebase Admin SDK (firebaseAdmin.auth().verifyIdToken)
+Express Backend (/api/v1/auth/login or /auth/google)
    │
    ├─► User Lookup / Upsert in MongoDB
    │
@@ -41,7 +37,6 @@ Both REST controllers and GraphQL resolvers delegate directly to `Container.auth
 
 | Operation | REST Endpoint | GraphQL Mutation | Shared Handler Method |
 | :--- | :--- | :--- | :--- |
-| **Phone / Firebase Login** | `POST /api/v1/auth/firebase-login` | `mutation { firebaseLogin }` | `authService.phoneVerify(idToken)` |
 | **Email Login** | `POST /api/v1/auth/login` | `mutation { login }` | `authService.login(identifier, pass)` |
 | **Register** | `POST /api/v1/auth/register` | `mutation { register }` | `authService.register(userData)` |
 | **Email OTP Send** | `POST /api/v1/auth/send-otp` | `mutation { sendEmailOTP }` | `authService.sendEmailVerification(email)` |
@@ -64,7 +59,7 @@ Both REST controllers and GraphQL resolvers delegate directly to `Container.auth
 
 # RoomBae — Google Sign-Up & OAuth 2.0 Integration
 
-This document describes RoomBae's "Sign Up with Google" autofill integration using Firebase Authentication.
+This document describes RoomBae's "Sign Up with Google" autofill integration using Google OAuth 2.0.
 
 ---
 
@@ -74,7 +69,7 @@ This document describes RoomBae's "Sign Up with Google" autofill integration usi
 User Clicks "Continue with Google"
    │
    ▼
-Firebase GoogleAuthProvider (signInWithPopup)
+Google OAuth 2.0 Client Authentication
    │
    ▼
 Google OAuth Popup Verification
@@ -259,9 +254,9 @@ This document records the security posture, middleware protections, secret manag
 | **CORS Origins** | Strict whitelist (`env.CLIENT_URL`, `env.FRONTEND_URL`, localhost development ports) with origin normalization. | ✅ VERIFIED |
 | **Rate Limiting** | `generalLimiter` (100 req/15min), `authLimiter` (10 req/15min), `uploadLimiter` (20 req/15min), `phoneVerifyLimiter`. | ✅ VERIFIED |
 | **File Upload Security** | Magic byte signature verification, Sharp buffer sanitization, extension whitelisting, file size caps. | ✅ VERIFIED |
-| **Bot Protection** | Google reCAPTCHA Enterprise verification with OTP bypass logic for verified Firebase ID Tokens. | ✅ VERIFIED |
+| **Bot Protection** | Google reCAPTCHA Enterprise verification with rate-limiting protection. | ✅ VERIFIED |
 | **Data Encryption** | Financial bank details & KYC scans encrypted with AES-256-GCM prior to database persistence. | ✅ VERIFIED |
-| **Secrets Exposure Audit** | Backend `.env` secrets (`CLOUDINARY_API_SECRET`, `JWT_SECRET`, `FIREBASE_PRIVATE_KEY`) strictly excluded from frontend build. | ✅ VERIFIED |
+| **Secrets Exposure Audit** | Backend `.env` secrets (`CLOUDINARY_API_SECRET`, `JWT_SECRET`, `ENCRYPTION_KEY`) strictly excluded from frontend build. | ✅ VERIFIED |
 
 ---
 
@@ -289,8 +284,8 @@ This document details RoomBae's multi-step registration wizard for both **PG Own
 ### Step 2: Personal Details & Verification
 - **Fields**: Profile Photo, Full Name, Gender, Date of Birth, Age, Phone Number, Email, City, District, State, PIN Code, Password.
 - **Verification**:
-  - **Phone Verification**: Firebase Phone Auth SMS OTP.
-  - **Email Verification**: Brevo SMTP 6-digit email OTP.
+  - **Phone Verification**: SMS OTP verification.
+  - **Email Verification**: Transactional 6-digit email OTP verification.
 - **Validation**: Strict real-time Zod & regex validation (full name format, age checks, password strength rules).
 
 ### Step 3: KYC & Role-Specific Verification

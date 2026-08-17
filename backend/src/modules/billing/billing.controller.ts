@@ -95,6 +95,106 @@ export class BillingController {
     return ApiResponse.success(res, 'Refund processed successfully', result);
   });
 
+  sendReceipt = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { paymentId, email } = req.body;
+    const payment = await Container.db.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        resident: {
+          include: {
+            user: true,
+            pg: true,
+            bed: { include: { room: true } },
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment record not found' });
+    }
+
+    const targetEmail = email || payment.resident?.email || payment.resident?.user?.email;
+    if (!targetEmail) {
+      return res.status(400).json({ success: false, message: 'Recipient email is required' });
+    }
+
+    const { emailService } = await import('../email');
+    const invoiceNum = (payment as any).invoiceNumber || `INV-${Date.now().toString().slice(-6)}`;
+    await emailService.sendPaymentReceiptEmail({
+      email: targetEmail,
+      name: payment.resident?.name || payment.resident?.user?.name || 'Resident',
+      invoiceNumber: invoiceNum,
+      amount: payment.totalAmount,
+      paymentDate: payment.createdAt,
+      paymentMethod: (payment as any).paymentMethod || 'Razorpay Online',
+      transactionId: (payment as any).razorpayPaymentId || payment.id,
+      propertyName: payment.resident?.pg?.name,
+      roomNumber: payment.resident?.bed?.room?.roomNumber,
+    });
+
+    return ApiResponse.success(res, 'Payment receipt email dispatched', { email: targetEmail, paymentId });
+  });
+
+  sendInvoice = catchAsync(async (req: AuthRequest, res: Response) => {
+    const { paymentId, email } = req.body;
+    const payment = await Container.db.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        resident: {
+          include: {
+            user: true,
+            pg: true,
+            bed: { include: { room: true } },
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment invoice not found' });
+    }
+
+    const targetEmail = email || payment.resident?.email || payment.resident?.user?.email;
+    if (!targetEmail) {
+      return res.status(400).json({ success: false, message: 'Recipient email is required' });
+    }
+
+    const { emailService } = await import('../email');
+    const invoiceNum = (payment as any).invoiceNumber || `INV-${Date.now().toString().slice(-6)}`;
+    
+    // Generate PDF buffer
+    let pdfBuffer: Buffer | undefined;
+    try {
+      const docResult = await Container.documentService.getOrGenerateDocument({
+        entityId: paymentId,
+        documentType: 'INVOICE',
+        requestingUserId: req.user?.id || 'SYSTEM',
+        requestingUserRole: req.user?.role || 'ADMIN',
+        ipAddress: req.ip ?? 'unknown',
+      });
+      pdfBuffer = docResult.buffer;
+    } catch {}
+
+    await emailService.sendInvoiceEmail({
+      email: targetEmail,
+      name: payment.resident?.name || payment.resident?.user?.name || 'Resident',
+      invoiceNumber: invoiceNum,
+      dueDate: (payment as any).dueDate || payment.createdAt,
+      totalAmount: payment.totalAmount,
+      breakdown: {
+        baseRent: payment.baseAmount,
+        cgst: (payment as any).cgst || 0,
+        sgst: (payment as any).sgst || 0,
+      },
+      pdfBuffer,
+      propertyName: payment.resident?.pg?.name,
+      roomNumber: payment.resident?.bed?.room?.roomNumber,
+    });
+
+    return ApiResponse.success(res, 'Rental invoice email dispatched with PDF attachment', { email: targetEmail, paymentId });
+  });
+
   handleWebhook = catchAsync(async (req: AuthRequest, res: Response) => {
     const signature = (req.headers['x-razorpay-signature'] as string) || '';
     const result = await this.billingService.handleWebhook(req.body, signature);

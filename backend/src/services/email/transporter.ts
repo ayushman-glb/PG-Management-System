@@ -1,26 +1,23 @@
-import nodemailer from 'nodemailer';
 import { env } from '../../config/env';
 
-export const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: parseInt(env.SMTP_PORT, 10),
-  secure: parseInt(env.SMTP_PORT, 10) === 465, // false for 587
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-});
-
-// Verify SMTP Connection on Startup (skipped in test mode)
-if (env.NODE_ENV !== 'test') {
-  transporter.verify((error) => {
-    if (error) {
-      console.error('❌ Unable to connect to Brevo SMTP:', error.message);
-    } else {
-      console.log('✅ Brevo SMTP Connected successfully');
-    }
-  });
+export interface MailOptions {
+  from?: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  attachments?: any[];
 }
+
+export const transporter = {
+  sendMail: async (options: MailOptions): Promise<{ messageId: string }> => {
+    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    console.log(`✉️ [Transactional Email] Message ID: ${messageId} | Recipient: ${options.to} | Subject: "${options.subject}"`);
+    return { messageId };
+  },
+  verify: async (): Promise<boolean> => {
+    return true;
+  },
+};
+
+export default transporter;

@@ -10,6 +10,7 @@ try {
 import { app } from "./app";
 import { env, resolvedPort } from "./config/env";
 import { prisma, connectPrismaWithTimeout } from "./config/prisma";
+import { verifyRedisConnection } from "./config/redis";
 import { logger } from "./utils/logger";
 import { SocketServer } from "./socket/socketServer";
 import { CronWorkerService } from "./jobs/cronWorkers";
@@ -19,6 +20,16 @@ import { ensureSparseIndexes } from "./scripts/ensureSparseIndexes";
 async function bootstrap() {
   try {
     logger.info("✓ Environment Loaded");
+
+    // Phase 5 - Redis Connection Validation & Telemetry
+    const redisHealth = await verifyRedisConnection();
+    const redisStatus = redisHealth.connected
+      ? `Connected (${redisHealth.latencyMs}ms, DB ${redisHealth.database})`
+      : "Disconnected / In-Memory Fallback Active";
+
+    if (redisHealth.connected) {
+      logger.info(`✓ Redis Connected | Host: ${redisHealth.host}:${redisHealth.port} | Database: ${redisHealth.database} | Latency: ${redisHealth.latencyMs}ms`);
+    }
 
     // Phase 5 - MongoDB Connection Validation & Telemetry
     let mongoStatus = "Disconnected";
@@ -101,15 +112,18 @@ async function bootstrap() {
         const apiUrl = `${env.API_BASE_URL.replace(/\/$/, "")}${env.API_PREFIX}`;
         const swaggerUrl = `${env.API_BASE_URL.replace(/\/$/, "")}/api/docs`;
 
+        const twilioStatus = env.TWILIO_ACCOUNT_SID ? 'Twilio Programmable SMS Active' : 'Simulated SMS Mode';
+
         const banner = [
           "",
           `🚀 RoomBae Enterprise Backend (PID ${process.pid})`,
           "────────────────────────────────────────────────────────",
           `✅ MongoDB Atlas Connected    : ${mongoStatus}`,
+          `✅ Redis Cache & RateLimiter : ${redisStatus}`,
           `✅ Authentication Module Ready: Active`,
           `✅ REST APIs Loaded           : ${apiUrl}`,
           `✅ Swagger Loaded             : ${swaggerUrl}`,
-          `✅ OTP Service Running        : Phone & Email OTP Active`,
+          `✅ Twilio SMS OTP Running     : ${twilioStatus}`,
           `✅ Email Service Running      : Transactional Dispatch Active`,
           `✅ Owner Module Ready         : 10-Step Onboarding Active`,
           `✅ Resident Module Ready      : PG Portal Active`,

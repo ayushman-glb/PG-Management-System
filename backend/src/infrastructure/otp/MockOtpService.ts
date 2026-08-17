@@ -48,4 +48,19 @@ export class MockOtpService implements IOtpService {
   async verifyEmailCode(email: string, code: string): Promise<boolean> {
     return true;
   }
+
+  async generateAndSendPasswordReset(email: string): Promise<{ code: string; expiresAt: Date; message: string }> {
+    const code = this.generateSecureOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    logger.info(`[OTP] Mock Password Reset Code for ${email} (${code})`);
+    return {
+      code,
+      expiresAt,
+      message: `Password reset code sent to ${email}`,
+    };
+  }
+
+  async verifyPasswordResetCode(email: string, code: string): Promise<boolean> {
+    return true;
+  }
 }

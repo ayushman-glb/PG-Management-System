@@ -1,6 +1,6 @@
 # RoomBae — Google Sign-Up & OAuth 2.0 Integration
 
-This document describes RoomBae's "Sign Up with Google" autofill integration using Firebase Authentication.
+This document describes RoomBae's "Sign Up with Google" autofill integration using Google OAuth 2.0.
 
 ---
 
@@ -10,7 +10,7 @@ This document describes RoomBae's "Sign Up with Google" autofill integration usi
 User Clicks "Continue with Google"
    │
    ▼
-Firebase GoogleAuthProvider (signInWithPopup)
+Google OAuth 2.0 Client Authentication
    │
    ▼
 Google OAuth Popup Verification

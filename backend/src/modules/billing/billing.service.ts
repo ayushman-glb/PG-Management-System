@@ -10,6 +10,7 @@ import PDFDocument from 'pdfkit';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { prisma } from '../../config/prisma';
+import { emailService } from '../email';
 
 let razorpayInstance: any = null;
 function getRazorpay() {
@@ -123,6 +124,25 @@ export class BillingService implements IBillingService {
 
     if (!isValid) {
       await this.billingRepository.updatePaymentStatus(payment.id, PaymentStatus.FAILED);
+      try {
+        const residentWithUser = await this.db.resident.findUnique({
+          where: { id: payment.residentId },
+          include: { user: true },
+        });
+        const failEmail = residentWithUser?.email || residentWithUser?.user?.email;
+        if (failEmail) {
+          await emailService.sendPaymentFailedEmail({
+            email: failEmail,
+            name: residentWithUser.name || residentWithUser.user?.name || 'Resident',
+            amount: payment.totalAmount,
+            attemptDate: new Date(),
+            invoiceNumber: (payment as any).invoiceNumber || payment.id,
+            failureReason: 'Razorpay signature verification failed.',
+          });
+        }
+      } catch (err: any) {
+        logger.warn('Failed to send payment failed email alert', { error: err.message });
+      }
       throw new AppError('Invalid Razorpay signature verification failed.', 400);
     }
 
@@ -135,6 +155,36 @@ export class BillingService implements IBillingService {
     const resident = await this.residentRepository.findById(payment.residentId);
     if (resident?.bedId) {
       await this.residentRepository.updateBedOccupancy(resident.bedId, true);
+    }
+
+    // Trigger automated payment receipt & invoice dispatch
+    try {
+      const residentWithDetails = await this.db.resident.findUnique({
+        where: { id: payment.residentId },
+        include: {
+          user: true,
+          pg: true,
+          bed: { include: { room: true } },
+        },
+      });
+
+      const recipientEmail = residentWithDetails?.email || residentWithDetails?.user?.email;
+      if (recipientEmail) {
+        const invoiceNum = (payment as any).invoiceNumber || `INV-${Date.now().toString().slice(-6)}`;
+        await emailService.sendPaymentReceiptEmail({
+          email: recipientEmail,
+          name: residentWithDetails.name || residentWithDetails.user?.name || 'Resident',
+          invoiceNumber: invoiceNum,
+          amount: payment.totalAmount,
+          paymentDate: new Date(),
+          paymentMethod: (payment as any).paymentMethod || 'Razorpay Online',
+          transactionId: data.razorpayPaymentId || payment.id,
+          propertyName: residentWithDetails.pg?.name,
+          roomNumber: residentWithDetails.bed?.room?.roomNumber,
+        });
+      }
+    } catch (err: any) {
+      logger.warn('Failed to dispatch payment success email receipt', { error: err.message });
     }
 
     return updated;

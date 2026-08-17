@@ -32,8 +32,12 @@ services:
       - DATABASE_URL=${DATABASE_URL:-mongodb://roombae-mongo:27017/roombae-db?replicaSet=rs0}
       - REDIS_HOST=roombae-redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-roombae_secure_redis_password_2026}
-      - REDIS_URL=${REDIS_URL:-redis://:roombae_secure_redis_password_2026@roombae-redis:6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5}
+      - REDIS_URL=${REDIS_URL:-redis://:Rdb@RoomBae_dev94a7e2b1c8f5@roombae-redis:6379/0}
+      - REDIS_DB=0
+      - REDIS_TLS=false
+      - CACHE_TTL=3600
+      - SESSION_TTL=86400
     networks:
       - roombae-network
     ports:
@@ -55,7 +59,7 @@ services:
     image: redis:7-alpine
     container_name: roombae-redis
     hostname: redis
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-roombae_secure_redis_password_2026}
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5}
     ports:
       - "6379:6379"
     networks:
@@ -64,7 +68,7 @@ services:
       - redis-data:/data
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-roombae_secure_redis_password_2026} ping | grep PONG || exit 1"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5} ping | grep PONG || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3

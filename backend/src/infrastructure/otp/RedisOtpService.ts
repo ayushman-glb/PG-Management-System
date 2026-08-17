@@ -92,6 +92,23 @@ export class RedisOtpService implements IOtpService {
     return this.verifyOtp(`otp:verify:${email}`, code);
   }
 
+  async generateAndSendPasswordReset(email: string): Promise<{ code: string; expiresAt: Date; message: string }> {
+    const code = this.generateSecureOtp(6);
+    const ttlSeconds = RedisOtpService.OTP_TTL_SECONDS;
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+
+    await this.storeOtp(`otp:reset:${email}`, code, ttlSeconds);
+    return {
+      code,
+      expiresAt,
+      message: `Password reset code sent to ${email}`,
+    };
+  }
+
+  async verifyPasswordResetCode(email: string, code: string): Promise<boolean> {
+    return this.verifyOtp(`otp:reset:${email}`, code);
+  }
+
   private async storeOtp(key: string, otp: string, ttlSeconds: number): Promise<void> {
     const attemptsKey = `${key}:attempts`;
 

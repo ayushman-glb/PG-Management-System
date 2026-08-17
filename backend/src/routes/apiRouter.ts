@@ -24,6 +24,8 @@ import { applicationsRoutes } from '../modules/applications';
 import { messagesRoutes } from '../modules/messages';
 import { moveInRoutes } from '../modules/moveIn';
 import { deviceRoutes } from '../modules/devices';
+import { marketingRoutes } from '../modules/marketing';
+import { paymentRoutes } from '../modules/payments';
 
 const apiRouter = Router();
 
@@ -41,7 +43,10 @@ apiRouter.use('/rooms', roomRoutes);
 apiRouter.use('/beds', bedRoutes);
 apiRouter.use('/residents', residentRoutes);
 apiRouter.use('/billing', billingRoutes);
+apiRouter.use('/payments', paymentRoutes);
 apiRouter.use('/complaints', complaintRoutes);
+apiRouter.use('/support', complaintRoutes);
+apiRouter.use('/marketing', marketingRoutes);
 apiRouter.use('/agreements', agreementRoutes);
 apiRouter.use('/search', searchRoutes);
 apiRouter.use('/analytics', analyticsRoutes);

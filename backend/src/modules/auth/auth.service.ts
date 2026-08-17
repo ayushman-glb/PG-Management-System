@@ -16,6 +16,7 @@ import { logger } from "../../utils/logger";
 import { TotpService } from "../../infrastructure/crypto/TotpService";
 import { cacheService } from "../../services/cache.service";
 import { tokenBlacklistService } from "../../services/tokenBlacklistService";
+import { emailService } from "../email";
 import * as crypto from "crypto";
 
 const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
@@ -575,6 +576,36 @@ export class AuthService implements IAuthService {
 
   async sendEmailVerification(
     email: string,
+    name?: string,
+  ): Promise<{ success: boolean; message: string; cooldownSeconds?: number }> {
+    if (!email) throw new AppError("Email address is required", 400);
+    if (this.otpService) {
+      const res = await this.otpService.generateAndSendEmailVerification(email);
+      return { success: true, message: res.message };
+    }
+    return emailService.sendOtp(email, name);
+  }
+
+  async verifyEmail(
+    email: string,
+    code: string,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!email || !code) {
+      throw new AppError("Email and verification code are required", 400);
+    }
+    if (this.otpService) {
+      const isValid = await this.otpService.verifyEmailCode(email, code);
+      if (!isValid) {
+        throw new AppError("Invalid verification code", 400);
+      }
+      await this.userRepository.markEmailVerified(email);
+      return { success: true, message: "Email verified successfully" };
+    }
+    return emailService.verifyOtp(email, code);
+  }
+
+  async sendPasswordReset(
+    email: string,
   ): Promise<{ success: boolean; message: string }> {
     if (!email) throw new AppError("Email address is required", 400);
 
@@ -582,49 +613,48 @@ export class AuthService implements IAuthService {
     if (!user) {
       return {
         success: true,
-        message: `If an account with that email exists, a verification code has been sent to ${email}`,
+        message: `If an account with that email exists, password reset instructions have been sent.`,
       };
     }
 
-    const { code, expiresAt } = await this.otpService.generateAndSendEmailVerification(email);
+    const { code } = await this.otpService.generateAndSendPasswordReset(email);
+    const resetLink = `${env.FRONTEND_URL}/auth?mode=reset&email=${encodeURIComponent(email)}&code=${code}`;
 
-    await prisma.otpToken.create({
-      data: {
-        email,
-        otp: code,
-        purpose: "EMAIL_VERIFICATION",
-        expiresAt,
-      },
-    });
+    await emailService.sendPasswordResetEmail(email, resetLink, user.name);
 
     return {
       success: true,
-      message: `Email verification code sent to ${email}`,
+      message: `Password reset instructions sent to ${email}`,
     };
   }
 
-  async verifyEmail(
+  async verifyPasswordReset(
     email: string,
-    code: string,
+    otp: string,
+    newPassword?: string,
   ): Promise<{ success: boolean; message: string }> {
-    if (!email || !code)
-      throw new AppError("Email and verification code are required", 400);
-
-    if (code.length !== 6 || !/^\d+$/.test(code)) {
-      throw new AppError("Invalid verification code", 400);
+    if (!email || !otp) {
+      throw new AppError("Email and reset OTP are required", 400);
     }
 
-    const isValid = await this.otpService.verifyEmailCode(email, code);
-
+    const isValid = await this.otpService.verifyPasswordResetCode(email, otp);
     if (!isValid) {
-      throw new AppError("Invalid verification code", 400);
+      throw new AppError("Invalid or expired password reset code", 400);
     }
 
-    await this.userRepository.markEmailVerified(email);
+    if (newPassword) {
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) throw new AppError("User not found", 404);
+      const hashedPassword = await this.cryptoService.hashPassword(newPassword);
+      await this.db.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+    }
 
     return {
       success: true,
-      message: "Email address verified successfully!",
+      message: "Password reset verified successfully.",
     };
   }
 

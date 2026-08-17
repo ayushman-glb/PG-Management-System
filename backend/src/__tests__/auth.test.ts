@@ -13,8 +13,27 @@ jest.mock('../config/prisma', () => ({
       findFirst: jest.fn().mockResolvedValue(null),
       deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
+    emailOTP: {
+      create: jest.fn().mockResolvedValue({}),
+      findFirst: jest.fn().mockResolvedValue({
+        id: 'otp_mock_id',
+        email: 'test@roombae.com',
+        hashedOtp: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // bcrypt hash for 123456
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        attempts: 0,
+        resendCount: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      update: jest.fn().mockResolvedValue({}),
+      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    emailLog: {
+      create: jest.fn().mockResolvedValue({}),
+    },
     user: {
       update: jest.fn().mockResolvedValue({}),
+      findFirst: jest.fn().mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com' }),
     },
     $transaction: jest.fn().mockImplementation((callback) => callback({})),
   },

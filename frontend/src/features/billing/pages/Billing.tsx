@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Search,
-  Send,
   AlertCircle,
   CheckCircle,
   Clock,
   TrendingUp,
   Zap,
+  Download,
+  FileSpreadsheet,
+  RefreshCw,
 } from "lucide-react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
 import type { Page } from "@app/App";
@@ -17,96 +19,90 @@ import { SpendBreakdownChart } from "../components/SpendBreakdownChart";
 import { TransactionTimeline } from "../components/TransactionTimeline";
 import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
 import { BillingSkeleton } from "@components/Skeletons";
+import { billingService } from "../../../services/billing.service";
 
 interface Props {
   navigate: (p: Page) => void;
 }
 
-const invoices = [
-  {
-    id: "INV-2025-001",
-    resident: "Ankit Joshi",
-    room: "202A",
-    amount: 12000,
-    due: "5 Jul 2025",
-    status: "Paid",
-    pg: "Sunrise PG",
-  },
-  {
-    id: "INV-2025-002",
-    resident: "Meera Pillai",
-    room: "104B",
-    amount: 10500,
-    due: "5 Jul 2025",
-    status: "Paid",
-    pg: "Green Valley",
-  },
-  {
-    id: "INV-2025-003",
-    resident: "Suresh Babu",
-    room: "301C",
-    amount: 11000,
-    due: "5 Jul 2025",
-    status: "Due",
-    pg: "Urban Nest",
-  },
-  {
-    id: "INV-2025-004",
-    resident: "Kavya Nair",
-    room: "205D",
-    amount: 13500,
-    due: "5 Jul 2025",
-    status: "Paid",
-    pg: "Sunrise PG",
-  },
-  {
-    id: "INV-2025-005",
-    resident: "Rohit Sinha",
-    room: "110A",
-    amount: 9500,
-    due: "5 Jul 2025",
-    status: "Late",
-    pg: "City Heights",
-    lateFee: 500,
-  },
-];
-
 export default function Billing({ navigate }: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "invoices" | "transactions">("overview");
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "paid" | "due" | "late">("all");
+  const [filter, setFilter] = useState<"all" | "PAID" | "PENDING" | "FAILED" | "REFUNDED">("all");
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedPayAmount, setSelectedPayAmount] = useState(8500);
+  const [paymentsList, setPaymentsList] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { darkMode } = useTheme();
 
-  const { showSkeleton } = useAdaptiveLoading(
-    async () => {
-      return invoices;
-    },
-    []
-  );
+  const loadBillingData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [historyRes, analyticsRes] = await Promise.allSettled([
+        billingService.getPaymentHistory({
+          status: filter !== "all" ? filter : undefined,
+          search: search.trim() || undefined,
+          limit: 50,
+        }),
+        billingService.getPaymentAnalytics(),
+      ]);
+
+      if (historyRes.status === "fulfilled" && historyRes.value?.payments) {
+        setPaymentsList(historyRes.value.payments);
+      }
+      if (analyticsRes.status === "fulfilled") {
+        setAnalytics(analyticsRes.value);
+      }
+    } catch (e) {
+      console.warn("Failed to load live billing data:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filter, search]);
+
+  const { showSkeleton } = useAdaptiveLoading(loadBillingData, [loadBillingData]);
+
+  useEffect(() => {
+    const handleDataChange = () => {
+      loadBillingData();
+    };
+    window.addEventListener("roombae-data-changed", handleDataChange);
+    return () => {
+      window.removeEventListener("roombae-data-changed", handleDataChange);
+    };
+  }, [loadBillingData]);
+
+  // Debounced search / filter trigger
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadBillingData();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [loadBillingData]);
 
   if (showSkeleton) {
     return <BillingSkeleton />;
   }
 
-  const filtered = invoices.filter((inv) => {
-    const matchSearch =
-      inv.resident.toLowerCase().includes(search.toLowerCase()) ||
-      inv.id.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === "all" || inv.status.toLowerCase() === filter;
-    return matchSearch && matchFilter;
-  });
+  const totalRevenue = analytics?.totalRevenue || paymentsList
+    .filter((i) => i.status === "PAID")
+    .reduce((sum, i) => sum + (i.totalAmount || 0), 0);
 
-  const totalRevenue = invoices
-    .filter((i) => i.status === "Paid")
-    .reduce((sum, i) => sum + i.amount, 0);
-  const pending = invoices
-    .filter((i) => i.status === "Due" || i.status === "Late")
-    .reduce((sum, i) => sum + i.amount, 0);
-  const lateFees = invoices
-    .filter((i) => i.status === "Late")
-    .reduce((sum, i) => sum + (i.lateFee || 0), 0);
+  const pending = analytics?.pendingAmount || paymentsList
+    .filter((i) => i.status === "PENDING")
+    .reduce((sum, i) => sum + (i.totalAmount || 0), 0);
+
+  const collectionRate = analytics?.collectionRatePercent ?? 95.4;
+  const successfulCount = analytics?.successfulPaymentsCount ?? paymentsList.filter(p => p.status === 'PAID').length;
+
+  const handleExportCsv = () => {
+    const url = billingService.getExportCsvUrl({
+      status: filter !== "all" ? filter : "",
+      search: search.trim(),
+    });
+    window.open(url, "_blank");
+  };
 
   return (
     <DashboardLayout navigate={navigate} activePage="billing">
@@ -136,10 +132,23 @@ export default function Billing({ navigate }: Props) {
             </button>
             <button
               type="button"
-              className={`flex items-center gap-2 border text-xs font-bold px-4 py-2.5 rounded-2xl transition-colors ${darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:bg-slate-50"}`}
+              onClick={handleExportCsv}
+              className={`flex items-center gap-2 border text-xs font-bold px-4 py-2.5 rounded-2xl transition-colors cursor-pointer ${
+                darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
             >
-              <Send className="w-3.5 h-3.5" />
-              Send Reminders
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={loadBillingData}
+              className={`p-2.5 rounded-2xl border transition-colors cursor-pointer ${
+                darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-amber-500" : ""}`} />
             </button>
           </div>
         </div>
@@ -148,29 +157,29 @@ export default function Billing({ navigate }: Props) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
-              label: "Collected This Month",
+              label: "Collected Revenue",
               value: `₹${(totalRevenue / 1000).toFixed(1)}K`,
               icon: CheckCircle,
               color: "text-green-600 dark:text-green-400",
               bg: "bg-green-500/10 border-green-500/20",
             },
             {
-              label: "Pending Collection",
+              label: "Pending Dues",
               value: `₹${(pending / 1000).toFixed(1)}K`,
               icon: Clock,
               color: "text-amber-600 dark:text-amber-400",
               bg: "bg-amber-500/10 border-amber-500/20",
             },
             {
-              label: "Late Fees Collected",
-              value: `₹${lateFees.toLocaleString()}`,
+              label: "Verified Transactions",
+              value: `${successfulCount} txns`,
               icon: AlertCircle,
               color: "text-rose-600 dark:text-rose-400",
               bg: "bg-rose-500/10 border-rose-500/20",
             },
             {
               label: "Collection Efficiency",
-              value: "94.2%",
+              value: `${collectionRate}%`,
               icon: TrendingUp,
               color: "text-blue-600 dark:text-blue-400",
               bg: "bg-blue-500/10 border-blue-500/20",
@@ -209,7 +218,7 @@ export default function Billing({ navigate }: Props) {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 text-xs font-bold capitalize border-b-2 transition-all ${
+              className={`px-4 py-2.5 text-xs font-bold capitalize border-b-2 transition-all cursor-pointer ${
                 activeTab === tab
                   ? "border-amber-500 text-amber-500"
                   : "border-transparent text-slate-400 hover:text-slate-200"
@@ -243,7 +252,7 @@ export default function Billing({ navigate }: Props) {
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search resident or invoice..."
+                  placeholder="Search resident, invoice, or txn..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className={`w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
@@ -254,12 +263,12 @@ export default function Billing({ navigate }: Props) {
                 />
               </div>
 
-              <div className="flex gap-2">
-                {(["all", "paid", "due", "late"] as const).map((f) => (
+              <div className="flex gap-2 flex-wrap">
+                {(["all", "PAID", "PENDING", "FAILED", "REFUNDED"] as const).map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
                       filter === f
                         ? "bg-amber-500 text-black shadow-sm"
                         : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
@@ -282,41 +291,62 @@ export default function Billing({ navigate }: Props) {
                     <th className="p-3.5">Invoice ID</th>
                     <th className="p-3.5">Resident</th>
                     <th className="p-3.5">Room</th>
-                    <th className="p-3.5">PG</th>
+                    <th className="p-3.5">Property</th>
                     <th className="p-3.5">Amount</th>
-                    <th className="p-3.5">Due Date</th>
+                    <th className="p-3.5">Date</th>
                     <th className="p-3.5">Status</th>
+                    <th className="p-3.5 text-right">PDF Invoice</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/10">
-                  {filtered.map((inv) => (
-                    <tr
-                      key={inv.id}
-                      className={`hover:bg-amber-500/5 transition-colors ${
-                        darkMode ? "text-slate-300" : "text-slate-700"
-                      }`}
-                    >
-                      <td className="p-3.5 font-mono font-bold">{inv.id}</td>
-                      <td className="p-3.5 font-semibold">{inv.resident}</td>
-                      <td className="p-3.5">{inv.room}</td>
-                      <td className="p-3.5">{inv.pg}</td>
-                      <td className="p-3.5 font-bold">₹{inv.amount.toLocaleString()}</td>
-                      <td className="p-3.5">{inv.due}</td>
-                      <td className="p-3.5">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
-                            inv.status === "Paid"
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : inv.status === "Due"
-                              ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                              : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                          }`}
-                        >
-                          {inv.status}
-                        </span>
+                  {paymentsList.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-slate-400">
+                        No payments match the specified criteria.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    paymentsList.map((inv) => (
+                      <tr
+                        key={inv.id}
+                        className={`hover:bg-amber-500/5 transition-colors ${
+                          darkMode ? "text-slate-300" : "text-slate-700"
+                        }`}
+                      >
+                        <td className="p-3.5 font-mono font-bold text-amber-500">{inv.invoiceNumber || inv.id?.slice(0, 10)}</td>
+                        <td className="p-3.5 font-semibold">{inv.resident?.name || "Resident"}</td>
+                        <td className="p-3.5">{inv.resident?.bed?.room?.roomNumber || "—"}</td>
+                        <td className="p-3.5">{inv.pg?.name || "RoomBae PG"}</td>
+                        <td className="p-3.5 font-bold">₹{(inv.totalAmount || 0).toLocaleString("en-IN")}</td>
+                        <td className="p-3.5 text-slate-400">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</td>
+                        <td className="p-3.5">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                              inv.status === "PAID"
+                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                : inv.status === "PENDING"
+                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                            }`}
+                          >
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <a
+                            href={billingService.getInvoicePdfUrl(inv.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                            title="Download PDF"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>PDF</span>
+                          </a>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -331,6 +361,10 @@ export default function Billing({ navigate }: Props) {
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}
         defaultAmount={selectedPayAmount}
+        onSuccess={() => {
+          setIsPayModalOpen(false);
+          loadBillingData();
+        }}
       />
     </DashboardLayout>
   );

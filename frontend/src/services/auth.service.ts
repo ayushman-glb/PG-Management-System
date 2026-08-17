@@ -240,36 +240,91 @@ export class AuthService {
     return this.refreshPromise;
   }
 
-  async sendPhoneOtp(phone: string) {
-    const res = await this.request("/auth/send-phone-otp", {
+  async sendPhoneOtp(phone: string, purpose: string = "PHONE_VERIFICATION") {
+    const res = await this.request("/auth/phone/send-otp", {
+      method: "POST",
+      body: JSON.stringify({ phone, purpose }),
+    });
+    return res.data || res;
+  }
+
+  async verifyPhoneOtp(phone: string, otp: string, purpose: string = "PHONE_VERIFICATION") {
+    const res = await this.request("/auth/phone/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ phone, otp, purpose }),
+    });
+    return res.data || res;
+  }
+
+  async resendPhoneOtp(phone: string) {
+    const res = await this.request("/auth/phone/resend-otp", {
       method: "POST",
       body: JSON.stringify({ phone }),
     });
     return res.data || res;
   }
 
-  async verifyPhoneOtp(phone: string, otp: string) {
-    const res = await this.request("/auth/verify-phone-otp", {
-      method: "POST",
-      body: JSON.stringify({ phone, otp }),
+  async getPhoneAuthStatus(phone?: string) {
+    const query = phone ? `?phone=${encodeURIComponent(phone)}` : "";
+    const res = await this.request(`/auth/phone/status${query}`, {
+      method: "GET",
     });
     return res.data || res;
   }
 
-  async sendEmailVerification(email: string) {
-    const res = await this.request("/auth/send-email-verification", {
+  async removePhoneAuth() {
+    const res = await this.request("/auth/phone/remove", {
+      method: "DELETE",
+    });
+    return res.data || res;
+  }
+
+  async sendEmailOtp(email: string, name?: string) {
+    const res = await this.request("/auth/email/send-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, name }),
+    });
+    return res.data || res;
+  }
+
+  async verifyEmailOtp(email: string, otp: string) {
+    const res = await this.request("/auth/email/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, otp }),
+    });
+    return res.data || res;
+  }
+
+  async resendEmailOtp(email: string, name?: string) {
+    const res = await this.request("/auth/email/resend-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, name }),
+    });
+    return res.data || res;
+  }
+
+  async sendPasswordReset(email: string) {
+    const res = await this.request("/auth/password/send-reset", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
     return res.data || res;
   }
 
-  async verifyEmail(email: string, code: string) {
-    const res = await this.request("/auth/verify-email", {
+  async verifyPasswordReset(email: string, otp: string, newPassword?: string) {
+    const res = await this.request("/auth/password/verify", {
       method: "POST",
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, otp, newPassword }),
     });
     return res.data || res;
+  }
+
+  async sendEmailVerification(email: string, name?: string) {
+    return this.sendEmailOtp(email, name);
+  }
+
+  async verifyEmail(email: string, code: string) {
+    return this.verifyEmailOtp(email, code);
   }
 
   async verifyTwoFactor(preAuthTokenOrUserId: string, token: string, rememberMe: boolean = false) {

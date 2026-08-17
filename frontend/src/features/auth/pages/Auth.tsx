@@ -22,6 +22,8 @@ import { AnimatedTabs } from "../../../components/MotionPrimitives";
 import { authService } from "../../../services/auth.service";
 import { UploadCard } from "../../../components/UploadCard";
 import { env } from "../../../config/env";
+import { EmailOtpVerificationModal } from "../../../components/auth/EmailOtpVerificationModal";
+import { PhoneOtpModal } from "../components/PhoneOtpModal";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -60,6 +62,9 @@ export default function Auth({ navigate }: Props) {
   const [phoneOtp, setPhoneOtp] = useState("");
   const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [phoneTrialNotice, setPhoneTrialNotice] = useState<string | null>(null);
   const [phoneAuthError, setPhoneAuthError] = useState<string | null>(null);
 
   // Email Verification State
@@ -67,6 +72,7 @@ export default function Auth({ navigate }: Props) {
   const [isEmailOtpSent, setIsEmailOtpSent] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailError, setEmailError] = useState("");
 
   const handlePhoneInputChange = (newVal: string) => {
@@ -297,9 +303,23 @@ export default function Auth({ navigate }: Props) {
       return;
     }
     setPhoneAuthError(null);
-    setPhoneOtp("");
-    setIsPhoneVerified(false);
-    setIsPhoneOtpSent(true);
+    setIsPhoneLoading(true);
+    try {
+      const fullPhone = `+91${phone}`;
+      const result = await authService.sendPhoneOtp(fullPhone, "PHONE_VERIFICATION");
+      setIsPhoneOtpSent(true);
+      if (result?.isTrialNotice || result?.notice) {
+        setPhoneTrialNotice(result.notice || result.error || null);
+      } else {
+        setPhoneTrialNotice(null);
+      }
+      setIsPhoneModalOpen(true);
+    } catch (err: any) {
+      setPhoneAuthError(err?.message || "Failed to send SMS verification code. Please try again.");
+      setIsPhoneModalOpen(true);
+    } finally {
+      setIsPhoneLoading(false);
+    }
   };
 
   // Handle Phone OTP Verify - calls backend to validate OTP
@@ -316,18 +336,22 @@ export default function Auth({ navigate }: Props) {
     }
 
     setPhoneAuthError(null);
+    setIsPhoneLoading(true);
     try {
       const fullPhone = `+91${phone}`;
-      await authService.verifyPhoneOtp(fullPhone, code);
+      await authService.verifyPhoneOtp(fullPhone, code, "PHONE_VERIFICATION");
       setIsPhoneVerified(true);
+      setIsPhoneModalOpen(false);
       setPhoneAuthError(null);
     } catch (err: any) {
       setIsPhoneVerified(false);
       setPhoneAuthError(err?.message || "Invalid OTP code. Please try again.");
+    } finally {
+      setIsPhoneLoading(false);
     }
   };
 
-  // Handle Brevo Email Verification Send
+  // Handle Email Verification Send
   const handleSendEmailVerification = async () => {
     if (!isValidEmail) {
       setEmailError("Please enter a valid email address.");
@@ -336,12 +360,12 @@ export default function Auth({ navigate }: Props) {
     setEmailError("");
     setIsEmailLoading(true);
     try {
-      await authService.sendEmailVerification(email);
+      await authService.sendEmailOtp(email, fullName);
       setIsEmailOtpSent(true);
-      setIsEmailVerified(false);
+      setIsEmailModalOpen(true);
     } catch (err: any) {
-      setIsEmailOtpSent(true);
-      setIsEmailVerified(false);
+      setEmailError(err?.message || "Failed to send email verification code.");
+      setIsEmailModalOpen(true);
     } finally {
       setIsEmailLoading(false);
     }
@@ -586,8 +610,8 @@ export default function Auth({ navigate }: Props) {
 
                 <div className="space-y-3 pt-2">
                   {[
-                    "Firebase Phone Auth & Server Validation",
-                    "Brevo Automated Transactional Mail",
+                    "Multi-Factor Authentication & Verification",
+                    "Automated Notification Dispatch",
                     "Cloudinary Virus-Scanned Media Storage",
                     "AES-256-GCM Financial Data Encryption",
                   ].map((item) => (
@@ -1034,18 +1058,18 @@ export default function Auth({ navigate }: Props) {
                                 <button
                                   type="button"
                                   onClick={handleSendPhoneOtp}
-                                  disabled={!isValidPhone || isPhoneVerified}
+                                  disabled={!isValidPhone || isPhoneLoading || isPhoneVerified}
                                   className={`px-3 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
                                     isPhoneVerified
                                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                       : "bg-amber-500 text-black hover:bg-amber-400"
                                   }`}
                                 >
-                                  {isPhoneVerified ? "✓ Verified" : "OTP"}
+                                  {isPhoneVerified ? "✓ Verified" : isPhoneLoading ? "Sending..." : "Verify SMS"}
                                 </button>
                               </div>
                               {isPhoneOtpSent && !isPhoneVerified && (
-                                <div className="mt-2 flex gap-2">
+                                <div className="mt-2 flex gap-2 items-center">
                                   <input
                                     type="text"
                                     maxLength={6}
@@ -1059,7 +1083,14 @@ export default function Auth({ navigate }: Props) {
                                     onClick={() => handleVerifyPhoneOtp()}
                                     className="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-extrabold text-xs cursor-pointer"
                                   >
-                                    Verify OTP
+                                    Confirm
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsPhoneModalOpen(true)}
+                                    className="text-[11px] text-amber-500 hover:underline cursor-pointer"
+                                  >
+                                    Open Modal
                                   </button>
                                 </div>
                               )}
@@ -1449,6 +1480,28 @@ export default function Auth({ navigate }: Props) {
           </div>
         </div>
       </main>
+
+      <EmailOtpVerificationModal
+        isOpen={isEmailModalOpen}
+        email={email}
+        name={fullName}
+        onClose={() => setIsEmailModalOpen(false)}
+        onSuccess={() => {
+          setIsEmailVerified(true);
+          setIsEmailModalOpen(false);
+        }}
+      />
+
+      <PhoneOtpModal
+        isOpen={isPhoneModalOpen}
+        phone={phone ? (phone.startsWith("+91") ? phone : `+91${phone}`) : ""}
+        initialNotice={phoneTrialNotice}
+        onClose={() => setIsPhoneModalOpen(false)}
+        onVerified={() => {
+          setIsPhoneVerified(true);
+          setIsPhoneModalOpen(false);
+        }}
+      />
     </div>
   );
 }

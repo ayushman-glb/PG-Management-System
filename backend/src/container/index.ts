@@ -397,4 +397,43 @@ export class Container {
     }
     return this._deviceController;
   }
+
+  // Email & Marketing Subsystems
+  public static get emailService() {
+    const { emailService } = require('../modules/email');
+    return emailService;
+  }
+
+  public static get marketingService() {
+    const { marketingService } = require('../modules/marketing');
+    return marketingService;
+  }
+
+  public static get marketingController() {
+    const { marketingController } = require('../modules/marketing');
+    return marketingController;
+  }
+
+  // Payment Subsystem
+  public static get paymentService() {
+    const { paymentService } = require('../modules/payments');
+    return paymentService;
+  }
+
+  public static get paymentController() {
+    const { paymentController } = require('../modules/payments');
+    return paymentController;
+  }
+
+  // Phone Authentication Subsystem (Twilio SMS)
+  public static get phoneAuthService() {
+    const { phoneAuthService } = require('../modules/phone-auth');
+    return phoneAuthService;
+  }
+
+  public static get phoneAuthController() {
+    const { phoneAuthController } = require('../modules/phone-auth');
+    return phoneAuthController;
+  }
 }
+

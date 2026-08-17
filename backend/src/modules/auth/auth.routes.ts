@@ -9,6 +9,7 @@ import {
   Enable2FASchema,
 } from "./auth.dto";
 import { authenticate } from "../../middleware/authMiddleware";
+import { phoneAuthRoutes } from "../phone-auth";
 import {
   loginLimiter,
   registerLimiter,
@@ -55,20 +56,54 @@ router.post("/test-email", (req, res, next) =>
   Container.authController.testEmail(req, res, next),
 );
 
+// ── Phone Authentication Subsystem (Twilio SMS) ───────────────────────────
+router.use("/phone", phoneAuthRoutes);
+
 router.post(
   "/send-phone-otp",
   sendOtpLimiter,              // 3 req / 10 min per IP
   validate(SendPhoneOtpSchema),
-  (req, res, next) => Container.authController.sendPhoneOtp(req, res, next),
+  (req, res, next) => Container.phoneAuthController.sendOtp(req, res, next),
 );
 
 router.post(
   "/verify-phone-otp",
   phoneVerifyLimiter,          // 10 req / 15 min per IP
   validate(VerifyPhoneOtpSchema),
-  (req, res, next) => Container.authController.verifyPhoneOtp(req, res, next),
+  (req, res, next) => Container.phoneAuthController.verifyOtp(req, res, next),
 );
 
+// ── Email OTP Authentication Endpoints ─────────────────────────────────────
+router.post(
+  "/email/send-otp",
+  sendOtpLimiter,
+  (req, res, next) => Container.authController.sendEmailOtp(req, res, next),
+);
+
+router.post(
+  "/email/verify-otp",
+  (req, res, next) => Container.authController.verifyEmailOtp(req, res, next),
+);
+
+router.post(
+  "/email/resend-otp",
+  sendOtpLimiter,
+  (req, res, next) => Container.authController.resendEmailOtp(req, res, next),
+);
+
+// ── Password Reset Endpoints ──────────────────────────────────────────────
+router.post(
+  "/password/send-reset",
+  sendOtpLimiter,
+  (req, res, next) => Container.authController.sendPasswordReset(req, res, next),
+);
+
+router.post(
+  "/password/verify",
+  (req, res, next) => Container.authController.verifyPasswordReset(req, res, next),
+);
+
+// ── Backwards Compatible Aliases ──────────────────────────────────────────
 router.post("/send-email-verification", (req, res, next) =>
   Container.authController.sendEmailVerification(req, res, next),
 );

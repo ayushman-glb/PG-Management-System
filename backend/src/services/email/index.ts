@@ -1,3 +1,2 @@
-export * from './email.service';
-export * from './email.templates';
-export * from './transporter';
+export * from '../../modules/email';
+export { emailService, default as EmailService } from '../../modules/email/email.service';

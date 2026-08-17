@@ -1,6 +1,6 @@
 # RoomBae — Centralized Authentication & Authorization Architecture
 
-This document outlines RoomBae's hybrid authentication architecture combining Firebase Phone Authentication, Google OAuth 2.0 Sign-In, and Node.js JWT Access & Refresh Token Sessions.
+This document outlines RoomBae's authentication architecture combining Phone / Email OTP verification, Google OAuth 2.0 Sign-In, and Node.js JWT Access & Refresh Token Sessions.
 
 ---
 
@@ -9,14 +9,10 @@ This document outlines RoomBae's hybrid authentication architecture combining Fi
 ```
 Frontend Client (React)
    │
-   ├─► Firebase Web SDK (Phone Auth SMS OTP / Google Sign-In)
-   │      │
-   │      └─► Obtains Firebase ID Token
+   ├─► Phone / Email OTP Verification & Google OAuth 2.0
    │
    ▼
-Express Backend (/api/v1/auth/firebase-login or /auth/google)
-   │
-   ├─► Firebase Admin SDK (firebaseAdmin.auth().verifyIdToken)
+Express Backend (/api/v1/auth/login or /auth/google)
    │
    ├─► User Lookup / Upsert in MongoDB
    │
@@ -33,7 +29,6 @@ Both REST controllers and GraphQL resolvers delegate directly to `Container.auth
 
 | Operation | REST Endpoint | GraphQL Mutation | Shared Handler Method |
 | :--- | :--- | :--- | :--- |
-| **Phone / Firebase Login** | `POST /api/v1/auth/firebase-login` | `mutation { firebaseLogin }` | `authService.phoneVerify(idToken)` |
 | **Email Login** | `POST /api/v1/auth/login` | `mutation { login }` | `authService.login(identifier, pass)` |
 | **Register** | `POST /api/v1/auth/register` | `mutation { register }` | `authService.register(userData)` |
 | **Email OTP Send** | `POST /api/v1/auth/send-otp` | `mutation { sendEmailOTP }` | `authService.sendEmailVerification(email)` |

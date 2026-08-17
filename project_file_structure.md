@@ -24,7 +24,6 @@ PG-Management-System/
 ├── AUTH_ARCHITECTURE.md            # Authentication and JWT architecture overview
 ├── CLOUDINARY_SETUP.md             # Cloudinary configuration guide
 ├── DATABASE_ARCHITECTURE.md        # Database schema and MongoDB model specifications
-├── FIREBASE_SETUP.md               # Firebase authentication setup guide
 ├── GOOGLE_AUTH.md                  # Google OAuth 2.0 integration guide
 ├── PERFORMANCE_REPORT.md           # Application benchmark and performance audit report
 ├── PROJECT_RECOVERY_REPORT.md      # Recovery and production readiness audit report
@@ -73,7 +72,7 @@ backend/
 │   │   └── middleware/             # Tenant isolation & core request middleware
 │   ├── infrastructure/             # External service adapters & concrete implementations
 │   │   ├── crypto/                 # Password hashing & TOTP 2FA implementations
-│   │   ├── email/                  # Nodemailer & Brevo SMTP email transporters
+│   │   ├── email/                  # Transactional email notification service
 │   │   ├── otp/                    # OTP generation & verification services
 │   │   ├── redis/                  # Redis caching & stub fallback
 │   │   └── tokens/                 # JWT token generation & validation services

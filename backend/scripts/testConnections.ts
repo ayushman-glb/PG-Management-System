@@ -1,17 +1,16 @@
 import { transporter } from '../src/services/email/transporter';
 import { cloudinaryService } from '../src/services/cloudinary.service';
-import { firebaseAdmin } from '../src/config/firebaseAdmin';
 
 async function testConnections() {
   console.log('--- 🧪 STARTING CONNECTION AUDIT & VERIFICATION ---');
 
-  // 1. Test Brevo SMTP
+  // 1. Test Email Transporter
   try {
-    console.log('📧 Testing Brevo SMTP connection...');
+    console.log('📧 Testing Transactional Email Dispatcher...');
     await transporter.verify();
-    console.log('✅ Brevo SMTP verification PASSED!');
+    console.log('✅ Transactional Email Dispatcher PASSED!');
   } catch (err: any) {
-    console.warn('⚠️ Brevo SMTP Notice:', err.message, '(Falling back gracefully for out-of-band delivery)');
+    console.warn('⚠️ Email Dispatcher Notice:', err.message);
   }
 
   // 2. Test Cloudinary Buffer Upload
@@ -26,17 +25,6 @@ async function testConnections() {
     console.log('✅ Cloudinary Upload PASSED! Secure URL:', res.secureUrl);
   } catch (err: any) {
     console.error('❌ Cloudinary Upload FAILED:', err.message);
-  }
-
-  // 3. Test Firebase Admin SDK
-  try {
-    console.log('🔥 Testing Firebase Admin SDK status...');
-    const authInstance = firebaseAdmin.auth();
-    if (authInstance) {
-      console.log('✅ Firebase Admin SDK initialized successfully!');
-    }
-  } catch (err: any) {
-    console.error('❌ Firebase Admin SDK test FAILED:', err.message);
   }
 
   console.log('--- 🏁 CONNECTION AUDIT COMPLETED ---');

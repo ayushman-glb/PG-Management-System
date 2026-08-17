@@ -12,9 +12,9 @@ This document records the security posture, middleware protections, secret manag
 | **CORS Origins** | Strict whitelist (`env.CLIENT_URL`, `env.FRONTEND_URL`, localhost development ports) with origin normalization. | ✅ VERIFIED |
 | **Rate Limiting** | `generalLimiter` (100 req/15min), `authLimiter` (10 req/15min), `uploadLimiter` (20 req/15min), `phoneVerifyLimiter`. | ✅ VERIFIED |
 | **File Upload Security** | Magic byte signature verification, Sharp buffer sanitization, extension whitelisting, file size caps. | ✅ VERIFIED |
-| **Bot Protection** | Google reCAPTCHA Enterprise verification with OTP bypass logic for verified Firebase ID Tokens. | ✅ VERIFIED |
+| **Bot Protection** | Google reCAPTCHA Enterprise verification with rate-limiting protection. | ✅ VERIFIED |
 | **Data Encryption** | Financial bank details & KYC scans encrypted with AES-256-GCM prior to database persistence. | ✅ VERIFIED |
-| **Secrets Exposure Audit** | Backend `.env` secrets (`CLOUDINARY_API_SECRET`, `JWT_SECRET`, `FIREBASE_PRIVATE_KEY`) strictly excluded from frontend build. | ✅ VERIFIED |
+| **Secrets Exposure Audit** | Backend `.env` secrets (`CLOUDINARY_API_SECRET`, `JWT_SECRET`, `ENCRYPTION_KEY`) strictly excluded from frontend build. | ✅ VERIFIED |
 
 ---
 

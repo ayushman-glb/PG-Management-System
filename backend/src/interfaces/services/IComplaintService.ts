@@ -11,5 +11,7 @@ export interface ICreateComplaintPayload {
 export interface IComplaintService {
   createComplaint(userId: string, data: ICreateComplaintPayload): Promise<any>;
   listComplaints(filters: IComplaintFilters): Promise<any[]>;
-  updateStatus(complaintId: string, status: TicketStatus): Promise<any>;
+  updateStatus(complaintId: string, status: TicketStatus, resolutionNotes?: string): Promise<any>;
+  sendSupportReply?(ticketCode: string, message: string, repliedBy: string): Promise<any>;
 }
+

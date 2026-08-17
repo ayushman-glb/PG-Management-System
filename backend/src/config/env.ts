@@ -58,6 +58,11 @@ if (!process.env.REDIS_URL && (process.env.REDIS_HOST || process.env.REDIS_PORT)
   process.env.REDIS_URL = `${scheme}://${auth}${host}:${port}`;
 }
 
+// Clean placeholder CLOUDINARY_URL so Cloudinary SDK does not throw Invalid URL
+if (process.env.CLOUDINARY_URL && (process.env.CLOUDINARY_URL.includes("<REPLACE") || process.env.CLOUDINARY_URL.includes("<"))) {
+  delete process.env.CLOUDINARY_URL;
+}
+
 // Fallback defaults for local development / testing when env secrets are unpopulated or contain placeholders
 const isDevOrTest = (process.env.NODE_ENV || "development") !== "production";
 
@@ -123,6 +128,7 @@ const envSchema = z.object({
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.string().default("6379"),
   REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z.string().default("0"),
   REDIS_TLS: z.string().default("false"),
   CACHE_TTL: z.string().default("3600"),
   SESSION_TTL: z.string().default("86400"),
@@ -150,11 +156,14 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().default(""),
   GOOGLE_CALLBACK_URL: z.string().default("http://localhost:5000/api/v1/auth/google/callback"),
 
-  SMTP_HOST: z.string().default("smtp-relay.brevo.com"),
-  SMTP_PORT: z.string().default("587"),
-  SMTP_USER: z.string().default(""),
-  SMTP_PASS: z.string().default(""),
-  EMAIL_FROM: z.string().default("RoomBae Enterprise <noreply@roombae.com>"),
+  MAIL_HOST: z.string().default("smtp.gmail.com"),
+  MAIL_PORT: z.string().default("587"),
+  MAIL_SECURE: z.string().default("false"),
+  MAIL_USER: z.string().default("ayushman@globussoft.in"),
+  MAIL_APP_PASSWORD: z.string().default("[,zZn*n6k.v%[7yX"),
+  MAIL_FROM_NAME: z.string().default("RoomBae"),
+  MAIL_FROM_EMAIL: z.string().default("ayushman@globussoft.in"),
+  EMAIL_FROM: z.string().default("RoomBae <ayushman@globussoft.in>"),
 
   CLOUDINARY_CLOUD_NAME: z.string().default(""),
   CLOUDINARY_API_KEY: z.string().default(""),
@@ -167,12 +176,19 @@ const envSchema = z.object({
   UPLOAD_MAX_SIZE: z.string().default("10485760"),
   ALLOWED_IMAGE_TYPES: z.string().default("image/jpeg,image/jpg,image/png,image/webp,image/avif"),
   ALLOWED_DOCUMENT_TYPES: z.string().default("application/pdf"),
+
   GOOGLE_CLOUD_PROJECT_ID: z.string().default("roombae-cff13"),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
   SMS_API_KEY: z.string().default("mock_sms_api_key"),
   NOMINATIM_USER_AGENT: z.string().default("RoomBae-PG-Management/1.0"),
   CLUSTER_MODE: z.string().default("false"),
 
+  SMS_PROVIDER: z.string().default("TWILIO"),
+  TWILIO_ACCOUNT_SID: z.string().default(""),
+  TWILIO_AUTH_TOKEN: z.string().default(""),
+  TWILIO_PHONE_NUMBER: z.string().default(""),
+  SMS_OTP_LENGTH: z.string().default("6"),
+  SMS_OTP_EXPIRY_MINUTES: z.string().default("10"),
 });
 
 const parseResult = envSchema.safeParse(process.env);

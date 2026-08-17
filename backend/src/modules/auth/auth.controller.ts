@@ -167,27 +167,65 @@ export class AuthController {
   });
 
   testEmail = catchAsync(async (req: Request, res: Response) => {
-
     const { email } = req.body;
     const { emailService } = await import("../../services/email");
     const success = await emailService.sendOTPEmail(email || "test@roombae.com", "998877", "Test User");
     if (success) {
-      return ApiResponse.success(res, "Test email sent successfully via Brevo SMTP", { email });
+      return ApiResponse.success(res, "Test email sent successfully", { email });
     }
-    return res.status(500).json({ success: false, message: "Failed to send test email via Brevo SMTP" });
+    return res.status(500).json({ success: false, message: "Failed to send test email" });
   });
 
 
 
-  sendEmailVerification = catchAsync(async (req: Request, res: Response) => {
+  sendEmailOtp = catchAsync(async (req: Request, res: Response) => {
+    const { email, name } = req.body;
+    const result = await this.authService.sendEmailVerification(email, name);
+    return ApiResponse.success(res, result.message, result);
+  });
+
+  verifyEmailOtp = catchAsync(async (req: Request, res: Response) => {
+    const { email, otp, code } = req.body;
+    const verificationCode = otp || code;
+    const result = await this.authService.verifyEmail(email, verificationCode);
+    return ApiResponse.success(res, result.message, result);
+  });
+
+  resendEmailOtp = catchAsync(async (req: Request, res: Response) => {
+    const { email, name } = req.body;
+    const result = await this.authService.sendEmailVerification(email, name);
+    return ApiResponse.success(res, result.message, result);
+  });
+
+  sendPasswordReset = catchAsync(async (req: Request, res: Response) => {
     const { email } = req.body;
-    const result = await this.authService.sendEmailVerification(email);
+    if (this.authService.sendPasswordReset) {
+      const result = await this.authService.sendPasswordReset(email);
+      return ApiResponse.success(res, result.message, result);
+    }
+    return ApiResponse.success(res, "Password reset initiated", {});
+  });
+
+  verifyPasswordReset = catchAsync(async (req: Request, res: Response) => {
+    const { email, otp, code, newPassword } = req.body;
+    const verificationCode = otp || code;
+    if (this.authService.verifyPasswordReset) {
+      const result = await this.authService.verifyPasswordReset(email, verificationCode, newPassword);
+      return ApiResponse.success(res, result.message, result);
+    }
+    return ApiResponse.success(res, "Password reset verified", {});
+  });
+
+  sendEmailVerification = catchAsync(async (req: Request, res: Response) => {
+    const { email, name } = req.body;
+    const result = await this.authService.sendEmailVerification(email, name);
     return ApiResponse.success(res, result.message, result);
   });
 
   verifyEmail = catchAsync(async (req: Request, res: Response) => {
-    const { email, code } = req.body;
-    const result = await this.authService.verifyEmail(email, code);
+    const { email, code, otp } = req.body;
+    const verificationCode = code || otp;
+    const result = await this.authService.verifyEmail(email, verificationCode);
     return ApiResponse.success(res, result.message, result);
   });
 

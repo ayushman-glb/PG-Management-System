@@ -80,7 +80,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
         summary?.resident?.id || "demo",
         8500
       );
-      alert(`Razorpay Payment Order Created: ${order.data?.orderId || "ORD_DEMO_2026"}`);
+      alert(`Razorpay Payment Order Created: ${order.orderId || order.razorpayOrderId || "ORD_DEMO_2026"}`);
     } catch (e) {
       console.error(e);
       alert("Payment gateway simulated order created successfully");

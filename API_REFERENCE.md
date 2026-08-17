@@ -20,7 +20,6 @@ This document provides a reference for RoomBae's core REST endpoints and GraphQL
 
 - `POST /api/v1/auth/register`: User registration.
 - `POST /api/v1/auth/login`: User login.
-- `POST /api/v1/auth/firebase-login`: Firebase ID Token verification & session JWT issue.
 - `POST /api/v1/auth/send-otp`: Send email OTP.
 - `POST /api/v1/auth/verify-otp`: Verify email OTP.
 - `GET /api/v1/auth/me`: Get current authenticated user profile.

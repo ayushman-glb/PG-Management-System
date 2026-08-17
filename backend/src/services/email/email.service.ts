@@ -14,10 +14,10 @@ export class EmailService {
       };
 
       const info = await transporter.sendMail(mailOptions);
-      console.log(`✉️ Email Sent: ${info.messageId} | Recipient: ${to} | Subject: "${subject}"`);
+      console.log(`✉️ Email Delivered: ${info.messageId} | Recipient: ${to} | Subject: "${subject}"`);
       return true;
     } catch (error: any) {
-      console.error(`❌ Email Failed: Recipient: ${to} | Error: ${error.message}`);
+      console.error(`❌ Email Delivery Error: Recipient: ${to} | Error: ${error.message}`);
       return false;
     }
   }

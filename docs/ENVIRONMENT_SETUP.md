@@ -205,21 +205,11 @@ https://your-backend-domain/api/v1/auth/google/callback
 
 ---
 
-# 📧 Email Provider
+# 📧 Email Configuration
 
-Configure your preferred email provider.
-
-Example variables
+Configure your email sender settings:
 
 ```env
-SMTP_HOST=<smtp_host>
-
-SMTP_PORT=<smtp_port>
-
-SMTP_USER=<smtp_username>
-
-SMTP_PASS=<smtp_password>
-
 EMAIL_FROM=<display_name_and_email>
 ```
 
@@ -233,18 +223,6 @@ CLOUDINARY_CLOUD_NAME=<cloud_name>
 CLOUDINARY_API_KEY=<api_key>
 
 CLOUDINARY_API_SECRET=<api_secret>
-```
-
----
-
-# 🔥 Firebase Admin
-
-```env
-FIREBASE_PROJECT_ID=<project_id>
-
-FIREBASE_CLIENT_EMAIL=<client_email>
-
-FIREBASE_PRIVATE_KEY=<private_key>
 ```
 
 ---
@@ -266,17 +244,10 @@ FIREBASE_PRIVATE_KEY=<private_key>
 | GOOGLE_CLIENT_ID | Yes | Google OAuth Client ID |
 | GOOGLE_CLIENT_SECRET | Yes | Google OAuth Client Secret |
 | GOOGLE_CALLBACK_URL | Yes | OAuth callback URL |
-| SMTP_HOST | Yes | SMTP server |
-| SMTP_PORT | Yes | SMTP port |
-| SMTP_USER | Yes | SMTP username |
-| SMTP_PASS | Yes | SMTP password |
 | EMAIL_FROM | Yes | Sender email |
 | CLOUDINARY_CLOUD_NAME | Yes | Cloudinary cloud name |
 | CLOUDINARY_API_KEY | Yes | Cloudinary API key |
 | CLOUDINARY_API_SECRET | Yes | Cloudinary API secret |
-| FIREBASE_PROJECT_ID | Yes | Firebase project |
-| FIREBASE_CLIENT_EMAIL | Yes | Firebase service account email |
-| FIREBASE_PRIVATE_KEY | Yes | Firebase private key |
 
 ---
 
@@ -296,8 +267,6 @@ DATABASE_URL is required
 JWT_SECRET must contain at least 32 characters
 
 GOOGLE_CLIENT_SECRET is missing
-
-SMTP_PASS is required
 ```
 
 ---
@@ -311,7 +280,7 @@ SMTP_PASS is required
 - Store production secrets only in your hosting provider (e.g. Render Environment Variables).
 - Use `.env.example` with placeholders for documentation.
 - Enable GitHub Secret Scanning and Push Protection.
-- Periodically rotate OAuth client secrets, JWT secrets, and SMTP credentials.
+- Periodically rotate OAuth client secrets and JWT secrets.
 
 ---
 
@@ -320,8 +289,7 @@ SMTP_PASS is required
 - MongoDB Atlas configured
 - Redis configured
 - Google OAuth configured
-- Firebase configured
-- SMTP configured
+- Email notifications configured
 - Cloudinary configured
 - Render environment variables added
 - Frontend environment variables added
