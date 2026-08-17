@@ -1,4 +1,5 @@
 import { PrismaClient, Role, PGStatus, BedStatus, ResidentStatus, AgreementStatus, TicketStatus, PaymentStatus, PassStatus, OwnerKYCStatus, BusinessType, PropertyType, PropertyOwnershipType, SubscriptionPlanType, SubscriptionStatus, FineType, FineCalculationType, FineStatus, Priority, LeaveStatus, HoldStatus, RoomType, ACType, WashroomType, BedHoldReason, RoomTransferStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -51,18 +52,47 @@ async function main() {
   }
   console.log('   ✅ Permissions verified.');
 
-  // 2. Admins
+  // 2. Admins & Platform Leadership
   console.log('📦 2. Seeding Platform Admins...');
-  const adminEmails = ['admin@roombae.com', 'superadmin@roombae.com', 'tech@roombae.com'];
-  for (let i = 0; i < adminEmails.length; i++) {
-    const email = adminEmails[i];
-    const existingAdmin = await prisma.admin.findUnique({ where: { email } });
+  const adminAccounts = [
+    { name: 'Super Admin', email: 'superadmin@roombae.com', password: 'SuperAdmin_RB_2026!', phone: '+919900000001', role: Role.SUPER_ADMIN },
+    { name: 'Platform Admin', email: 'admin@roombae.com', password: 'Admin_RoomBae_7890!', phone: '+919900000002', role: Role.ADMIN },
+    { name: 'Lead Engineer', email: 'tech@roombae.com', password: 'Admin_RoomBae_7890!', phone: '+919900000003', role: Role.ADMIN },
+  ];
+
+  for (const adm of adminAccounts) {
+    const passwordHash = await bcrypt.hash(adm.password, 12);
+    
+    // Seed in User collection for Unified Auth Handshake
+    let user = await prisma.user.findUnique({ where: { email: adm.email } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: adm.name,
+          email: adm.email,
+          phone: adm.phone,
+          passwordHash,
+          role: adm.role,
+          emailVerified: true,
+          phoneVerified: true,
+          accountStatus: 'ACTIVE',
+        },
+      });
+    } else {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, accountStatus: 'ACTIVE', emailVerified: true },
+      });
+    }
+
+    // Seed in Admin table for Admin Console relations
+    const existingAdmin = await prisma.admin.findUnique({ where: { email: adm.email } });
     if (!existingAdmin) {
       await prisma.admin.create({
         data: {
-          name: i === 0 ? 'RoomBae System Admin' : i === 1 ? 'Super Admin' : 'Lead Engineer',
-          email,
-          passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG', // Password123!
+          name: adm.name,
+          email: adm.email,
+          passwordHash,
           roleId: roles['SUPER_ADMIN'].id,
         },
       });
@@ -70,24 +100,25 @@ async function main() {
   }
   console.log('   ✅ Admins ready.');
 
-  // 3. PG Owners & Linked Accounts (10 Owners)
+  // 3. PG Owners & Linked Accounts (10 Owners matching USER_CREDENTIALS.md)
   console.log('📦 3. Seeding 10 PG Owners with Business & KYC records...');
   const ownerList = [
-    { name: 'Rajesh Sharma', email: 'owner1@roombae.com', phone: '+919876543210', city: 'Bengaluru' },
-    { name: 'Suresh Reddy', email: 'suresh.reddy@roombae.com', phone: '+919876543211', city: 'Hyderabad' },
-    { name: 'Vikram Malhotra', email: 'vikram.m@roombae.com', phone: '+919876543212', city: 'Pune' },
-    { name: 'Ananya Deshmukh', email: 'ananya.d@roombae.com', phone: '+919876543213', city: 'Mumbai' },
-    { name: 'Priya Nambiar', email: 'priya.n@roombae.com', phone: '+919876543214', city: 'Chennai' },
-    { name: 'Amitabh Gupta', email: 'amitabh.g@roombae.com', phone: '+919876543215', city: 'Delhi NCR' },
-    { name: 'Ramesh Verma', email: 'ramesh.v@roombae.com', phone: '+919876543216', city: 'Bengaluru' },
-    { name: 'Kavita Patel', email: 'kavita.p@roombae.com', phone: '+919876543217', city: 'Ahmedabad' },
-    { name: 'Arjun Mehta', email: 'arjun.m@roombae.com', phone: '+919876543218', city: 'Kolkata' },
-    { name: 'Deepak Saxena', email: 'deepak.s@roombae.com', phone: '+919876543219', city: 'Noida' },
+    { name: 'Rajesh Sharma', email: 'rajesh.owner@roombae.com', phone: '+919876543210', password: 'Owner_Rajesh_1001!', city: 'Bengaluru' },
+    { name: 'Priya Venkatesh', email: 'priya.owner@roombae.com', phone: '+919876543211', password: 'Owner_Priya_1002!', city: 'Bengaluru' },
+    { name: 'Amitabh Malhotra', email: 'amitabh.owner@roombae.com', phone: '+919876543212', password: 'Owner_Amitabh_1003!', city: 'Gurugram' },
+    { name: 'Sunita Aggarwal', email: 'sunita.owner@roombae.com', phone: '+919876543213', password: 'Owner_Sunita_1004!', city: 'Gurugram' },
+    { name: 'Vikram Joshi', email: 'vikram.owner@roombae.com', phone: '+919876543214', password: 'Owner_Vikram_1005!', city: 'Pune' },
+    { name: 'Ananya Deshmukh', email: 'ananya.owner@roombae.com', phone: '+919876543215', password: 'Owner_Ananya_1006!', city: 'Pune' },
+    { name: 'Suresh Reddy', email: 'suresh.owner@roombae.com', phone: '+919876543216', password: 'Owner_Suresh_1007!', city: 'Hyderabad' },
+    { name: 'Kavitha Rao', email: 'kavitha.owner@roombae.com', phone: '+919876543217', password: 'Owner_Kavitha_1008!', city: 'Hyderabad' },
+    { name: 'Rohan Gupta', email: 'rohan.owner@roombae.com', phone: '+919876543218', password: 'Owner_Rohan_1009!', city: 'Bengaluru' },
+    { name: 'Meenakshi Sundaram', email: 'meenakshi.owner@roombae.com', phone: '+919876543219', password: 'Owner_Meenakshi_1010!', city: 'Bengaluru' },
   ];
 
   const dbOwners: any[] = [];
   for (let i = 0; i < ownerList.length; i++) {
     const o = ownerList[i];
+    const passwordHash = await bcrypt.hash(o.password, 12);
     let user = await prisma.user.findUnique({ where: { email: o.email } });
     if (!user) {
       user = await prisma.user.create({
@@ -95,11 +126,17 @@ async function main() {
           name: o.name,
           email: o.email,
           phone: o.phone,
-          passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG',
+          passwordHash,
           role: 'OWNER',
           emailVerified: true,
           phoneVerified: true,
+          accountStatus: 'ACTIVE',
         },
+      });
+    } else {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, accountStatus: 'ACTIVE', emailVerified: true },
       });
     }
 
@@ -375,9 +412,12 @@ async function main() {
   for (let i = 0; i < targetResidentCount; i++) {
     const rName = `${residentNames[i % residentNames.length]} ${i + 1}`;
     const email = `resident${i + 1}@roombae.com`;
-    const phone = `+9190000${String(10000 + i)}`;
+    const resCode = `RES${1001 + i}`;
+    const rawPass = `Resident_${resCode}_Pass!`;
+    const phone = i < 9 ? `+91900002000${i + 1}` : i === 9 ? `+919000020010` : `+9190000${String(10000 + i)}`;
     const bed = availableBedsForSeeding[i];
     const pg = dbPGs[i % dbPGs.length];
+    const passwordHash = await bcrypt.hash(rawPass, 12);
 
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -386,12 +426,18 @@ async function main() {
           name: rName,
           email,
           phone,
-          residentCode: `RES${1000 + i}`,
-          passwordHash: '$2a$10$xB8nPGQdM2lKhzU07wn3XOzKKbz36pQ4cLoPOgsXu6.yL2CVxqTvG',
+          residentCode: resCode,
+          passwordHash,
           role: 'RESIDENT',
           emailVerified: true,
           phoneVerified: true,
+          accountStatus: 'ACTIVE',
         },
+      });
+    } else {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { residentCode: resCode, passwordHash, accountStatus: 'ACTIVE', emailVerified: true },
       });
     }
 
@@ -435,7 +481,7 @@ async function main() {
           name: `Father of ${rName.split(' ')[0]}`,
           relation: 'Father',
           phone: `+919811100${String(100 + i)}`,
-          address: resident.permanentAddress,
+          address: resident.permanentAddress || 'House No. 12, Green Park Extension, New Delhi',
         },
       });
     }

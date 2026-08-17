@@ -59,7 +59,14 @@ const corsMiddleware = cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
-    const isAllowed = allowedOrigins.includes(cleanOrigin);
+
+    // In development or local testing, allow any localhost/127.0.0.1 port
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
+    if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
+      return callback(null, true);
+    }
+
+    const isAllowed = allowedOrigins.includes(cleanOrigin) || isLocalhost;
     if (isAllowed) {
       return callback(null, true);
     }

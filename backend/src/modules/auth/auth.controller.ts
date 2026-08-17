@@ -12,15 +12,15 @@ export class AuthController {
   constructor(private readonly authService: IAuthService) {}
 
   login = catchAsync(async (req: Request, res: Response) => {
-    const { identifier, email, residentCode, password, rememberMe } = req.body;
-    const loginId = identifier || email || residentCode;
+    const { identifier, email, phone, residentCode, password, rememberMe } = req.body;
+    const loginId = identifier || email || phone || residentCode;
     const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
     const userAgent = req.headers["user-agent"];
 
     if (!loginId || !password) {
       return res.status(400).json({
         success: false,
-        message: "Identifier (email/residentCode) and password are required",
+        message: "Identifier (email/phone/residentCode) and password are required",
       });
     }
 

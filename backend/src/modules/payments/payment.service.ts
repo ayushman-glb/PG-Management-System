@@ -207,14 +207,18 @@ export class PaymentService {
 
       const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
       if (recipientEmail) {
-        await emailService.sendPaymentFailedEmail({
-          email: recipientEmail,
-          name: payment.resident?.name || 'Resident',
-          amount: payment.totalAmount,
-          attemptDate: new Date(),
-          invoiceNumber: payment.invoiceNumber,
-          failureReason: 'Razorpay cryptographic signature mismatch',
-        }).catch((err) => logger.warn('Failed to send failure email', { error: err.message }));
+        try {
+          await emailService.sendPaymentFailedEmail({
+            email: recipientEmail,
+            name: payment.resident?.name || 'Resident',
+            amount: payment.totalAmount,
+            attemptDate: new Date(),
+            invoiceNumber: payment.invoiceNumber,
+            failureReason: 'Razorpay cryptographic signature mismatch',
+          });
+        } catch (err: any) {
+          logger.warn('Failed to send failure email', { error: err?.message });
+        }
       }
 
       throw new AppError('Invalid Razorpay signature verification failed.', 400);
@@ -385,16 +389,20 @@ export class PaymentService {
 
           const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
           if (recipientEmail) {
-            await emailService.sendPaymentReceiptEmail({
-              email: recipientEmail,
-              name: payment.resident?.name || 'Resident',
-              invoiceNumber: payment.invoiceNumber,
-              amount: payment.totalAmount,
-              paymentDate: new Date(),
-              paymentMethod: 'Razorpay Webhook',
-              transactionId: paymentId,
-              propertyName: payment.resident?.pg?.name,
-            }).catch(() => {});
+            try {
+              await emailService.sendPaymentReceiptEmail({
+                email: recipientEmail,
+                name: payment.resident?.name || 'Resident',
+                invoiceNumber: payment.invoiceNumber,
+                amount: payment.totalAmount,
+                paymentDate: new Date(),
+                paymentMethod: 'Razorpay Webhook',
+                transactionId: paymentId,
+                propertyName: payment.resident?.pg?.name,
+              });
+            } catch (err: any) {
+              logger.warn('Failed to send webhook payment receipt email', { error: err?.message });
+            }
           }
         }
       }
@@ -479,14 +487,18 @@ export class PaymentService {
 
     const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
     if (recipientEmail) {
-      await emailService.sendRefundEmail({
-        email: recipientEmail,
-        name: payment.resident?.name || 'Resident',
-        refundAmount,
-        refundId,
-        originalTransactionId: payment.razorpayPaymentId || payment.id,
-        processedDate: new Date(),
-      }).catch((err) => logger.warn('Failed to send refund email', { error: err.message }));
+      try {
+        await emailService.sendRefundEmail({
+          email: recipientEmail,
+          name: payment.resident?.name || 'Resident',
+          refundAmount,
+          refundId,
+          originalTransactionId: payment.razorpayPaymentId || payment.id,
+          processedDate: new Date(),
+        });
+      } catch (err: any) {
+        logger.warn('Failed to send refund email', { error: err?.message });
+      }
     }
 
     return {

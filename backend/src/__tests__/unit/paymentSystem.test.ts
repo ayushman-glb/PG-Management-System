@@ -3,6 +3,48 @@ import { PaymentStatus } from '@prisma/client';
 import { PaymentService } from '../../modules/payments/payment.service';
 import { env } from '../../config/env';
 
+jest.mock('../../modules/email', () => {
+  const service = {
+    sendPaymentReceiptEmail: jest.fn().mockResolvedValue(true),
+    sendPaymentFailedEmail: jest.fn().mockResolvedValue(true),
+    sendRefundEmail: jest.fn().mockResolvedValue(true),
+    sendEmail: jest.fn().mockResolvedValue(true),
+    sendPasswordResetEmail: jest.fn().mockResolvedValue(true),
+    sendSignupVerificationOTP: jest.fn().mockResolvedValue(true),
+    sendWelcomeEmail: jest.fn().mockResolvedValue(true),
+  };
+  return {
+    __esModule: true,
+    emailService: service,
+    default: service,
+    EmailService: jest.fn().mockImplementation(() => service),
+  };
+});
+
+jest.mock('../../modules/email/email.service', () => {
+  const service = {
+    sendPaymentReceiptEmail: jest.fn().mockResolvedValue(true),
+    sendPaymentFailedEmail: jest.fn().mockResolvedValue(true),
+    sendRefundEmail: jest.fn().mockResolvedValue(true),
+    sendEmail: jest.fn().mockResolvedValue(true),
+    sendPasswordResetEmail: jest.fn().mockResolvedValue(true),
+    sendSignupVerificationOTP: jest.fn().mockResolvedValue(true),
+    sendWelcomeEmail: jest.fn().mockResolvedValue(true),
+  };
+  return {
+    __esModule: true,
+    emailService: service,
+    default: service,
+    EmailService: jest.fn().mockImplementation(() => service),
+  };
+});
+
+jest.mock('../../modules/documents/documents.service', () => ({
+  documentsService: {
+    generatePdfReceipt: jest.fn().mockResolvedValue(Buffer.from('mock pdf')),
+  },
+}));
+
 describe('Payment Subsystem Core & Razorpay Verification Suite', () => {
   let paymentService: PaymentService;
   let mockDb: any;

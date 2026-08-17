@@ -4,9 +4,13 @@ export const LoginSchema = z.object({
   body: z.object({
     identifier: z.string().optional(),
     email: z.string().optional(),
+    phone: z.string().optional(),
     residentCode: z.string().optional(),
     password: z.string().min(1, 'Password is required'),
-  }).refine((data) => !!(data.identifier || data.email || data.residentCode), {
+    rememberMe: z.boolean().optional(),
+    visitorId: z.string().optional(),
+    deviceLabel: z.string().optional(),
+  }).passthrough().refine((data) => !!(data.identifier || data.email || data.phone || data.residentCode), {
     message: 'Identifier (email/phone/residentCode) is required',
     path: ['identifier'],
   }),

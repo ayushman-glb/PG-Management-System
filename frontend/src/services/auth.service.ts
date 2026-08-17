@@ -125,7 +125,9 @@ export class AuthService {
   }
 
   async login(identifierOrCredentials: any, passwordArg?: string, rememberMeArg?: boolean) {
-    let identifier = typeof identifierOrCredentials === "string" ? identifierOrCredentials : (identifierOrCredentials.identifier || identifierOrCredentials.email || "");
+    let identifier = typeof identifierOrCredentials === "string" 
+      ? identifierOrCredentials 
+      : (identifierOrCredentials.identifier || identifierOrCredentials.email || identifierOrCredentials.phone || identifierOrCredentials.residentCode || "");
     let password = passwordArg || (typeof identifierOrCredentials === "object" ? identifierOrCredentials.password : "");
     let rememberMe = rememberMeArg !== undefined ? rememberMeArg : (typeof identifierOrCredentials === "object" ? Boolean(identifierOrCredentials.rememberMe) : false);
 
@@ -143,7 +145,14 @@ export class AuthService {
 
     const res = await this.request("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ identifier, password, rememberMe, visitorId, deviceLabel }),
+      body: JSON.stringify({ 
+        identifier: identifier.trim(), 
+        email: identifier.trim(), 
+        password, 
+        rememberMe, 
+        visitorId, 
+        deviceLabel 
+      }),
     });
 
     if (res.data?.accessToken) {
