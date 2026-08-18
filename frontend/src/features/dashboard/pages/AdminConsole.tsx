@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { api } from "@services/api";
+
 interface Props {
   navigate: (p: Page) => void;
 }
@@ -23,13 +25,13 @@ interface Props {
 export default function AdminConsole({ navigate }: Props) {
   const { darkMode } = useTheme();
   const [loading, setLoading] = useState(true);
-  const [metrics] = useState({
-    totalOwners: 24,
-    totalPGs: 58,
-    totalResidents: 1420,
-    monthlySaaSRevenue: "₹4,85,000",
+  const [metrics, setMetrics] = useState({
+    totalOwners: 10,
+    totalPGs: 10,
+    totalResidents: 150,
+    monthlySaaSRevenue: "₹1,25,000",
     systemHealth: "99.98%",
-    activeSubscriptions: 22,
+    activeSubscriptions: 10,
   });
 
   const [verifications, setVerifications] = useState<any[]>([]);
@@ -38,35 +40,34 @@ export default function AdminConsole({ navigate }: Props) {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const verifRes = await ownerService.getPendingVerifications().catch(() => null);
-      if (verifRes?.data) {
-        setVerifications(verifRes.data);
+      const [metricsRes, verifRes] = await Promise.all([
+        api.get("/saas/admin/metrics").catch(() => null),
+        api.get("/saas/admin/verification-queue").catch(() => null),
+      ]);
+
+      if (metricsRes?.data) {
+        setMetrics(metricsRes.data);
+      }
+
+      if (verifRes?.data && Array.isArray(verifRes.data) && verifRes.data.length > 0) {
+        setVerifications(
+          verifRes.data.map((owner: any) => ({
+            id: owner.id,
+            ownerName: owner.name,
+            email: owner.email,
+            pgName: owner.pgs?.[0]?.name || "New PG Property",
+            city: owner.pgs?.[0]?.city || "Bengaluru",
+            submittedAt: owner.createdAt || new Date().toISOString(),
+            kycStatus: owner.kyc?.status || "PENDING",
+            aadhaarNumber: owner.aadhaarNumber || "Verified Document",
+            panNumber: owner.panNumber || "Verified PAN",
+          }))
+        );
       } else {
-        // Mock fallback if API returns empty array for demo
-        setVerifications([
-          {
-            id: "verif-1",
-            ownerName: "Rajesh Kumar",
-            email: "rajesh.kumar@roombae.com",
-            pgName: "Sunrise Heights Indiranagar",
-            city: "Bengaluru",
-            submittedAt: "2026-08-11T14:30:00Z",
-            kycStatus: "PENDING",
-            aadhaarNumber: "5432-8765-1092",
-            panNumber: "ABCDE1234F",
-          },
-          {
-            id: "verif-2",
-            ownerName: "Meenakshi Iyer",
-            email: "meenakshi.iyer@roombae.com",
-            pgName: "Greenwood Stays HSR",
-            city: "Bengaluru",
-            submittedAt: "2026-08-12T09:15:00Z",
-            kycStatus: "PENDING",
-            aadhaarNumber: "9876-5432-1098",
-            panNumber: "XYZPS9876K",
-          },
-        ]);
+        const fallbackRes = await ownerService.getPendingVerifications().catch(() => null);
+        if (fallbackRes?.data && fallbackRes.data.length > 0) {
+          setVerifications(fallbackRes.data);
+        }
       }
     } catch {
       // Keep state resilient

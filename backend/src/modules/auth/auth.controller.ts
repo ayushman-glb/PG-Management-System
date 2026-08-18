@@ -74,7 +74,7 @@ export class AuthController {
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: cookieMaxAge,
     });
 
@@ -99,7 +99,7 @@ export class AuthController {
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -121,7 +121,7 @@ export class AuthController {
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -141,7 +141,7 @@ export class AuthController {
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -156,12 +156,12 @@ export class AuthController {
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     });
     res.clearCookie("accessToken", {
       httpOnly: false,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     });
     return ApiResponse.success(res, "Logged out successfully", { success: true });
   });
@@ -252,7 +252,7 @@ export class AuthController {
       res.cookie("refreshToken", result.refreshToken, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: cookieMaxAge,
       });
     }
@@ -273,7 +273,7 @@ export class AuthController {
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -379,7 +379,7 @@ export class AuthController {
           res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           });
 

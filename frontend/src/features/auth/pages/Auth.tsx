@@ -420,7 +420,9 @@ export default function Auth({ navigate }: Props) {
 
       if (userRole === "RESIDENT") {
         navigate("resident-portal");
-      } else if (userRole === "OWNER" || userRole === "ADMIN" || userRole === "SUPER_ADMIN" || userRole === "MANAGER") {
+      } else if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+        navigate("admin-console");
+      } else if (userRole === "OWNER" || userRole === "MANAGER" || userRole === "STAFF") {
         navigate("dashboard");
       } else {
         setAuthError("Your account role could not be determined. Please contact support.");
@@ -453,6 +455,8 @@ export default function Auth({ navigate }: Props) {
       setTimeout(() => {
         if (userRole === "RESIDENT") {
           navigate("resident-portal");
+        } else if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+          navigate("admin-console");
         } else {
           navigate("dashboard");
         }

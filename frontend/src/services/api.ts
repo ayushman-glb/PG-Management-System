@@ -19,7 +19,13 @@ export interface ApiResponse<T = any> {
 
 class ApiClient {
   public async request<T = any>(endpoint: string, options: RequestInit = {}, isRetry: boolean = false): Promise<T> {
-    const token = typeof localStorage !== "undefined" ? (localStorage.getItem("accessToken") || localStorage.getItem("token")) : null;
+    const token =
+      authService.getToken() ||
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("roombae_access_token") ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token")
+        : null);
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
     };

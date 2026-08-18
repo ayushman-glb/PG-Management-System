@@ -18,6 +18,7 @@ export class AuthRepository implements IUserRepository {
   async findByIdentifier(identifier: string): Promise<User | null> {
     const clean = identifier.trim();
     const lower = clean.toLowerCase();
+    const stripped = clean.replace(/\s+/g, "");
 
     return await this.client.user.findFirst({
       where: {
@@ -25,10 +26,14 @@ export class AuthRepository implements IUserRepository {
           { email: { equals: lower, mode: "insensitive" } },
           { email: { equals: clean, mode: "insensitive" } },
           { residentCode: { equals: clean, mode: "insensitive" } },
+          { residentCode: { equals: stripped, mode: "insensitive" } },
           { phone: { equals: clean, mode: "insensitive" } },
+          { phone: { equals: stripped, mode: "insensitive" } },
           { email: clean },
           { residentCode: clean },
+          { residentCode: stripped },
           { phone: clean },
+          { phone: stripped },
         ],
       },
     });

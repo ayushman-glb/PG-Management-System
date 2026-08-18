@@ -6,23 +6,33 @@ export class AuthService {
   private inMemoryToken: string | null = null;
 
   public getToken(): string | null {
-    return this.inMemoryToken;
+    if (this.inMemoryToken) return this.inMemoryToken;
+    try {
+      return (
+        localStorage.getItem("roombae_access_token") ||
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("token")
+      );
+    } catch {
+      return null;
+    }
   }
 
   public setToken(token: string) {
     this.inMemoryToken = token;
-    // Clean up any legacy localStorage entries
     try {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("token");
-      localStorage.removeItem("roombae_access_token");
+      localStorage.setItem("roombae_access_token", token);
+      localStorage.setItem("accessToken", token);
     } catch {}
     updateSocketAuth(token);
   }
 
   public getStoredRefreshToken(): string | null {
     try {
-      return sessionStorage.getItem("roombae_refresh_token") || localStorage.getItem("roombae_refresh_token");
+      return (
+        sessionStorage.getItem("roombae_refresh_token") ||
+        localStorage.getItem("roombae_refresh_token")
+      );
     } catch {
       return null;
     }
@@ -54,7 +64,7 @@ export class AuthService {
 
   public hasStoredSession(): boolean {
     return Boolean(
-      this.inMemoryToken ||
+      this.getToken() ||
       this.getStoredRefreshToken() ||
       (typeof document !== "undefined" && document.cookie.includes("refreshToken"))
     );
