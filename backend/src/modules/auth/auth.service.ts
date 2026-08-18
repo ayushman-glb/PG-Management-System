@@ -402,8 +402,9 @@ export class AuthService implements IAuthService {
       );
     }
 
-    // 2FA Enforcement for Admin/Super Admin or users with is2FAEnabled
-    if (user.is2FAEnabled === true || user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+    // 2FA Enforcement toggle: Disabled for now (set to true to re-enable)
+    const ENABLE_2FA_LOGIN_ENFORCEMENT = false;
+    if (ENABLE_2FA_LOGIN_ENFORCEMENT && (user.is2FAEnabled === true || user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN)) {
       if (user.is2FAEnabled && this.tokenService.generatePreAuthToken) {
         const preAuthToken = this.tokenService.generatePreAuthToken({
           preAuth: true,

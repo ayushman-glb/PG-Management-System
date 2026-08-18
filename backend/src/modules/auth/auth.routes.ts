@@ -120,7 +120,7 @@ router.post(
   (req, res, next) => Container.authController.enableTwoFactor(req, res, next),
 );
 
-router.post("/2fa/verify", authenticate, (req, res, next) =>
+router.post("/2fa/verify", (req, res, next) =>
   Container.authController.verifyTwoFactor(req, res, next),
 );
 
