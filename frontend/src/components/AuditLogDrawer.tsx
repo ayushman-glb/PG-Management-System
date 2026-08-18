@@ -18,7 +18,7 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const data = await (api as any).request('/resident-management/audit-logs');
+      const data = await (api as any).request('/settings/audit-logs');
       setLogs(data.data || []);
     } catch {
       // Fallback mock audit logs if backend DB connection is not initialized

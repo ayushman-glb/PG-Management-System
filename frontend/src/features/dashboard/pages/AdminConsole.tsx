@@ -41,8 +41,8 @@ export default function AdminConsole({ navigate }: Props) {
     setLoading(true);
     try {
       const [metricsRes, verifRes] = await Promise.all([
-        api.get("/saas/admin/metrics").catch(() => null),
-        api.get("/saas/admin/verification-queue").catch(() => null),
+        api.get("/dashboard/overview").catch(() => null),
+        api.get("/settings/admin/verification-queue").catch(() => null),
       ]);
 
       if (metricsRes?.data) {

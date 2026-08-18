@@ -35,9 +35,8 @@ export const RoomConversionModal: React.FC<RoomConversionModalProps> = ({
     setIsSubmitting(true);
     setFeedback(null);
     try {
-      await (api as any).request("/resident-management/rooms/convert", {
-        method: "POST",
-        body: JSON.stringify({ roomId: roomData.id, newType }),
+      await api.put(`/rooms/${roomData.id}/convert`, {
+        newType,
       });
       setFeedback({ type: "success", message: `Room ${roomData.roomNumber} successfully converted to ${newType} sharing!` });
       setTimeout(() => {

@@ -39,15 +39,15 @@ export class BedService {
   }
 
   async updateBedStatus(bedId: string, status: string, notes?: string) {
-    const res = await this.request("/resident-management/beds/status", {
-      method: "POST",
-      body: JSON.stringify({ bedId, status, notes }),
+    const res = await this.request(`/beds/${bedId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status, remarks: notes }),
     });
     return res.data;
   }
 
   async createBedHold(bedId: string, reason: string, holdStartDate?: string, holdEndDate?: string, notes?: string) {
-    const res = await this.request("/resident-management/beds/hold", {
+    const res = await this.request("/beds/holds", {
       method: "POST",
       body: JSON.stringify({ bedId, reason, holdStartDate, holdEndDate, notes }),
     });
@@ -55,7 +55,7 @@ export class BedService {
   }
 
   async releaseBedHold(holdId: string) {
-    const res = await this.request(`/resident-management/beds/hold/${holdId}`, {
+    const res = await this.request(`/beds/holds/${holdId}`, {
       method: "DELETE",
     });
     return res.data;
@@ -63,7 +63,7 @@ export class BedService {
 
   async getBedHolds(pgId?: string) {
     const query = pgId ? `?pgId=${pgId}` : "";
-    const res = await this.request(`/resident-management/beds/holds${query}`);
+    const res = await this.request(`/beds/holds${query}`);
     return res.data;
   }
 }

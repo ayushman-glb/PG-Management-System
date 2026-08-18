@@ -50,7 +50,7 @@ export class RoomService {
     additionalNotes?: string;
     priority?: string;
   }) {
-    const res = await this.request("/resident-management/transfers/request", {
+    const res = await this.request("/rooms/transfer-requests", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -62,28 +62,28 @@ export class RoomService {
     if (params?.pgId) query.append("pgId", params.pgId);
     if (params?.residentId) query.append("residentId", params.residentId);
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/resident-management/transfers${queryString}`);
+    const res = await this.request(`/rooms/transfer-requests${queryString}`);
     return res.data;
   }
 
   async approveRoomTransfer(requestId: string, targetBedId?: string, scheduledDate?: string, notes?: string) {
-    const res = await this.request(`/resident-management/transfers/${requestId}/approve`, {
-      method: "POST",
+    const res = await this.request(`/rooms/transfer-requests/${requestId}/approve`, {
+      method: "PUT",
       body: JSON.stringify({ targetBedId, scheduledDate, notes }),
     });
     return res.data;
   }
 
   async rejectRoomTransfer(requestId: string, rejectionReason: string) {
-    const res = await this.request(`/resident-management/transfers/${requestId}/reject`, {
-      method: "POST",
+    const res = await this.request(`/rooms/transfer-requests/${requestId}/reject`, {
+      method: "PUT",
       body: JSON.stringify({ rejectionReason }),
     });
     return res.data;
   }
 
   async completeRoomTransfer(requestId: string) {
-    const res = await this.request(`/resident-management/transfers/${requestId}/complete`, {
+    const res = await this.request(`/rooms/transfer-requests/${requestId}/complete`, {
       method: "POST",
     });
     return res.data;

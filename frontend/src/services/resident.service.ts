@@ -63,9 +63,9 @@ export class ResidentService {
   }
 
   async updateResidentStatus(residentId: string, status: string, reason?: string) {
-    const res = await this.request("/resident-management/status", {
-      method: "POST",
-      body: JSON.stringify({ residentId, status, reason }),
+    const res = await this.request(`/residents/${residentId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, reason }),
     });
     return res.data;
   }
@@ -81,7 +81,7 @@ export class ResidentService {
   }
 
   async getResidentStatusHistory(residentId: string) {
-    const res = await this.request(`/resident-management/status/history/${residentId}`);
+    const res = await this.request(`/residents/${residentId}/status-history`);
     return res.data;
   }
 }
