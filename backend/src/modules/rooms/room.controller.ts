@@ -10,6 +10,10 @@ export class RoomController {
   convertType = catchAsync(async (req: Request, res: Response) => {
     const { roomId } = req.params;
     const { newType } = req.body;
+    const validTypes = ['SINGLE', 'DOUBLE', 'TRIPLE', 'FOUR_SHARING', 'FIVE_SHARING', 'CUSTOM'];
+    if (!roomId || !newType || !validTypes.includes(newType)) {
+      return ApiResponse.error(res, 'Valid roomId and RoomType are required', undefined, 400);
+    }
     const result = await roomService.convertRoomType(roomId, newType);
     return ApiResponse.success(res, 'Room type converted successfully', { success: result });
   });

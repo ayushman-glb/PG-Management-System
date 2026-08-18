@@ -73,6 +73,13 @@ export class ResidentController {
   updateStatus = catchAsync(async (req: AuthRequest, res: Response) => {
     const { residentId } = req.params;
     const { status, reason } = req.body;
+    if (!residentId || !status) {
+      return ApiResponse.error(res, 'Resident ID and status are required', undefined, 400);
+    }
+    const existing = await Container.db.resident.findUnique({ where: { id: residentId } });
+    if (!existing) {
+      return ApiResponse.error(res, 'Resident record not found', undefined, 404);
+    }
     const updated = await Container.db.resident.update({
       where: { id: residentId },
       data: { status: status as any }

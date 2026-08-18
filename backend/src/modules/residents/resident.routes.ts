@@ -42,7 +42,17 @@ router.post('/visitor-pass',
   authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
   (req, res, next) => Container.residentController.createVisitorPass(req, res, next));
 
+router.post('/portal/visitor-pass',
+  authenticate,
+  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.residentController.createVisitorPass(req, res, next));
+
 router.post('/gate-pass',
+  authenticate,
+  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  (req, res, next) => Container.residentController.createGatePass(req, res, next));
+
+router.post('/portal/gate-pass',
   authenticate,
   authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
   (req, res, next) => Container.residentController.createGatePass(req, res, next));
