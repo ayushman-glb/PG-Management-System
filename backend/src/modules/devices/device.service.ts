@@ -37,6 +37,79 @@ export class DeviceService {
   }
 
   /**
+   * Classifies user agent into DESKTOP, MOBILE, or TABLET category.
+   */
+  public classifyDeviceCategory(userAgent?: string, deviceLabel?: string): "DESKTOP" | "MOBILE" | "TABLET" {
+    const raw = `${userAgent || ""} ${deviceLabel || ""}`.toLowerCase();
+    if (raw.includes("ipad") || (raw.includes("tablet") && !raw.includes("mobile"))) {
+      return "TABLET";
+    }
+    if (raw.includes("mobile") || raw.includes("android") || raw.includes("iphone") || raw.includes("ipod") || raw.includes("ios")) {
+      return "MOBILE";
+    }
+    return "DESKTOP";
+  }
+
+  /**
+   * Enforces 1 Desktop + 1 Mobile concurrent session cap policy.
+   * If a second device in the same category logs in, force-evicts the prior session in that category.
+   */
+  public async enforceConcurrentSessionPolicy(
+    userId: string,
+    currentDeviceId: string,
+    context: { ipAddress?: string; userAgent?: string; requestId?: string },
+  ): Promise<{ evictedDeviceId?: string }> {
+    const userDevices = await this.deviceRepository.findByUserId(userId);
+    const currentCategory = this.classifyDeviceCategory(context.userAgent);
+
+    let evictedDeviceId: string | undefined;
+
+    for (const dev of userDevices) {
+      if (dev.id === currentDeviceId) continue;
+      if (dev.status === "REVOKED" || dev.status === "BLOCKED") continue;
+
+      const devCategory = this.classifyDeviceCategory(dev.deviceLabel);
+
+      // If existing active device is in the same category (e.g. desktop + desktop or mobile + mobile)
+      if (devCategory === currentCategory) {
+        evictedDeviceId = dev.id;
+        await this.deviceRepository.updateDeviceStatus(dev.id, "REVOKED", "UNTRUSTED");
+
+        await this.deviceRepository.createAuditEvent({
+          userId,
+          deviceId: dev.id,
+          eventType: "FORCED_LOGOUT_CONCURRENT_CAP",
+          severity: "WARNING",
+          riskScore: 50,
+          riskLevel: "MEDIUM",
+          ipAddress: context.ipAddress,
+          userAgent: context.userAgent,
+          requestId: context.requestId,
+          metadata: {
+            category: currentCategory,
+            evictedDeviceId: dev.id,
+            newDeviceId: currentDeviceId,
+            reason: "CONCURRENT_SESSION_LIMIT_EXCEEDED",
+          },
+        });
+
+        try {
+          // Broadcast real-time eviction to client sockets
+          const { SocketServer } = require("../../socket/socketServer");
+          SocketServer.emitToUser(userId, "security:session-revoked", {
+            deviceId: dev.id,
+            reason: "CONCURRENT_SESSION_LIMIT_EXCEEDED",
+            category: currentCategory,
+            timestamp: new Date().toISOString(),
+          });
+        } catch {}
+      }
+    }
+
+    return { evictedDeviceId };
+  }
+
+  /**
    * Identify device and evaluate security risk.
    */
   public async identifyAndEvaluateDevice(
@@ -47,6 +120,7 @@ export class DeviceService {
     device: any;
     isNew: boolean;
     risk: RiskEvaluationResult;
+    evictedDeviceId?: string;
   }> {
     const visitorId = payload.visitorId?.trim();
     if (!visitorId) {
@@ -107,6 +181,15 @@ export class DeviceService {
       });
     }
 
+    // Enforce 1 Desktop + 1 Mobile concurrent session cap policy
+    let evictedDeviceId: string | undefined;
+    try {
+      const sessionResult = await this.enforceConcurrentSessionPolicy(userId, existingDevice.id, context);
+      evictedDeviceId = sessionResult.evictedDeviceId;
+    } catch (policyErr) {
+      logger.debug("Concurrent session policy enforcement notice:", policyErr);
+    }
+
     const risk = DeviceRiskEngine.evaluate({
       isNewDevice: isNew,
       deviceStatus,
@@ -141,6 +224,7 @@ export class DeviceService {
       },
       isNew,
       risk,
+      evictedDeviceId,
     };
   }
 

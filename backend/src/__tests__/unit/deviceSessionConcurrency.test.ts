@@ -76,35 +76,27 @@ describe("Device Session Concurrency & Policy Suite (Project-Specific Rules)", (
       const androidMobileUA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
       const iPadUA = "Mozilla/5.0 (iPad; CPU OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1";
 
-      const classify = (ua?: string) => {
-        if (!ua) return "DESKTOP";
-        const low = ua.toLowerCase();
-        if (low.includes("ipad") || (low.includes("tablet") && !low.includes("mobile"))) return "TABLET";
-        if (low.includes("mobile") || low.includes("android") || low.includes("iphone") || low.includes("ipod")) return "MOBILE";
-        return "DESKTOP";
-      };
-
-      expect(classify(desktopUA)).toBe("DESKTOP");
-      expect(classify(mobileUA)).toBe("MOBILE");
-      expect(classify(androidMobileUA)).toBe("MOBILE");
-      expect(classify(iPadUA)).toBe("TABLET");
+      expect(deviceService.classifyDeviceCategory(desktopUA)).toBe("DESKTOP");
+      expect(deviceService.classifyDeviceCategory(mobileUA)).toBe("MOBILE");
+      expect(deviceService.classifyDeviceCategory(androidMobileUA)).toBe("MOBILE");
+      expect(deviceService.classifyDeviceCategory(iPadUA)).toBe("TABLET");
     });
 
     it("should allow simultaneous active sessions for 1 Desktop and 1 Mobile device without eviction", async () => {
       const userId = "usr_multi_device_1";
       const activeDevices = [
-        { id: "dev_desk_1", userId, deviceLabel: "Chrome on Windows", status: "TRUSTED", trustLevel: "TRUSTED" },
         { id: "dev_mob_1", userId, deviceLabel: "Safari on iOS", status: "TRUSTED", trustLevel: "TRUSTED" },
       ];
 
-      mockPrisma.userDevice.findByUserId = jest.fn().mockResolvedValue(activeDevices);
+      mockPrisma.userDevice.findMany.mockResolvedValue(activeDevices);
 
-      // Desktop and Mobile coexist peacefully
-      const desktopDevices = activeDevices.filter((d) => d.deviceLabel.includes("Windows"));
-      const mobileDevices = activeDevices.filter((d) => d.deviceLabel.includes("iOS"));
+      // Desktop connects while Mobile is already active
+      const result = await deviceService.enforceConcurrentSessionPolicy(userId, "dev_desk_new", {
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0",
+      });
 
-      expect(desktopDevices).toHaveLength(1);
-      expect(mobileDevices).toHaveLength(1);
+      expect(result.evictedDeviceId).toBeUndefined();
+      expect(mockPrisma.userDevice.update).not.toHaveBeenCalled();
     });
 
     it("should revoke previous session and emit real-time event when a second device in the same category logs in", async () => {
@@ -120,7 +112,7 @@ describe("Device Session Concurrency & Policy Suite (Project-Specific Rules)", (
 
       const emitSpy = jest.spyOn(SocketServer, "emitToUser").mockImplementation(() => {});
 
-      mockPrisma.userDevice.findUnique.mockResolvedValue(existingDesktopDevice);
+      mockPrisma.userDevice.findMany.mockResolvedValue([existingDesktopDevice]);
       mockPrisma.userDevice.update.mockResolvedValue({
         ...existingDesktopDevice,
         status: "REVOKED",
@@ -128,29 +120,29 @@ describe("Device Session Concurrency & Policy Suite (Project-Specific Rules)", (
       });
       mockPrisma.securityAuditEvent.create.mockResolvedValue({ id: "aud_evict_1" });
 
-      // Execute revocation of the old desktop session
-      const result = await deviceService.revokeDevice(userId, existingDesktopDevice.id, {
+      // Execute policy enforcement when a new desktop device connects
+      const result = await deviceService.enforceConcurrentSessionPolicy(userId, "dev_desk_new", {
         ipAddress: "10.0.0.1",
-        userAgent: "New Desktop Browser",
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/120.0.0.0",
         requestId: "req_evict_123",
       });
 
-      expect(result.status).toBe("REVOKED");
+      expect(result.evictedDeviceId).toBe("dev_desk_old");
       expect(mockPrisma.userDevice.update).toHaveBeenCalledWith({
-        where: { id: existingDesktopDevice.id },
+        where: { id: "dev_desk_old" },
         data: expect.objectContaining({
           status: "REVOKED",
           trustLevel: "UNTRUSTED",
         }),
       });
 
-      // Verify security audit log record was created
+      // Verify security audit log record was created for forced logout
       expect(mockPrisma.securityAuditEvent.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             userId,
-            deviceId: existingDesktopDevice.id,
-            eventType: "DEVICE_REVOKED",
+            deviceId: "dev_desk_old",
+            eventType: "FORCED_LOGOUT_CONCURRENT_CAP",
           }),
         })
       );
