@@ -13,7 +13,7 @@ const REDIS_CONNECT_TIMEOUT_MS = 5000;
 export function getRedisConfig(): RedisClientOptions {
   const rawUrl = (env.REDIS_URL || process.env.REDIS_URL || "").trim();
   const isDev = (env.NODE_ENV || process.env.NODE_ENV || "development") === "development";
-  const isTLS = rawUrl.startsWith("rediss://");
+  const isTLS = rawUrl.startsWith("rediss://") || (rawUrl === "" && (env.REDIS_TLS === "true" || process.env.REDIS_TLS === "true"));
 
   const reconnectStrategy = (retries: number) => {
     // In development, avoid noisy endless retry loops if Docker Redis is not started
@@ -43,7 +43,6 @@ export function getRedisConfig(): RedisClientOptions {
   // Fallback configuration if no URL string is provided
   const host = env.REDIS_HOST || process.env.REDIS_HOST || "localhost";
   const port = parseInt(env.REDIS_PORT || process.env.REDIS_PORT || "6379", 10);
-  const hostTls = env.REDIS_TLS === "true" || process.env.REDIS_TLS === "true";
 
   const config: RedisClientOptions = {
     socket: {
@@ -51,7 +50,7 @@ export function getRedisConfig(): RedisClientOptions {
       port,
       connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
       reconnectStrategy,
-      ...(hostTls ? { tls: true } : {}),
+      ...(isTLS ? { tls: true } : {}),
     },
   };
 
@@ -87,7 +86,7 @@ export const redisClient: RedisClientType = initRedisClient();
 export const redis: RedisClientType = redisClient;
 
 let hasLoggedConnectError = false;
-let isConnecting = false;
+let connectPromise: Promise<boolean> | null = null;
 
 redisClient.on("error", (err: Error) => {
   if (!hasLoggedConnectError) {
@@ -122,24 +121,27 @@ redisClient.on("end", () => {
 });
 
 /**
- * Initialize connection lazily & idempotently
+ * Initialize connection lazily, concurrently-safe, & idempotently
  */
 export async function connectRedis(): Promise<boolean> {
   if (redisClient.isReady) return true;
-  if (isConnecting) return false;
+  if (connectPromise) return connectPromise;
 
-  isConnecting = true;
-  try {
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
+  connectPromise = (async () => {
+    try {
+      if (!redisClient.isOpen) {
+        await redisClient.connect();
+      }
+      return true;
+    } catch (err: any) {
+      logger.warn(`⚠️ Redis connection could not be established (${err.message}). In-memory fallback is active.`);
+      return false;
+    } finally {
+      connectPromise = null;
     }
-    return true;
-  } catch (err: any) {
-    logger.warn(`⚠️ Redis connection could not be established (${err.message}). In-memory fallback is active.`);
-    return false;
-  } finally {
-    isConnecting = false;
-  }
+  })();
+
+  return connectPromise;
 }
 
 /**
@@ -154,7 +156,7 @@ export function isRedisReady(): boolean {
 }
 
 /**
- * Validates Redis connection during server startup (Phase 5)
+ * Validates Redis connection during server startup
  */
 export async function verifyRedisConnection(): Promise<{
   connected: boolean;
@@ -167,19 +169,22 @@ export async function verifyRedisConnection(): Promise<{
   const rawUrl = env.REDIS_URL || process.env.REDIS_URL || "";
   let host = env.REDIS_HOST || process.env.REDIS_HOST || "localhost";
   let port = env.REDIS_PORT || process.env.REDIS_PORT || "6379";
-  const database = env.REDIS_DB || process.env.REDIS_DB || "0";
+  let database = env.REDIS_DB || process.env.REDIS_DB || "0";
 
   if (rawUrl) {
     try {
       const parsed = new URL(rawUrl);
       host = parsed.hostname || host;
       port = parsed.port || port;
+      if (parsed.pathname && parsed.pathname.length > 1) {
+        database = parsed.pathname.replace(/^\//, "");
+      }
     } catch {}
   }
 
   try {
     const isConnected = await connectRedis();
-    if (!isConnected) {
+    if (!isConnected || !redisClient.isReady) {
       return {
         connected: false,
         host,

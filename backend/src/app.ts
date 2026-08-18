@@ -9,6 +9,7 @@ import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
 import { pingRedis, isRedisReady } from "./config/redis";
+import { getSmtpHealth } from "./modules/email";
 import { swaggerSpec } from "./config/swagger";
 import apiRouter from "./routes/apiRouter";
 import { globalErrorHandler } from "./middleware/errorMiddleware";
@@ -189,6 +190,20 @@ app.get("/health", async (req, res) => {
   const isHealthy = isDbHealthy;
   const statusCode = isHealthy ? 200 : (env.NODE_ENV === "production" ? 503 : 200);
 
+  const smtpHealth = getSmtpHealth();
+  const smtpResponse = smtpHealth.status === "healthy"
+    ? {
+        status: "healthy",
+        host: smtpHealth.host || env.MAIL_HOST || "smtp.gmail.com",
+        port: smtpHealth.port || parseInt(String(env.MAIL_PORT || "587"), 10),
+        latency: smtpHealth.latency ?? 0,
+        lastVerifiedAt: smtpHealth.lastVerifiedAt || new Date().toISOString(),
+      }
+    : {
+        status: "degraded",
+        reason: smtpHealth.reason || "UNVERIFIED",
+      };
+
   res.status(statusCode).json({
     success: isHealthy,
     status: isHealthy ? "UP" : "DEGRADED",
@@ -213,6 +228,7 @@ app.get("/health", async (req, res) => {
       status: dbStatus,
       latencyMs: env.NODE_ENV === "production" ? "N/A" : dbLatency,
     },
+    smtp: smtpResponse,
     memory: env.NODE_ENV === "production"
       ? { rssMB: "N/A", heapTotalMB: "N/A", heapUsedMB: "N/A" }
       : {

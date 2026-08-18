@@ -2,103 +2,62 @@ version: '3.8'
 
 services:
   redis:
-    image: redis:7-alpine
+    image: valkey/valkey:8
     container_name: roombae-redis-dev
     hostname: redis
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5}
+    command: valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5}
     ports:
       - "6379:6379"
-    networks:
-      - roombae-network
     volumes:
       - redis-data:/data
-      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./docker/redis/redis.conf:/usr/local/etc/valkey/valkey.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5} ping | grep PONG || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
-    restart: unless-stopped
-
-  mongo:
-    image: mongo:7.0
-    container_name: roombae-mongo-dev
-    hostname: mongo
-    ports:
-      - "27017:27017"
+      test: ["CMD-SHELL", "valkey-cli -a ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5} ping | grep PONG || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
     networks:
-      - roombae-network
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
-    healthcheck:
-      test: ["CMD-SHELL", "mongod --eval \"db.adminCommand('ping')\" || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    volumes:
-      - mongo-data:/data/db
+      - roombae-dev-network
     restart: unless-stopped
 
-  backend:
+  app:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: roombae-backend-dev
+    env_file:
+      - ./backend/.env.development
     environment:
-      - NODE_ENV=development
-      - PORT=5000
-      - DATABASE_URL=${DATABASE_URL:-mongodb://roombae-mongo-dev:27017/roombae-db?replicaSet=rs0}
-      - REDIS_HOST=roombae-redis-dev
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5}
-      - REDIS_URL=${REDIS_URL:-redis://:Rdb@RoomBae_dev94a7e2b1c8f5@roombae-redis-dev:6379/0}
-      - REDIS_DB=0
+      - REDIS_URL=redis://:Rdb@RoomBae_dev94a7e2b1c8f5@redis:6379/0
+      - REDIS_PASSWORD=Rdb@RoomBae_dev94a7e2b1c8f5
       - REDIS_TLS=false
-      - CACHE_TTL=3600
-      - SESSION_TTL=86400
-    networks:
-      - roombae-network
     ports:
       - "5000:5000"
     volumes:
-      - ./backend/src:/app/src
-      - ./backend/prisma:/app/prisma
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
     depends_on:
-      mongo:
-        condition: service_healthy
       redis:
         condition: service_healthy
-    command: npm run dev
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: roombae-frontend-dev
-    environment:
-      - VITE_API_BASE_URL=http://localhost:5000
-      - VITE_APP_ENV=development
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/live || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     networks:
-      - roombae-network
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-    depends_on:
-      backend:
-        condition: service_healthy
+      - roombae-dev-network
     restart: unless-stopped
 
 networks:
-  roombae-network:
-    name: roombae-network
+  roombae-dev-network:
+    name: roombae-dev-network
     driver: bridge
 
 volumes:
   redis-data:
     name: roombae-redis-dev-data
-  mongo-data:
-    name: roombae-mongo-dev-data

@@ -2,10 +2,19 @@ import dns from "dns";
 import http from "http";
 import { AddressInfo } from "net";
 
-// DNS resolution fallback for Windows Node.js
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch (e) {}
+import fs from "fs";
+
+// Force IPv4-first resolution for Node DNS lookups across all environments (Render, Linux, Docker, Windows)
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
+// DNS resolution fallback for Windows Node.js host (never override inside Docker containers)
+if (process.platform === "win32" && !fs.existsSync("/.dockerenv")) {
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  } catch (e) {}
+}
 
 import { app } from "./app";
 import { env, resolvedPort } from "./config/env";
@@ -141,13 +150,27 @@ async function bootstrap() {
       logger.info(
         `Received ${signal}. Shutting down worker process PID ${process.pid} gracefully...`,
       );
-      if (httpServer) {
-        httpServer.close(async () => {
-          await prisma.$disconnect().catch(() => {});
-          logger.info(`Worker PID ${process.pid} disconnected cleanly.`);
+
+      const forceExitTimer = setTimeout(() => {
+        logger.warn(`Graceful shutdown timed out. Force exiting PID ${process.pid}.`);
+        process.exit(0);
+      }, 2000);
+      forceExitTimer.unref();
+
+      try {
+        if (httpServer) {
+          httpServer.close(async () => {
+            try {
+              await prisma.$disconnect().catch(() => {});
+            } finally {
+              logger.info(`Worker PID ${process.pid} disconnected cleanly.`);
+              process.exit(0);
+            }
+          });
+        } else {
           process.exit(0);
-        });
-      } else {
+        }
+      } catch {
         process.exit(0);
       }
     };
