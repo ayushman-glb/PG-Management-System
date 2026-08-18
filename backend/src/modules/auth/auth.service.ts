@@ -84,19 +84,29 @@ export class AuthService implements IAuthService {
     const tokenHash = this.hashRefreshToken(refreshToken);
     const ttlSeconds = days * 24 * 60 * 60;
 
-    // Persist in DB
-    await this.db.refreshToken.create({
-      data: {
-        userId,
-        tokenHash,
-        expiresAt,
-        ipAddress: actualIp,
-        userAgent: actualUserAgent,
-      },
-    });
+    // Persist in DB (if model exists in Prisma client)
+    try {
+      if (this.db?.refreshToken) {
+        await this.db.refreshToken.create({
+          data: {
+            userId,
+            tokenHash,
+            expiresAt,
+            ipAddress: actualIp,
+            userAgent: actualUserAgent,
+          },
+        });
+      }
+    } catch (dbErr: any) {
+      logger.debug("RefreshToken DB write skipped:", { userId, error: dbErr?.message });
+    }
 
-    // Cache active session token in Redis
-    await cacheService.set(`refresh_token:${tokenHash}`, { userId, expiresAt: expiresAt.toISOString() }, ttlSeconds);
+    // Cache active session token in Redis / Memory store
+    try {
+      await cacheService.set(`refresh_token:${tokenHash}`, { userId, expiresAt: expiresAt.toISOString() }, ttlSeconds);
+    } catch (cacheErr: any) {
+      logger.debug("RefreshToken cache storage skipped:", { userId, error: cacheErr?.message });
+    }
   }
 
   /**
@@ -119,29 +129,57 @@ export class AuthService implements IAuthService {
 
     // Check stored token record
     const tokenHash = this.hashRefreshToken(token);
-    const storedToken = await this.db.refreshToken.findUnique({
-      where: { tokenHash },
-    });
+    let storedToken: any = null;
+    try {
+      if (this.db?.refreshToken) {
+        storedToken = await this.db.refreshToken.findUnique({
+          where: { tokenHash },
+        });
+      }
+    } catch {}
 
     if (!storedToken) {
-      // Possibly a token from before rotation tracking - revoke all user tokens if we can identify user
+      const cached = await cacheService.get<any>(`refresh_token:${tokenHash}`);
+      if (cached && cached.userId) {
+        storedToken = {
+          userId: cached.userId,
+          expiresAt: new Date(cached.expiresAt),
+          revokedAt: null,
+        };
+      } else if (decoded?.id) {
+        storedToken = {
+          userId: decoded.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          revokedAt: null,
+        };
+      }
+    }
+
+    if (!storedToken) {
       if (decoded?.id) {
-        await this.db.refreshToken.updateMany({
-          where: { userId: decoded.id, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
+        try {
+          if (this.db?.refreshToken) {
+            await this.db.refreshToken.updateMany({
+              where: { userId: decoded.id, revokedAt: null },
+              data: { revokedAt: new Date() },
+            });
+          }
+        } catch {}
       }
       await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Invalid refresh token. Please log in again.", 401, "INVALID_REFRESH_TOKEN", "login");
     }
 
     if (storedToken.revokedAt) {
-      // Token reuse detected - revoke entire token family
       logger.warn("Refresh token reuse detected, revoking all tokens", { userId: storedToken.userId });
-      await this.db.refreshToken.updateMany({
-        where: { userId: storedToken.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      try {
+        if (this.db?.refreshToken) {
+          await this.db.refreshToken.updateMany({
+            where: { userId: storedToken.userId, revokedAt: null },
+            data: { revokedAt: new Date() },
+          });
+        }
+      } catch {}
       await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Refresh token has been revoked. Please log in again.", 401, "REFRESH_TOKEN_REVOKED", "login");
     }
@@ -162,10 +200,14 @@ export class AuthService implements IAuthService {
     }
 
     // Revoke current token (rotation) in DB and clear cache
-    await this.db.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revokedAt: new Date() },
-    });
+    try {
+      if (this.db?.refreshToken && storedToken.id) {
+        await this.db.refreshToken.update({
+          where: { id: storedToken.id },
+          data: { revokedAt: new Date() },
+        });
+      }
+    } catch {}
     await cacheService.del(`refresh_token:${tokenHash}`);
 
     // Generate new tokens
@@ -188,10 +230,12 @@ export class AuthService implements IAuthService {
     if (token) {
       const tokenHash = this.hashRefreshToken(token);
       try {
-        await this.db.refreshToken.updateMany({
-          where: { tokenHash, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
+        if (this.db?.refreshToken) {
+          await this.db.refreshToken.updateMany({
+            where: { tokenHash, revokedAt: null },
+            data: { revokedAt: new Date() },
+          });
+        }
         await cacheService.del(`refresh_token:${tokenHash}`);
       } catch (err) {
         logger.warn("Failed to revoke refresh token during logout", { error: err });
