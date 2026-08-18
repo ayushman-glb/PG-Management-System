@@ -437,6 +437,13 @@ export class AuthService implements IAuthService {
       logger.debug("LoginHistory record creation skipped", { userId: user.id, error: err.message });
     }
 
+    // Ensure linked Owner or Resident profile record exists for active user
+    try {
+      await this.userRepository.ensureUserProfile(user);
+    } catch (profileErr: any) {
+      logger.debug("Profile auto-ensure during login note:", { userId: user.id, error: profileErr?.message });
+    }
+
     const payload = this.buildAccessPayload(user);
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);

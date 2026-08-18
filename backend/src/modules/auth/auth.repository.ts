@@ -128,7 +128,7 @@ export class AuthRepository implements IUserRepository {
     return newUser;
   }
 
-  private async ensureUserProfile(user: User): Promise<void> {
+  async ensureUserProfile(user: User): Promise<void> {
     try {
       if (user.role === Role.OWNER) {
         const existingOwner = await this.client.owner.findFirst({ where: { userId: user.id } });

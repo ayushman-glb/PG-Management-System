@@ -35,6 +35,38 @@ export class SocketServer {
   private static io: SocketIOServer | null = null;
 
   public static init(server: HttpServer): SocketIOServer {
+    const rawOrigins = [
+      ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
+      env.CLIENT_URL,
+      env.FRONTEND_URL,
+      "https://ayushman-glb.github.io",
+      "https://ayushman-glb.github.io/PG-Management-System",
+      "https://pg-management-system-boxb.onrender.com",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+    ];
+
+    const allowedOrigins = Array.from(
+      new Set(
+        rawOrigins
+          .filter(Boolean)
+          .map((item) => {
+            const trimmed = item.trim();
+            if (!trimmed) return "";
+            try {
+              if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                return new URL(trimmed).origin.toLowerCase();
+              }
+              return trimmed.replace(/\/$/, "").toLowerCase();
+            } catch {
+              return trimmed.replace(/\/$/, "").toLowerCase();
+            }
+          })
+          .filter(Boolean)
+      )
+    );
+
     SocketServer.io = new SocketIOServer(server, {
       cors: {
         origin: (
@@ -42,21 +74,19 @@ export class SocketServer {
           callback: (err: Error | null, allow?: boolean) => void,
         ) => {
           if (!origin) return callback(null, true);
-          const cleanOrigin = origin.replace(/\/$/, "");
-          const allowedOrigins = [
-            env.CLIENT_URL,
-            env.FRONTEND_URL,
-            "https://ayushman-glb.github.io/PG-Management-System",
-            "https://pg-management-system-boxb.onrender.com",
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-          ].filter(Boolean);
-          const isAllowed = allowedOrigins.some(
-            (o) => o && o.replace(/\/$/, "") === cleanOrigin,
-          );
+          const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
+
+          const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
+          if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
+            return callback(null, true);
+          }
+
+          const isAllowed = allowedOrigins.includes(cleanOrigin) || isLocalhost;
           if (isAllowed) {
             return callback(null, true);
           }
+
+          logger.warn(`🔌 Socket connection rejected [CORS]: Origin ${origin} not permitted`);
           return callback(new Error(`Origin ${origin} not allowed by CORS`));
         },
         credentials: true,
@@ -85,7 +115,8 @@ export class SocketServer {
       try {
         const token =
           (socket.handshake.auth?.token as string) ||
-          (socket.handshake.headers?.authorization?.split(" ")[1] as string);
+          (socket.handshake.headers?.authorization?.split(" ")[1] as string) ||
+          (socket.handshake.query?.token as string);
 
         if (!token) {
           logger.warn(`🔌 Socket connection rejected [Handshake]: No token provided (ID: ${socket.id})`);

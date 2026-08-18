@@ -33,4 +33,5 @@ export interface IResidentRepository {
   findMealSkip(residentId: string, mealType: string, date: Date): Promise<MealSchedule | null>;
   createMealSkip(residentId: string, mealType: string, date: Date): Promise<MealSchedule>;
   deleteMealSkip(id: string): Promise<void>;
+  ensureResidentProfile(user: { id: string; name: string; email: string; phone?: string | null; avatarUrl?: string | null; residentCode?: string | null }): Promise<any>;
 }

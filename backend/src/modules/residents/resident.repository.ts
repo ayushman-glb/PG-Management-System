@@ -23,12 +23,36 @@ export class ResidentRepository implements IResidentRepository {
           payments: { orderBy: { createdAt: 'desc' } },
           complaints: { orderBy: { createdAt: 'desc' } },
           visitors: { orderBy: { createdAt: 'desc' } },
-          leaveApplications: { orderBy: { createdAt: 'desc' } }
+          leaveApplications: { orderBy: { createdAt: 'desc' } },
+          agreements: { orderBy: { createdAt: 'desc' } },
+          documents: true
         }
       });
     } catch {
       return null;
     }
+  }
+
+  async ensureResidentProfile(user: { id: string; name: string; email: string; phone?: string | null; avatarUrl?: string | null; residentCode?: string | null }): Promise<any> {
+    const existing = await this.findByUserId(user.id);
+    if (existing) return existing;
+
+    try {
+      await this.db.resident.create({
+        data: {
+          userId: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone || "+919800000000",
+          profilePicture: user.avatarUrl || "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png",
+          status: "ACTIVE",
+        }
+      });
+    } catch {
+      // Handled if created concurrently
+    }
+
+    return await this.findByUserId(user.id);
   }
 
   async findBedById(bedId: string): Promise<Bed | null> {

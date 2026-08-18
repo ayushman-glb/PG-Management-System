@@ -41,4 +41,5 @@ export interface IUserRepository {
     enabled: boolean,
     method?: string,
   ): Promise<User>;
+  ensureUserProfile(user: User): Promise<void>;
 }

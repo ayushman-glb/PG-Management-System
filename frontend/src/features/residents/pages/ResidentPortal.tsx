@@ -235,7 +235,7 @@ export default function ResidentPortal({ navigate }: Props) {
           <Logo onClick={() => navigate("landing")} badge={user?.id?.slice(0, 8) || "—"} />
           <div className="hidden lg:block border-l border-[#E6D7CA] dark:border-[#4A433F] pl-3">
             <p className={`text-xs font-medium truncate ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
-              {portalData?.pg?.name || "My PG"} — {portalData?.room?.roomNumber || "—"} ({portalData?.bed?.bedNumber || "—"})
+              {portalData?.profile?.propertyName || portalData?.pg?.name || "RoomBae PG"} — Room {portalData?.profile?.roomNumber || portalData?.room?.roomNumber || "N/A"} ({portalData?.profile?.bedNumber || portalData?.bed?.bedNumber || "Unassigned"})
             </p>
           </div>
         </div>

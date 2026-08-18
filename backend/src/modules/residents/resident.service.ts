@@ -82,27 +82,31 @@ export class ResidentService implements IResidentService {
 
     if (!resident) {
       const user = await this.userRepository.findById(userId);
-      if (user && user.role === Role.RESIDENT) {
+      if (user) {
         try {
-          const defaultPg = await this.residentRepository.findBedById("").catch(() => null);
-          resident = await (this.residentRepository as any).db?.resident.create({
-            data: {
-              userId: user.id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone || "+919800000000",
-              status: "ACTIVE",
-            },
-            include: { bed: { include: { room: true } }, pg: true, user: true, payments: true, complaints: true, visitors: true, leaveApplications: true }
-          });
+          if (typeof (this.residentRepository as any).ensureResidentProfile === 'function') {
+            resident = await (this.residentRepository as any).ensureResidentProfile(user);
+          } else {
+            resident = await (this.residentRepository as any).db?.resident.create({
+              data: {
+                userId: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone || "+919800000000",
+                profilePicture: user.avatarUrl || "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png",
+                status: "ACTIVE",
+              },
+            });
+            resident = await this.residentRepository.findByUserId(user.id);
+          }
         } catch {
-          // continue
+          // fallback if auto-creation encounters database constraint
         }
       }
     }
 
     if (!resident) {
-      throw new AppError('Resident profile record not found', 404);
+      throw new AppError('Resident profile record not found', 404, 'RESIDENT_PROFILE_INCOMPLETE');
     }
 
     let decryptedKyc = null;
@@ -138,8 +142,9 @@ export class ResidentService implements IResidentService {
         propertyName,
         moveInDate: resident.moveInDate,
         rentDueDate: resident.rentDueDate,
-        kycStatus: 'VERIFIED',
-        kycDetails: decryptedKyc
+        kycStatus: resident.encryptedKycData ? 'VERIFIED' : 'PENDING',
+        kycDetails: decryptedKyc,
+        status: resident.status || 'ACTIVE'
       },
       wifiCredentials: {
         ssid: `${propertyName}_Guest_WiFi`,
@@ -150,6 +155,8 @@ export class ResidentService implements IResidentService {
       complaints: resident.complaints || [],
       visitorPasses: resident.visitors || [],
       gatePasses: resident.leaveApplications || [],
+      agreements: resident.agreements || [],
+      documents: resident.documents || [],
       mealSkips: []
     };
   }

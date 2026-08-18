@@ -4,7 +4,11 @@ import type { ApiResponse } from "../types";
 export class BedService {
   private getToken(): string | null {
     try {
-      return localStorage.getItem("accessToken");
+      return (
+        localStorage.getItem("roombae_access_token") ||
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("token")
+      );
     } catch {
       return null;
     }
