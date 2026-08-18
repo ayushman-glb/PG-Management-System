@@ -110,7 +110,7 @@ export class AuthController {
     const { email, phone } = req.body;
     const target = email || phone;
     const result = await this.authService.sendOtp(target);
-    return ApiResponse.success(res, result.message, {});
+    return ApiResponse.success(res, result.message, result);
   });
 
   verifyOtp = catchAsync(async (req: Request, res: Response) => {
@@ -130,8 +130,8 @@ export class AuthController {
 
   sendPhoneOtp = catchAsync(async (req: Request, res: Response) => {
     const { phone } = req.body;
-    const result = await this.authService.sendOtp(phone);
-    return ApiResponse.success(res, result.message, {});
+    const result = await this.authService.sendPhoneOtp(phone);
+    return ApiResponse.success(res, result.message, result);
   });
 
   verifyPhoneOtp = catchAsync(async (req: Request, res: Response) => {

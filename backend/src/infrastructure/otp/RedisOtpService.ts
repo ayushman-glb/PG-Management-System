@@ -22,7 +22,7 @@ export class RedisOtpService implements IOtpService {
     return otp;
   }
 
-  async generateAndSendOtp(email: string): Promise<{ otp: string; expiresAt: Date; message: string }> {
+  async generateAndSendOtp(email: string): Promise<{ otp: string; expiresAt: Date; message: string; devOtp?: string }> {
     const otp = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.OTP_TTL_SECONDS * 1000);
 
@@ -31,16 +31,20 @@ export class RedisOtpService implements IOtpService {
 
     logger.info("OTP generated and sent", { email, purpose: "EMAIL_OTP" });
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? otp : undefined;
+
     return {
       otp,
       expiresAt,
       message: `OTP sent to ${email}`,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
     };
   }
 
   async generateAndSendPhoneOtp(
     phone: string,
-  ): Promise<{ otp: string; expiresAt: Date; message: string; timerSeconds: number }> {
+  ): Promise<{ otp: string; expiresAt: Date; message: string; timerSeconds: number; devOtp?: string }> {
     const otp = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.PHONE_OTP_TTL_SECONDS * 1000);
 
@@ -58,11 +62,15 @@ export class RedisOtpService implements IOtpService {
       logger.warn("Phone OTP requested but no email found for user", { phone });
     }
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? otp : undefined;
+
     return {
       otp,
       expiresAt,
       message: `OTP sent to ${phone}. We've sent the code to the email on file.`,
       timerSeconds: RedisOtpService.OTP_TTL_SECONDS,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -72,7 +80,7 @@ export class RedisOtpService implements IOtpService {
 
   async generateAndSendEmailVerification(
     email: string,
-  ): Promise<{ code: string; expiresAt: Date; message: string }> {
+  ): Promise<{ code: string; expiresAt: Date; message: string; devOtp?: string }> {
     const code = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.OTP_TTL_SECONDS * 1000);
 
@@ -81,10 +89,14 @@ export class RedisOtpService implements IOtpService {
 
     logger.info("Email verification code generated and sent", { email });
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? code : undefined;
+
     return {
       code,
       expiresAt,
       message: `Verification code sent to ${email}`,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -92,16 +104,21 @@ export class RedisOtpService implements IOtpService {
     return this.verifyOtp(`otp:verify:${email}`, code);
   }
 
-  async generateAndSendPasswordReset(email: string): Promise<{ code: string; expiresAt: Date; message: string }> {
+  async generateAndSendPasswordReset(email: string): Promise<{ code: string; expiresAt: Date; message: string; devOtp?: string }> {
     const code = this.generateSecureOtp(6);
     const ttlSeconds = RedisOtpService.OTP_TTL_SECONDS;
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
     await this.storeOtp(`otp:reset:${email}`, code, ttlSeconds);
+
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? code : undefined;
+
     return {
       code,
       expiresAt,
       message: `Password reset code sent to ${email}`,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
     };
   }
 

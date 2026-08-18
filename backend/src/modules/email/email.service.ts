@@ -156,10 +156,14 @@ export class EmailService {
       template: EMAIL_CONSTANTS.TEMPLATES.OTP_VERIFICATION,
     });
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== 'production' ? rawOtp : undefined;
+
     return {
       success: true,
       message: 'Verification code sent to your email address.',
       cooldownSeconds: EMAIL_CONSTANTS.OTP.COOLDOWN_SECONDS,
+      ...(process.env.NODE_ENV !== 'production' && devOtp ? { devOtp } : {}),
     };
   }
 

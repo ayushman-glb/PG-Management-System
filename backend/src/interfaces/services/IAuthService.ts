@@ -43,11 +43,11 @@ export interface IAuthService {
   register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   generateOAuthTokens(user: any, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string }>;
-  sendOtp(email: string): Promise<{ message: string }>;
+  sendOtp(email: string): Promise<{ message: string; devOtp?: string }>;
   verifyOtp(email: string, otp: string): Promise<IAuthUserResult>;
   sendPhoneOtp(
     phone: string,
-  ): Promise<{ success: boolean; message: string; timerSeconds: number }>;
+  ): Promise<{ success: boolean; message: string; timerSeconds: number; devOtp?: string }>;
   verifyPhoneOtp(
     phone: string,
     otp: string,
@@ -55,14 +55,14 @@ export interface IAuthService {
   sendEmailVerification(
     email: string,
     name?: string,
-  ): Promise<{ success: boolean; message: string; cooldownSeconds?: number }>;
+  ): Promise<{ success: boolean; message: string; cooldownSeconds?: number; devOtp?: string }>;
   verifyEmail(
     email: string,
     code: string,
   ): Promise<{ success: boolean; message: string }>;
   sendPasswordReset?(
     email: string,
-  ): Promise<{ success: boolean; message: string }>;
+  ): Promise<{ success: boolean; message: string; devOtp?: string }>;
   verifyPasswordReset?(
     email: string,
     otp: string,
@@ -70,7 +70,7 @@ export interface IAuthService {
   ): Promise<{ success: boolean; message: string }>;
   enableTwoFactor(
     userId: string,
-  ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string }>;
+  ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string; devOtp?: string }>;
   verifyTwoFactor(
     userIdOrPreAuthToken: string,
     token: string,

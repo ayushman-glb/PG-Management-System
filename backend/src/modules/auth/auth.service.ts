@@ -517,7 +517,7 @@ export class AuthService implements IAuthService {
     };
   }
 
-  async sendOtp(identifier: string): Promise<{ message: string }> {
+  async sendOtp(identifier: string): Promise<{ message: string; devOtp?: string }> {
     if (!identifier) {
       return { message: "If an account with that contact details exists, an OTP code has been sent." };
     }
@@ -528,11 +528,17 @@ export class AuthService implements IAuthService {
       return { message: "If an account with that contact details exists, an OTP code has been sent." };
     }
 
-    const { message } = isEmail
+    const res = isEmail
       ? await this.otpService.generateAndSendOtp(identifier)
       : await this.otpService.generateAndSendPhoneOtp(identifier);
 
-    return { message };
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? (res as any)?.otp || (res as any)?.devOtp : undefined;
+
+    return {
+      message: res.message,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+    };
   }
 
   async verifyOtp(identifier: string, otp: string): Promise<IAuthUserResult> {
@@ -577,7 +583,7 @@ export class AuthService implements IAuthService {
 
   async sendPhoneOtp(
     phone: string,
-  ): Promise<{ success: boolean; message: string; timerSeconds: number }> {
+  ): Promise<{ success: boolean; message: string; timerSeconds: number; devOtp?: string }> {
     const cleanPhone = phone.trim();
     if (!cleanPhone || cleanPhone.length < 10) {
       throw new AppError(
@@ -588,10 +594,14 @@ export class AuthService implements IAuthService {
 
     const result = await this.otpService.generateAndSendPhoneOtp(cleanPhone);
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? result.otp || result.devOtp : undefined;
+
     return {
       success: true,
       message: result.message,
       timerSeconds: result.timerSeconds,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -621,13 +631,27 @@ export class AuthService implements IAuthService {
   async sendEmailVerification(
     email: string,
     name?: string,
-  ): Promise<{ success: boolean; message: string; cooldownSeconds?: number }> {
+  ): Promise<{ success: boolean; message: string; cooldownSeconds?: number; devOtp?: string }> {
     if (!email) throw new AppError("Email address is required", 400);
     if (this.otpService) {
       const res = await this.otpService.generateAndSendEmailVerification(email);
-      return { success: true, message: res.message };
+      // DEV-ONLY: remove or verify gated before production deploy
+      const devOtp = process.env.NODE_ENV !== "production" ? res.code || res.devOtp : undefined;
+      return {
+        success: true,
+        message: res.message,
+        ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+      };
     }
-    return emailService.sendOtp(email, name);
+    const emailRes = await emailService.sendOtp(email, name);
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? (emailRes as any)?.devOtp : undefined;
+    return {
+      success: emailRes.success,
+      message: emailRes.message,
+      cooldownSeconds: emailRes.cooldownSeconds,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+    };
   }
 
   async verifyEmail(
@@ -650,7 +674,7 @@ export class AuthService implements IAuthService {
 
   async sendPasswordReset(
     email: string,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; devOtp?: string }> {
     if (!email) throw new AppError("Email address is required", 400);
 
     const user = await this.userRepository.findByEmail(email);
@@ -666,9 +690,13 @@ export class AuthService implements IAuthService {
 
     await emailService.sendPasswordResetEmail(email, resetLink, user.name);
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? code : undefined;
+
     return {
       success: true,
       message: `Password reset instructions sent to ${email}`,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -704,7 +732,7 @@ export class AuthService implements IAuthService {
 
   async enableTwoFactor(
     userId: string,
-  ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string }> {
+  ): Promise<{ secret: string; qrCodeUrl: string; qrCodeImage: string; devOtp?: string }> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
 
@@ -714,7 +742,15 @@ export class AuthService implements IAuthService {
 
     await this.userRepository.updateTwoFactor(userId, secret, true, "TOTP");
 
-    return { secret, qrCodeUrl, qrCodeImage };
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== "production" ? TotpService.generateCurrentToken(secret) : undefined;
+
+    return {
+      secret,
+      qrCodeUrl,
+      qrCodeImage,
+      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+    };
   }
 
   async verifyTwoFactor(

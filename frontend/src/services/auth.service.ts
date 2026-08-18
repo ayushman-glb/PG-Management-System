@@ -131,6 +131,14 @@ export class AuthService {
     if (!response.ok) {
       throw new Error(data.message || "Authentication request failed");
     }
+
+    // DEV-ONLY: remove or verify gated before production deploy
+    const isDevMode = typeof import.meta !== "undefined" && import.meta.env?.MODE !== "production" && Boolean(import.meta.env?.DEV);
+    if (isDevMode && (data?.devOtp || data?.data?.devOtp)) {
+      const devOtp = data?.devOtp || data?.data?.devOtp;
+      console.log('%c[DEV OTP] %s', 'color: orange; font-weight: bold;', devOtp);
+    }
+
     return data;
   }
 

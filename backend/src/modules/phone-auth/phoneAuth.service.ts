@@ -72,6 +72,9 @@ export class PhoneAuthService {
       details: { messageId: smsResult.messageId, isTrialNotice: smsResult.isTrialNotice },
     });
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtp = process.env.NODE_ENV !== 'production' ? otp : undefined;
+
     return {
       success: true,
       message: smsResult.isTrialNotice
@@ -82,6 +85,7 @@ export class PhoneAuthService {
       cooldownSecondsRemaining,
       isTrialNotice: smsResult.isTrialNotice,
       notice: smsResult.isTrialNotice ? smsResult.error : undefined,
+      ...(process.env.NODE_ENV !== 'production' && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -96,6 +100,7 @@ export class PhoneAuthService {
     cooldownSecondsRemaining: number;
     isTrialNotice?: boolean;
     notice?: string;
+    devOtp?: string;
   }> {
     const formattedPhone = normalizeIndianPhone(input.phone);
     if (!formattedPhone) {
@@ -136,6 +141,9 @@ export class PhoneAuthService {
       details: { messageId: smsResult.messageId },
     });
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const devOtpResend = process.env.NODE_ENV !== 'production' ? otp : undefined;
+
     return {
       success: true,
       message: 'New verification code resent successfully via SMS.',
@@ -144,6 +152,7 @@ export class PhoneAuthService {
       cooldownSecondsRemaining,
       isTrialNotice: smsResult.isTrialNotice,
       notice: smsResult.isTrialNotice ? smsResult.error : undefined,
+      ...(process.env.NODE_ENV !== 'production' && devOtpResend ? { devOtp: devOtpResend } : {}),
     };
   }
 

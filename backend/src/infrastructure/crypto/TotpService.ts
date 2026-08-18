@@ -53,6 +53,13 @@ export class TotpService {
     return false;
   }
 
+  // DEV-ONLY: remove or verify gated before production deploy
+  static generateCurrentToken(secret: string): string {
+    const key = Buffer.from(this.base32ToHex(secret), "hex");
+    const time = Math.floor(Date.now() / 1000 / this.OTP_PERIOD);
+    return this.generateOtpForKey(key, time);
+  }
+
   private static buildOtpAuthUrl(secret: string, accountName: string, issuer: string): string {
     return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=${this.OTP_DIGITS}&period=${this.OTP_PERIOD}`;
   }

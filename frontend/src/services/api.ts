@@ -76,7 +76,16 @@ class ApiClient {
       window.dispatchEvent(new CustomEvent("roombae-data-changed", { detail: { endpoint, method } }));
     }
 
-    return res.json();
+    const json = await res.json();
+
+    // DEV-ONLY: remove or verify gated before production deploy
+    const isDevMode = typeof import.meta !== "undefined" && import.meta.env?.MODE !== "production" && Boolean(import.meta.env?.DEV);
+    if (isDevMode && (json?.devOtp || json?.data?.devOtp)) {
+      const devOtp = json?.devOtp || json?.data?.devOtp;
+      console.log('%c[DEV OTP] %s', 'color: orange; font-weight: bold;', devOtp);
+    }
+
+    return json;
   }
 
   public get<T = any>(endpoint: string, options?: RequestInit): Promise<T> {

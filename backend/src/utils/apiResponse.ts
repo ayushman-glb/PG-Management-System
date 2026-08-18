@@ -11,10 +11,26 @@ export class ApiResponse {
       meta = metaOrStatusCode;
     }
 
+    // DEV-ONLY: remove or verify gated before production deploy
+    const isDev = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== undefined;
+    let sanitizedData = data;
+
+    if (!isDev && data && typeof data === 'object') {
+      if ('devOtp' in (data as any)) {
+        const { devOtp: _, ...rest } = data as any;
+        sanitizedData = rest as T;
+      }
+    }
+
+    const devOtp = isDev && data && typeof data === 'object' && 'devOtp' in (data as any)
+      ? (data as any).devOtp
+      : undefined;
+
     return res.status(code).json({
       success: true,
       message,
-      data,
+      data: sanitizedData,
+      ...(devOtp ? { devOtp } : {}),
       ...(meta ? { meta } : {})
     });
   }
