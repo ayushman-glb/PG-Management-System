@@ -4,9 +4,8 @@
   "description": "Zero-Trust Enterprise Backend for RoomBae PG Management System",
   "main": "dist/src/server.js",
   "scripts": {
-    "predev": "kill-port 5000 5001",
+    "predev": "node scripts/cleanup-ports.js",
     "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/server.ts",
-    "prebuild": "kill-port 5000 5001",
     "build": "node scripts/generate-with-retry.js && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
