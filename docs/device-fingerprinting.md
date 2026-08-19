@@ -53,8 +53,9 @@ The frontend uses dependency inversion via the `DeviceIdentityProvider` interfac
 ## 3. Database Schema
 
 ### `UserDevice` Collection
+
 | Field | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `id` | ObjectId | Unique Mongo document identifier |
 | `userId` | ObjectId | Reference to `User` account |
 | `visitorIdHash` | String | SHA-256 hash of Fingerprint visitor ID |
@@ -66,6 +67,7 @@ The frontend uses dependency inversion via the `DeviceIdentityProvider` interfac
 | `lastSeenAt` | DateTime | Timestamp of last active API interaction |
 
 ### `SecurityAuditEvent` Collection
+
 Tracks immutable security audit events (`LOGIN_SUCCESS`, `NEW_DEVICE`, `DEVICE_TRUSTED`, `DEVICE_REVOKED`, `DEVICE_BLOCKED`, `SUSPICIOUS_LOGIN`, etc.) with associated risk level and severity.
 
 ---
@@ -73,6 +75,7 @@ Tracks immutable security audit events (`LOGIN_SUCCESS`, `NEW_DEVICE`, `DEVICE_T
 ## 4. Device Trust Lifecycle & Risk Engine Rules
 
 ### Risk Scoring Matrix
+
 - **BLOCKED Device**: Score = 100 (`CRITICAL` Risk) -> Authentication / action denied.
 - **REVOKED Device**: Score += 60 (`HIGH` Risk) -> Step-up verification prompt required.
 - **NEW Device**: Score += 25 (`MEDIUM` Risk) -> Security banner notification dispatched (`roombae-new-device-detected`).
@@ -83,7 +86,7 @@ Tracks immutable security audit events (`LOGIN_SUCCESS`, `NEW_DEVICE`, `DEVICE_T
 ## 5. API Reference
 
 | Method | Endpoint | Auth | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `POST` | `/api/v1/security/devices/identify` | Bearer | Identifies browser fingerprint & evaluates risk |
 | `GET` | `/api/v1/security/devices` | Bearer | Returns list of registered devices for current user |
 | `PATCH` | `/api/v1/security/devices/:id/trust` | Bearer | Marks device status as `TRUSTED` |
@@ -104,6 +107,7 @@ Tracks immutable security audit events (`LOGIN_SUCCESS`, `NEW_DEVICE`, `DEVICE_T
 ## 7. Migration Path to Fingerprint Pro
 
 To migrate to commercial Fingerprint Pro in the future:
+
 1. Update `frontend/src/services/deviceIdentity.ts` to swap `FingerprintJSProvider` with `@fingerprintjs/fingerprintjs-pro`.
 2. Update backend `FINGERPRINT_PROVIDER=fingerprintjs-pro` environment variable.
 3. No changes to database models or application controllers are required.

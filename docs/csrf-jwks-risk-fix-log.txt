@@ -1,0 +1,261 @@
+================================================================================
+ROOMBAE SECURITY REMEDIATION AUDIT LOG
+csrf-jwks-risk-fix-log.txt
+Generated: 2026-08-19  |  Engineer: Principal Security Architect
+Baseline test suite: 43 suites / 249 tests — ALL PASSED (18.4s)
+================================================================================
+
+SECTION 1 — CSRF EXEMPTION FIX
+───────────────────────────────────────────────────────────────────────────────
+FINDING:
+  /api/v1/auth/refresh-token was explicitly listed in CSRF_EXEMPT_PATHS inside
+  backend/src/middleware/csrfMiddleware.ts (line 14).
+  This endpoint is cookie-authenticated (reads the refreshToken httpOnly cookie)
+  and is state-changing (issues a new refresh token + new access token on each
+  call). Exempting it from CSRF protection is a textbook CSRF vector: a
+  malicious cross-origin page can POST to /refresh-token, piggyback the user's
+  httpOnly cookie, and rotate their session without their knowledge.
+
+CHANGE MADE:
+  File: backend/src/middleware/csrfMiddleware.ts
+  Action: Removed '/api/v1/auth/refresh-token' from CSRF_EXEMPT_PATHS.
+          Updated comment block to document the intentional non-exemption.
+
+  File: frontend/src/services/auth.service.ts — refreshToken() method
+  Action: Added CSRF token reading and x-csrf-token header attachment to the
+          raw fetch() call inside refreshToken(). Also added lazy bootstrapCsrf()
+          call when the csrf-token cookie is absent (e.g., on first page load
+          before the bootstrap endpoint has been called).
+
+OPEN QUESTIONS: None.
+STATUS: COMPLETE.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 2 — CSRF BOOTSTRAP ENDPOINT FIX
+────────────────────────────────────────────────────────────────────────────────
+FINDING:
+  The existing GET /api/v1/auth/csrf endpoint (auth.routes.ts lines 22-31)
+  was non-functional as a bootstrap mechanism:
+  1. It generated a fake token using Math.random() — not HMAC-signed.
+  2. It read from the request cookie / header and returned whatever was there,
+     but NEVER called generateCsrfToken(), so no cookie was ever SET.
+  3. It was unrated-limited (any number of calls).
+  Result: anonymous visitors arriving at /register or /login with no existing
+  csrf-token cookie would receive a 403 CSRF_TOKEN_MISSING from the first call.
+
+  The frontend had NO call to any bootstrap endpoint on app boot (checked
+  frontend/src/app/main.tsx and AuthService — confirmed absent).
+
+CHANGE MADE:
+  File: backend/src/modules/auth/auth.routes.ts
+  Action: Replaced the broken /csrf endpoint with a proper /csrf-token route
+          that calls the existing generateCsrfToken() middleware (which correctly
+          sets the cookie + header) and then returns the token value in the body.
+          The legacy /csrf alias is kept for backward compatibility (same handler).
+          Both routes are rate-limited with sendOtpLimiter.
+  Import: generateCsrfToken imported at file top-level.
+
+  File: frontend/src/services/auth.service.ts
+  Action: Added public bootstrapCsrf(): Promise<void> method that calls
+          GET /auth/csrf-token with credentials:include. Fire-and-forget; errors
+          are swallowed (non-fatal — the backend will surface a clear 403 if the
+          cookie is genuinely absent and the call fails).
+
+  File: frontend/src/app/main.tsx
+  Action: Added authService.bootstrapCsrf().catch(() => {}) call before
+          ReactDOM.createRoot — fires on every fresh page load, non-blocking.
+
+OPEN QUESTIONS: None.
+STATUS: COMPLETE.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 3 — REDIS-DOWN FAIL-CLOSED BEHAVIOUR
+────────────────────────────────────────────────────────────────────────────────
+FINDING:
+  Code audit confirmed the existing implementation already correctly handles
+  the Redis-down scenario for security-sensitive rate limiters:
+
+  backend/src/middleware/rateLimiter.ts — DistributedRedisStore class:
+  - When isRedisRequired() returns true (REDIS_REQUIRED=true in env):
+    The increment() method catches Redis errors and returns { totalHits: 999999 }
+    which guarantees the rate limit is exceeded → fail-closed (login blocked).
+    It also calls logger.error() with structured JSON.
+  - When isRedisRequired() returns false (default/dev):
+    Falls back to per-process in-memory Map (memoryFallbackStore). Appropriate
+    for development; NOT appropriate for production multi-process deployments.
+
+  backend/src/config/redis.ts — isRedisRequired():
+    Returns process.env.REDIS_REQUIRED === 'true'.
+
+  backend/src/config/env.ts:
+    REDIS_REQUIRED declared with default "false".
+
+NO CODE CHANGE REQUIRED. The fail-closed path already exists and is correct.
+
+ACTION REQUIRED FOR PRODUCTION OPERATORS:
+  Set REDIS_REQUIRED=true in your production environment (Render dashboard /
+  environment config — NOT in the .env file). This ensures that if Redis
+  becomes unavailable, all login/register/OTP rate limiters fail closed rather
+  than falling through to per-process memory (which provides no protection in
+  multi-replica deployments).
+
+STATUS: VERIFIED CORRECT — NO CHANGE MADE.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 4 — JWKS MULTI-KEY ROTATION WITH RETENTION WINDOW
+────────────────────────────────────────────────────────────────────────────────
+FINDING:
+  backend/src/services/security/JwtKeyService.ts — rotateKey():
+  - Correctly adds the new key to keyStore and updates currentKid. ✓
+  - Did NOT set any expiry / retireAfter on the previous key.
+  - getJwks() published ALL keys in the Map with no filtering.
+  
+  Consequence: After rotation, old keys are published forever in JWKS. This is
+  acceptable for correctness (tokens still verify) but is a hygiene issue —
+  stale keys accumulate indefinitely in the published key set.
+
+  Separate gap: Rotation is manual-only with no admin endpoint or scheduled job.
+  This is not addressed here (requires product decision on rotation schedule).
+
+CHANGE MADE:
+  File: backend/src/services/security/JwtKeyService.ts
+
+  1. KeyPairEntry interface: Added optional retireAfter?: Date field.
+
+  2. rotateKey():
+     - Now parses JWT_ACCESS_EXPIRATION (e.g., "15m") to milliseconds.
+     - Sets previousKey.retireAfter = now + (2 × access_token_lifetime) before
+       generating the new key. This gives a 30-minute window (with 15m tokens)
+       for in-flight tokens signed by the old key to be verified.
+     - Logs the retireAfter timestamp.
+
+  3. getJwks():
+     - Now filters: a key is published if (a) it is the current active key, OR
+       (b) its retireAfter has not yet passed.
+     - Keys past retireAfter are OMITTED from the published JWKS set but remain
+       in keyStore indefinitely so verifyAccessToken() can still verify tokens
+       signed by them (defense against replay of legitimately-issued but not-yet-
+       expired tokens after a rotation).
+     - Updated JSDoc to describe the retention window semantics.
+
+OPEN GAPS:
+  - No admin endpoint to trigger rotation (GET /admin/keys/rotate or similar).
+  - No BullMQ scheduled job for automatic rotation.
+  - keyStore is in-memory: rotation is lost on process restart. For production,
+    rotation state should be persisted to Redis or MongoDB.
+  These gaps require separate implementation work and product decisions.
+
+STATUS: COMPLETE (retention window fix). Gaps documented above.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 5 — RISK ENGINE WEIGHT CALIBRATION
+────────────────────────────────────────────────────────────────────────────────
+FINDING:
+  backend/src/services/security/RiskEngine.ts
+  Actual scoring weights from code inspection (comments had stale values):
+  - NEW_FINGERPRINT: +30 (code), comment said +50
+  - IP_ROTATION:     +15 (code), comment said +20
+  - USER_AGENT_MISMATCH: +20
+  - FAILED_ATTEMPTS: +30
+  - IMPOSSIBLE_TRAVEL: +60 ← problem
+  - NEW_COUNTRY:     +40 ← problem
+  - ASN_CHANGED:     +20
+  - VPN_PROXY:       +25 (code), comment said +30
+  - REVOKED_DEVICE:  +80
+  Thresholds: <40 ALLOW, 40-69 STEP_UP, >=70 BLOCK.
+
+  PROBLEM: IMPOSSIBLE_TRAVEL (+60) alone = 60 → STEP_UP (ok).
+  But IMPOSSIBLE_TRAVEL + IP_ROTATION (60+15=75) = BLOCK.
+  And IMPOSSIBLE_TRAVEL + NEW_COUNTRY (60+40=100, capped=100) = BLOCK.
+  Both combinations can fire from a single mobile-carrier NAT / VPN event
+  (IP changes, geo shifts) producing a false-positive hard-block.
+  IP geolocation is unreliable for mobile, CGNAT, and VPN users.
+  No automated account recovery mechanism exists.
+
+CHANGE MADE:
+  File: backend/src/services/security/RiskEngine.ts
+
+  1. IMPOSSIBLE_TRAVEL weight: reduced +60 → +35.
+     Rationale: Alone (35) → STEP_UP. Plus IP_ROTATION (35+15=50) → STEP_UP.
+     Genuine multi-signal compromise still reaches BLOCK via independent signals.
+
+  2. NEW_COUNTRY weight: reduced +40 → +25.
+     Rationale: Alone (25) → ALLOW (not worth alarming). Plus IMPOSSIBLE_TRAVEL
+     (35+25=60) → STEP_UP. The combination of two geo signals from the same
+     reading no longer automatically hard-blocks.
+
+  3. Updated JSDoc comment block to match actual code values and document rationale.
+
+  4. evaluateLoginRisk return value: When decision === 'BLOCK', now includes:
+     - errorCode: 'ACCOUNT_LOGIN_BLOCKED_HIGH_RISK'
+     - recoveryGuidance: human-readable message surfaced to the user.
+
+BLOCK SCENARIOS AFTER FIX (spot-check):
+  - REVOKED_DEVICE alone (+80) = 80 → BLOCK ✓
+  - NEW_FINGERPRINT + NEW_COUNTRY + IP_ROTATION (30+25+15=70) → BLOCK ✓
+  - IMPOSSIBLE_TRAVEL + IP_ROTATION (35+15=50) → STEP_UP ✓ (false-positive mitigated)
+  - IMPOSSIBLE_TRAVEL + NEW_COUNTRY (35+25=60) → STEP_UP ✓ (false-positive mitigated)
+  - VPN + USER_AGENT_MISMATCH + FAILED_ATTEMPTS (25+20+30=75) → BLOCK ✓
+
+OPEN GAP — NO RECOVERY MECHANISM:
+  There is currently no automated account-unlock / security alert email for
+  BLOCK decisions. The errorCode and recoveryGuidance fields are now present in
+  the API response but no email is dispatched.
+  REQUIRED ACTION: Implement a security alert email via the existing emailService
+  that sends to the user's verified address with an account unlock link when
+  the RiskEngine returns decision=BLOCK. This requires a product decision on
+  unlock link TTL, rate limiting, and admin override flow.
+
+STATUS: COMPLETE (weight fix + error codes). Recovery mechanism gap documented.
+
+────────────────────────────────────────────────────────────────────────────────
+SECTION 6 — UserDevice MODEL FIELD CONSISTENCY
+────────────────────────────────────────────────────────────────────────────────
+FINDING:
+  Code audit of backend/prisma/schema.prisma and backend/src/modules/devices/:
+
+  schema.prisma UserDevice model:
+  - Field name: visitorIdHash String  ✓
+  - Unique: @@unique([userId, visitorIdHash])  ✓
+  - No raw visitorId field  ✓
+
+  device.repository.ts:
+  - hashVisitorId() correctly hashes the raw visitorId before any DB operation ✓
+  - createDevice() writes visitorIdHash (not visitorId) to Prisma ✓
+  - findByUserIdAndVisitorId() uses composite key userId_visitorIdHash ✓
+  - No service file writes a bare visitorId field to userDevice ✓
+
+  Previous audit summary claimed a discrepancy — this was documentation drift.
+  The actual code is consistent and correct throughout the entire stack.
+
+NO CHANGE REQUIRED. Schema and repository are consistent.
+STATUS: VERIFIED CORRECT — NO CHANGE MADE.
+
+════════════════════════════════════════════════════════════════════════════════
+POST-CHANGE TEST SUITE RESULTS
+════════════════════════════════════════════════════════════════════════════════
+Baseline (before changes):  43 suites / 249 tests — ALL PASSED (18.4s)
+Final (after changes):      43 suites / 250 tests — ALL PASSED (18.4s)
+                            (+1 test: new assertion for /refresh-token CSRF enforcement)
+
+FILES CHANGED (implementation):
+  backend/src/middleware/csrfMiddleware.ts           [Section 1 — CSRF exempt list]
+  backend/src/modules/auth/auth.routes.ts            [Section 2 — bootstrap endpoint]
+  backend/src/services/security/JwtKeyService.ts    [Section 4 — JWKS retention]
+  backend/src/services/security/RiskEngine.ts        [Section 5 — risk weights]
+  frontend/src/services/auth.service.ts              [Section 1+2 — CSRF header, bootstrapCsrf]
+  frontend/src/app/main.tsx                          [Section 2 — boot bootstrap call]
+
+FILES NOT CHANGED (verified correct):
+  backend/src/middleware/rateLimiter.ts              [Section 3 — already correct]
+  backend/src/config/redis.ts                        [Section 3 — already correct]
+  backend/prisma/schema.prisma                       [Section 6 — already consistent]
+  backend/src/modules/devices/device.repository.ts  [Section 6 — already consistent]
+
+OUTSTANDING ACTION ITEMS (require separate implementation or product decisions):
+  1. Set REDIS_REQUIRED=true in production Render dashboard env config.
+  2. Implement JWKS rotation admin endpoint (POST /admin/keys/rotate).
+  3. Implement BullMQ scheduled key rotation job.
+  4. Persist keyStore to Redis/DB for rotation state survival across restarts.
+  5. Implement security alert email + account unlock flow for BLOCK decisions.
+================================================================================

@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import { authService } from './auth.service';
 
 export interface CloudinaryAssetResponse {
   url: string;
@@ -20,11 +21,7 @@ export interface UploadProgressCallback {
 
 export class MediaService {
   private getToken(): string | null {
-    try {
-      return localStorage.getItem('accessToken');
-    } catch {
-      return null;
-    }
+    return authService.getToken();
   }
 
   /**

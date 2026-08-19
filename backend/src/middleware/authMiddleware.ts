@@ -5,6 +5,8 @@ import { logger } from '../utils/logger';
 import { prisma } from '../config/prisma';
 import { tokenBlacklistService } from '../services/tokenBlacklistService';
 import { Container } from '../container';
+import { TokenVersionService } from '../services/security/TokenVersionService';
+import { KycAuthorizationService } from '../services/security/KycAuthorizationService';
 
 export interface AuthUserPayload {
   id: string;
@@ -80,7 +82,8 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
           return next(new AppError('This account has been deactivated.', 403, 'ACCOUNT_INACTIVE'));
         }
 
-        if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== dbUser.tokenVersion) {
+        const isVersionValid = await TokenVersionService.isValidTokenVersion(dbUser.id, decoded.tokenVersion);
+        if (!isVersionValid) {
           return next(new AppError('Authentication token has been revoked. Please log in again.', 401, 'TOKEN_INVALIDATED'));
         }
 
@@ -121,6 +124,9 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       };
     }
 
+    // Set Cache-Control header to instruct CDN edge caches (Cloudflare/Render) never to store personalized user responses
+    res.setHeader("Cache-Control", "private, no-store");
+
     next();
   } catch (err: any) {
     logger.error("Auth verification failed", { path: `${req.method} ${req.originalUrl}`, errorType: err.name, message: err.message });
@@ -144,3 +150,48 @@ export const authorize = (...roles: Role[]) => {
 };
 
 export const requireRole = authorize;
+
+/**
+ * Middleware: Enforces KYC approval for financial and public property management actions.
+ * Blocks unverified owners while allowing standard dashboard access and read-only navigation.
+ * Uses KycAuthorizationService as the single authoritative source of truth.
+ */
+export const requireKycApproved = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return next(new AppError('Authentication required.', 401, 'TOKEN_REQUIRED'));
+  }
+
+  // Admins and Super Admins bypass KYC gate
+  if (req.user.role === Role.ADMIN || req.user.role === Role.SUPER_ADMIN) {
+    return next();
+  }
+
+  // Only Owners are subject to Owner KYC review gate
+  if (req.user.role !== Role.OWNER) {
+    return next();
+  }
+
+  try {
+    const isApproved = await KycAuthorizationService.isOwnerKycApproved(req.user.id);
+
+    if (!isApproved) {
+      return next(
+        new AppError(
+          'Your account KYC is currently pending review. Property listing and financial actions will be unlocked once your KYC is approved.',
+          403,
+          'KYC_PENDING_REVIEW'
+        )
+      );
+    }
+    next();
+  } catch (err: any) {
+    logger.error('Error verifying KYC status in middleware', { error: err.message });
+    return next(
+      new AppError(
+        'Unable to verify account KYC status at this time. Please try again later.',
+        500,
+        'KYC_CHECK_FAILED'
+      )
+    );
+  }
+};

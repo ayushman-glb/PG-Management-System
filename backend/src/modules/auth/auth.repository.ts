@@ -20,20 +20,22 @@ export class AuthRepository implements IUserRepository {
     const lower = clean.toLowerCase();
     const stripped = clean.replace(/\s+/g, "");
 
+    // If identifier is an email address, use exact point lookup on canonical lowercase index
+    if (clean.includes("@")) {
+      return await this.client.user.findFirst({
+        where: { email: lower },
+      });
+    }
+
+    // Otherwise check exact matching against residentCode, phone, or email
     return await this.client.user.findFirst({
       where: {
         OR: [
-          { email: { equals: lower, mode: "insensitive" } },
-          { email: { equals: clean, mode: "insensitive" } },
-          { residentCode: { equals: clean, mode: "insensitive" } },
-          { residentCode: { equals: stripped, mode: "insensitive" } },
-          { phone: { equals: clean, mode: "insensitive" } },
-          { phone: { equals: stripped, mode: "insensitive" } },
-          { email: clean },
           { residentCode: clean },
           { residentCode: stripped },
           { phone: clean },
           { phone: stripped },
+          { email: lower },
         ],
       },
     });
@@ -42,12 +44,7 @@ export class AuthRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
     const clean = email.trim().toLowerCase();
     return await this.client.user.findFirst({
-      where: {
-        OR: [
-          { email: { equals: clean, mode: "insensitive" } },
-          { email: clean },
-        ],
-      },
+      where: { email: clean },
     });
   }
 
@@ -110,10 +107,11 @@ export class AuthRepository implements IUserRepository {
       ? data.role
       : Role.RESIDENT;
 
+    const cleanEmail = data.email.trim().toLowerCase();
     const newUser = await this.client.user.create({
       data: {
         name: data.name,
-        email: data.email,
+        email: cleanEmail,
         googleSubId: data.googleSubId,
         avatarUrl: data.avatarUrl,
         role: allowedRole,
@@ -239,10 +237,11 @@ export class AuthRepository implements IUserRepository {
   }
 
   async create(data: ICreateUserData): Promise<User> {
+    const cleanEmail = data.email.trim().toLowerCase();
     const newUser = await this.client.user.create({
       data: {
         name: data.name,
-        email: data.email,
+        email: cleanEmail,
         passwordHash: data.passwordHash,
         phone: data.phone,
         role: data.role,

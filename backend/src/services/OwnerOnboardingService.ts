@@ -11,6 +11,7 @@ import {
   RoomConfigInput,
   SubscriptionSelectionInput
 } from './IOwnerOnboardingService';
+import { EncryptionService } from './security/EncryptionService';
 
 export class OwnerOnboardingService implements IOwnerOnboardingService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -30,17 +31,22 @@ export class OwnerOnboardingService implements IOwnerOnboardingService {
   }
 
   async submitKYC(ownerId: string, input: OwnerKYCInput): Promise<any> {
+    const encAadhaar = input.aadhaarNumber ? EncryptionService.encrypt(input.aadhaarNumber) : '';
+    const encPan = input.panNumber ? EncryptionService.encrypt(input.panNumber) : '';
+    const encPassport = input.passportNumber ? EncryptionService.encrypt(input.passportNumber) : undefined;
+    const encDL = input.drivingLicenseNo ? EncryptionService.encrypt(input.drivingLicenseNo) : undefined;
+
     return this.prisma.ownerKYC.upsert({
       where: { ownerId },
       create: {
         ownerId,
-        aadhaarNumber: input.aadhaarNumber,
+        aadhaarNumber: encAadhaar,
         aadhaarDocUrl: input.aadhaarDocUrl,
-        panNumber: input.panNumber,
+        panNumber: encPan,
         panDocUrl: input.panDocUrl,
-        passportNumber: input.passportNumber,
+        passportNumber: encPassport,
         passportDocUrl: input.passportDocUrl,
-        drivingLicenseNo: input.drivingLicenseNo,
+        drivingLicenseNo: encDL,
         drivingLicenseUrl: input.drivingLicenseUrl,
         ownerSelfieUrl: input.ownerSelfieUrl,
         faceVerificationToken: input.faceVerificationToken || `FACE_VERIFIED_${Date.now()}`,
@@ -48,13 +54,13 @@ export class OwnerOnboardingService implements IOwnerOnboardingService {
         verificationStatus: OwnerKYCStatus.PENDING
       },
       update: {
-        aadhaarNumber: input.aadhaarNumber,
+        aadhaarNumber: encAadhaar,
         aadhaarDocUrl: input.aadhaarDocUrl,
-        panNumber: input.panNumber,
+        panNumber: encPan,
         panDocUrl: input.panDocUrl,
-        passportNumber: input.passportNumber,
+        passportNumber: encPassport,
         passportDocUrl: input.passportDocUrl,
-        drivingLicenseNo: input.drivingLicenseNo,
+        drivingLicenseNo: encDL,
         drivingLicenseUrl: input.drivingLicenseUrl,
         ownerSelfieUrl: input.ownerSelfieUrl,
         faceVerificationToken: input.faceVerificationToken,
@@ -79,8 +85,8 @@ export class OwnerOnboardingService implements IOwnerOnboardingService {
         ownerId,
         businessName: input.businessName,
         businessType: input.businessType as BusinessType,
-        gstin: input.gstin,
-        panNumber: input.panNumber,
+        gstin: input.gstin ? EncryptionService.encrypt(input.gstin) : undefined,
+        panNumber: input.panNumber ? EncryptionService.encrypt(input.panNumber) : undefined,
         businessAddress: input.businessAddress,
         businessEmail: input.businessEmail,
         businessPhone: input.businessPhone,
@@ -90,8 +96,8 @@ export class OwnerOnboardingService implements IOwnerOnboardingService {
       update: {
         businessName: input.businessName,
         businessType: input.businessType as BusinessType,
-        gstin: input.gstin,
-        panNumber: input.panNumber,
+        gstin: input.gstin ? EncryptionService.encrypt(input.gstin) : undefined,
+        panNumber: input.panNumber ? EncryptionService.encrypt(input.panNumber) : undefined,
         businessAddress: input.businessAddress,
         businessEmail: input.businessEmail,
         businessPhone: input.businessPhone,
@@ -120,9 +126,9 @@ export class OwnerOnboardingService implements IOwnerOnboardingService {
       where: { id: ownerId },
       data: {
         bankName: input.bankName,
-        accountNumber: input.accountNumber,
-        ifscCode: input.ifscCode,
-        upiId: input.upiId
+        accountNumber: EncryptionService.encrypt(input.accountNumber),
+        ifscCode: EncryptionService.encrypt(input.ifscCode),
+        upiId: EncryptionService.encrypt(input.upiId)
       }
     });
   }

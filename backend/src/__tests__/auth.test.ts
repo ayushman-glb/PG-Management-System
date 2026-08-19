@@ -35,6 +35,16 @@ jest.mock('../config/prisma', () => ({
       update: jest.fn().mockResolvedValue({}),
       findFirst: jest.fn().mockResolvedValue({ id: '507f1f77bcf86cd799439011', email: 'test@roombae.com' }),
     },
+    loginHistory: {
+      create: jest.fn().mockResolvedValue({ id: 'lh_1' }),
+    },
+    securityAuditEvent: {
+      create: jest.fn().mockResolvedValue({ id: 'audit_1' }),
+    },
+    userDevice: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      upsert: jest.fn().mockResolvedValue({ id: 'dev_1' }),
+    },
     $transaction: jest.fn().mockImplementation((callback) => callback({})),
   },
 }));

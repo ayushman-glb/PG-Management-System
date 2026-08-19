@@ -20,7 +20,8 @@ export class ResidentService implements IResidentService {
     }
 
     if (!user) {
-      const resCode = `RES${Math.floor(1000 + Math.random() * 9000)}`;
+      const entropy = crypto.randomBytes(4).toString('hex').toUpperCase();
+      const resCode = `RB-${new Date().getFullYear()}-${entropy}`;
       const pwdHash = await this.cryptoService.hashPassword('Welcome@123');
       user = await this.userRepository.create({
         name: data.name,

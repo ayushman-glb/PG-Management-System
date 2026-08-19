@@ -26,10 +26,7 @@ export class SettingsController {
 
   getAuditLogs = catchAsync(async (req: Request, res: Response) => {
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-    const logs = await prisma.activityLog.findMany({
-      take: limit,
-      orderBy: { timestamp: 'desc' }
-    });
+    const logs = await settingsService.getAuditLogs(limit);
     return ApiResponse.success(res, 'Audit logs retrieved', logs);
   });
 }

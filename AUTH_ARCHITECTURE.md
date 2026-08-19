@@ -6,7 +6,7 @@ This document outlines RoomBae's authentication architecture combining Phone / E
 
 ## 1. Authentication Architecture Overview
 
-```
+```text
 Frontend Client (React)
    │
    ├─► Phone / Email OTP Verification & Google OAuth 2.0

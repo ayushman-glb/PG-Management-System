@@ -31,7 +31,7 @@ ALLOWED_DOCUMENT_TYPES=application/pdf
 
 All media uploaded by RoomBae is automatically namespaced by environment prefix (`RoomBae-development` vs `RoomBae-production`) and categorized into target subfolders:
 
-```
+```text
 RoomBae-{NODE_ENV}/
 ├── rooms/           # Room gallery and bed photos
 ├── residents/       # Resident profile pictures
@@ -50,14 +50,16 @@ RoomBae-{NODE_ENV}/
 All endpoints are protected by JWT authentication (`authenticate`) and rate-limited.
 
 ### 1. Upload Single File
+
 * **Endpoint:** `POST /api/v1/media/upload/single`
 * **Content-Type:** `multipart/form-data`
 * **Form Data:**
-  - `file`: File binary (`.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`, `.pdf`)
-  - `folder`: Target subfolder (e.g. `rooms`, `residents`, `complaints`, `kyc`)
-  - `entityType`: Associated entity type (optional, e.g. `ROOM`, `RESIDENT`)
-  - `entityId`: Associated entity ID (optional)
+  * `file`: File binary (`.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`, `.pdf`)
+  * `folder`: Target subfolder (e.g. `rooms`, `residents`, `complaints`, `kyc`)
+  * `entityType`: Associated entity type (optional, e.g. `ROOM`, `RESIDENT`)
+  * `entityId`: Associated entity ID (optional)
 * **Response (201 Created):**
+
 ```json
 {
   "success": true,
@@ -79,22 +81,27 @@ All endpoints are protected by JWT authentication (`authenticate`) and rate-limi
 ```
 
 ### 2. Upload Multiple Files
+
 * **Endpoint:** `POST /api/v1/media/upload/multiple`
 * **Content-Type:** `multipart/form-data`
 * **Form Data:** `files` (array up to 10 files), `folder`, `entityType`, `entityId`.
 
 ### 3. Replace Image
+
 * **Endpoint:** `PUT /api/v1/media/replace/:publicId`
 * **Content-Type:** `multipart/form-data`
 * **Form Data:** `file`, `folder`, `entityType`, `entityId`.
 
 ### 4. Delete Image
+
 * **Endpoint:** `DELETE /api/v1/media/:publicId`
 * **Query Params:** `resourceType` (`image` or `raw`, default: `image`)
 
 ### 5. Bulk Delete Images
+
 * **Endpoint:** `POST /api/v1/media/bulk-delete`
 * **Body:**
+
 ```json
 {
   "publicIds": ["RoomBae-development/rooms/img1", "RoomBae-development/rooms/img2"]
@@ -102,11 +109,14 @@ All endpoints are protected by JWT authentication (`authenticate`) and rate-limi
 ```
 
 ### 6. Get Asset Metadata
+
 * **Endpoint:** `GET /api/v1/media/metadata/:publicId`
 
 ### 7. Reorder Multiple Images
+
 * **Endpoint:** `PATCH /api/v1/media/reorder`
 * **Body:**
+
 ```json
 {
   "publicIds": ["publicId1", "publicId2", "publicId3"],
@@ -165,6 +175,7 @@ model MediaRecord {
 ## 5. Frontend Components & Usage
 
 ### 1. `MediaUploader` Component
+
 Features drag-and-drop file upload, file picker, upload progress indicator, failure retry, image replacement, deletion, and drag-to-reorder.
 
 ```tsx
@@ -180,6 +191,7 @@ import { MediaUploader } from '../components/common/MediaUploader';
 ```
 
 ### 2. `CloudinaryImage` Component
+
 Optimized, responsive, lazy-loaded image renderer with Cloudinary on-the-fly transformations and fallback placeholders.
 
 ```tsx
@@ -201,6 +213,7 @@ import { CloudinaryImage } from '../components/common/CloudinaryImage';
 ## 6. Image Lifecycle & Cascading Deletion
 
 When an entity (e.g. Property, Resident, Complaint) is deleted from RoomBae:
+
 1. `mediaService.deleteImage(publicId)` or `mediaService.bulkDeleteImages(publicIds)` is invoked to purge Cloudinary assets.
 2. MongoDB `MediaRecord` documents are unlinked and purged.
 3. Transactional fallback logic ensures orphaned media files are avoided.

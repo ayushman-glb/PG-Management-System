@@ -58,6 +58,7 @@ string.
 - Replace whatever two-step `INCR` + `EXPIRE` sequence currently exists in the `increment()`
   method with a single atomic Lua script executed via the Redis client's `eval`/script
   capability:
+
   ```lua
   local current = redis.call("INCR", KEYS[1])
   if current == 1 then
@@ -65,6 +66,7 @@ string.
   end
   return current
   ```
+
 - Pass the window size (in seconds) as `ARGV[1]`, the rate-limit key as `KEYS[1]`.
 - This must guarantee: on the very first hit for a key, the TTL is set in the same atomic
   operation as the increment — no window where a key exists without an expiry.
@@ -81,6 +83,7 @@ string.
 **Files:** `backend/src/services/cache.service.ts`, `backend/src/middleware/cacheMiddleware.ts`
 
 **3a. `invalidatePattern(pattern)`:**
+
 - Replace any "collect all matching keys via SCAN, then issue one large/unbounded DEL" pattern
   with: `SCAN` in cursor-based batches (COUNT ~100–500 per iteration), and delete each batch
   immediately using `UNLINK` (non-blocking reclaim) instead of `DEL`, pipelined within the
@@ -90,6 +93,7 @@ string.
   unbounded full-keyspace scan.
 
 **3b. `remember<T>(key, ttlSeconds, fetcher)` stampede protection:**
+
 - On a cache miss, before calling `fetcher()`, attempt to acquire a short-lived lock:
   `SET lock:<key> 1 NX PX 5000` (5-second auto-expiring lock — never can deadlock).
 - If the lock is acquired: call `fetcher()`, write the result via `SET key value EX

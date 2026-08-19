@@ -9,6 +9,7 @@
 RoomBae uses a warm, inviting luxury palette built on relative units (`rem`, `em`, `%`, `vw`) and fluid typography `clamp()` definitions:
 
 ### 1.1 Color Engine & Tokens
+
 - **Canvas Background (`--bg-primary`)**: `#FFF8F2` (Light) / `#1D1B1A` (Dark).
 - **Surface / Sidebar (`--bg-surface`)**: `#F8EEE5` (Light) / `#2B2725` (Dark).
 - **Card Fills (`--bg-card`)**: `#FFFDFB` (Light) / `#332D2B` (Dark).
@@ -19,6 +20,7 @@ RoomBae uses a warm, inviting luxury palette built on relative units (`rem`, `em
 - **Structural Borders (`--border-main`)**: `#E6D7CA` (Light) / `#4A443F` (Dark).
 
 ### 1.2 Fluid Typography Scale (`clamp()`)
+
 - **Hero Display**: `font-size: clamp(2.2rem, 5.5vw, 4.75rem); line-height: 1.08;`
 - **Section Heading H1**: `font-size: clamp(1.75rem, 3.8vw, 2.75rem); line-height: 1.15;`
 - **Card Heading H2**: `font-size: clamp(1.35rem, 2.8vw, 2rem); line-height: 1.25;`

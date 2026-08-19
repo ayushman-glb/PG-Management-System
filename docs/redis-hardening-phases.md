@@ -20,6 +20,7 @@ This document records the exact modifications, architectural decisions, and veri
 - **Problem:** The previous `DistributedRedisStore` used a two-step sequence (`INCR` followed by `EXPIRE`). If a network glitch or process interruption occurred between the two calls on the first hit, the key would persist in Redis with `TTL == -1`, causing a permanent lockout for the client IP.
 - **Modifications:**
   - In [`backend/src/middleware/rateLimiter.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/middleware/rateLimiter.ts), replaced the two-step sequence with an atomic Lua script executed via `redisClient.eval`:
+
     ```lua
     local current = redis.call("INCR", KEYS[1])
     if current == 1 then
@@ -27,6 +28,7 @@ This document records the exact modifications, architectural decisions, and veri
     end
     return current
     ```
+
   - Added standalone diagnostic utility [`backend/scripts/diagnoseRateLimitTtl.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/scripts/diagnoseRateLimitTtl.ts) which uses `scanIterator` to detect any legacy `rl:*` keys with `TTL == -1`.
 
 ---
@@ -69,7 +71,8 @@ This document records the exact modifications, architectural decisions, and veri
 
 ## Phase 6 — Eviction Policy & Logical DB Architecture
 
-### Architectural Findings:
+### Architectural Findings
+
 1. **Logical DBs (`SELECT`):**
    - Configured via `REDIS_DB` in `env.ts` (default `0`).
    - Local Docker and standalone Redis instances support multiple logical DBs (`0` through `15`).
@@ -96,6 +99,7 @@ This document records the exact modifications, architectural decisions, and veri
   - In [`backend/src/middleware/cacheMiddleware.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/middleware/cacheMiddleware.ts), added in-process telemetry tracking `routeCacheHits`, `routeCacheMisses`, `routeCacheBypasses`, and exported `getRouteCacheStats()`.
   - In [`backend/src/config/redis.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/config/redis.ts), exported `getRedisKeyEstimates()` using non-blocking bounded `scanIterator` (up to 1,000 keys per category).
   - In [`backend/src/app.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/app.ts), extended `GET /health` to expose:
+
     ```json
     {
       "redis": {

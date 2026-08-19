@@ -41,7 +41,7 @@ describe('TokenBlacklistService Unit Tests', () => {
       const ttlArg = calledArgs[2];
 
       const expectedHash = crypto.createHash('sha256').update(token).digest('hex');
-      expect(keyArg).toBe(`jwt:blacklist:${expectedHash}`);
+      expect(keyArg).toBe(`security:jwt:blacklist:${expectedHash}`);
       expect(valArg).toBe('revoked');
       // TTL should be around 295-300 seconds (remaining lifetime)
       expect(ttlArg).toBeGreaterThan(290);

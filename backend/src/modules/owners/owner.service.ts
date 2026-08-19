@@ -22,6 +22,30 @@ function getCrypto(): ICryptoService {
 export class OwnerService implements IOwnerOnboardingService {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async getOrCreateOwnerForUser(user: { id: string; name?: string; email: string; phone?: string; avatarUrl?: string }): Promise<any> {
+    let owner = await this.prisma.owner.findFirst({ where: { userId: user.id } });
+    if (!owner) {
+      owner = await this.prisma.owner.create({
+        data: {
+          userId: user.id,
+          name: user.name || "Owner",
+          email: user.email,
+          phone: user.phone || "",
+          photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+          address: "",
+          aadhaarNumber: "",
+          panNumber: "",
+          upiId: "",
+          bankName: "",
+          accountNumber: "",
+          ifscCode: "",
+          emergencyContact: "",
+        },
+      });
+    }
+    return owner;
+  }
+
   async savePersonalDetails(ownerId: string, input: PersonalDetailsInput): Promise<any> {
     return this.prisma.owner.update({
       where: { id: ownerId },

@@ -38,11 +38,13 @@ sequenceDiagram
 ## 🔑 Environment Variables Setup
 
 ### 1. Frontend (`frontend/.env`)
+
 ```env
 VITE_RECAPTCHA_SITE_KEY=6LfgNnYtAAAAAABdvCLaqfA6ucDLdBKTxy8sLCwfn
 ```
 
 ### 2. Backend (`backend/.env`)
+
 ```env
 GOOGLE_CLOUD_PROJECT_ID=roombae-cff13
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
@@ -56,6 +58,7 @@ RECAPTCHA_ENABLED=true
 ## 🎯 Protected Actions & Threshold Tiers
 
 ### Actions Union
+
 - `signup`
 - `login`
 - `forgot_password`
@@ -71,6 +74,7 @@ RECAPTCHA_ENABLED=true
 - `property_creation`
 
 ### Risk Classification Tiers
+
 - **`>= 0.9` (TRUSTED)**: Highly confident human user.
 - **`>= 0.7` (NORMAL)**: Standard legitimate traffic.
 - **`>= 0.5` (ELEVATED)**: Acceptable threshold for form processing.
@@ -81,11 +85,14 @@ RECAPTCHA_ENABLED=true
 ## 🚀 Deployment Guide
 
 ### GitHub Pages (Frontend)
+
 Set the repository secret or environment variable:
 `VITE_RECAPTCHA_SITE_KEY=6LfgNnYtAAAAAABdvCLaqfA6ucDLdBKTxy8sLCwfn` in GitHub Actions.
 
 ### Render (Backend)
+
 Configure environment variables in Render Dashboard:
+
 - `GOOGLE_CLOUD_PROJECT_ID`: `roombae-cff13`
 - `RECAPTCHA_SITE_KEY`: `6LfgNnYtAAAAAABdvCLaqfA6ucDLdBKTxy8sLCwfn`
 - `RECAPTCHA_MIN_SCORE`: `0.5`
@@ -96,5 +103,6 @@ Configure environment variables in Render Dashboard:
 ## 🧪 Local Development & Graceful Fallback Mode
 
 When developing locally without active Google Cloud Application Credentials:
+
 - Set `RECAPTCHA_ENABLED=true` in `backend/.env`.
 - The `RecaptchaService` automatically runs in **fallback mode**, returning a synthetic score of `1.0` and logging assessment events to Winston without breaking local offline workflows.

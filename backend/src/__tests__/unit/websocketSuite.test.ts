@@ -10,13 +10,13 @@ describe('RoomBae Enterprise Real-time WebSocket Subsystem Suite', () => {
   const secret = process.env.JWT_SECRET || 'dev_secret_change_me_in_production';
 
   const validOwnerToken = jwt.sign(
-    { id: 'usr_owner_1', email: 'owner@roombae.com', role: 'OWNER' },
+    { id: 'usr_owner_1', email: 'owner@roombae.com', role: 'OWNER', tokenVersion: 0 },
     secret,
     { expiresIn: '1h' }
   );
 
   const validResidentToken = jwt.sign(
-    { id: 'usr_res_1', email: 'resident@roombae.com', role: 'RESIDENT', residentCode: 'RB-001' },
+    { id: 'usr_res_1', email: 'resident@roombae.com', role: 'RESIDENT', residentCode: 'RB-001', tokenVersion: 0 },
     secret,
     { expiresIn: '1h' }
   );
@@ -143,7 +143,7 @@ describe('RoomBae Enterprise Real-time WebSocket Subsystem Suite', () => {
     });
 
     const refreshedToken = jwt.sign(
-      { id: 'usr_owner_1', email: 'owner@roombae.com', role: 'OWNER', version: 2 },
+      { id: 'usr_owner_1', email: 'owner@roombae.com', role: 'OWNER', tokenVersion: 0 },
       secret,
       { expiresIn: '2h' }
     );

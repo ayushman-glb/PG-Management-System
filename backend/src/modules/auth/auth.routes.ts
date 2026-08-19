@@ -15,9 +15,36 @@ import {
   registerLimiter,
   sendOtpLimiter,
   phoneVerifyLimiter,
+  csrfBootstrapLimiter,
 } from "../../middleware/rateLimiter";
+import { generateCsrfToken } from '../../middleware/csrfMiddleware';
 
 const router = Router();
+
+// ── CSRF Bootstrap Endpoint ────────────────────────────────────────────────────────
+// Issues or refreshes the csrf-token cookie for anonymous visitors before
+// they call /register, /login, or /refresh-token. Must NOT itself require CSRF.
+// Rate-limited with dedicated limiter to prevent resource exhaustion without colliding with OTP limits.
+router.get('/csrf-token', csrfBootstrapLimiter, generateCsrfToken, (req, res) => {
+  // The cookie was already set by generateCsrfToken. Return the value in the
+  // body as well so the frontend can also read it directly if needed.
+  const token: string = (req.cookies && req.cookies['csrf-token']) || res.getHeader('x-csrf-token') as string || '';
+  res.status(200).json({
+    success: true,
+    message: 'CSRF token issued',
+    data: { csrfToken: token },
+  });
+});
+
+// ── Legacy CSRF alias (preserved for backward compat, redirects to new path) ──
+router.get('/csrf', csrfBootstrapLimiter, generateCsrfToken, (req, res) => {
+  const token: string = (req.cookies && req.cookies['csrf-token']) || res.getHeader('x-csrf-token') as string || '';
+  res.status(200).json({
+    success: true,
+    message: 'CSRF token issued',
+    data: { csrfToken: token },
+  });
+});
 
 // ── Authentication endpoints with per-route rate limiting ─────────────────────
 router.post(
@@ -46,6 +73,10 @@ router.post("/verify-otp", (req, res, next) =>
 
 router.post("/logout", (req, res, next) =>
   Container.authController.logout(req, res, next),
+);
+
+router.post("/logout-all", authenticate, (req, res, next) =>
+  Container.authController.logoutAll(req, res, next),
 );
 
 router.post("/refresh-token", (req, res, next) =>

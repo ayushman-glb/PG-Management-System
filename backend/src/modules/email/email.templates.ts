@@ -14,6 +14,19 @@ import {
 import { env } from '../../config/env';
 
 /**
+ * HTML Output Escaping Utility to prevent HTML/script injection in email templates
+ */
+export function escapeHtml(str?: string | null): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
  * Shared Bento UI Email Shell Layout
  */
 function bentoWrapper(content: string, options?: { preheader?: string; categoryBadge?: string }): string {
@@ -121,6 +134,8 @@ function bentoWrapper(content: string, options?: { preheader?: string; categoryB
 export const emailTemplates = {
   // 1. OTP Verification
   otpVerification: (data: OtpEmailData) => {
+    const safeName = escapeHtml(data.name || 'Resident');
+    const safeOtp = escapeHtml(data.otp);
     const content = `
       <div style="text-align: center; margin-bottom: 24px;">
         <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; font-size: 24px; margin-bottom: 16px;">
@@ -128,14 +143,14 @@ export const emailTemplates = {
         </div>
         <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Security Verification Code</h1>
         <p style="margin: 0; font-size: 14px; color: #9ca3af; line-height: 1.5;">
-          Hello <strong style="color: #f3f4f6;">${data.name || 'Resident'}</strong>, use the one-time password below to authenticate your RoomBae account:
+          Hello <strong style="color: #f3f4f6;">${safeName}</strong>, use the one-time password below to authenticate your RoomBae account:
         </p>
       </div>
 
       <!-- Bento OTP Box -->
       <div style="background: #0f172a; border: 2px dashed #f59e0b; border-radius: 16px; padding: 24px; text-align: center; margin: 28px 0;">
         <div class="otp-digit-box" style="font-size: 40px; font-weight: 800; letter-spacing: 14px; color: #fbbf24; font-family: monospace; padding-left: 14px;">
-          ${data.otp}
+          ${safeOtp}
         </div>
         <div style="margin-top: 12px; font-size: 12px; font-weight: 600; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px;">
           ⏱ Valid for ${data.expiresInMinutes || 10} minutes
@@ -153,11 +168,12 @@ export const emailTemplates = {
         </tr>
       </table>
     `;
-    return bentoWrapper(content, { preheader: `Your RoomBae OTP is ${data.otp}`, categoryBadge: 'Security OTP' });
+    return bentoWrapper(content, { preheader: `Your RoomBae OTP is ${safeOtp}`, categoryBadge: 'Security OTP' });
   },
 
   // 2. Welcome Email
   welcome: (data: WelcomeEmailData) => {
+    const safeName = escapeHtml(data.name);
     const loginUrl = data.loginUrl || `${env.FRONTEND_URL}/auth`;
     const content = `
       <div style="text-align: center; margin-bottom: 28px;">
@@ -166,7 +182,7 @@ export const emailTemplates = {
         </div>
         <h1 style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Welcome to RoomBae!</h1>
         <p style="margin: 0; font-size: 15px; color: #9ca3af; line-height: 1.5;">
-          Hello <strong style="color: #f3f4f6;">${data.name}</strong>, your account is fully verified and ready.
+          Hello <strong style="color: #f3f4f6;">${safeName}</strong>, your account is fully verified and ready.
         </p>
       </div>
 

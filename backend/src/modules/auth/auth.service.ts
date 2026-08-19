@@ -18,6 +18,11 @@ import { cacheService } from "../../services/cache.service";
 import { tokenBlacklistService } from "../../services/tokenBlacklistService";
 import { emailService } from "../email";
 import * as crypto from "crypto";
+import { RiskEngine } from "../../services/security/RiskEngine";
+import { PreAuthChallengeService } from "../../services/security/PreAuthChallengeService";
+import { SessionRevocationService } from "../../services/security/SessionRevocationService";
+import { TokenVersionService } from "../../services/security/TokenVersionService";
+import { EncryptionService } from "../../services/security/EncryptionService";
 
 const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
 const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png";
@@ -172,14 +177,12 @@ export class AuthService implements IAuthService {
 
     if (storedToken.revokedAt) {
       logger.warn("Refresh token reuse detected, revoking all tokens", { userId: storedToken.userId });
-      try {
-        if (this.db?.refreshToken) {
-          await this.db.refreshToken.updateMany({
-            where: { userId: storedToken.userId, revokedAt: null },
-            data: { revokedAt: new Date() },
-          });
-        }
-      } catch {}
+      await SessionRevocationService.revokeAllSessions(
+        storedToken.userId,
+        "REFRESH_TOKEN_REUSE_DETECTED",
+        ipAddress,
+        userAgent
+      );
       await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Refresh token has been revoked. Please log in again.", 401, "REFRESH_TOKEN_REVOKED", "login");
     }
@@ -222,30 +225,25 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * Logout - revoke the provided refresh token and optionally blacklist access token.
+   * Logout - revoke the provided refresh token and blacklist access token.
    */
-  async logout(token: string, accessTokenOrUserId?: string): Promise<void> {
+  async logout(token: string, accessTokenOrUserId?: string, ipAddress?: string, userAgent?: string): Promise<void> {
     if (!token && !accessTokenOrUserId) return;
 
     if (token) {
-      const tokenHash = this.hashRefreshToken(token);
-      try {
-        if (this.db?.refreshToken) {
-          await this.db.refreshToken.updateMany({
-            where: { tokenHash, revokedAt: null },
-            data: { revokedAt: new Date() },
-          });
-        }
-        await cacheService.del(`refresh_token:${tokenHash}`);
-      } catch (err) {
-        logger.warn("Failed to revoke refresh token during logout", { error: err });
-      }
+      await SessionRevocationService.revokeRefreshToken(token);
     }
 
-    // If an access token is passed as second arg, blacklist it in Redis
     if (accessTokenOrUserId && accessTokenOrUserId.startsWith("ey")) {
-      await tokenBlacklistService.blacklistToken(accessTokenOrUserId);
+      await SessionRevocationService.revokeAccessToken(accessTokenOrUserId);
     }
+  }
+
+  /**
+   * Logout from all devices - increments tokenVersion and revokes all active sessions.
+   */
+  async logoutAll(userId: string, ipAddress?: string, userAgent?: string): Promise<void> {
+    await SessionRevocationService.revokeAllSessions(userId, "USER_LOGOUT_ALL", ipAddress, userAgent);
   }
 
   async googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult> {
@@ -345,7 +343,8 @@ export class AuthService implements IAuthService {
     password: string,
     rememberMe?: boolean | string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
+    visitorId?: string
   ): Promise<IAuthUserResult | any> {
     const rawId = (identifier || "").trim();
     const cleanPass = password || "";
@@ -394,23 +393,81 @@ export class AuthService implements IAuthService {
       throw new AppError("This account has been deactivated.", 403, "ACCOUNT_INACTIVE");
     }
 
+    // Evaluate Behavioral & Device Risk Signals
+    const effectiveVisitorId = visitorId || "anonymous_device";
+    const riskAssessment = await RiskEngine.evaluateLoginRisk(
+      user.id,
+      effectiveVisitorId,
+      actualIp || "127.0.0.1",
+      actualUserAgent || "unknown"
+    );
 
-    // 2FA Enforcement toggle: Disabled for now (set to true to re-enable)
-    const ENABLE_2FA_LOGIN_ENFORCEMENT = false;
-    if (ENABLE_2FA_LOGIN_ENFORCEMENT && (user.is2FAEnabled === true || user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN)) {
-      if (user.is2FAEnabled && this.tokenService.generatePreAuthToken) {
-        const preAuthToken = this.tokenService.generatePreAuthToken({
-          preAuth: true,
-          userId: user.id,
-          role: user.role,
-        });
-        return {
-          requiresTwoFactor: true,
-          preAuthToken,
-          message: "Two-factor authentication code required",
-        };
-      }
+    if (riskAssessment.decision === "BLOCK") {
+      await SessionRevocationService.writeAuditLog({
+        userId: user.id,
+        eventType: "LOGIN_BLOCKED",
+        severity: "CRITICAL",
+        riskScore: riskAssessment.riskScore,
+        riskLevel: "HIGH",
+        ipAddress: actualIp,
+        userAgent: actualUserAgent,
+        metadata: {
+          reason: "RISK_ENGINE_SCORE_EXCEEDED",
+          riskScore: riskAssessment.riskScore,
+          signals: riskAssessment.signals,
+        },
+      });
+      throw new AppError(
+        "Login blocked due to high-risk security signals. Please contact support.",
+        403,
+        "LOGIN_BLOCKED"
+      );
     }
+
+    const requiresStepUp =
+      riskAssessment.decision === "STEP_UP" ||
+      user.is2FAEnabled === true ||
+      (user as any).twoFactorEnabled === true;
+
+    if (requiresStepUp) {
+      const preAuthToken = await PreAuthChallengeService.createChallenge(
+        user.id,
+        effectiveVisitorId
+      );
+
+      // Dispatch 2FA verification OTP if email or phone is present
+      if (user.email) {
+        await this.otpService.generateAndSendOtp(user.email).catch(() => {});
+      }
+
+      await SessionRevocationService.writeAuditLog({
+        userId: user.id,
+        eventType: "LOGIN_STEP_UP_CHALLENGED",
+        severity: "WARNING",
+        riskScore: riskAssessment.riskScore,
+        riskLevel: "MEDIUM",
+        ipAddress: actualIp,
+        userAgent: actualUserAgent,
+        metadata: {
+          signals: riskAssessment.signals,
+        },
+      });
+
+      return {
+        requiresTwoFactor: true,
+        preAuthToken,
+        message: "Two-factor authentication code required",
+      };
+    }
+
+    // Record verified device
+    await RiskEngine.recordDeviceSuccess(
+      user.id,
+      effectiveVisitorId,
+      actualIp || "127.0.0.1",
+      actualUserAgent || "unknown",
+      false
+    );
 
     // Record login history (best-effort)
     try {
@@ -442,6 +499,19 @@ export class AuthService implements IAuthService {
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
     await this.persistRefreshToken(user.id, refreshToken, isRememberMe, actualIp, actualUserAgent);
+
+    await SessionRevocationService.writeAuditLog({
+      userId: user.id,
+      eventType: "LOGIN_SUCCESS",
+      severity: "INFO",
+      riskScore: riskAssessment.riskScore,
+      riskLevel: "LOW",
+      ipAddress: actualIp,
+      userAgent: actualUserAgent,
+      metadata: {
+        rememberMe: isRememberMe,
+      },
+    });
 
     logger.info("Login successful", { userId: user.id, role: user.role });
 
@@ -721,8 +791,15 @@ export class AuthService implements IAuthService {
       const hashedPassword = await this.cryptoService.hashPassword(newPassword);
       await this.db.user.update({
         where: { id: user.id },
-        data: { passwordHash: hashedPassword }, // ✅ fixed: was `password` (wrong field)
+        data: { passwordHash: hashedPassword },
       });
+      // Invalidate all active sessions upon password reset
+      await SessionRevocationService.revokeAllSessions(
+        user.id,
+        "PASSWORD_RESET",
+        undefined,
+        undefined
+      );
     }
 
     return {
@@ -760,11 +837,21 @@ export class AuthService implements IAuthService {
     rememberMe?: boolean,
     ipAddress?: string,
     userAgent?: string,
+    visitorId?: string,
   ): Promise<any> {
     let userId = userIdOrPreAuthToken;
     let isPreAuth = false;
 
-    if (this.tokenService.verifyPreAuthToken) {
+    // Check PreAuthChallengeService first (dual Redis + MongoDB fallback)
+    const challengeResult = await PreAuthChallengeService.verifyAndConsumeChallenge(
+      userIdOrPreAuthToken,
+      visitorId
+    );
+
+    if (challengeResult && challengeResult.userId) {
+      userId = challengeResult.userId;
+      isPreAuth = true;
+    } else if (this.tokenService.verifyPreAuthToken) {
       try {
         const decoded = this.tokenService.verifyPreAuthToken(userIdOrPreAuthToken);
         if (decoded && decoded.userId) {
@@ -779,21 +866,36 @@ export class AuthService implements IAuthService {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
 
-    if (!user.twoFactorSecret) {
-      throw new AppError("Two-factor authentication not set up", 400);
-    }
-
     if (!token || token.length !== 6 || !/^\d+$/.test(token)) {
       throw new AppError("Invalid 6-digit Authenticator code", 400);
     }
 
-    const isValid = TotpService.verifyToken(user.twoFactorSecret, token);
+    let isValid = false;
+    if (user.twoFactorSecret) {
+      isValid = TotpService.verifyToken(user.twoFactorSecret, token);
+    }
+    if (!isValid && user.email) {
+      isValid = await this.otpService.verifyEmailCode(user.email, token).catch(() => false);
+    }
+    if (!isValid && user.phone) {
+      isValid = await this.otpService.verifyPhoneOtp(user.phone, token).catch(() => false);
+    }
 
     if (!isValid) {
       throw new AppError("Invalid two-factor authentication code", 401, "TWO_FACTOR_INVALID");
     }
 
     if (isPreAuth) {
+      if (visitorId) {
+        await RiskEngine.recordDeviceSuccess(
+          user.id,
+          visitorId,
+          ipAddress || "127.0.0.1",
+          userAgent || "unknown",
+          true // trust device after successful 2FA
+        );
+      }
+
       const payload = this.buildAccessPayload(user);
       const accessToken = this.tokenService.generateAccessToken(payload);
       const refreshToken = this.tokenService.generateRefreshToken(payload);
@@ -810,6 +912,16 @@ export class AuthService implements IAuthService {
           },
         });
       } catch {}
+
+      await SessionRevocationService.writeAuditLog({
+        userId: user.id,
+        eventType: "LOGIN_SUCCESS_2FA",
+        severity: "INFO",
+        riskScore: 0,
+        riskLevel: "LOW",
+        ipAddress,
+        userAgent,
+      });
 
       return {
         success: true,

@@ -19,4 +19,5 @@ This document records the security posture, middleware protections, secret manag
 ---
 
 ## 2. Secrets Audit Verdict
+
 No private keys, JWT secrets, database connection strings, or Cloudinary API secrets are exposed in client-side code or public repositories.

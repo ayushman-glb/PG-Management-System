@@ -6,23 +6,16 @@
  * All download requests now use Authorization: Bearer header exclusively.
  */
 
+import { authService } from './auth.service';
+
 export interface DownloadOptions {
   url: string;
   filename: string;
   onProgress?: (progress: number) => void;
 }
 
-const getStoredToken = (): string | null => {
-  if (typeof localStorage === 'undefined') return null;
-  return (
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('roombae_access_token') ||
-    localStorage.getItem('token')
-  );
-};
-
 export const downloadFile = async ({ url, filename }: DownloadOptions): Promise<void> => {
-  const token = getStoredToken();
+  const token = authService.getToken();
 
   const headers: Record<string, string> = {};
   if (token) {

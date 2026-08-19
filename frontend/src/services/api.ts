@@ -19,13 +19,9 @@ export interface ApiResponse<T = any> {
 
 class ApiClient {
   public async request<T = any>(endpoint: string, options: RequestInit = {}, isRetry: boolean = false): Promise<T> {
-    const token =
-      authService.getToken() ||
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem("roombae_access_token") ||
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("token")
-        : null);
+    // Access token is in-memory only (managed by AuthService). Never read
+    // from localStorage directly — that would re-introduce the XSS exposure.
+    const token = authService.getToken();
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
     };

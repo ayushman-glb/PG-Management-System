@@ -152,6 +152,8 @@ export default function Auth({ navigate }: Props) {
   }, []);
 
   // Autosave progress to localStorage whenever step 2/3 fields update
+  // SECURITY FIX (Zero-Trust PII Protection): DOB, permanentAddress, emergency contact,
+  // and financial identifiers (accountNumber, IFSC, UPI, etc.) are strictly EXCLUDED from localStorage.
   useEffect(() => {
     if (mode === "register" && (fullName || email || phone)) {
       const draft = {
@@ -159,8 +161,6 @@ export default function Auth({ navigate }: Props) {
         regStep,
         fullName,
         photoUrl,
-        dob,
-        gender,
         phone,
         email,
         city,
@@ -168,13 +168,6 @@ export default function Auth({ navigate }: Props) {
         pincode,
         isPhoneVerified,
         isEmailVerified,
-        permanentAddress,
-        landmark,
-        accountHolderName,
-        bankName,
-        ifscCode,
-        accountNumber,
-        upiId,
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem("roombae_incomplete_signup", JSON.stringify(draft));
@@ -195,9 +188,7 @@ export default function Auth({ navigate }: Props) {
     isPhoneVerified,
     isEmailVerified,
     permanentAddress,
-    accountHolderName,
-    accountNumber,
-    upiId,
+    landmark,
   ]);
 
   const resumeIncompleteSignup = () => {
@@ -217,13 +208,19 @@ export default function Auth({ navigate }: Props) {
     setIsEmailVerified(!!incompleteDraft.isEmailVerified);
     setPermanentAddress(incompleteDraft.permanentAddress || "");
     setLandmark(incompleteDraft.landmark || "");
-    setAccountHolderName(incompleteDraft.accountHolderName || "");
-    setBankName(incompleteDraft.bankName || "HDFC Bank");
-    setIfscCode(incompleteDraft.ifscCode || "HDFC0001234");
-    setAccountNumber(incompleteDraft.accountNumber || "");
-    setUpiId(incompleteDraft.upiId || "");
+    // Bank & financial fields are never stored in localStorage and must be freshly entered
+    setAccountHolderName("");
+    setBankName("HDFC Bank");
+    setIfscCode("");
+    setAccountNumber("");
+    setConfirmAccountNumber("");
+    setUpiId("");
     setMode("register");
     setIncompleteDraft(null);
+
+    if (incompleteDraft.selectedRole === "OWNER" && incompleteDraft.regStep >= 3) {
+      setAuthSuccessMsg("Draft restored! For your security, bank and settlement details must be re-entered.");
+    }
   };
 
   const clearIncompleteDraft = () => {

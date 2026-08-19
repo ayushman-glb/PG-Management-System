@@ -51,4 +51,11 @@ export class SettingsService {
 
     return true;
   }
+
+  async getAuditLogs(limit: number = 50) {
+    return this.prisma.activityLog.findMany({
+      take: limit,
+      orderBy: { timestamp: 'desc' },
+    });
+  }
 }

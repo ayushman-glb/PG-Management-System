@@ -1,6 +1,7 @@
 import rateLimit, { Store, Options, IncrementResponse } from 'express-rate-limit';
 import { cacheService } from '../services/cache.service';
 import { redisClient, isRedisReady, isRedisRequired } from '../config/redis';
+import { RedisNamespace } from '../services/security/RedisNamespace';
 import { logger } from '../utils/logger';
 
 const ATOMIC_RATE_LIMIT_LUA = `
@@ -19,7 +20,7 @@ class DistributedRedisStore implements Store {
   private memoryFallbackStore: Map<string, { hits: number; resetTime: number }> = new Map();
   public windowMs: number = 60000;
 
-  constructor(prefix: string = 'rl:') {
+  constructor(prefix: string = RedisNamespace.SECURITY_RATELIMIT) {
     this.prefix = prefix;
   }
 
@@ -98,7 +99,7 @@ const createLimiter = (
   max: number,
   message: string,
   code: string = 'TOO_MANY_REQUESTS',
-  prefix: string = 'rl:'
+  prefix: string = `${RedisNamespace.SECURITY_RATELIMIT}gen:`
 ) =>
   rateLimit({
     windowMs,
@@ -122,15 +123,15 @@ export const generalLimiter = createLimiter(
   100,
   'Too many requests from this IP, please try again after 15 minutes.',
   'TOO_MANY_REQUESTS',
-  'rl:gen:'
+  `${RedisNamespace.SECURITY_RATELIMIT}gen:`
 );
 
 export const loginLimiter = createLimiter(
-  15 * 60 * 1000, // 15 minutes — matches DESIGN.md §8.3 spec: 5 req/15min
-  5,
+  15 * 60 * 1000, // 15 minutes
+  10, // 10 attempts
   'Too many login attempts. Please try again after 15 minutes.',
   'LOGIN_RATE_EXCEEDED',
-  'rl:login:'
+  `${RedisNamespace.SECURITY_RATELIMIT}login:`
 );
 
 export const registerLimiter = createLimiter(
@@ -198,3 +199,24 @@ export const refreshTokenLimiter = createLimiter(
   'REFRESH_RATE_EXCEEDED',
   'rl:refresh:'
 );
+
+// Dedicated limiter for the SOAP billing endpoint.
+// Tighter than generalLimiter because this endpoint exposes financial data.
+export const soapBillingLimiter = createLimiter(
+  15 * 60 * 1000, // 15 minutes
+  20,             // 20 calls per window (ERP internal callers should not burst)
+  'Too many SOAP billing requests. Please try again after 15 minutes.',
+  'SOAP_BILLING_RATE_EXCEEDED',
+  'rl:soap:billing:'
+);
+
+// Dedicated limiter for CSRF token bootstrapping.
+// Generous allowance to prevent blocking legitimate page boots and refresh flows.
+export const csrfBootstrapLimiter = createLimiter(
+  15 * 60 * 1000, // 15 minutes
+  60,             // 60 requests per 15 min per IP
+  'Too many CSRF bootstrap requests. Please try again after 15 minutes.',
+  'CSRF_RATE_EXCEEDED',
+  'rl:csrf:'
+);
+

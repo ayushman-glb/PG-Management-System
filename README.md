@@ -48,6 +48,7 @@
 The **PG Management System ("Room Bae")** is a state-of-the-art, multi-tenant SaaS application built to simplify room allocations, tenant onboarding, rent collection, complaint resolution, and revenue analytics for PG (Paying Guest) owners, hostel managers, and residents.
 
 It features a dual-experience architecture:
+
 1. **Public Discovery Portal**: For prospective residents to search, filter, and explore PG properties, check room amenities, view pricing, and register online.
 2. **Management & Tenant Workspace**: An enterprise-grade dashboard for PG owners to monitor real-time occupancy rates, track pending dues, manage visitor logs, resolve support tickets, and review analytical trends.
 
@@ -77,6 +78,7 @@ The frontend web application is deployed live on GitHub Pages:
 | **Analytics Engine** | Financial breakdown, revenue trend charts, occupancy statistics ([Analytics.tsx](file:///c:/Users/GLB-BLR-191/Documents/pg%20management/New%20folder/PG%20Management%20system2/src/pages/Analytics.tsx)). | PG Owners |
 
 ### Non-Functional Requirements
+
 - **Performance**: Sub-second page rendering and smooth 60fps animations.
 - **Accessibility & Contrast**: Built-in support for both Light Warm luxury mode and Dark Gold mode with proper ARIA attributes.
 - **Responsiveness**: Mobile-first design adapting seamlessly from 320px smartphones to 4K desktop displays.
@@ -124,6 +126,7 @@ flowchart TD
 ```
 
 ### Component Pipeline & Execution Flow
+
 1. **Entry Point**: `index.html` mounts React into `<div id="root"></div>` via `src/main.tsx`.
 2. **Global Wrapper**: `App.tsx` wraps the application tree inside `ThemeProvider` (handles dark/light mode toggling) and `NavigationProvider` (handles smooth history stack navigation).
 3. **State-Based Client Router**: Uses React's `useState<Page>` to drive client-side navigation without full-page refreshes.
@@ -135,7 +138,7 @@ flowchart TD
 
 The visual identity combines **Warm Hospitality Palette** (Light) with a **Gold Luxury Palette** (Dark) engineered using Tailwind CSS v4 `@theme` design tokens in [index.css](file:///c:/Users/GLB-BLR-191/Documents/pg%20management/New%20folder/PG%20Management%20system2/src/index.css).
 
-```
+```text
 ☀️ LIGHT LUXURY PALETTE                    🌙 DARK GOLD PALETTE
 ┌──────────────────────────────────┐      ┌──────────────────────────────────┐
 │  Background: #FFF8F2 (Soft Cream)│      │  Background: #1D1B1A (Dark Warm) │
@@ -148,6 +151,7 @@ The visual identity combines **Warm Hospitality Palette** (Light) with a **Gold 
 ```
 
 ### Why This Color Palette?
+
 Hostel and PG software is often associated with cold, utilitarian spreadsheets. "Room Bae" uses **warm hotel-like tones** to evoke comfort, cleanliness, and premium hospitality for tenants while providing clear visual hierarchy for property owners.
 
 ---
@@ -166,7 +170,7 @@ Hostel and PG software is often associated with cold, utilitarian spreadsheets. 
 
 ## 📂 Project Directory Pathway Structure
 
-```
+```text
 PG Management System/
 ├── 📄 index.html                      # HTML DOM Entry Point
 ├── 📄 package.json                    # Package metadata & build scripts
@@ -221,14 +225,18 @@ PG Management System/
 Follow these step-by-step terminal instructions to build or run this project locally:
 
 ### 1. Prerequisites
+
 Ensure you have Node.js (v18 or higher) installed on your system:
+
 ```bash
 node -v
 npm -v
 ```
 
 ### 2. How to Initialize a New Project from Scratch (Optional)
+
 If you want to recreate this exact setup from scratch:
+
 ```bash
 # 1. Initialize Vite + React + TypeScript app
 npm create vite@latest pg-management-system -- --template react-ts
@@ -241,6 +249,7 @@ npm install tailwindcss @tailwindcss/vite
 ```
 
 ### 3. Installation & Local Development Setup
+
 To clone and run **this existing codebase**:
 
 ```bash
@@ -290,23 +299,29 @@ Detailed specification documents are available inside the [docs/](./docs) direct
 ## 🛡️ Enterprise Security & Integrations Architecture
 
 ### 1. Authentication & Session Security
+
 - **Identity Provider**: Secure JWT access & refresh token rotation with multi-factor authentication and Google OAuth 2.0.
 - **Verification**: Cryptographic OTP verification for phone and email addresses.
 
 ### 2. Transactional Notifications & Communication
+
 - **Notification Relay**: Standardized HTML email templates for OTP verification, Password Resets, Welcome Greetings, System Notifications, and Digital Agreements.
 
 ### 3. Cloudinary Media Storage & Security Pipeline
+
 - **Upload Endpoint**: `POST /api/v1/upload/image` & `POST /api/v1/upload/document`.
 - **Pipeline Execution Order**:
-  ```
+
+  ```text
   Upload -> Multer -> Max Size Check -> Extension Check -> MIME Validation ->
   Magic-Number Byte Verification -> Virus Scan -> Sharp Compression/WebP ->
   PDF Structural Validation -> SHA-256 Checksum -> Cloudinary Upload -> Temp Cleanup
   ```
+
 - **Folders**: `RoomBae/ProfileImages`, `RoomBae/Residents`, `RoomBae/Owners`, `RoomBae/Properties`, `RoomBae/Documents`, `RoomBae/Agreements`, `RoomBae/Complaints`.
 
 ### 4. Zero-Trust Security & Hashing
+
 - **Sensitive Data Encryption**: AES-256-GCM authenticated encryption for bank accounts, IFSC, UPI ID, Aadhaar, and PAN.
 - **Password Hashing**: Argon2id (`argon2` package) with bcrypt legacy verification fallback.
 

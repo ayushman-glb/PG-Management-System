@@ -7,6 +7,7 @@
 ---
 
 ## 📋 Table of Contents
+
 1. [🌟 System Architecture & Executive Summary](#1-system-architecture--executive-summary)
 2. [🧰 Complete Technology Stack & Ecosystem](#2-complete-technology-stack--ecosystem)
 3. [📂 Project File & Folder Directory Tree](#3-project-file--folder-directory-tree)
@@ -42,6 +43,7 @@
 **RoomBae** is an enterprise-grade, multi-tenant SaaS platform engineered specifically for modern PG (Paying Guest) accommodations, co-living spaces, and hostel property management across India. The platform bridges the gap between **PG Owners**, **Residents**, and **Platform Administrators** by providing real-time room allocation, automated GST invoicing, digital rental contracts, maintenance ticketing, and multi-channel communication.
 
 ### Core Architectural Philosophy
+
 - **Clean Feature-First Modular Architecture**: Code is structured around business domains rather than tech layers, facilitating scaling and independent feature maintenance.
 - **REST & Real-Time API Engine**: Unified REST API for CRUD operations paired with a Socket.IO WebSocket engine for instant state synchronization and real-time dashboard updates.
 - **Zero-Trust Security Model**: Role-Based Access Control (RBAC), short-lived JWTs (15-minute access token) with HTTP-only refresh tokens (7-day lifetime), AES-256-GCM field encryption for sensitive KYC data, and complete request tracing.
@@ -82,6 +84,7 @@ graph TD
 ## 2. 🧰 Complete Technology Stack & Ecosystem
 
 ### Frontend Technologies
+
 | Component | Technology | Version | Purpose & Description |
 | :--- | :--- | :--- | :--- |
 | **Core Framework** | React | `^19.0.0` | Next-generation React library utilizing concurrent rendering and automatic batching. |
@@ -94,6 +97,7 @@ graph TD
 | **Data Viz** | Recharts | `^3.10.0` | Composably built SVG charts for revenue, MRR, and occupancy breakdown. |
 
 ### Backend Technologies
+
 | Component | Technology | Version | Purpose & Description |
 | :--- | :--- | :--- | :--- |
 | **Runtime** | Node.js | `>=20.0.0` | Asynchronous event-driven I/O JavaScript runtime. |
@@ -103,14 +107,14 @@ graph TD
 | **Cache & Locks** | Redis | `^6.2.0` | In-memory key-value store used for rate limiting and Redlock distributed locks. |
 | **Realtime Engine** | Socket.IO | `^4.8.3` | Event-based WebSockets library for instant bi-directional client-server updates. |
 | **Background Cron** | Node-Cron | `^3.0.3` | Scheduled background worker service for invoice generation, late fees, and SLA escalation. |
-| **Document Generator**| PDFKit | `^0.15.2` | Dynamic vector PDF generation engine for tax invoices and rental agreements. |
+| **Document Generator** | PDFKit | `^0.15.2` | Dynamic vector PDF generation engine for tax invoices and rental agreements. |
 | **Password Hashing** | BcryptJS | `^2.4.3` | Password hashing engine using cost factor 12 (`saltRounds = 12`). |
 
 ---
 
 ## 3. 📂 Project File & Folder Directory Tree
 
-```
+```text
 PG-Management-System/
 ├── USER_CREDENTIALS.md             # Local development test account credentials directory
 ├── DESIGN.md                       # (This Document) Master Design Specification
@@ -179,6 +183,7 @@ PG-Management-System/
 ## 4. 🎨 Frontend Architecture & Visual Design System
 
 ### 4.1 Color Engine & Tokens
+
 RoomBae implements a dual-theme design system (**Warm Sand Light** & **Obsidian Bronze Dark**) driven by CSS custom properties in `index.css`:
 
 ```css
@@ -204,6 +209,7 @@ html.dark-theme {
 ```
 
 ### 4.2 Micro-Animations, Glassmorphism & Transitions
+
 - **Glassmorphism Cards (`.glass-card`)**: Integrated backdrop blur (`blur(16px)`), subtle translucent borders, and depth shadows applied across metrics panels.
 - **Skeleton Shimmer (`.skeleton-wave`)**: Linear gradient keyframe animation (`@keyframes skeletonWave`) providing shimmering placeholders during async component loading.
 - **Pulsing Status Badges (`.badge-pulse`)**: Smooth scale and opacity pulse (`@keyframes badgePulse`) applied to `● Available` bed status indicators.
@@ -214,13 +220,17 @@ html.dark-theme {
 ## 5. ⚙️ Backend Architecture & Domain Services
 
 ### 5.1 Clean Architecture & Domain Modules
+
 The backend follows a Feature-First modular structure where each domain contains its own controllers, services, repositories, DTOs, and socket handlers.
 
 ### 5.2 Distributed Concurrency Locks (Redlock)
+
 To prevent double-booking during concurrent check-in operations or manual bed edits, `BedService.updateBedStatus`, `createBedHold`, `releaseBedHold`, and `BillingService.createPaymentOrder` acquire distributed Redis locks via `Container.lockService.acquireLock("bed:lock:" + bedId, 10000)`. If a concurrent operation attempts to modify the same bed during lock acquisition, the request is rejected with HTTP `409 Conflict` or HTTP `429 Too Many Requests`.
 
 ### 5.3 Real-Time WebSocket Engine
+
 The backend Socket.IO server ([socketServer.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/socket/socketServer.ts)) authenticates connection handshakes using JWT access tokens. Real-time events emitted server-side include:
+
 - `bed:status_change`: Emitted when bed occupancy or hold status changes.
 - `complaint:created` & `complaint:status_change`: Emitted on ticket submission or status column shifts.
 - `payment:success`: Emitted when payment order verification completes.
@@ -228,6 +238,7 @@ The backend Socket.IO server ([socketServer.ts](file:///c:/Users/GLB-BLR-191/Dow
 Client-side [socket.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/frontend/src/services/socket.ts) propagates these events into `roombae-data-changed` DOM events, triggering immediate, automatic UI data refetching without manual browser reloads.
 
 ### 5.4 PDF Pipeline & Scheduled Cron Workers
+
 - **PDF Generation**: `PdfGeneratorService` utilizes `PDFKit` to dynamically build vector-graphics Tax Invoices, Digital Rental Agreements, KYC Summaries, and Refund Receipts with embedded QR code verification payloads.
 - **Scheduled Cron Workers ([cronWorkers.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/jobs/cronWorkers.ts))**:
   1. **Monthly Rent Invoice Generator** (`0 0 1 * *` - 1st of every month): Automatically generates monthly rent invoices for active residents.
@@ -239,11 +250,13 @@ Client-side [socket.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-M
 ## 6. 🛡️ Comprehensive Security & Compliance Architecture
 
 ### 6.1 Zero-Trust Framework & RBAC
+
 - **Strict Role-Based Access Control**: Standardized roles (`SUPER_ADMIN`, `ADMIN`, `OWNER`, `MANAGER`, `STAFF`, `RESIDENT`).
 - **Ownership Verification**: Route handlers enforce `assertOwnershipOf("ownerId")` to guarantee PG Owners can only query or modify properties and residents belonging directly to their own account.
 - **Public Admin Signup Exclusion**: `ADMIN` and `SUPER_ADMIN` accounts cannot be self-served through public signup or Google OAuth. They are provisioned strictly via seed scripts or internal administrative provisioning.
 
 ### 6.2 Cryptographic Standards & Token Lifecycle
+
 - **Short-Lived Access Tokens**: Signed JWT access tokens with a 15-minute expiration period. Access tokens are held in-memory and omitted from persistent `localStorage`.
 - **HTTP-Only Refresh Token Cookies**: Refresh tokens are stored in `httpOnly`, `Secure`, `SameSite=Strict` cookies with a 7-day expiration period.
 - **Token Rotation & Revocation**: Refresh tokens are hashed in database (`RefreshToken` model) and rotated on every `/auth/refresh` request. Revoked tokens (`revokedAt`) or token reuse triggers immediate session invalidation.
@@ -251,6 +264,7 @@ Client-side [socket.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-M
 - **AES-256-GCM Field Encryption**: Sensitive KYC fields (Aadhaar number, PAN number, bank account details) are encrypted at rest using AES-256-GCM via `CryptoEngine` with an environment-managed key.
 
 ### 6.3 Network & Infrastructure Defense
+
 - **Rate Limiting**: Redis-backed rate limiting enforces 100 requests / 15 minutes generally (`generalRateLimiter`) and 5 requests / 15 minutes on `/auth/login` (`loginRateLimiter`).
 - **NoSQL Injection Prevention**: `express-mongo-sanitize` strips `$` and `.` characters from incoming request bodies and query parameters.
 - **Security Headers**: `helmet` configures Content Security Policy, HSTS, X-Frame-Options, and X-Content-Type-Options.
@@ -260,6 +274,7 @@ Client-side [socket.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-M
 ## 7. 🚀 Local Development & Verification Summary
 
 ### Database Seeding & Safety Guard
+
 The seed script ([seed.ts](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/prisma/seed.ts)) checks `process.env.DATABASE_URL` and unconditionally refuses execution if the connection string does not point to a local/dev MongoDB instance (`mongodb://localhost` or `mongodb://127.0.0.1`).
 
 All test accounts in [USER_CREDENTIALS.md](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/USER_CREDENTIALS.md) utilize distinct, strong, unique passwords per account hashed with bcrypt cost factor 12.

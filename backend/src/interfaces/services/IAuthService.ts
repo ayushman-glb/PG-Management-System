@@ -39,7 +39,7 @@ export interface IRefreshResult {
 }
 
 export interface IAuthService {
-  login(identifier: string, password: string, rememberMe?: boolean | string, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult | any>;
+  login(identifier: string, password: string, rememberMe?: boolean | string, ipAddress?: string, userAgent?: string, visitorId?: string): Promise<IAuthUserResult | any>;
   register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   generateOAuthTokens(user: any, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string }>;
@@ -77,12 +77,14 @@ export interface IAuthService {
     rememberMe?: boolean,
     ipAddress?: string,
     userAgent?: string,
+    visitorId?: string,
   ): Promise<{ success: boolean; message: string } | any>;
   disableTwoFactor(
     userId: string,
   ): Promise<{ success: boolean; message: string }>;
   refreshToken(token: string, ipAddress?: string, userAgent?: string): Promise<IRefreshResult>;
   logout(token: string, userId?: string, ipAddress?: string, userAgent?: string): Promise<void>;
+  logoutAll?(userId: string, ipAddress?: string, userAgent?: string): Promise<void>;
   me(userId: string): Promise<any>;
 
   ownerProfile(userId: string): Promise<any>;

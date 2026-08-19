@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, CookieOptions } from "express";
+import crypto from "crypto";
 import passport from "passport";
 import { Container } from "../../container";
 import { env } from "../../config/env";
@@ -7,6 +8,17 @@ import { logger } from "../../utils/logger";
 import { IAuthService } from "../../interfaces/services/IAuthService";
 import { catchAsync } from "../../utils/appError";
 import { ApiResponse } from "../../utils/apiResponse";
+
+const getRefreshTokenCookieOptions = (maxAge: number): CookieOptions => {
+  const isProduction = env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+    maxAge,
+  };
+};
 
 export class AuthController {
   constructor(private readonly authService: IAuthService) {}
@@ -25,7 +37,9 @@ export class AuthController {
     }
 
     const isRememberMe = Boolean(rememberMe);
-    const result = await this.authService.login(loginId, password, isRememberMe, ipAddress, userAgent);
+    const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
+
+    const result = await this.authService.login(loginId, password, isRememberMe, ipAddress, userAgent, visitorId);
 
     if (result && result.requiresTwoFactor) {
       return ApiResponse.success(res, result.message || "Two-factor authentication code required", {
@@ -34,7 +48,6 @@ export class AuthController {
       });
     }
 
-    const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
     let deviceSecurity: any = null;
 
     if (visitorId && result?.user?.id) {
@@ -71,12 +84,7 @@ export class AuthController {
     }
 
     const cookieMaxAge = isRememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: cookieMaxAge,
-    });
+    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(cookieMaxAge));
 
     return ApiResponse.success(res, "Login successful", {
       user: result.user,
@@ -96,12 +104,7 @@ export class AuthController {
       phone,
     });
 
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     // Strip refreshToken from the response data — cookie-only, never in body
     const { refreshToken: _rt, ...safeResult } = result as any;
@@ -120,12 +123,7 @@ export class AuthController {
     const target = email || phone;
     const result = await this.authService.verifyOtp(target, otp);
 
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     return ApiResponse.success(res, "OTP verified successfully", result);
   });
@@ -140,32 +138,63 @@ export class AuthController {
     const { phone, otp } = req.body;
     const result = await this.authService.verifyOtp(phone, otp);
 
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     return ApiResponse.success(res, "Phone OTP verified successfully", result);
   });
 
   logout = catchAsync(async (req: Request, res: Response) => {
-    const token = req.cookies.refreshToken || req.body.refreshToken || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined);
-    if (token) {
-      await this.authService.logout(token);
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
+    const userAgent = req.headers["user-agent"];
+
+    if (refreshToken || accessToken) {
+      await this.authService.logout(refreshToken || "", accessToken, ipAddress, userAgent);
     }
+    const isProduction = env.NODE_ENV === "production";
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
     });
     res.clearCookie("accessToken", {
       httpOnly: false,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
     });
     return ApiResponse.success(res, "Logged out successfully", { success: true });
+  });
+
+  logoutAll = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
+    const userAgent = req.headers["user-agent"];
+
+    if (this.authService.logoutAll) {
+      await this.authService.logoutAll(userId, ipAddress, userAgent);
+    }
+
+    const isProduction = env.NODE_ENV === "production";
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
+    res.clearCookie("accessToken", {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    });
+    return ApiResponse.success(res, "All active sessions revoked successfully", { success: true });
   });
 
   testEmail = catchAsync(async (req: Request, res: Response) => {
@@ -246,8 +275,9 @@ export class AuthController {
     const tokenOrUserId = preAuthToken || bodyUserId || (req as any).user?.id || "USER_CURRENT";
     const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
     const userAgent = req.headers["user-agent"];
+    const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
 
-    const result = await this.authService.verifyTwoFactor(tokenOrUserId, token, rememberMe, ipAddress, userAgent);
+    const result = await this.authService.verifyTwoFactor(tokenOrUserId, token, rememberMe, ipAddress, userAgent, visitorId);
 
     if (result && result.refreshToken) {
       const cookieMaxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
@@ -272,12 +302,7 @@ export class AuthController {
     const token = req.cookies.refreshToken || req.body.refreshToken || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined);
     const result = await this.authService.refreshToken(token);
 
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     return ApiResponse.success(res, "Access token refreshed and rotated", {
       accessToken: result.accessToken,
@@ -322,8 +347,14 @@ export class AuthController {
       );
     }
 
-    const stateObj = { role: roleParam, frontendUrl: targetFrontendUrl };
-    const state = Buffer.from(JSON.stringify(stateObj)).toString("base64");
+    const statePayload = JSON.stringify({
+      role: roleParam,
+      frontendUrl: targetFrontendUrl,
+      nonce: crypto.randomBytes(16).toString("hex"),
+      timestamp: Date.now(),
+    });
+    const stateSig = crypto.createHmac("sha256", env.JWT_SECRET).update(statePayload).digest("hex");
+    const state = Buffer.from(JSON.stringify({ p: statePayload, s: stateSig })).toString("base64url");
 
     passport.authenticate("google", {
       scope: ["openid", "email", "profile"],
@@ -343,11 +374,21 @@ export class AuthController {
 
         if (req.query?.state) {
           try {
-            const stateObj = JSON.parse(
-              Buffer.from(req.query.state as string, "base64").toString("utf-8")
+            const rawState = req.query.state as string;
+            // Handle both base64url and standard base64 for resilience
+            const decodedJson = JSON.parse(
+              Buffer.from(rawState, rawState.includes("-") || rawState.includes("_") ? "base64url" : "base64").toString("utf-8")
             );
-            if (stateObj?.frontendUrl) {
-              targetFrontendUrl = normalizeFrontendUrl(stateObj.frontendUrl);
+            if (decodedJson?.p && decodedJson?.s) {
+              const expectedSig = crypto.createHmac("sha256", env.JWT_SECRET).update(decodedJson.p).digest("hex");
+              if (expectedSig === decodedJson.s) {
+                const payload = JSON.parse(decodedJson.p);
+                if (payload?.frontendUrl) {
+                  targetFrontendUrl = normalizeFrontendUrl(payload.frontendUrl);
+                }
+              }
+            } else if (decodedJson?.frontendUrl) {
+              targetFrontendUrl = normalizeFrontendUrl(decodedJson.frontendUrl);
             }
           } catch {
             // keep resolved fallback
@@ -378,12 +419,7 @@ export class AuthController {
             req.headers["user-agent"] as string
           );
 
-          res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: env.NODE_ENV === "production",
-            sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-          });
+          res.cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
 
           const targetParams = new URLSearchParams();
           targetParams.set("oauth", "success");

@@ -3,7 +3,6 @@ import { AuthRequest } from '../../middleware/authMiddleware';
 import { DocumentService, DocumentType } from './documents.service';
 import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
-import { prisma } from '../../config/prisma';
 
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
@@ -23,7 +22,7 @@ export class DocumentController {
     const dispositionType = req.query.inline === '1' ? 'inline' : 'attachment';
 
     const user = req.user!;
-    const { residentId, ownerId } = await this.resolveUserIdentifiers(user.id, user.role);
+    const { residentId, ownerId } = await this.documentService.resolveUserIdentifiers(user.id, user.role);
 
     const result = await this.documentService.getOrGenerateDocument({
       entityId,
@@ -68,7 +67,7 @@ export class DocumentController {
    * Dedicated agreement PDF download — backward compatible with /agreements/:id/download
    */
   downloadAgreement = catchAsync(async (req: AuthRequest, res: Response, _next: NextFunction) => {
-    req.params.type = 'SIGNED_AGREEMENT';
+    req.params.type = 'LEASE_AGREEMENT';
     return this.download(req, res, _next);
   });
 
@@ -93,7 +92,7 @@ export class DocumentController {
    */
   getStatus = catchAsync(async (req: AuthRequest, res: Response) => {
     const { documentKey } = req.params;
-    const record = await prisma.generatedDocument.findUnique({ where: { documentKey } });
+    const record = await this.documentService.getDocumentRecordByKey(documentKey);
 
     if (!record) {
       return ApiResponse.success(res, 'Document not found', { status: 'NOT_FOUND' });
@@ -108,22 +107,4 @@ export class DocumentController {
       fileSize: record.fileSize,
     });
   });
-
-  // ─── Private helpers ──────────────────────────────────────────────────────────
-
-  /**
-   * Resolve the resident/owner DB ID from the authenticated user ID.
-   * These are the IDs used for authorization (not the User.id from JWT).
-   */
-  private async resolveUserIdentifiers(userId: string, role: string): Promise<{ residentId?: string; ownerId?: string }> {
-    if (role === 'RESIDENT') {
-      const resident = await prisma.resident.findFirst({ where: { userId } });
-      return { residentId: resident?.id };
-    }
-    if (role === 'OWNER' || role === 'MANAGER') {
-      const owner = await prisma.owner.findFirst({ where: { userId } });
-      return { ownerId: owner?.id };
-    }
-    return {};
-  }
 }

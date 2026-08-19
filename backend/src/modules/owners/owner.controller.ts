@@ -14,26 +14,7 @@ export class OwnerController {
         return;
       }
 
-      let owner = await prisma.owner.findFirst({ where: { userId: user.id } });
-      if (!owner) {
-        owner = await prisma.owner.create({
-          data: {
-            userId: user.id,
-            name: user.name || "Owner",
-            email: user.email,
-            phone: user.phone || "",
-            photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-            address: "",
-            aadhaarNumber: "",
-            panNumber: "",
-            upiId: "",
-            bankName: "",
-            accountNumber: "",
-            ifscCode: "",
-            emergencyContact: "",
-          },
-        });
-      }
+      const owner = await onboardingService.getOrCreateOwnerForUser(user);
       const targetOwnerId = owner.id;
 
       const {

@@ -6,7 +6,7 @@ This document provides a comprehensive overview of the Redis 7 Alpine infrastruc
 
 ## 1. Architectural Topology
 
-```
+```text
                   ┌──────────────────────────────────────────────┐
                   │           Client Applications / SPA          │
                   └──────────────────────┬───────────────────────┘
@@ -48,7 +48,7 @@ This document provides a comprehensive overview of the Redis 7 Alpine infrastruc
 
 ## 2. Directory & File Structure
 
-```
+```text
 PG-Management-System/
 ├── docker/
 │   └── redis/
@@ -86,32 +86,38 @@ PG-Management-System/
 ## 3. How Redis Works in RoomBae
 
 ### 3.1. High-Performance Caching (`CacheService`)
+
 - Location: `src/services/cache.service.ts`
 - **Features**: Automatic JSON serialization, `remember()` pattern, pattern invalidation (`invalidatePattern("pg:*")`), integer increment/decrement, and TTL inspection.
 - **Failover Guarantee**: If Redis is offline or unreachable, `CacheService` seamlessly redirects reads and writes to a non-blocking in-memory store.
 
 ### 3.2. JWT Token Revocation & Blacklisting (`TokenBlacklistService`)
+
 - Location: `src/services/tokenBlacklistService.ts`
 - When a user logs out, their current JWT access token is stored in Redis under `jwt:blacklist:<token>` with a TTL equal to the token's remaining lifespan.
 - `authMiddleware.ts` checks Redis on every authenticated API request. Revoked tokens are rejected immediately with `401 TOKEN_INVALIDATED`.
 
 ### 3.3. Refresh Token Session Management
+
 - Location: `src/modules/auth/auth.service.ts`
 - Active refresh tokens are saved in MongoDB and cached in Redis under `refresh_token:<hash>`.
 - Token rotation and revocation clean up Redis cache entries instantly.
 
 ### 3.4. OTP Lifecycle & Security (`RedisOtpService`)
+
 - Location: `src/infrastructure/otp/RedisOtpService.ts`
 - 5-minute strict expiration (`OTP_TTL_SECONDS = 300`).
 - Attempt counter key (`otp:...:attempts`) blocks requests exceeding 5 attempts within 10 minutes.
 - Successful verification deletes both the OTP key and attempt counter to enforce single-use semantics.
 
 ### 3.5. Distributed Rate Limiting (`rateLimiter.ts`)
+
 - Location: `src/middleware/rateLimiter.ts`
 - Protects `/login`, `/register`, `/send-otp`, `/verify-otp`, `/upload`, and general API routes.
 - Uses `DistributedRedisStore` with key namespaces (`rl:login:`, `rl:gen:`, `rl:upload:`), ensuring rate limits operate uniformly across multiple horizontally scaled backend containers.
 
 ### 3.6. WebSocket Scaling (Socket.IO Redis Adapter)
+
 - Location: `src/socket/socketServer.ts`
 - Leverages `@socket.io/redis-adapter` when Redis is active to broadcast real-time events across multiple backend workers.
 
@@ -120,7 +126,7 @@ PG-Management-System/
 ## 4. Environment Variables
 
 | Variable | Default Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `REDIS_URL` | `redis://localhost:6379` | Full connection URI (auto-constructed if HOST/PORT supplied) |
 | `REDIS_HOST` | `localhost` | Redis server hostname (`roombae-redis` in Docker) |
 | `REDIS_PORT` | `6379` | Redis server port |
@@ -134,6 +140,7 @@ PG-Management-System/
 ## 5. Docker Infrastructure Setup
 
 ### 5.1. Running Local Stack with Docker Compose
+
 ```bash
 # Build and launch all services in background
 docker-compose up -d --build
@@ -146,6 +153,7 @@ docker-compose exec redis redis-cli -a roombae_secure_redis_password_2026 ping
 ```
 
 ### 5.2. Production Deployment Command
+
 ```bash
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
@@ -155,6 +163,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ## 6. Health & Diagnostic Probes
 
 Requesting `GET /health` returns:
+
 ```json
 {
   "success": true,
@@ -180,6 +189,7 @@ Requesting `GET /health` returns:
 ## 7. Operational Runbook & Common CLI Commands
 
 ### 7.1. Basic Redis Commands
+
 ```bash
 # Connect to Redis CLI with password
 redis-cli -a <REDIS_PASSWORD>
@@ -200,11 +210,14 @@ PONG
 ```
 
 ### 7.2. Backup & Restore
+
 - **Backup**: Redis is configured with `appendonly yes` and periodic snapshot saving (`save 900 1`). Persistent files (`appendonly.aof` and `dump.rdb`) are saved in Docker volume `roombae-redis-data`.
+
 ```bash
 # Force manual snapshot write to disk
 docker-compose exec redis redis-cli -a <REDIS_PASSWORD> BGSAVE
 ```
+
 - **Restore**: Mount the `roombae-redis-data` volume into a replacement Redis container; Redis automatically reloads AOF and RDB files on startup.
 
 ---

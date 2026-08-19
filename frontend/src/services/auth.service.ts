@@ -1,30 +1,79 @@
 import { env } from "@config/env";
 import type { ApiResponse } from "../types";
 import { updateSocketAuth, disconnectSocket } from "./socket";
+import { useUIStore } from "../store/useUIStore";
+
+// ─── Cross-tab sync channel (Section 1 fix) ────────────────────────────────
+// The access token MUST NOT be persisted to localStorage (XSS risk).
+// We use BroadcastChannel ("roombae-auth") so other tabs react to auth state
+// changes via signal-only messages without storing or sharing the raw token.
+const AUTH_CHANNEL_NAME = "roombae-auth";
 
 export class AuthService {
   private inMemoryToken: string | null = null;
+  private channel: BroadcastChannel | null = null;
+  private authStateListeners: Set<(isAuthenticated: boolean) => void> = new Set();
 
-  public getToken(): string | null {
-    if (this.inMemoryToken) return this.inMemoryToken;
-    try {
-      return (
-        localStorage.getItem("roombae_access_token") ||
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token")
-      );
-    } catch {
-      return null;
+  constructor() {
+    if (typeof BroadcastChannel !== "undefined") {
+      this.channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+      this.channel.onmessage = async (ev) => {
+        if (ev.data?.type === "LOGOUT") {
+          // Another tab logged out — clear this tab's in-memory token silently
+          this.inMemoryToken = null;
+          disconnectSocket();
+          this.notifyAuthState(false);
+        } else if (
+          ev.data?.type === "LOGIN" ||
+          ev.data?.type === "TOKEN_REFRESHED" ||
+          ev.data?.type === "TOKEN_SET"
+        ) {
+          // Another tab obtained a new token — trigger this tab's own silent refresh
+          // relying on the shared httpOnly cookie to obtain a fresh token in its own memory.
+          try {
+            await this.refreshToken();
+            this.notifyAuthState(true);
+          } catch {
+            // Silent catch — tab will refresh on next user interaction
+          }
+        }
+      };
     }
   }
 
-  public setToken(token: string) {
+  public subscribeAuthState(listener: (isAuthenticated: boolean) => void): () => void {
+    this.authStateListeners.add(listener);
+    return () => {
+      this.authStateListeners.delete(listener);
+    };
+  }
+
+  private notifyAuthState(isAuthenticated: boolean) {
+    for (const listener of this.authStateListeners) {
+      try {
+        listener(isAuthenticated);
+      } catch {}
+    }
+  }
+
+  public getToken(): string | null {
+    // Access token is in-memory only — never read from localStorage or persistent storage.
+    return this.inMemoryToken;
+  }
+
+  public setToken(
+    token: string,
+    broadcastType: "LOGIN" | "TOKEN_REFRESHED" | "TOKEN_SET" = "TOKEN_SET"
+  ) {
     this.inMemoryToken = token;
-    try {
-      localStorage.setItem("roombae_access_token", token);
-      localStorage.setItem("accessToken", token);
-    } catch {}
     updateSocketAuth(token);
+    // Notify other tabs that a new session is active (no token value is sent).
+    try {
+      this.channel?.postMessage({ type: broadcastType });
+    } catch {
+      /* ignore */
+    }
+    this.notifyAuthState(true);
   }
 
   public getStoredRefreshToken(): string | null {
@@ -53,21 +102,56 @@ export class AuthService {
   public clearToken() {
     this.inMemoryToken = null;
     try {
+      // Clean up any legacy keys that may have been written by older builds.
       localStorage.removeItem("accessToken");
       localStorage.removeItem("token");
       localStorage.removeItem("roombae_access_token");
+      // Refresh token clearance is intentional on logout.
       localStorage.removeItem("roombae_refresh_token");
       sessionStorage.removeItem("roombae_refresh_token");
     } catch {}
     disconnectSocket();
+    // Broadcast logout to other open tabs.
+    try {
+      this.channel?.postMessage({ type: "LOGOUT" });
+    } catch {
+      /* ignore */
+    }
+    this.notifyAuthState(false);
   }
 
   public hasStoredSession(): boolean {
+    // Access token is in-memory only, so also check refresh token stores
+    // (which survive page reloads) to determine if a session can be restored.
     return Boolean(
-      this.getToken() ||
+      this.inMemoryToken ||
       this.getStoredRefreshToken() ||
       (typeof document !== "undefined" && document.cookie.includes("refreshToken"))
     );
+  }
+
+  private getCsrfToken(): string | null {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  /**
+   * Fetches a fresh CSRF token from the backend bootstrap endpoint.
+   * Should be called once on app boot (before any protected request) and
+   * lazily from refreshToken() when no cookie is present yet.
+   * Does NOT require a CSRF token itself (bootstrap is unauthenticated).
+   */
+  async bootstrapCsrf(): Promise<void> {
+    try {
+      await fetch(`${env.API_URL}/auth/csrf-token`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      // The response sets the csrf-token cookie; no need to read the body.
+    } catch {
+      // Non-fatal — request will fail CSRF check and surface a clear 403
+    }
   }
 
   private async request<T = any>(
@@ -85,6 +169,14 @@ export class AuthService {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    const method = options.method?.toUpperCase() || 'GET';
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrf = this.getCsrfToken();
+      if (csrf) {
+        headers['x-csrf-token'] = csrf;
+      }
+    }
+
     const response = await fetch(`${env.API_URL}${endpoint}`, {
       ...options,
       headers,
@@ -99,31 +191,12 @@ export class AuthService {
       this.hasStoredSession()
     ) {
       try {
-        const storedRefreshToken = this.getStoredRefreshToken();
-        const refreshRes = await fetch(`${env.API_URL}/auth/refresh-token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refreshToken: storedRefreshToken }),
-          credentials: "include",
-        });
-
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          const newToken = refreshData?.data?.accessToken || refreshData?.accessToken;
-          const newRefreshToken = refreshData?.data?.refreshToken || refreshData?.refreshToken;
-          if (newToken) {
-            this.setToken(newToken);
-            if (newRefreshToken) {
-              const isPersistent = Boolean(localStorage.getItem("roombae_refresh_token"));
-              this.setRefreshToken(newRefreshToken, isPersistent);
-            }
-            return this.request<T>(endpoint, options, true);
-          }
+        const refreshed = await this.refreshToken();
+        if (refreshed?.accessToken || this.getToken()) {
+          return this.request<T>(endpoint, options, true);
         }
-        this.clearToken();
       } catch (refreshErr) {
         console.warn("⚠️ Token auto-refresh failed:", refreshErr);
-        this.clearToken();
       }
     }
 
@@ -174,21 +247,17 @@ export class AuthService {
     });
 
     if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
+      this.setToken(res.data.accessToken, "LOGIN");
     }
     if (res.data?.refreshToken) {
       this.setRefreshToken(res.data.refreshToken, rememberMe);
     }
 
-    if (res.data?.deviceSecurity?.isNewDevice && typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("roombae-new-device-detected", {
-          detail: {
-            deviceLabel: deviceLabel || "New Browser",
-            status: res.data.deviceSecurity.status,
-            riskLevel: res.data.deviceSecurity.riskLevel,
-          },
-        }),
+    if (res.data?.deviceSecurity?.isNewDevice) {
+      useUIStore.getState().openNewDeviceModal(
+        deviceLabel || "New Browser",
+        res.data.deviceSecurity.status,
+        res.data.deviceSecurity.riskLevel,
       );
     }
 
@@ -201,7 +270,7 @@ export class AuthService {
       body: JSON.stringify(data),
     });
     if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
+      this.setToken(res.data.accessToken, "LOGIN");
     }
     if (res.data?.refreshToken) {
       this.setRefreshToken(res.data.refreshToken, false);
@@ -223,7 +292,7 @@ export class AuthService {
       body: JSON.stringify({ email, otp }),
     });
     if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
+      this.setToken(res.data.accessToken, "LOGIN");
     }
     if (res.data?.refreshToken) {
       this.setRefreshToken(res.data.refreshToken, false);
@@ -238,27 +307,58 @@ export class AuthService {
 
   private refreshPromise: Promise<any> | null = null;
 
-  async refreshToken() {
+  async refreshToken(): Promise<any> {
     if (this.refreshPromise) {
-      const res = await this.refreshPromise;
-      return res.data || res;
+      return this.refreshPromise;
     }
 
     this.refreshPromise = (async () => {
       try {
         const storedRefreshToken = this.getStoredRefreshToken();
-        const res = await this.request("/auth/refresh-token", {
+        // /refresh-token requires CSRF double-submit (same as login/logout).
+        // We read the existing csrf-token cookie; if missing we call the
+        // bootstrap endpoint first so a fresh session can still refresh.
+        let csrf = this.getCsrfToken();
+        if (!csrf) {
+          try {
+            await this.bootstrapCsrf();
+            csrf = this.getCsrfToken();
+          } catch {
+            // proceed without — backend will reject with 403 if cookie is absent
+          }
+        }
+        const refreshHeaders: Record<string, string> = { "Content-Type": "application/json" };
+        if (csrf) {
+          refreshHeaders["x-csrf-token"] = csrf;
+        }
+        const response = await fetch(`${env.API_URL}/auth/refresh-token`, {
           method: "POST",
+          headers: refreshHeaders,
           body: JSON.stringify({ refreshToken: storedRefreshToken }),
+          credentials: "include",
         });
-        if (res.data?.accessToken) {
-          this.setToken(res.data.accessToken);
+
+        if (!response.ok) {
+          this.clearToken();
+          throw new Error("Session refresh failed");
         }
-        if (res.data?.refreshToken) {
+
+        const data = await response.json();
+        const newToken = data?.data?.accessToken || data?.accessToken;
+        const newRefreshToken = data?.data?.refreshToken || data?.refreshToken;
+
+        if (newToken) {
+          this.setToken(newToken, "TOKEN_REFRESHED");
+        }
+        if (newRefreshToken) {
           const isPersistent = Boolean(localStorage.getItem("roombae_refresh_token"));
-          this.setRefreshToken(res.data.refreshToken, isPersistent);
+          this.setRefreshToken(newRefreshToken, isPersistent);
         }
-        return res.data || res;
+
+        return data?.data || data;
+      } catch (err) {
+        this.clearToken();
+        throw err;
       } finally {
         this.refreshPromise = null;
       }

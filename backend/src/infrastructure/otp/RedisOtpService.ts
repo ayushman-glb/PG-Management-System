@@ -4,6 +4,7 @@ import { emailService } from "../../services/email";
 import { logger } from "../../utils/logger";
 import { redisClient, isRedisReady } from "../../config/redis";
 import { prisma } from "../../config/prisma";
+import { RedisNamespace } from "../../services/security/RedisNamespace";
 
 export class RedisOtpService implements IOtpService {
   private static readonly OTP_LENGTH = 6;
@@ -34,7 +35,7 @@ export class RedisOtpService implements IOtpService {
     const otp = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.OTP_TTL_SECONDS * 1000);
 
-    await this.storeOtp(`otp:email:${email}`, otp, RedisOtpService.OTP_TTL_SECONDS);
+    await this.storeOtp(RedisNamespace.otpKey(`email:${email}`), otp, RedisOtpService.OTP_TTL_SECONDS);
     await this.sendEmailOtp(email, otp, expiresAt);
 
     logger.info("OTP generated and sent", { email, purpose: "EMAIL_OTP" });
@@ -56,7 +57,7 @@ export class RedisOtpService implements IOtpService {
     const otp = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.PHONE_OTP_TTL_SECONDS * 1000);
 
-    await this.storeOtp(`otp:phone:${phone}`, otp, RedisOtpService.PHONE_OTP_TTL_SECONDS);
+    await this.storeOtp(RedisNamespace.otpKey(`phone:${phone}`), otp, RedisOtpService.PHONE_OTP_TTL_SECONDS);
 
     // Check if we have an email for this phone — send via email as fallback
     const user = await prisma.user.findFirst({
@@ -83,7 +84,7 @@ export class RedisOtpService implements IOtpService {
   }
 
   async verifyPhoneOtp(phone: string, otp: string): Promise<boolean> {
-    return this.verifyOtp(`otp:phone:${phone}`, otp);
+    return this.verifyOtp(RedisNamespace.otpKey(`phone:${phone}`), otp);
   }
 
   async generateAndSendEmailVerification(
@@ -92,7 +93,7 @@ export class RedisOtpService implements IOtpService {
     const code = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.OTP_TTL_SECONDS * 1000);
 
-    await this.storeOtp(`otp:verify:${email}`, code, RedisOtpService.OTP_TTL_SECONDS);
+    await this.storeOtp(RedisNamespace.otpKey(`verify:${email}`), code, RedisOtpService.OTP_TTL_SECONDS);
     await this.sendVerificationEmail(email, code, expiresAt);
 
     logger.info("Email verification code generated and sent", { email });
@@ -109,7 +110,7 @@ export class RedisOtpService implements IOtpService {
   }
 
   async verifyEmailCode(email: string, code: string): Promise<boolean> {
-    return this.verifyOtp(`otp:verify:${email}`, code);
+    return this.verifyOtp(RedisNamespace.otpKey(`verify:${email}`), code);
   }
 
   async generateAndSendPasswordReset(email: string): Promise<{ code: string; expiresAt: Date; message: string; devOtp?: string }> {
@@ -117,7 +118,7 @@ export class RedisOtpService implements IOtpService {
     const ttlSeconds = RedisOtpService.OTP_TTL_SECONDS;
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
-    await this.storeOtp(`otp:reset:${email}`, code, ttlSeconds);
+    await this.storeOtp(RedisNamespace.otpKey(`reset:${email}`), code, ttlSeconds);
 
     // DEV-ONLY: remove or verify gated before production deploy
     const devOtp = process.env.NODE_ENV !== "production" ? code : undefined;
@@ -131,100 +132,147 @@ export class RedisOtpService implements IOtpService {
   }
 
   async verifyPasswordResetCode(email: string, code: string): Promise<boolean> {
-    return this.verifyOtp(`otp:reset:${email}`, code);
+    return this.verifyOtp(RedisNamespace.otpKey(`reset:${email}`), code);
   }
 
   private async storeOtp(key: string, otp: string, ttlSeconds: number): Promise<void> {
     const attemptsKey = `${key}:attempts`;
+    const hashedOtp = this.hashOtp(otp);
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+    const email = key.includes("email:") || key.includes("verify:") || key.includes("reset:") ? this.extractEmail(key) : undefined;
+    const phone = key.includes("phone:") ? this.extractPhone(key) : undefined;
+    const purpose = this.extractPurpose(key);
 
+    // 1. Authoritative persistent write to MongoDB
     try {
-      if (!isRedisReady()) throw new Error("Redis connection offline");
-      await redisClient.set(key, this.hashOtp(otp), { EX: ttlSeconds });
-      await redisClient.set(attemptsKey, "0", { EX: ttlSeconds });
-      logger.debug("OTP stored in Redis", { key });
-    } catch (err: any) {
-      logger.warn("Redis unavailable for OTP storage, falling back to MongoDB", { error: err.message });
-      try {
-        await prisma.otpToken.create({
-          data: {
-            email: key.includes("email:") || key.includes("verify:") ? this.extractEmail(key) : undefined,
-            phone: key.includes("phone:") ? this.extractPhone(key) : undefined,
-            otp: this.hashOtp(otp), // stored as SHA-256 hash, never plaintext
-            purpose: this.extractPurpose(key),
-            expiresAt: new Date(Date.now() + ttlSeconds * 1000),
-          },
-        });
-        logger.debug("OTP stored in MongoDB fallback", { key });
-      } catch (mongoErr: any) {
-        logger.error("Failed to store OTP in both Redis and MongoDB", { error: mongoErr.message, key });
+      await prisma.otpToken.create({
+        data: {
+          email: email ? email.toLowerCase() : undefined,
+          phone,
+          otp: hashedOtp,
+          purpose,
+          attempts: 0,
+          verified: false,
+          expiresAt,
+        },
+      });
+      logger.debug("OTP persisted in MongoDB OtpToken", { key });
+    } catch (mongoErr: any) {
+      logger.warn("Failed to persist OTP in MongoDB", { error: mongoErr.message, key });
+    }
+
+    // 2. Fast-path cache write to Redis if available
+    try {
+      if (isRedisReady()) {
+        await redisClient.set(key, hashedOtp, { EX: ttlSeconds });
+        await redisClient.set(attemptsKey, "0", { EX: ttlSeconds });
+        logger.debug("OTP cached in Redis", { key });
       }
+    } catch (redisErr: any) {
+      logger.warn("Redis unavailable for OTP caching, running on Mongo", { error: redisErr.message });
     }
   }
 
   private async verifyOtp(key: string, otp: string): Promise<boolean> {
     const attemptsKey = `${key}:attempts`;
+    const hashedInput = this.hashOtp(otp);
+    const email = key.includes("email:") || key.includes("verify:") || key.includes("reset:") ? this.extractEmail(key) : undefined;
+    const phone = key.includes("phone:") ? this.extractPhone(key) : undefined;
+    const purpose = this.extractPurpose(key);
 
-    try {
-      if (!isRedisReady()) throw new Error("Redis connection offline");
-      const currentAttempts = parseInt((await redisClient.get(attemptsKey)) || "0", 10);
-
-      if (currentAttempts >= RedisOtpService.MAX_ATTEMPTS) {
-        logger.warn("OTP verification blocked due to max attempts", { key });
-        return false;
-      }
-
-      const storedOtp = await redisClient.get(key);
-
-      if (!storedOtp) {
-        return this.verifyOtpFromMongo(key, otp, attemptsKey);
-      }
-
-      const isValid = storedOtp === this.hashOtp(otp); // compare hash, not plaintext
-
-      if (!isValid) {
-        await redisClient.set(attemptsKey, (currentAttempts + 1).toString(), { EX: RedisOtpService.ATTEMPTS_TTL_SECONDS });
-      } else {
-        await redisClient.del(key);
-        await redisClient.del(attemptsKey);
-      }
-
-      return isValid;
-    } catch (err: any) {
-      logger.warn("Redis unavailable for OTP verification, falling back to MongoDB", { error: err.message });
-      return this.verifyOtpFromMongo(key, otp, attemptsKey);
+    // 1. Check Redis fast-path attempts counter
+    let redisAttempts = 0;
+    if (isRedisReady()) {
+      try {
+        redisAttempts = parseInt((await redisClient.get(attemptsKey)) || "0", 10);
+      } catch {}
     }
-  }
 
-  private async verifyOtpFromMongo(key: string, otp: string, attemptsKey: string): Promise<boolean> {
+    if (redisAttempts >= RedisOtpService.MAX_ATTEMPTS) {
+      logger.warn("OTP verification blocked due to max attempts (Redis fast-check)", { key, attempts: redisAttempts });
+      return false;
+    }
+
+    // 2. Authoritative check against MongoDB OtpToken
+    let mongoOtpRecord: any = null;
     try {
-      const email = key.includes("email:") || key.includes("verify:") ? this.extractEmail(key) : undefined;
-      const phone = key.includes("phone:") ? this.extractPhone(key) : undefined;
-      const purpose = this.extractPurpose(key);
-
-      const stored = await prisma.otpToken.findFirst({
+      mongoOtpRecord = await prisma.otpToken.findFirst({
         where: {
-          ...(email && { email: { equals: email, mode: "insensitive" } }),
+          ...(email && { email: { equals: email.toLowerCase(), mode: "insensitive" } }),
           ...(phone && { phone: { equals: phone, mode: "insensitive" } }),
           purpose,
-          otp: this.hashOtp(otp), // compare hashed value
           verified: false,
           expiresAt: { gt: new Date() },
         },
         orderBy: { createdAt: "desc" },
       });
+    } catch (mongoReadErr: any) {
+      logger.error("Error reading OTP from MongoDB", { error: mongoReadErr.message });
+    }
 
-      if (!stored) return false;
-
-      await prisma.otpToken.update({
-        where: { id: stored.id },
-        data: { verified: true, attempts: stored.attempts + 1 },
-      });
-
-      return true;
-    } catch (err: any) {
-      logger.error("MongoDB fallback OTP verification failed", { error: err.message, key });
+    if (mongoOtpRecord && mongoOtpRecord.attempts >= RedisOtpService.MAX_ATTEMPTS) {
+      logger.warn("OTP verification blocked due to max attempts (MongoDB authoritative check)", { key, attempts: mongoOtpRecord.attempts });
       return false;
     }
+
+    // 3. Verify OTP validity
+    let isValid = false;
+    let storedRedisOtp: string | null = null;
+
+    if (isRedisReady()) {
+      try {
+        storedRedisOtp = await redisClient.get(key);
+      } catch {}
+    }
+
+    if (storedRedisOtp) {
+      isValid = storedRedisOtp === hashedInput;
+    } else if (mongoOtpRecord) {
+      isValid = mongoOtpRecord.otp === hashedInput;
+    }
+
+    if (!isValid) {
+      // Increment attempt counter in BOTH Redis and MongoDB
+      const newAttempts = Math.max(redisAttempts, mongoOtpRecord?.attempts || 0) + 1;
+      
+      if (isRedisReady()) {
+        try {
+          await redisClient.set(attemptsKey, String(newAttempts), { EX: RedisOtpService.ATTEMPTS_TTL_SECONDS });
+        } catch {}
+      }
+
+      if (mongoOtpRecord) {
+        try {
+          await prisma.otpToken.update({
+            where: { id: mongoOtpRecord.id },
+            data: { attempts: newAttempts },
+          });
+        } catch {}
+      }
+
+      logger.warn("OTP verification failed, incremented attempt counter", { key, newAttempts });
+      return false;
+    }
+
+    // On Success: Invalidate Redis keys and mark Mongo OtpToken as verified
+    if (isRedisReady()) {
+      try {
+        await redisClient.del(key);
+        await redisClient.del(attemptsKey);
+      } catch {}
+    }
+
+    if (mongoOtpRecord) {
+      try {
+        await prisma.otpToken.update({
+          where: { id: mongoOtpRecord.id },
+          data: { verified: true, attempts: mongoOtpRecord.attempts + 1 },
+        });
+      } catch {}
+    }
+
+    logger.info("OTP successfully verified and invalidated", { key });
+    return true;
   }
 
   private async sendEmailOtp(email: string, otp: string, expiresAt: Date): Promise<void> {

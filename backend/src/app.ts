@@ -14,11 +14,13 @@ import { getSmtpHealth } from "./modules/email";
 import { swaggerSpec } from "./config/swagger";
 import apiRouter from "./routes/apiRouter";
 import { globalErrorHandler } from "./middleware/errorMiddleware";
-import { generalLimiter } from "./middleware/rateLimiter";
+import { generalLimiter, soapBillingLimiter } from "./middleware/rateLimiter";
 import { correlationIdMiddleware } from "./middleware/correlationMiddleware";
-import { setupSoapServer } from "./services/soapService";
+import { setupSoapServer, soapBillingAuthMiddleware, soapXxePreFilter } from "./services/soapService";
 import { APP_INFO, PathResolver } from "./utils/pathResolver";
 import passport from "./config/passport";
+import { JwksService } from "./services/security/JwksService";
+import { idempotencyMiddleware } from "./middleware/idempotencyMiddleware";
 
 export const app = express();
 
@@ -77,8 +79,8 @@ const corsMiddleware = cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Visitor-Id", "X-Correlation-ID", "Accept"],
-  exposedHeaders: ["X-Correlation-ID", "Set-Cookie"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Visitor-Id", "X-Correlation-ID", "X-Request-ID", "X-CSRF-Token", "Accept"],
+  exposedHeaders: ["X-Correlation-ID", "X-Request-ID", "X-CSRF-Token", "Set-Cookie"],
   optionsSuccessStatus: 204,
 });
 
@@ -126,9 +128,19 @@ app.use(mongoSanitize({ allowDots: false, replaceWith: '_' }));
 // ── HTTP Parameter Pollution Prevention ───────────────────────────────────────
 app.use(hpp());
 
+// ── Idempotency Protection ───────────────────────────────────────────────────
+app.use(idempotencyMiddleware);
+
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
-app.use("/soap/billing", generalLimiter);
+// SOAP billing endpoint: text body parser for XML inspection + dedicated rate limiter + API-key auth + XXE pre-filter
+app.use(
+  "/soap/billing",
+  express.text({ type: ["text/xml", "application/xml", "application/soap+xml", "text/plain", "*/*"], limit: "1mb" }),
+  soapBillingLimiter,
+  soapBillingAuthMiddleware,
+  soapXxePreFilter
+);
 
 
 // Swagger Documentation Endpoints — only accessible in non-production environments
@@ -139,6 +151,12 @@ if (env.NODE_ENV !== "production") {
     res.send(swaggerSpec);
   });
 }
+
+// Public JWKS Endpoint for Asymmetric RS256 Verification
+app.get("/.well-known/jwks.json", (req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.status(200).json(JwksService.getJwks());
+});
 
 // Phase 15 - System Health, Readiness, Liveness, & Prometheus Metrics Probes
 app.get("/metrics", (req, res) => {

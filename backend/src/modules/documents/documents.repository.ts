@@ -197,4 +197,18 @@ export class DocumentRepository {
       },
     });
   }
+
+  /**
+   * Find resident ID associated with a user ID.
+   */
+  async findResidentByUserId(userId: string) {
+    return this.db.resident.findFirst({ where: { userId } });
+  }
+
+  /**
+   * Find owner ID associated with a user ID.
+   */
+  async findOwnerByUserId(userId: string) {
+    return this.db.owner.findFirst({ where: { userId } });
+  }
 }

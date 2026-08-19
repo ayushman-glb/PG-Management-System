@@ -1,6 +1,7 @@
 import { cacheService } from "./cache.service";
 import { logger } from "../utils/logger";
 import { env } from "../config/env";
+import { RedisNamespace } from "./security/RedisNamespace";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
@@ -29,8 +30,6 @@ export function parseDurationToSeconds(duration: string = "15m"): number {
  * Stores revoked JWT access tokens in Redis until their natural expiration time.
  */
 export class TokenBlacklistService {
-  private static readonly PREFIX = "jwt:blacklist:";
-
   /**
    * Hash a token with SHA-256 before using as a Redis key to prevent raw secret exposure in keyspace.
    */
@@ -39,32 +38,43 @@ export class TokenBlacklistService {
   }
 
   /**
-   * Blacklist an access token until its expiration date.
-   * Derives TTL from token's exp claim, falling back to configured JWT_ACCESS_EXPIRATION.
+   * Blacklist an access token until its natural expiration date.
+   * Derives remaining lifetime from token's exp claim.
+   * If TTL <= 0, the token is already expired and is NOT stored.
    */
   async blacklistToken(token: string, expiresAtSeconds?: number): Promise<void> {
     if (!token) return;
 
-    const configuredTtl = parseDurationToSeconds(env.JWT_ACCESS_EXPIRATION || "15m");
-    let ttl = configuredTtl;
+    const nowUnix = Math.floor(Date.now() / 1000);
+    let ttl = 0;
 
-    if (expiresAtSeconds) {
-      ttl = Math.max(1, expiresAtSeconds - Math.floor(Date.now() / 1000));
+    if (expiresAtSeconds !== undefined && expiresAtSeconds !== null) {
+      ttl = expiresAtSeconds - nowUnix;
     } else {
       try {
         const decoded = jwt.decode(token) as { exp?: number };
         if (decoded?.exp) {
-          ttl = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
+          ttl = decoded.exp - nowUnix;
+        } else {
+          ttl = parseDurationToSeconds(env.JWT_ACCESS_EXPIRATION || "15m");
         }
       } catch {
-        ttl = configuredTtl;
+        ttl = parseDurationToSeconds(env.JWT_ACCESS_EXPIRATION || "15m");
       }
     }
 
+    // If token has already naturally expired, there is no need to store in Redis
+    if (ttl <= 0) {
+      return;
+    }
+
     const tokenHash = this.hashToken(token);
-    const key = `${TokenBlacklistService.PREFIX}${tokenHash}`;
+    const key = RedisNamespace.jwtBlacklistKey(tokenHash);
     await cacheService.set(key, "revoked", ttl);
-    logger.info("JWT access token blacklisted", { tokenHashPrefix: tokenHash.substring(0, 8), ttlSeconds: ttl });
+    logger.info("JWT access token blacklisted with dynamic TTL", {
+      tokenHashPrefix: tokenHash.substring(0, 8),
+      ttlSeconds: ttl,
+    });
   }
 
   /**
@@ -73,7 +83,7 @@ export class TokenBlacklistService {
   async isTokenBlacklisted(token: string): Promise<boolean> {
     if (!token) return false;
     const tokenHash = this.hashToken(token);
-    const key = `${TokenBlacklistService.PREFIX}${tokenHash}`;
+    const key = RedisNamespace.jwtBlacklistKey(tokenHash);
     const exists = await cacheService.exists(key);
     return exists;
   }

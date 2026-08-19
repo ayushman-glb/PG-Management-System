@@ -7,7 +7,7 @@
 ## 📊 Summary of Audit Findings & Remediation
 
 | Ref | Finding Description | Severity | Layer | Fix Applied | Files Changed |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | **AUD-01** | Support ticket & complaint routes lacked authentication middleware (`authenticate`), allowing unauthenticated complaint queries. | **HIGH** | REST API | Mounted `authenticate` middleware on `complaint.routes.ts` and enforced non-null `req.user?.id`. | `backend/src/modules/complaints/complaint.routes.ts`<br>`backend/src/modules/complaints/complaint.controller.ts` |
 | **AUD-02** | Razorpay payment order and verification endpoints lacked JWT authentication. | **HIGH** | REST API | Added `authenticate` middleware to `billing.routes.ts` routes (`/orders`, `/verify`, `/invoices`). | `backend/src/modules/billing/billing.routes.ts` |
 | **AUD-03** | Swagger spec had minor path drifts for complaints and billing routes. | **MEDIUM** | API Docs | Updated `swagger.ts` schemas and security requirements to include `bearerAuth` on complaints and invoices. | `backend/src/config/swagger.ts` |

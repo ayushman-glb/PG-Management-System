@@ -6,7 +6,7 @@ This document describes the end-to-end file and media upload pipeline for RoomBa
 
 ## 1. Request Lifecycle Diagram
 
-```
+```text
 Client App (React / Axios / XHR)
       │
       ▼
@@ -55,6 +55,7 @@ Uploads are automatically organized into Cloudinary subfolders namespaced by env
 ## 3. Transactional Compensation & Rollback Rules
 
 To eliminate orphaned cloud assets and dangling database references:
+
 1. **Cloudinary Upload Failure**: If Cloudinary upload fails, the request returns a 500 error immediately. Database records are **never** created.
 2. **MongoDB Write Failure**: If database metadata saving fails after Cloudinary succeeds, a `try/catch` block catches the exception and immediately issues a `cloudinaryService.deleteFile(publicId)` call to delete the asset from Cloudinary.
 3. **Asset Replacement**: When an image is replaced via `PUT /api/v1/media/replace/:publicId`, the existing Cloudinary asset and its MongoDB record are purged before the new asset is persisted.

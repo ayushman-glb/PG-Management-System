@@ -1,17 +1,10 @@
 import { env } from "@config/env";
 import type { ApiResponse } from "../types";
+import { authService } from "./auth.service";
 
 export class ComplaintService {
   private getToken(): string | null {
-    try {
-      return (
-        localStorage.getItem("roombae_access_token") ||
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token")
-      );
-    } catch {
-      return null;
-    }
+    return authService.getToken();
   }
 
   private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {

@@ -49,8 +49,9 @@ server-side as hashed session records), single-session logout, all-session logou
 ## 3. Environment variables — read-only contract
 
 **Used by the current implementation (must be wired in exactly as described in Section 6–9):**
+
 | Variable | Purpose |
-|---|---|
+| --- | --- |
 | `MONGO_URI` | Mongoose connection string |
 | `JWT_SECRET` | Signs/verifies JWTs |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_USER` | Gmail OAuth2 creds for Nodemailer |
@@ -81,17 +82,20 @@ logs `"Connected to DB"` on success. Called once from the entrypoint before `app
 ## 6. Data models
 
 ### `users` (`src/models/user.model.js`)
+
 | Field | Type | Rules |
-|---|---|---|
+| --- | --- | --- |
 | `username` | String | required, unique |
 | `email` | String | required, unique |
 | `password` | String | required (hashed — see Section 9 item 1 for hashing algorithm decision) |
 | `verified` | Boolean | default `false` |
 
 ### `sessions` (`src/models/session.model.js`)
+
 Represents one active refresh-token session (one device/login).
+
 | Field | Type | Rules |
-|---|---|---|
+| --- | --- | --- |
 | `user` | ObjectId ref `users` | required |
 | `refreshTokenHash` | String | required — `sha256` hex digest of the raw refresh token, never store the raw token |
 | `ip` | String | required — from `req.ip` at login time |
@@ -100,8 +104,9 @@ Represents one active refresh-token session (one device/login).
 | timestamps | — | `createdAt`/`updatedAt` enabled |
 
 ### `otps` (`src/models/otp.model.js`)
+
 | Field | Type | Rules |
-|---|---|---|
+| --- | --- | --- |
 | `email` | String | required |
 | `user` | ObjectId ref `users` | required |
 | `otpHash` | String | required — `sha256` hex digest of the 6-digit OTP, never store the raw OTP |
@@ -122,13 +127,14 @@ Base path: `/api/auth`. All bodies are JSON (`express.json()` is mounted globall
 `cookie-parser` is mounted globally so `req.cookies` is available.
 
 **Token delivery pattern (frontend-agnostic — preserve exactly):**
+
 - Access token → returned in the JSON response body only, never as a cookie. Client is
   expected to hold it in memory and send it as `Authorization: Bearer <token>`.
 - Refresh token → set as an `httpOnly`, `secure`, `sameSite: "strict"` cookie named
   `refreshToken`, `maxAge` 7 days. Never returned in a JSON body.
 
 | Method & Path | Auth required | Request body | Success response | Notes |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `POST /register` | none | `{ username, email, password }` | `201` `{ message, user: { username, email, verified } }` | Rejects if username or email already taken (`409`). Hashes password, creates user, generates a 6-digit OTP, stores its hash, emails the OTP as both plain text and HTML. |
 | `POST /login` | none | `{ email, password }` | `200` `{ message, user: { username, email }, accessToken }` + sets `refreshToken` cookie | `401` if user not found, not verified, or password mismatch. On success: creates a new `sessions` doc, signs access token (15m) and refresh token (7d). |
 | `GET /get-me` | Bearer access token | — | `200` `{ message, user: { username, email } }` | `401` if no/invalid token. |
@@ -190,6 +196,7 @@ that makes an old token verify under a new secret.
 
 **The correct fix:** treat the secret rotation as "every existing login session is now dead."
 As part of this rebuild:
+
 1. Write a one-time migration (a small script under e.g. `scripts/purgeStaleSessions.js`, run
    manually once, not on every server boot) that either deletes every document in the
    `sessions` collection or sets `revoked: true` on all of them.

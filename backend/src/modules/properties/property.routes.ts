@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Container } from '../../container';
-import { authenticate, authorize } from '../../middleware/authMiddleware';
+import { authenticate, authorize, requireKycApproved } from '../../middleware/authMiddleware';
 import { Role } from '@prisma/client';
 
 const router = Router();
@@ -24,6 +24,7 @@ router.get('/:pgId/meal-schedules',
 router.post('/',
   authenticate,
   authorize(Role.OWNER),
+  requireKycApproved,
   (req, res, next) => Container.propertyController.create(req, res, next));
 
 export default router;

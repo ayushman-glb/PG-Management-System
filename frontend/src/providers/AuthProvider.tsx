@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return refreshInFlight.current;
   }, []);
 
-  // On mount, check for existing session
+  // On mount, check for existing session and subscribe to cross-tab auth signals
   useEffect(() => {
     let cancelled = false;
     const checkSession = async () => {
@@ -78,10 +78,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkSession();
+
+    const unsubscribe = authService.subscribeAuthState((isAuthenticated) => {
+      if (cancelled) return;
+      if (!isAuthenticated) {
+        setUserState(null);
+        setStatus("unauthenticated");
+      } else {
+        refreshUser();
+      }
+    });
+
     return () => {
       cancelled = true;
+      unsubscribe();
     };
-  }, []);
+  }, [refreshUser]);
 
   const login = useCallback(async (credentials: { identifier: string; password: string }) => {
     // Reset user state synchronously before logging in new user

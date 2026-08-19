@@ -283,6 +283,7 @@ model User {
   termsAccepted      Boolean         @default(true)
   accountStatus      String          @default("ACTIVE")
   verificationStatus String          @default("VERIFIED")
+  kycStatus          String          @default("PENDING_REVIEW") // PENDING_REVIEW, APPROVED, REJECTED
   lastLogin          DateTime?
   phoneOtp           String?
   phoneOtpExpiresAt  DateTime?
@@ -293,6 +294,7 @@ model User {
   otpSecret          String?
   otpExpiresAt       DateTime?
   tokenVersion       Int             @default(0)
+  deletedAt          DateTime?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   ownerProfile       Owner?
@@ -329,19 +331,45 @@ model PhoneOTP {
   @@index([expiresAt])
 }
 
-model RefreshToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  tokenHash String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  revokedAt DateTime?
-  replacedBy String?
-  ipAddress String?
-  userAgent String?
+model SessionFamily {
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  familyId          String?        // UUID string
+  userId            String         @db.ObjectId
+  currentSessionId  String?
+  previousSessionId String?
+  compromised       Boolean        @default(false)
+  compromisedReason String?
+  rotationCounter   Int            @default(0)
+  lastRotationAt    DateTime?
+  revokedAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  refreshTokens     RefreshToken[]
 
   @@index([userId])
+  @@index([familyId])
+}
+
+model RefreshToken {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String         @db.ObjectId
+  user          User           @relation(fields: [userId], references: [id])
+  familyId      String?        @db.ObjectId
+  family        SessionFamily? @relation(fields: [familyId], references: [id])
+  sessionId     String?
+  tokenHash     String         @unique
+  rotatedFrom   String?
+  revokedReason String?
+  expiresAt     DateTime
+  createdAt     DateTime       @default(now())
+  revokedAt     DateTime?
+  replacedBy    String?
+  ipAddress     String?
+  userAgent     String?
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([sessionId])
 }
 
 model PasswordResetToken {
@@ -357,15 +385,35 @@ model PasswordResetToken {
 }
 
 model OtpToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  phone     String?
-  email     String?
-  otp       String
-  purpose   String // PHONE_VERIFICATION, EMAIL_VERIFICATION, PASSWORD_RESET, 2FA
-  attempts  Int      @default(0)
-  verified  Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  phone      String?
+  email      String?
+  otp        String
+  nonce      String?
+  purpose    String // PHONE_VERIFICATION, EMAIL_VERIFICATION, PASSWORD_RESET, 2FA
+  attempts   Int       @default(0)
+  verified   Boolean   @default(false)
+  consumedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+
+  @@index([phone])
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model PreAuthChallenge {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  tokenHash   String    @unique
+  userId      String    @db.ObjectId
+  visitorId   String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model LoginHistory {
@@ -375,7 +423,14 @@ model LoginHistory {
   ipAddress String
   userAgent String
   status    String // SUCCESS, FAILED
+  latitude  Float?
+  longitude Float?
+  city      String?
+  country   String?
+  asn       String?
   createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model UserDevice {
@@ -390,6 +445,11 @@ model UserDevice {
   trustLevel      String    @default("UNTRUSTED") // TRUSTED, UNTRUSTED
   lastIpHash      String?
   userAgentHash   String?
+  latitude        Float?
+  longitude       Float?
+  city            String?
+  country         String?
+  asn             String?
   failedAttempts  Int       @default(0)
   firstSeenAt     DateTime  @default(now())
   lastSeenAt      DateTime  @default(now())
@@ -409,17 +469,21 @@ model SecurityAuditEvent {
   userId    String?  @db.ObjectId
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   deviceId  String?
-  eventType String   // LOGIN_SUCCESS, LOGIN_FAILURE, NEW_DEVICE, DEVICE_TRUSTED, DEVICE_REVOKED, DEVICE_BLOCKED, DEVICE_UNBLOCKED, SUSPICIOUS_LOGIN, STEP_UP_REQUIRED, STEP_UP_SUCCESS, STEP_UP_FAILURE, LOGOUT, SESSION_REVOKED
+  visitorId String?
+  eventType String   // LOGIN_SUCCESS, LOGIN_FAILURE, NEW_DEVICE, DEVICE_TRUSTED, DEVICE_REVOKED, DEVICE_BLOCKED, DEVICE_UNBLOCKED, SUSPICIOUS_LOGIN, STEP_UP_REQUIRED, STEP_UP_SUCCESS, STEP_UP_FAILURE, LOGOUT, SESSION_REVOKED, IMPOSSIBLE_TRAVEL_DETECTED, KEY_ROTATED
   severity  String   @default("INFO") // INFO, WARNING, CRITICAL
   riskScore Int      @default(0)
   riskLevel String   @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
   ipAddress String?
   userAgent String?
+  country   String?
+  asn       String?
   requestId String?
   metadata  String?
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([userId, createdAt])
   @@index([eventType])
   @@index([createdAt])
 }
@@ -455,6 +519,7 @@ model Owner {
   kyc              OwnerKYC?
   business         Business?
   subscription     Subscription?
+  bankAccount      BankAccount?
   pgs              PG[]
   agreements       Agreement[]
   kanbanBoards     KanbanBoard[]
@@ -1626,4 +1691,45 @@ model MarketingCampaign {
 
   @@index([status])
   @@index([scheduledAt])
+}
+
+model BankAccount {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId           String   @unique @db.ObjectId
+  owner             Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  accountHolderName String?
+  bankName          String?
+  accountNumber     String?  // AES-256-GCM encrypted (v1:<keyId>:<iv>:<tag>:<ciphertext>)
+  ifscCode          String?  // AES-256-GCM encrypted
+  upiId             String?  // AES-256-GCM encrypted
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model IdempotencyRequest {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  key        String   @unique
+  route      String
+  userId     String?  @db.ObjectId
+  statusCode Int      @default(200)
+  response   Json
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model OutboxEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventType String
+  payload   Json
+  status    String   @default("PENDING") // PENDING, PROCESSING, PROCESSED, FAILED
+  attempts  Int      @default(0)
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
 }

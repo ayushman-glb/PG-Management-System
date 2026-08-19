@@ -6,7 +6,7 @@ This document describes RoomBae's "Sign Up with Google" autofill integration usi
 
 ## 1. Flow Diagram
 
-```
+```text
 User Clicks "Continue with Google"
    │
    ▼

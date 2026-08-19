@@ -8,7 +8,7 @@
 
 The **RoomBae Backend** is an enterprise-grade feature-first modular Node.js backend engineered to support the RoomBae React 19 single-page application. It delivers a multi-protocol API layer (REST, GraphQL, Socket.IO real-time engine) coupled with zero-trust security, field-level encryption, distributed concurrency locks, and automated GST billing workflows.
 
-```
+```text
                     ┌─────────────────────────────────────────┐
                     │      React 19 + Vite 6 Frontend         │
                     └──────────────────┬──────────────────────┘
@@ -35,6 +35,7 @@ The **RoomBae Backend** is an enterprise-grade feature-first modular Node.js bac
 ## 🔐 2. Zero-Trust Security & Concurrency Architecture
 
 ### 2.1 Cryptographic Standards & Field Encryption
+
 - **AES-256-GCM Encryption**: Sensitive resident KYC payloads (Aadhaar number, PAN number, Bank account number, UPI IDs) are encrypted prior to database persistence.
 - **Password Hashing**: Bcrypt with 12 salt rounds for local credential authentication.
 - **JWT Authentication**:
@@ -42,7 +43,9 @@ The **RoomBae Backend** is an enterprise-grade feature-first modular Node.js bac
   - **Refresh Token**: Long-lived 7-day HTTP-Only cookie.
 
 ### 2.2 Distributed Bed Concurrency Locking (Redlock)
+
 When simultaneous users attempt to reserve or pay for the same bed:
+
 1. Redlock acquires a distributed lock on key `bed:lock:{bedId}` with a TTL of 30 seconds.
 2. Successful transaction sets bed status to `OCCUPIED` and attaches `residentId`.
 3. Competing requests fail lock acquisition and trigger instant rollback or refund.
@@ -53,7 +56,7 @@ When simultaneous users attempt to reserve or pay for the same bed:
 
 The backend codebase is organized into self-contained feature-first domain modules:
 
-```
+```text
 src/modules/
 ├── auth/          # Auth, JWT, OTP, Login/Register DTOs, Routes, Services
 ├── owners/        # Owner Onboarding, KYC, Business Info, Bank Details, Building Specs

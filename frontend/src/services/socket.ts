@@ -1,18 +1,14 @@
 import { useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { env } from "../config/env";
+import { authService } from "./auth.service";
 
 const SOCKET_URL = env.SOCKET_URL;
 
 let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("roombae_access_token")
-      : null;
+  const token = typeof window !== "undefined" ? authService.getToken() : null;
 
   if (!socket) {
     socket = io(SOCKET_URL, {

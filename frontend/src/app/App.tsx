@@ -5,6 +5,8 @@ import { NavigationProvider } from "./navigation";
 import { AppProviders } from "./providers";
 import { AppRoutes } from "./routes";
 import loadingImg from "../assets/loading.png";
+import { authService } from "../services/auth.service";
+import { useUIStore } from "../store/useUIStore";
 
 export type Page =
   | "landing"
@@ -61,25 +63,7 @@ export default function App() {
   const [page, setPage] = useState<Page>("landing");
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
   const directionRef = useRef<1 | -1>(1);
-  const [newDeviceModal, setNewDeviceModal] = useState<{ isOpen: boolean; deviceLabel: string }>({
-    isOpen: false,
-    deviceLabel: "",
-  });
-
-  useEffect(() => {
-    const handleNewDevice = (e: any) => {
-      if (e.detail?.deviceLabel) {
-        setNewDeviceModal({
-          isOpen: true,
-          deviceLabel: e.detail.deviceLabel,
-        });
-      }
-    };
-    window.addEventListener("roombae-new-device-detected", handleNewDevice);
-    return () => {
-      window.removeEventListener("roombae-new-device-detected", handleNewDevice);
-    };
-  }, []);
+  const { newDeviceModal, closeNewDeviceModal } = useUIStore();
 
   const [showOneTimeLoading, setShowOneTimeLoading] = useState<boolean>(() => {
     try {
@@ -129,8 +113,9 @@ export default function App() {
     const legacyUserJson = params.get("user");
     if (legacyToken) {
       try {
-        localStorage.setItem("accessToken", legacyToken);
-        localStorage.setItem("token", legacyToken);
+        // Route the legacy token through AuthService so it stays in-memory only
+        // (no localStorage write for the raw access token).
+        authService.setToken(legacyToken);
         if (legacyUserJson) {
           localStorage.setItem("user", decodeURIComponent(legacyUserJson));
         }
@@ -245,7 +230,7 @@ export default function App() {
             } catch {
               // Ignore if trust call fails
             } finally {
-              setNewDeviceModal({ isOpen: false, deviceLabel: "" });
+              closeNewDeviceModal();
             }
           }}
           onRevoke={async () => {
@@ -257,10 +242,10 @@ export default function App() {
             } catch {
               // Ignore if revoke fails
             } finally {
-              setNewDeviceModal({ isOpen: false, deviceLabel: "" });
+              closeNewDeviceModal();
             }
           }}
-          onClose={() => setNewDeviceModal({ isOpen: false, deviceLabel: "" })}
+          onClose={closeNewDeviceModal}
         />
       </NavigationProvider>
     </AppProviders>

@@ -285,17 +285,29 @@ export async function getRedisKeyEstimates(): Promise<{
   const SCAN_CAP = 1000;
 
   try {
-    // Count rl:* keys
+    // Count rate limit keys (security:ratelimit:* and rl:*)
+    for await (const _ of (redisClient as any).scanIterator({ MATCH: "security:ratelimit:*", COUNT: 100 })) {
+      counts.rateLimitKeys++;
+      if (counts.rateLimitKeys >= SCAN_CAP) break;
+    }
     for await (const _ of (redisClient as any).scanIterator({ MATCH: "rl:*", COUNT: 100 })) {
       counts.rateLimitKeys++;
       if (counts.rateLimitKeys >= SCAN_CAP) break;
     }
-    // Count otp:* keys
+    // Count otp keys (security:otp:* and otp:*)
+    for await (const _ of (redisClient as any).scanIterator({ MATCH: "security:otp:*", COUNT: 100 })) {
+      counts.otpKeys++;
+      if (counts.otpKeys >= SCAN_CAP) break;
+    }
     for await (const _ of (redisClient as any).scanIterator({ MATCH: "otp:*", COUNT: 100 })) {
       counts.otpKeys++;
       if (counts.otpKeys >= SCAN_CAP) break;
     }
-    // Count jwt:blacklist:* keys
+    // Count blacklist keys (security:jwt:blacklist:* and jwt:blacklist:*)
+    for await (const _ of (redisClient as any).scanIterator({ MATCH: "security:jwt:blacklist:*", COUNT: 100 })) {
+      counts.blacklistKeys++;
+      if (counts.blacklistKeys >= SCAN_CAP) break;
+    }
     for await (const _ of (redisClient as any).scanIterator({ MATCH: "jwt:blacklist:*", COUNT: 100 })) {
       counts.blacklistKeys++;
       if (counts.blacklistKeys >= SCAN_CAP) break;

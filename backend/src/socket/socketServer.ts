@@ -91,7 +91,13 @@ export class SocketServer {
         },
         credentials: true,
       },
+      pingInterval: 25000,
+      pingTimeout: 10000,
     });
+
+    // Register with SocketSessionService for live session revocation broadcasts
+    const { SocketSessionService } = require("../services/security/SocketSessionService");
+    SocketSessionService.registerIO(SocketServer.io);
 
     // Initialize Redis adapter for multi-node WebSocket scalability if Redis is active
     if (isRedisReady()) {
@@ -110,39 +116,22 @@ export class SocketServer {
       }
     }
 
-    // Pre-connection Handshake Authentication Middleware
+    // Zero-Trust Handshake Authentication Middleware with TokenVersion and Blacklist Verification
     SocketServer.io.use((socket: Socket, next: (err?: Error) => void) => {
-      try {
-        const token =
-          (socket.handshake.auth?.token as string) ||
-          (socket.handshake.headers?.authorization?.split(" ")[1] as string) ||
-          (socket.handshake.query?.token as string);
-
-        if (!token) {
-          logger.warn(`🔌 Socket connection rejected [Handshake]: No token provided (ID: ${socket.id})`);
-          return next(new Error("Authentication failed: Access token missing during handshake"));
-        }
-
-        const decoded = tokenService.verifyAccessToken(token);
-        (socket as any).user = {
-          id: decoded.id,
-          email: decoded.email,
-          role: decoded.role,
-          residentCode: decoded.residentCode,
-        };
-        next();
-      } catch (err: any) {
-        logger.warn(`🔌 Socket connection rejected [Handshake Invalid Token]: ${err.message} (ID: ${socket.id})`);
-        return next(new Error(`Authentication failed: ${err.message || "Invalid or expired token"}`));
-      }
+      SocketSessionService.authenticateSocket(socket, next);
     });
 
     SocketServer.io.on("connection", (socket: Socket) => {
       logger.info(`🔌 Socket connected: ${socket.id}`);
-      const userId = (socket as any).user?.id;
+      const userId = socket.data?.userId || (socket as any).user?.id;
       if (userId) {
         socket.join(`user_${userId}`);
       }
+
+      // Continuous packet-level authorization guard for every incoming event
+      socket.use((packet, next) => {
+        SocketSessionService.authorizeSocketEvent(socket, packet, next);
+      });
 
       socket.on("auth_refresh", (newToken: string) => {
         try {

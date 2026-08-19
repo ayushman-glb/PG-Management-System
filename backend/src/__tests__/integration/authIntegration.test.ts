@@ -40,7 +40,19 @@ const mockPrisma: any = {
     create: jest.fn(),
   },
   loginHistory: {
-    create: jest.fn(),
+    create: jest.fn().mockResolvedValue({ id: 'lh_1' }),
+  },
+  securityAuditEvent: {
+    create: jest.fn().mockResolvedValue({ id: 'audit_1' }),
+  },
+  userDevice: {
+    findFirst: jest.fn().mockResolvedValue(null),
+    upsert: jest.fn().mockResolvedValue({ id: 'dev_1' }),
+  },
+  preAuthChallenge: {
+    create: jest.fn().mockResolvedValue({ id: 'preauth_1' }),
+    findUnique: jest.fn().mockResolvedValue(null),
+    update: jest.fn().mockResolvedValue(null),
   },
   $transaction: jest.fn(),
 };
@@ -373,7 +385,10 @@ describe('Authentication Endpoints Integration Tests (Supertest API Integration)
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.accessToken).toBeDefined();
-      expect(res.body.data.refreshToken).toBeDefined();
+      const rawCookies = res.headers['set-cookie'];
+      const cookieArray: string[] = Array.isArray(rawCookies) ? rawCookies : (rawCookies ? [rawCookies] : []);
+      const hasRefreshCookie = cookieArray.some((c: string) => c.startsWith('refreshToken='));
+      expect(hasRefreshCookie || res.body.data.refreshToken !== undefined).toBe(true);
     });
 
     test('anti-enumeration check: non-existent email vs wrong password return identical response shape & 401 code', async () => {

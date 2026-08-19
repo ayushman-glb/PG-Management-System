@@ -6,7 +6,7 @@ This document provides clear guidelines for local containerized development and 
 
 ## 🏗️ Architecture & Component Overview
 
-```
+```text
 Local Development (Host / Docker)
 ┌─────────────────────────────────────────────────────────────┐
 │ Workflow A: Full Docker Stack                               │
@@ -98,10 +98,11 @@ npx ts-node scripts/testRedisDevPipeline.ts
 ## 🛠️ Process Lifecycle & Port Management (Windows / Cross-Platform)
 
 ### 1. Automated Stale Port Clearing (`predev` & `prebuild`)
+
 - **Root Cause**: On Windows, when `ts-node-dev` is terminated via `SIGINT` (Ctrl+C), orphaned background `node.exe` worker processes can occasionally hold locks on port 5000/5001 or on Prisma query engine binary DLLs (`node_modules/.prisma/client/query_engine-windows.dll.node`).
 - **Solution**: Cross-platform npm pre-hooks (`predev` and `prebuild`) invoke `kill-port 5000 5001` before starting the server or generating binaries.
 - **Watcher Configuration**: `dev` script explicitly ignores `node_modules` (`--ignore-watch node_modules`) to avoid open file descriptors on compiled engines.
 
 ### 2. Resilient Prisma Generation (`scripts/generate-with-retry.js`)
-- `npm run build` and `npm run prisma:generate` wrap `prisma generate` in an exponential retry loop (up to 3 attempts with 1.5s delay) to gracefully absorb transient Windows OS file-rename locks during fast reload/rebuild cycles.
 
+- `npm run build` and `npm run prisma:generate` wrap `prisma generate` in an exponential retry loop (up to 3 attempts with 1.5s delay) to gracefully absorb transient Windows OS file-rename locks during fast reload/rebuild cycles.

@@ -7,6 +7,7 @@
 A comprehensive forensic audit, dependency repair, environment validation, build verification, and automated test suite execution was performed on the **RoomBae PG Management System** workspace following a Windows environment reset.
 
 ### Audit Summary
+
 - **Frontend**: Clean build verified (`tsc -b && vite build`) — output in `frontend/dist/`.
 - **Backend**: Clean build verified (`tsc -p tsconfig.build.json`) — output in `backend/dist/`.
 - **Unit & Integration Tests**: 5 test suites (39 tests total) executed via Jest with 100% pass rate (`39 passed, 39 total`).
@@ -29,7 +30,7 @@ A comprehensive forensic audit, dependency repair, environment validation, build
 
 ## 3. Architecture & Tech Stack Inventory
 
-```
+```text
 RoomBae Monorepo
 ├── frontend/ (Vite 8 + React 19 + TypeScript + Tailwind CSS v4 + Motion + GSAP + Recharts)
 ├── backend/  (Node.js + Express + TypeScript + Prisma ORM + MongoDB + Socket.IO + SOAP + JWT)
@@ -39,6 +40,7 @@ RoomBae Monorepo
 ```
 
 ### Core Architecture Capabilities
+
 - **Database Layer**: Prisma ORM v5.22 connected to MongoDB Atlas.
 - **Auth System**: Dual-role JWT authentication (Owner & Resident), OTP email/phone verification, bcrypt password hashing, 2FA/TOTP support, and Google OAuth 2.0.
 - **REST & SOAP APIs**: RESTful API endpoints under `/api/v1/` alongside a legacy SOAP ERP billing service at `/soap/billing`.
@@ -49,10 +51,12 @@ RoomBae Monorepo
 ## 4. Issues Identified & Systematically Repaired
 
 ### Issue 1: Unit Test Mock Discrepancy in `auth.test.ts`
+
 - **Root Cause**: Unit tests in `src/__tests__/auth.test.ts` invoked `AuthService` functions that triggered unmocked `prisma` database queries against MongoDB. Mock user IDs were non-hexadecimal strings (`user-123`), which failed Prisma's MongoDB `@db.ObjectId` validation rules.
 - **Repair**: Mocked `prisma` calls inside `auth.test.ts` (`refreshToken.findUnique`, `update`, `updateMany`, `create`) and updated test user fixtures to valid 24-character hexadecimal ObjectIds (`507f1f77bcf86cd799439011`).
 
 ### Issue 2: PowerShell Script Execution Policy Restriction
+
 - **Root Cause**: Windows PowerShell restricted execution of `.ps1` wrapper scripts for `npm`.
 - **Repair**: Configured execution workflows to call direct command executables via `cmd /c "npm ..."` or direct binary invocations.
 

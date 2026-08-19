@@ -585,4 +585,20 @@ export class DocumentService {
       // Audit logging must never throw — it is observability only
     }
   }
+
+  async getDocumentRecordByKey(documentKey: string) {
+    return this.documentRepo.findByKey(documentKey);
+  }
+
+  async resolveUserIdentifiers(userId: string, role: string): Promise<{ residentId?: string; ownerId?: string }> {
+    if (role === 'RESIDENT') {
+      const resident = await this.documentRepo.findResidentByUserId(userId);
+      return { residentId: resident?.id };
+    }
+    if (role === 'OWNER' || role === 'MANAGER') {
+      const owner = await this.documentRepo.findOwnerByUserId(userId);
+      return { ownerId: owner?.id };
+    }
+    return {};
+  }
 }
