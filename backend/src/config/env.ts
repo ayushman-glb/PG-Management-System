@@ -130,6 +130,7 @@ const envSchema = z.object({
   REDIS_PASSWORD: z.string().optional(),
   REDIS_DB: z.string().default("0"),
   REDIS_TLS: z.string().default("false"),
+  REDIS_REQUIRED: z.string().default("false"),
   CACHE_TTL: z.string().default("3600"),
   SESSION_TTL: z.string().default("86400"),
 

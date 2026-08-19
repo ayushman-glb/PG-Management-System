@@ -8,6 +8,29 @@ export interface CacheOptions {
   keyPrefix?: string;
 }
 
+// In-process telemetry counters for route cache observability
+let routeCacheHits = 0;
+let routeCacheMisses = 0;
+let routeCacheBypasses = 0;
+
+export function getRouteCacheStats(): {
+  hits: number;
+  misses: number;
+  bypasses: number;
+  totalRequests: number;
+  hitRatePercent: number;
+} {
+  const total = routeCacheHits + routeCacheMisses;
+  const hitRatePercent = total > 0 ? parseFloat(((routeCacheHits / total) * 100).toFixed(2)) : 0;
+  return {
+    hits: routeCacheHits,
+    misses: routeCacheMisses,
+    bypasses: routeCacheBypasses,
+    totalRequests: total + routeCacheBypasses,
+    hitRatePercent,
+  };
+}
+
 /**
  * Route Caching Middleware
  * Automatically caches JSON responses for GET requests.
@@ -25,6 +48,7 @@ export function cacheRoute(ttlSeconds: number = 300, keyPrefix: string = "route:
     const bypassHeader = req.headers["x-cache-bypass"];
     const cacheControlHeader = req.headers["cache-control"];
     if (bypassHeader === "true" || (typeof cacheControlHeader === "string" && cacheControlHeader.includes("no-cache"))) {
+      routeCacheBypasses++;
       res.setHeader("X-Cache", "BYPASS");
       return next();
     }
@@ -37,6 +61,7 @@ export function cacheRoute(ttlSeconds: number = 300, keyPrefix: string = "route:
     try {
       const cachedResponse = await cacheService.get<any>(cacheKey);
       if (cachedResponse !== null && cachedResponse !== undefined) {
+        routeCacheHits++;
         res.setHeader("X-Cache", "HIT");
         return res.status(200).json(cachedResponse);
       }
@@ -44,6 +69,7 @@ export function cacheRoute(ttlSeconds: number = 300, keyPrefix: string = "route:
       logger.warn("Route cache read error", { cacheKey, error: err.message });
     }
 
+    routeCacheMisses++;
     res.setHeader("X-Cache", "MISS");
 
     // Intercept res.json to capture response body before sending

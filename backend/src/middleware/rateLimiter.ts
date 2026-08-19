@@ -1,10 +1,18 @@
 import rateLimit, { Store, Options, IncrementResponse } from 'express-rate-limit';
 import { cacheService } from '../services/cache.service';
-import { isRedisReady } from '../config/redis';
+import { redisClient, isRedisReady, isRedisRequired } from '../config/redis';
 import { logger } from '../utils/logger';
 
+const ATOMIC_RATE_LIMIT_LUA = `
+local current = redis.call("INCR", KEYS[1])
+if current == 1 then
+  redis.call("EXPIRE", KEYS[1], ARGV[1])
+end
+return current
+`;
+
 /**
- * Custom Distributed Redis Store for express-rate-limit with memory fallback
+ * Custom Distributed Redis Store for express-rate-limit with atomic Lua script and memory fallback
  */
 class DistributedRedisStore implements Store {
   public prefix: string;
@@ -21,22 +29,35 @@ class DistributedRedisStore implements Store {
 
   async increment(key: string): Promise<IncrementResponse> {
     const fullKey = `${this.prefix}${key}`;
+    const windowSeconds = Math.ceil(this.windowMs / 1000);
 
     if (isRedisReady()) {
       try {
-        const hits = await cacheService.increment(fullKey, 1);
-        if (hits === 1) {
-          await cacheService.expire(fullKey, Math.ceil(this.windowMs / 1000));
-        }
-        const ttlSeconds = await cacheService.ttl(fullKey);
+        const rawHits = await redisClient.eval(ATOMIC_RATE_LIMIT_LUA, {
+          keys: [fullKey],
+          arguments: [windowSeconds.toString()],
+        });
+        const hits = typeof rawHits === 'number' ? rawHits : parseInt(String(rawHits), 10);
+        const ttlSeconds = await redisClient.ttl(fullKey);
         const resetTime = new Date(Date.now() + (ttlSeconds > 0 ? ttlSeconds * 1000 : this.windowMs));
         return { totalHits: hits, resetTime };
       } catch (err: any) {
-        logger.warn('Redis rate limit increment failed, using in-memory store', { error: err.message });
+        logger.warn('Redis atomic rate limit increment failed, evaluating fallback policy', { error: err.message, key: fullKey });
       }
     }
 
-    // In-memory fallback
+    // Explicit Production vs Dev Fallback Policy
+    if (isRedisRequired()) {
+      logger.error('⚠️ Rate limiter failed closed: Redis is unreachable and REDIS_REQUIRED=true in production', { key: fullKey });
+      // Fail-closed: return hit count exceeding limit so traffic is throttled rather than unbounded
+      return {
+        totalHits: 999999,
+        resetTime: new Date(Date.now() + this.windowMs),
+      };
+    }
+
+    // In-memory fallback for local development (REDIS_REQUIRED=false)
+    logger.warn('Redis offline in development: Rate limiter using local in-memory store', { key: fullKey });
     const now = Date.now();
     let entry = this.memoryFallbackStore.get(fullKey);
     if (!entry || now > entry.resetTime) {
@@ -52,7 +73,7 @@ class DistributedRedisStore implements Store {
     const fullKey = `${this.prefix}${key}`;
     if (isRedisReady()) {
       try {
-        await cacheService.decrement(fullKey, 1);
+        await redisClient.decr(fullKey);
       } catch {}
     }
     const entry = this.memoryFallbackStore.get(fullKey);
@@ -65,7 +86,7 @@ class DistributedRedisStore implements Store {
     const fullKey = `${this.prefix}${key}`;
     if (isRedisReady()) {
       try {
-        await cacheService.del(fullKey);
+        await redisClient.del(fullKey);
       } catch {}
     }
     this.memoryFallbackStore.delete(fullKey);

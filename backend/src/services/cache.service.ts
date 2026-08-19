@@ -85,7 +85,9 @@ export class CacheService {
   }
 
   /**
-   * Cache remember pattern: Return cached value if present, else call callback, cache result, and return.
+   * Cache remember pattern with Cache Stampede / Thundering Herd protection.
+   * Acquires a short-lived distributed mutex (lock:<key>) before invoking the callback.
+   * Concurrent requests poll briefly for the populated value rather than pounding the database.
    */
   async remember<T>(key: string, ttlSeconds: number, callback: () => Promise<T>): Promise<T> {
     const cached = await this.get<T>(key);
@@ -93,6 +95,54 @@ export class CacheService {
       return cached;
     }
 
+    if (isRedisReady()) {
+      const lockKey = `lock:${key}`;
+      let lockAcquired = false;
+
+      try {
+        // Attempt to acquire non-blocking lock with 5-second auto-expiration (PX 5000)
+        const res = await redisClient.set(lockKey, "1", { NX: true, PX: 5000 });
+        lockAcquired = res === "OK";
+      } catch (lockErr: any) {
+        logger.debug("Redis stampede lock acquisition notice:", { key, error: lockErr.message });
+      }
+
+      if (lockAcquired) {
+        try {
+          const freshValue = await callback();
+          if (freshValue !== undefined && freshValue !== null) {
+            await this.set(key, freshValue, ttlSeconds);
+          }
+          return freshValue;
+        } finally {
+          try {
+            await redisClient.del(lockKey);
+          } catch {}
+        }
+      } else {
+        // Lock held by another concurrent request — poll cache with brief intervals
+        const maxPollTimeMs = 1500;
+        const pollIntervalMs = 50;
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < maxPollTimeMs) {
+          await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+          const polled = await this.get<T>(key);
+          if (polled !== null && polled !== undefined) {
+            return polled;
+          }
+        }
+
+        // Fallback to direct fetch if lock holder timed out
+        const freshValue = await callback();
+        if (freshValue !== undefined && freshValue !== null) {
+          await this.set(key, freshValue, ttlSeconds);
+        }
+        return freshValue;
+      }
+    }
+
+    // In-memory fallback
     const freshValue = await callback();
     if (freshValue !== undefined && freshValue !== null) {
       await this.set(key, freshValue, ttlSeconds);
@@ -218,13 +268,35 @@ export class CacheService {
 
   /**
    * Invalidate all keys matching a glob pattern (e.g., "pg:list:*")
+   * Uses non-blocking cursor-based SCAN in batches with UNLINK and a 10,000 key safety cap.
    */
   async invalidatePattern(pattern: string): Promise<void> {
+    const MAX_KEYS_CAP = 10000;
+    const BATCH_SIZE = 200;
+    let totalDeleted = 0;
+    let batch: string[] = [];
+
     if (isRedisReady()) {
       try {
-        const keys = await redisClient.keys(pattern);
-        if (keys.length > 0) {
-          await redisClient.del(keys);
+        for await (const entry of (redisClient as any).scanIterator({ MATCH: pattern, COUNT: BATCH_SIZE })) {
+          if (Array.isArray(entry)) {
+            batch.push(...entry);
+          } else if (typeof entry === "string") {
+            batch.push(entry);
+          }
+          if (batch.length >= BATCH_SIZE) {
+            await (redisClient as any).unlink(batch);
+            totalDeleted += batch.length;
+            batch = [];
+          }
+          if (totalDeleted + batch.length >= MAX_KEYS_CAP) {
+            logger.warn("Redis invalidatePattern reached hard safety limit of 10,000 keys", { pattern, totalDeleted: totalDeleted + batch.length });
+            break;
+          }
+        }
+        if (batch.length > 0) {
+          await (redisClient as any).unlink(batch);
+          totalDeleted += batch.length;
         }
       } catch (err: any) {
         logger.warn("Redis pattern invalidation failed", { pattern, error: err.message });

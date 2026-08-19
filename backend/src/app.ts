@@ -8,7 +8,8 @@ import hpp from "hpp";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
-import { pingRedis, isRedisReady } from "./config/redis";
+import { pingRedis, isRedisReady, getRedisKeyEstimates } from "./config/redis";
+import { getRouteCacheStats } from "./middleware/cacheMiddleware";
 import { getSmtpHealth } from "./modules/email";
 import { swaggerSpec } from "./config/swagger";
 import apiRouter from "./routes/apiRouter";
@@ -185,6 +186,8 @@ app.get("/health", async (req, res) => {
 
   const redisLatency = await pingRedis();
   const redisConnected = isRedisReady();
+  const redisKeyCounts = await getRedisKeyEstimates();
+  const routeCacheStats = getRouteCacheStats();
 
   const memoryUsage = process.memoryUsage();
   const isHealthy = isDbHealthy;
@@ -217,6 +220,14 @@ app.get("/health", async (req, res) => {
       status: redisConnected ? "CONNECTED" : "DISCONNECTED_MEMORY_FALLBACK",
       latencyMs: redisLatency >= 0 ? redisLatency : "N/A",
       readyState: redisConnected,
+      keyEstimates: {
+        rateLimitKeys: redisKeyCounts.rateLimitKeys,
+        otpKeys: redisKeyCounts.otpKeys,
+        blacklistKeys: redisKeyCounts.blacklistKeys,
+      },
+    },
+    cache: {
+      routeCache: routeCacheStats,
     },
     database: {
       provider: "mongodb",
