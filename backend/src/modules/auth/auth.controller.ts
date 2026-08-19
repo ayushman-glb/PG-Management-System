@@ -81,7 +81,7 @@ export class AuthController {
     return ApiResponse.success(res, "Login successful", {
       user: result.user,
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
+      // refreshToken intentionally omitted — httpOnly cookie only (see RFC 6749 §10.3)
       deviceSecurity,
     });
   });
@@ -103,7 +103,9 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return ApiResponse.success(res, "User registered successfully", result, 201);
+    // Strip refreshToken from the response data — cookie-only, never in body
+    const { refreshToken: _rt, ...safeResult } = result as any;
+    return ApiResponse.success(res, "User registered successfully", safeResult, 201);
   });
 
   sendOtp = catchAsync(async (req: Request, res: Response) => {
@@ -279,7 +281,7 @@ export class AuthController {
 
     return ApiResponse.success(res, "Access token refreshed and rotated", {
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
+      // refreshToken intentionally omitted — httpOnly cookie only
     });
   });
 

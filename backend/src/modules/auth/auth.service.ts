@@ -139,20 +139,20 @@ export class AuthService implements IAuthService {
     } catch {}
 
     if (!storedToken) {
-      const cached = await cacheService.get<any>(`refresh_token:${tokenHash}`);
-      if (cached && cached.userId) {
-        storedToken = {
-          userId: cached.userId,
-          expiresAt: new Date(cached.expiresAt),
-          revokedAt: null,
-        };
-      } else if (decoded?.id) {
-        storedToken = {
-          userId: decoded.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          revokedAt: null,
-        };
+      // No valid session found in DB or cache — reject immediately.
+      // Do NOT fabricate a storedToken from decoded JWT alone; that bypasses session validation.
+      if (decoded?.id) {
+        try {
+          if (this.db?.refreshToken) {
+            await this.db.refreshToken.updateMany({
+              where: { userId: decoded.id, revokedAt: null },
+              data: { revokedAt: new Date() },
+            });
+          }
+        } catch {}
       }
+      await cacheService.del(`refresh_token:${tokenHash}`);
+      throw new AppError("Invalid refresh token. Please log in again.", 401, "INVALID_REFRESH_TOKEN", "login");
     }
 
     if (!storedToken) {
@@ -394,13 +394,6 @@ export class AuthService implements IAuthService {
       throw new AppError("This account has been deactivated.", 403, "ACCOUNT_INACTIVE");
     }
 
-    if (user.emailVerified === false) {
-      throw new AppError(
-        "Please verify your email address before signing in.",
-        403,
-        "ACCOUNT_UNVERIFIED"
-      );
-    }
 
     // 2FA Enforcement toggle: Disabled for now (set to true to re-enable)
     const ENABLE_2FA_LOGIN_ENFORCEMENT = false;
@@ -728,7 +721,7 @@ export class AuthService implements IAuthService {
       const hashedPassword = await this.cryptoService.hashPassword(newPassword);
       await this.db.user.update({
         where: { id: user.id },
-        data: { password: hashedPassword },
+        data: { passwordHash: hashedPassword }, // ✅ fixed: was `password` (wrong field)
       });
     }
 

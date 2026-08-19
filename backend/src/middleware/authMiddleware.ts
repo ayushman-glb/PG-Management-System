@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/appError';
 import { Role } from '@prisma/client';
 import { logger } from '../utils/logger';
-
 import { prisma } from '../config/prisma';
-
 import { tokenBlacklistService } from '../services/tokenBlacklistService';
+import { Container } from '../container';
 
 export interface AuthUserPayload {
   id: string;
@@ -44,8 +42,8 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'dev_secret_change_me_in_production';
-    const decoded = jwt.verify(token, secret) as any;
+    // Use the singleton JwtTokenService — validated secrets, not raw process.env fallback
+    const decoded = Container.tokenService.verifyAccessToken(token) as any;
 
     if (decoded.role === Role.PUBLIC || decoded.role === 'PUBLIC') {
       return next(new AppError('Permission denied. Invalid role.', 403, 'FORBIDDEN'));

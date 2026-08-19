@@ -20,7 +20,7 @@
     "test:regression": "jest src/__tests__/regression --detectOpenHandles"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.7.5",
     "@types/cookie-parser": "^1.4.8",
@@ -84,7 +84,7 @@
     "jest": "^30.4.2",
     "kill-port": "^2.0.1",
     "mongodb-memory-server": "^11.2.0",
-    "prisma": "^5.22.0",
+    "prisma": "^6.19.3",
     "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.12",

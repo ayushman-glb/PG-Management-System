@@ -22,6 +22,14 @@ export class RedisOtpService implements IOtpService {
     return otp;
   }
 
+  /**
+   * Hash an OTP with SHA-256 before storing — OTPs must never be stored in plaintext.
+   * Mirrors the refreshTokenHash pattern used in the RefreshToken Prisma model.
+   */
+  private hashOtp(otp: string): string {
+    return crypto.createHash("sha256").update(otp).digest("hex");
+  }
+
   async generateAndSendOtp(email: string): Promise<{ otp: string; expiresAt: Date; message: string; devOtp?: string }> {
     const otp = this.generateSecureOtp();
     const expiresAt = new Date(Date.now() + RedisOtpService.OTP_TTL_SECONDS * 1000);
@@ -131,7 +139,7 @@ export class RedisOtpService implements IOtpService {
 
     try {
       if (!isRedisReady()) throw new Error("Redis connection offline");
-      await redisClient.set(key, otp, { EX: ttlSeconds });
+      await redisClient.set(key, this.hashOtp(otp), { EX: ttlSeconds });
       await redisClient.set(attemptsKey, "0", { EX: ttlSeconds });
       logger.debug("OTP stored in Redis", { key });
     } catch (err: any) {
@@ -141,7 +149,7 @@ export class RedisOtpService implements IOtpService {
           data: {
             email: key.includes("email:") || key.includes("verify:") ? this.extractEmail(key) : undefined,
             phone: key.includes("phone:") ? this.extractPhone(key) : undefined,
-            otp,
+            otp: this.hashOtp(otp), // stored as SHA-256 hash, never plaintext
             purpose: this.extractPurpose(key),
             expiresAt: new Date(Date.now() + ttlSeconds * 1000),
           },
@@ -171,7 +179,7 @@ export class RedisOtpService implements IOtpService {
         return this.verifyOtpFromMongo(key, otp, attemptsKey);
       }
 
-      const isValid = storedOtp === otp;
+      const isValid = storedOtp === this.hashOtp(otp); // compare hash, not plaintext
 
       if (!isValid) {
         await redisClient.set(attemptsKey, (currentAttempts + 1).toString(), { EX: RedisOtpService.ATTEMPTS_TTL_SECONDS });
@@ -198,7 +206,7 @@ export class RedisOtpService implements IOtpService {
           ...(email && { email: { equals: email, mode: "insensitive" } }),
           ...(phone && { phone: { equals: phone, mode: "insensitive" } }),
           purpose,
-          otp,
+          otp: this.hashOtp(otp), // compare hashed value
           verified: false,
           expiresAt: { gt: new Date() },
         },
