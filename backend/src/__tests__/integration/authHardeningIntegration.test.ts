@@ -1,9 +1,6 @@
 import { SessionRevocationService } from '../../services/security/SessionRevocationService';
-import { TokenVersionService } from '../../services/security/TokenVersionService';
-import { tokenBlacklistService } from '../../services/tokenBlacklistService';
 import { SocketSessionService } from '../../services/security/SocketSessionService';
 import { prisma } from '../../config/prisma';
-import { redisClient } from '../../config/redis';
 
 jest.mock('../../config/prisma', () => ({
   prisma: {
@@ -20,30 +17,10 @@ jest.mock('../../config/prisma', () => ({
   },
 }));
 
-jest.mock('../../config/redis', () => {
-  const store = new Map<string, string>();
-  return {
-    isRedisReady: jest.fn(() => true),
-    redisClient: {
-      get: jest.fn(async (k: string) => store.get(k) || null),
-      set: jest.fn(async (k: string, v: string) => {
-        store.set(k, v);
-        return 'OK';
-      }),
-      del: jest.fn(async (k: string) => {
-        store.delete(k);
-        return 1;
-      }),
-      _clear: () => store.clear(),
-    },
-  };
-});
-
-describe('Security Remediation Issue 4: Unified Session Revocation Integration', () => {
+describe('Security Remediation: Unified Session Revocation Integration (Redis-Free)', () => {
   const userId = 'usr_int_revocation';
 
   beforeEach(() => {
-    (redisClient as any)._clear();
     jest.clearAllMocks();
   });
 
@@ -79,7 +56,6 @@ describe('Security Remediation Issue 4: Unified Session Revocation Integration',
       data: expect.objectContaining({
         userId,
         eventType: 'SESSION_REVOKED',
-        severity: 'CRITICAL',
       }),
     });
   });

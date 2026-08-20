@@ -56,7 +56,7 @@ describe('Security Remediation Issue 5: WebSocket Zero-Trust Handshake and Live 
     clearTimeout(mockSocket.data.disconnectTimer);
   });
 
-  test('should reject socket connection if access token is blacklisted in Redis', async () => {
+  test('should reject socket connection if access token is blacklisted', async () => {
     jest.spyOn(JwtTokenService.prototype, 'verifyAccessToken').mockReturnValue({
       id: mockUserId,
       email: 'ws@roombae.com',

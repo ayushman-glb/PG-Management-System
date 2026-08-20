@@ -1,6 +1,5 @@
 import { TokenVersionService } from '../../services/security/TokenVersionService';
 import { prisma } from '../../config/prisma';
-import { redisClient, isRedisReady } from '../../config/redis';
 
 jest.mock('../../config/prisma', () => ({
   prisma: {
@@ -11,32 +10,11 @@ jest.mock('../../config/prisma', () => ({
   },
 }));
 
-jest.mock('../../config/redis', () => ({
-  isRedisReady: jest.fn(),
-  redisClient: {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-  },
-}));
-
-describe('Security Remediation Issue 3: Token Version Cache Consistency', () => {
+describe('Security Remediation: Token Version Authoritative MongoDB Consistency', () => {
   const userId = 'usr_version_test';
-  let store: Map<string, string>;
 
   beforeEach(() => {
-    store = new Map<string, string>();
-    (isRedisReady as jest.Mock).mockReturnValue(true);
-
-    (redisClient.get as jest.Mock).mockImplementation(async (key: string) => store.get(key) ?? null);
-    (redisClient.set as jest.Mock).mockImplementation(async (key: string, val: any) => {
-      store.set(key, String(val));
-      return 'OK';
-    });
-    (redisClient.del as jest.Mock).mockImplementation(async (key: string) => {
-      const existed = store.delete(key);
-      return existed ? 1 : 0;
-    });
+    jest.clearAllMocks();
   });
 
   test('should return true on matching token version from cache', async () => {
@@ -46,7 +24,7 @@ describe('Security Remediation Issue 3: Token Version Cache Consistency', () => 
     const initialVersion = await TokenVersionService.getTokenVersion(userId);
     expect(initialVersion).toBe(2);
 
-    // Subsequent call should hit cache without calling MongoDB
+    // Subsequent call should hit memory cache without calling MongoDB
     (prisma.user.findUnique as jest.Mock).mockClear();
     const isValid = await TokenVersionService.isValidTokenVersion(userId, 2);
     expect(isValid).toBe(true);
@@ -60,7 +38,7 @@ describe('Security Remediation Issue 3: Token Version Cache Consistency', () => 
     expect(isValid).toBe(false);
   });
 
-  test('should atomically increment token version in MongoDB and synchronize Redis cache', async () => {
+  test('should atomically increment token version in MongoDB and synchronize cache', async () => {
     (prisma.user.update as jest.Mock).mockResolvedValue({ id: userId, tokenVersion: 4 });
 
     const newVersion = await TokenVersionService.incrementTokenVersion(userId);
@@ -70,18 +48,12 @@ describe('Security Remediation Issue 3: Token Version Cache Consistency', () => 
       data: { tokenVersion: { increment: 1 } },
       select: { tokenVersion: true },
     });
-    expect(redisClient.set).toHaveBeenCalled();
   });
 
-  test('should invalidate cache when explicitly requested', async () => {
-    await TokenVersionService.invalidateCache(userId);
-    expect(redisClient.del).toHaveBeenCalled();
-  });
-
-  test('should gracefully fall back to MongoDB if Redis is unavailable', async () => {
-    (isRedisReady as jest.Mock).mockReturnValue(false);
+  test('should invalidate cache and re-query MongoDB when explicitly requested', async () => {
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: userId, tokenVersion: 5 });
 
+    await TokenVersionService.invalidateCache(userId);
     const version = await TokenVersionService.getTokenVersion(userId);
     expect(version).toBe(5);
     expect(prisma.user.findUnique).toHaveBeenCalled();

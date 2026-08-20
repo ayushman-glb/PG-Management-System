@@ -1,108 +1,171 @@
-# 🐳 RoomBae Docker & Valkey/Redis Architecture
+# 🐳 RoomBae Docker Ecosystem & Container Architecture
 
-This document provides clear guidelines for local containerized development and explains the separation between local Valkey/Redis containers and Render-managed production Redis.
+This document provides a comprehensive reference for how, where, and why **Docker** and containerization are utilized across the RoomBae ecosystem. It covers project file structures, multi-stage build workflows, development stacks, production images, and Nginx reverse proxy configurations.
 
 ---
 
-## 🏗️ Architecture & Component Overview
+## 1. Project Docker File Structure
+
+All Docker assets are organized logically across the root, backend, frontend, and dedicated infrastructure directories:
 
 ```text
-Local Development (Host / Docker)
-┌─────────────────────────────────────────────────────────────┐
-│ Workflow A: Full Docker Stack                               │
-│  • app (Dockerfile.dev -> ts-node-dev hot reload, Port 5000)│
-│  • redis (valkey/valkey:8, Port 6379)                       │
-│  • Atlas MongoDB (cloud connection via DATABASE_URL)        │
-│                                                             │
-│ Workflow B: Hybrid Development (Fastest DX)                 │
-│  • Node.js process runs natively on Host (npm run dev)      │
-│  • Redis runs in Docker (docker compose up redis -d)        │
-└─────────────────────────────────────────────────────────────┘
-
-Production Deployment (Render)
-┌─────────────────────────────────────────────────────────────┐
-│  • Backend Web Service: Render-managed Node runtime         │
-│  • Key-Value Store: roombae-redis (Valkey 8 with TLS)       │
-│  • Secrets & Config: Set via Render Environment Dashboard   │
-└─────────────────────────────────────────────────────────────┘
+PG-Management-System/
+├── docker-compose.dev.yml          # Root development container orchestration
+├── docker/
+│   └── nginx.conf                  # Production reverse proxy template (SPA + API + WebSockets)
+│
+├── backend/
+│   ├── Dockerfile                  # Multi-stage production container build (non-root runner)
+│   ├── Dockerfile.dev              # Development container with hot reload & Prisma generation
+│   ├── .dockerignore               # Ignores node_modules, dist, logs, and local env files
+│   └── src/
+│       └── server.ts               # Production backend server with native in-memory caching
+│
+└── frontend/
+    ├── Dockerfile                  # Multi-stage container (Vite build -> Nginx Alpine runner)
+    ├── nginx.conf                  # Nginx configuration for SPA routing & /api/ reverse proxy
+    └── .dockerignore               # Ignores node_modules, dist, and build caches
 ```
 
 ---
 
-## 🚀 Local Development Workflows
+## 2. Container Architecture & Connection Topology
 
-### Workflow 1: Full Docker Stack (App + Redis Containerized)
+```
+                                  [ Browser / Client ]
+                                           │
+                                           │ Port 80 / 5173
+                                           ▼
+                 ┌──────────────────────────────────────────────────┐
+                 │       Frontend Container (Nginx Alpine)          │
+                 │   • Serves React Single Page App (try_files)     │
+                 │   • Reverse Proxies /api/  ─► http://backend:5000│
+                 │   • Reverse Proxies /socket.io/ ─► WebSocket     │
+                 └─────────────────────────┬────────────────────────┘
+                                           │
+                        roombae-dev-network│(Bridge DNS: 127.0.0.11)
+                                           ▼
+                 ┌──────────────────────────────────────────────────┐
+                 │      Backend Container (Node 20 Alpine)          │
+                 │   • Express REST API Server (Port 5000)          │
+                 │   • Socket.IO WebSocket Engine                   │
+                 │   • In-Memory Fast Cache & Rate Limiting         │
+                 └─────────────────────────┬────────────────────────┘
+                                           │
+                                           │ External Cloud Connection
+                                           ▼
+                                ┌─────────────────────────────────┐
+                                │   MongoDB Atlas (Cloud Cluster) │
+                                │ • DATABASE_URL Connection       │
+                                │ • Prisma ORM Client             │
+                                └─────────────────────────────────┘
+```
 
-Use this workflow to run both the backend API and the Valkey/Redis store in isolated Docker containers with hot-reload volume mounts.
+---
+
+## 3. Dockerfiles Breakdown
+
+### A. Backend Production Image (`backend/Dockerfile`)
+Built using a hardened, **3-stage multi-stage build** adhering to zero-trust production security principles:
+
+1. **Stage 1 (`deps`)**: Installs only production dependencies (`npm ci --omit=dev`) with native Alpine build tools (`python3`, `make`, `g++`).
+2. **Stage 2 (`builder`)**: Installs full dependencies, compiles TypeScript source tree (`npm run build`), and generates Linux-compatible Prisma Client query engines (`npx prisma generate`).
+3. **Stage 3 (`runner`)**: 
+   - Minimal Node.js 20 Alpine base.
+   - Runs as an unprivileged system user (`roombae:nodejs`, UID 1001) rather than `root`.
+   - Copies only compiled `dist/`, production `node_modules/`, and generated `.prisma` engines.
+   - Includes automatic healthcheck probe: `wget --spider http://localhost:5000/health`.
+
+### B. Backend Development Image (`backend/Dockerfile.dev`)
+Optimized for developer experience and instantaneous feedback:
+- Runs `npm run dev` with volume mounts mapped to the host filesystem.
+- Includes `curl` and `openssl` for health check diagnostics and key generation.
+- Generates Prisma client bindings automatically upon container launch.
+
+### C. Frontend Production Image (`frontend/Dockerfile`)
+Multi-stage build converting React/Vite source code into static assets served via Nginx:
+1. **Stage 1 (`builder`)**: Ingests build-time ARGs (`VITE_API_BASE_URL`, `VITE_APP_ENV`), installs packages, and compiles production bundles with Vite (`npm run build`).
+2. **Stage 2 (`runner`)**: 
+   - Minimal `nginx:alpine` image.
+   - Copies compiled `dist/` into `/usr/share/nginx/html`.
+   - Injects custom `nginx.conf` supporting SPA HTML5 history routing and dynamic upstream reverse proxying.
+
+---
+
+## 4. Reverse Proxy & Network Routing (`nginx.conf`)
+
+The Nginx configuration located at `frontend/nginx.conf` and `docker/nginx.conf` manages reverse proxy routing between the frontend client and backend API container:
+
+- **Single Page Application Routing**:
+  ```nginx
+  location / {
+      try_files $uri $uri/ /index.html;
+  }
+  ```
+- **REST API Reverse Proxy**:
+  Proxies all `/api/` traffic to the backend container alias (`http://backend:5000`):
+  ```nginx
+  location /api/ {
+      set $backend_upstream http://backend:5000;
+      proxy_pass $backend_upstream;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  ```
+- **WebSocket Socket.IO Upgrade Proxy**:
+  Maintains persistent bi-directional WebSocket tunnels with `Connection "Upgrade"`:
+  ```nginx
+  location /socket.io/ {
+      set $backend_socket http://backend:5000;
+      proxy_pass $backend_socket;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+      proxy_read_timeout 86400;
+  }
+  ```
+
+---
+
+## 5. Development Orchestration (`docker-compose.dev.yml`)
+
+The root `docker-compose.dev.yml` orchestrates the local stack on the bridge network `roombae-dev-network`:
+
+### Services Defined:
+
+1. **`app` (Backend API Server)**:
+   - **Build Context**: `./backend/Dockerfile.dev`
+   - **Ports**: `5000:5000`
+   - **Live Volume Sync**: Mounts `./backend` to `/app` while preserving container-native `/app/node_modules` and `/app/dist`.
+   - **Healthcheck**: Queries `curl -f http://localhost:5000/live` every 15 seconds.
+
+---
+
+## 6. How to Run & Work with Docker
 
 ```bash
-# Build and start all services in foreground
+# 1. Build and launch backend service in container
 docker compose -f docker-compose.dev.yml up --build
 
-# Or run in detached background mode
+# 2. Or run in background detached mode
 docker compose -f docker-compose.dev.yml up -d --build
 
-# View logs
+# 3. Stream backend container logs
 docker compose -f docker-compose.dev.yml logs -f app
 
-# Stop containers
+# 4. Stop and tear down containers
 docker compose -f docker-compose.dev.yml down
 ```
 
-- **App URL**: `http://localhost:5000`
-- **Health Check**: `http://localhost:5000/health`
-- **Internal Networking**: Inside Docker, `app` connects to Valkey via `redis:6379`.
-
 ---
 
-### Workflow 2: Hybrid (Redis in Docker + Node.js on Host)
+## 7. Summary of Ports & Network Endpoints
 
-Use this workflow for the fastest local development feedback loop with local debugging.
-
-```bash
-# 1. Start only the Valkey/Redis container in the background
-docker compose -f docker-compose.dev.yml up redis -d
-
-# 2. Verify Redis container is healthy
-docker ps --filter "name=roombae-redis-dev"
-
-# 3. Start backend on host (from ./backend directory)
-cd backend
-npm run dev
-```
-
-- **Host Networking**: The backend reads `.env.development` and connects to `localhost:6379` with the configured password.
-- **In-Memory Fallback**: If Redis is not started, the application automatically falls back to an active in-memory cache and Redlock simulator without crashing.
-
----
-
-### 🧪 Verification & Audit Script
-
-To verify your local Redis connection independently of the web server:
-
-```bash
-cd backend
-npx ts-node scripts/testRedisDevPipeline.ts
-```
-
----
-
-## 🔒 Production Redis Notice
-
-- **Managed Service**: Production uses Render Key-Value (`roombae-redis`, Valkey 8).
-- **Security & TLS**: Connections strictly require TLS (`rediss://` scheme and `REDIS_TLS=true`).
-- **Configuration Files**: `.env.production` is a read-only source of truth; all production secrets are injected via the Render Environment Dashboard. Docker Compose files are never used in production on Render.
-
----
-
-## 🛠️ Process Lifecycle & Port Management (Windows / Cross-Platform)
-
-### 1. Automated Stale Port Clearing (`predev` & `prebuild`)
-
-- **Root Cause**: On Windows, when `ts-node-dev` is terminated via `SIGINT` (Ctrl+C), orphaned background `node.exe` worker processes can occasionally hold locks on port 5000/5001 or on Prisma query engine binary DLLs (`node_modules/.prisma/client/query_engine-windows.dll.node`).
-- **Solution**: Cross-platform npm pre-hooks (`predev` and `prebuild`) invoke `kill-port 5000 5001` before starting the server or generating binaries.
-- **Watcher Configuration**: `dev` script explicitly ignores `node_modules` (`--ignore-watch node_modules`) to avoid open file descriptors on compiled engines.
-
-### 2. Resilient Prisma Generation (`scripts/generate-with-retry.js`)
-
-- `npm run build` and `npm run prisma:generate` wrap `prisma generate` in an exponential retry loop (up to 3 attempts with 1.5s delay) to gracefully absorb transient Windows OS file-rename locks during fast reload/rebuild cycles.
+| Service | Container Port | Host Port | Protocol | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Frontend (Nginx)** | `80` | `80` / `5173` | HTTP / WS | Web UI, SPA routing, Reverse proxy |
+| **Backend API** | `5000` | `5000` | HTTP / WS | Express REST API, SOAP ERP, Socket.IO |
+| **MongoDB Atlas** | Cloud | Cloud | TCP / TLS | Database persistence layer |

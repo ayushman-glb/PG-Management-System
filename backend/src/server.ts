@@ -1,7 +1,6 @@
 import dns from "dns";
 import http from "http";
 import { AddressInfo } from "net";
-
 import fs from "fs";
 
 // Force IPv4-first resolution for Node DNS lookups across all environments (Render, Linux, Docker, Windows)
@@ -19,7 +18,6 @@ if (process.platform === "win32" && !fs.existsSync("/.dockerenv")) {
 import { app } from "./app";
 import { env, resolvedPort } from "./config/env";
 import { prisma, connectPrismaWithTimeout } from "./config/prisma";
-import { verifyRedisConnection } from "./config/redis";
 import { logger } from "./utils/logger";
 import { SocketServer } from "./socket/socketServer";
 import { CronWorkerService } from "./jobs/cronWorkers";
@@ -30,17 +28,7 @@ async function bootstrap() {
   try {
     logger.info("✓ Environment Loaded");
 
-    // Phase 5 - Redis Connection Validation & Telemetry
-    const redisHealth = await verifyRedisConnection();
-    const redisStatus = redisHealth.connected
-      ? `Connected (${redisHealth.latencyMs}ms, DB ${redisHealth.database})`
-      : "Disconnected / In-Memory Fallback Active";
-
-    if (redisHealth.connected) {
-      logger.info(`✓ Redis Connected | Host: ${redisHealth.host}:${redisHealth.port} | Database: ${redisHealth.database} | Latency: ${redisHealth.latencyMs}ms`);
-    }
-
-    // Phase 5 - MongoDB Connection Validation & Telemetry
+    // MongoDB Connection Validation & Telemetry
     let mongoStatus = "Disconnected";
     let connectionTimeMs = 0;
     let mongoHost = "Unknown";
@@ -128,7 +116,7 @@ async function bootstrap() {
           `🚀 RoomBae Enterprise Backend (PID ${process.pid})`,
           "────────────────────────────────────────────────────────",
           `✅ MongoDB Atlas Connected    : ${mongoStatus}`,
-          `✅ Redis Cache & RateLimiter : ${redisStatus}`,
+          `✅ In-Memory Fast Cache & RL  : Active`,
           `✅ Authentication Module Ready: Active`,
           `✅ REST APIs Loaded           : ${apiUrl}`,
           `✅ Swagger Loaded             : ${swaggerUrl}`,

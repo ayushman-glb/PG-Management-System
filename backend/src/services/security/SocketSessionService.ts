@@ -56,7 +56,7 @@ export class SocketSessionService {
       // 1. Verify JWT signature & expiration
       const decoded = tokenService.verifyAccessToken(rawToken);
 
-      // 2. Verify Blacklist in Redis
+      // 2. Verify Blacklist in RevokedToken database store
       const isBlacklisted = await tokenBlacklistService.isTokenBlacklisted(rawToken);
       if (isBlacklisted) {
         logger.warn(`🔌 Socket rejected: Access token is blacklisted (ID: ${socket.id})`);

@@ -235,7 +235,7 @@ export default function AdminConsole({ navigate }: Props) {
             <div className="space-y-3 text-xs font-mono">
               {[
                 { label: "MongoDB Replica Cluster", status: "CONNECTED", latency: "14ms", color: "text-emerald-400" },
-                { label: "Redis Memory Cache Stub", status: "ONLINE", latency: "2ms", color: "text-emerald-400" },
+                { label: "Enterprise In-Memory Fast Cache", status: "ONLINE", latency: "<1ms", color: "text-emerald-400" },
                 { label: "Transactional Notification Relay", status: "HEALTHY", latency: "120ms", color: "text-emerald-400" },
                 { label: "AES-256-GCM Cryptographic Service", status: "ACTIVE", latency: "<1ms", color: "text-emerald-400" },
               ].map((s) => (

@@ -1,4 +1,3 @@
-import { redisClient, isRedisReady } from "../config/redis";
 import { logger } from "../utils/logger";
 
 interface MemoryCacheItem {
@@ -7,17 +6,22 @@ interface MemoryCacheItem {
 }
 
 /**
- * Enterprise Production Cache Service
- * Wraps Redis with automatic JSON serialization, TypeScript generics,
- * pattern invalidation, remember cache pattern, and a resilient in-memory fallback.
+ * Enterprise In-Memory Cache Service (Redis-Free Architecture)
+ * 
+ * Provides fast $O(1)$ in-memory caching with automatic JSON serialization,
+ * TypeScript generics, pattern invalidation, and thundering-herd/stampede-safe
+ * Promise deduplication.
  */
 export class CacheService {
   private static instance: CacheService;
-  private inMemoryFallback: Map<string, MemoryCacheItem> = new Map();
+  private memoryStore: Map<string, MemoryCacheItem> = new Map();
+  private inFlightPromises: Map<string, Promise<any>> = new Map();
 
   private constructor() {
-    // Periodic memory cleanup for expired items in fallback mode
-    setInterval(() => this.cleanupMemoryStore(), 60000).unref();
+    // Periodic memory cleanup for expired items every 60 seconds
+    if (typeof setInterval !== "undefined") {
+      setInterval(() => this.cleanupMemoryStore(), 60000).unref();
+    }
   }
 
   public static getInstance(): CacheService {
@@ -29,9 +33,9 @@ export class CacheService {
 
   private cleanupMemoryStore(): void {
     const now = Date.now();
-    for (const [key, item] of this.inMemoryFallback.entries()) {
+    for (const [key, item] of this.memoryStore.entries()) {
       if (item.expiresAt && now > item.expiresAt) {
-        this.inMemoryFallback.delete(key);
+        this.memoryStore.delete(key);
       }
     }
   }
@@ -40,54 +44,25 @@ export class CacheService {
    * Get cached item with automatic JSON parsing
    */
   async get<T>(key: string): Promise<T | null> {
-    if (isRedisReady()) {
-      try {
-        const raw = await redisClient.get(key);
-        if (!raw) return null;
-        return JSON.parse(raw) as T;
-      } catch (err: any) {
-        logger.warn("Redis GET failed, attempting memory fallback", { key, error: err.message });
-      }
-    }
-
-    // In-memory fallback
-    const item = this.inMemoryFallback.get(key);
+    const item = this.memoryStore.get(key);
     if (!item) return null;
     if (item.expiresAt && Date.now() > item.expiresAt) {
-      this.inMemoryFallback.delete(key);
+      this.memoryStore.delete(key);
       return null;
     }
     return item.value as T;
   }
 
   /**
-   * Set cached item with optional TTL in seconds and automatic JSON stringification
+   * Set cached item with optional TTL in seconds
    */
   async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
-    const serialized = JSON.stringify(value);
-
-    if (isRedisReady()) {
-      try {
-        if (ttlSeconds && ttlSeconds > 0) {
-          await redisClient.set(key, serialized, { EX: ttlSeconds });
-        } else {
-          await redisClient.set(key, serialized);
-        }
-        return;
-      } catch (err: any) {
-        logger.warn("Redis SET failed, using memory fallback", { key, error: err.message });
-      }
-    }
-
-    // In-memory fallback
     const expiresAt = ttlSeconds && ttlSeconds > 0 ? Date.now() + ttlSeconds * 1000 : undefined;
-    this.inMemoryFallback.set(key, { value, expiresAt });
+    this.memoryStore.set(key, { value, expiresAt });
   }
 
   /**
-   * Cache remember pattern with Cache Stampede / Thundering Herd protection.
-   * Acquires a short-lived distributed mutex (lock:<key>) before invoking the callback.
-   * Concurrent requests poll briefly for the populated value rather than pounding the database.
+   * Cache remember pattern with Cache Stampede / Thundering Herd protection via Promise deduplication.
    */
   async remember<T>(key: string, ttlSeconds: number, callback: () => Promise<T>): Promise<T> {
     const cached = await this.get<T>(key);
@@ -95,19 +70,10 @@ export class CacheService {
       return cached;
     }
 
-    if (isRedisReady()) {
-      const lockKey = `lock:${key}`;
-      let lockAcquired = false;
-
-      try {
-        // Attempt to acquire non-blocking lock with 5-second auto-expiration (PX 5000)
-        const res = await redisClient.set(lockKey, "1", { NX: true, PX: 5000 });
-        lockAcquired = res === "OK";
-      } catch (lockErr: any) {
-        logger.debug("Redis stampede lock acquisition notice:", { key, error: lockErr.message });
-      }
-
-      if (lockAcquired) {
+    // Deduplicate in-flight concurrent invocations for the same key
+    let promise = this.inFlightPromises.get(key);
+    if (!promise) {
+      promise = (async () => {
         try {
           const freshValue = await callback();
           if (freshValue !== undefined && freshValue !== null) {
@@ -115,72 +81,30 @@ export class CacheService {
           }
           return freshValue;
         } finally {
-          try {
-            await redisClient.del(lockKey);
-          } catch {}
+          this.inFlightPromises.delete(key);
         }
-      } else {
-        // Lock held by another concurrent request — poll cache with brief intervals
-        const maxPollTimeMs = 1500;
-        const pollIntervalMs = 50;
-        const startTime = Date.now();
-
-        while (Date.now() - startTime < maxPollTimeMs) {
-          await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
-          const polled = await this.get<T>(key);
-          if (polled !== null && polled !== undefined) {
-            return polled;
-          }
-        }
-
-        // Fallback to direct fetch if lock holder timed out
-        const freshValue = await callback();
-        if (freshValue !== undefined && freshValue !== null) {
-          await this.set(key, freshValue, ttlSeconds);
-        }
-        return freshValue;
-      }
+      })();
+      this.inFlightPromises.set(key, promise);
     }
 
-    // In-memory fallback
-    const freshValue = await callback();
-    if (freshValue !== undefined && freshValue !== null) {
-      await this.set(key, freshValue, ttlSeconds);
-    }
-    return freshValue;
+    return promise;
   }
 
   /**
    * Delete specific cache key
    */
   async del(key: string): Promise<void> {
-    if (isRedisReady()) {
-      try {
-        await redisClient.del(key);
-      } catch (err: any) {
-        logger.warn("Redis DEL failed", { key, error: err.message });
-      }
-    }
-    this.inMemoryFallback.delete(key);
+    this.memoryStore.delete(key);
   }
 
   /**
    * Check if cache key exists
    */
   async exists(key: string): Promise<boolean> {
-    if (isRedisReady()) {
-      try {
-        const count = await redisClient.exists(key);
-        return count > 0;
-      } catch (err: any) {
-        logger.warn("Redis EXISTS failed", { key, error: err.message });
-      }
-    }
-
-    const item = this.inMemoryFallback.get(key);
+    const item = this.memoryStore.get(key);
     if (!item) return false;
     if (item.expiresAt && Date.now() > item.expiresAt) {
-      this.inMemoryFallback.delete(key);
+      this.memoryStore.delete(key);
       return false;
     }
     return true;
@@ -190,16 +114,7 @@ export class CacheService {
    * Set expiration TTL in seconds for a key
    */
   async expire(key: string, ttlSeconds: number): Promise<boolean> {
-    if (isRedisReady()) {
-      try {
-        const res = await redisClient.expire(key, ttlSeconds);
-        return Boolean(res);
-      } catch (err: any) {
-        logger.warn("Redis EXPIRE failed", { key, error: err.message });
-      }
-    }
-
-    const item = this.inMemoryFallback.get(key);
+    const item = this.memoryStore.get(key);
     if (!item) return false;
     item.expiresAt = Date.now() + ttlSeconds * 1000;
     return true;
@@ -209,15 +124,7 @@ export class CacheService {
    * Get remaining TTL in seconds for a key (-1 if no expiry, -2 if key does not exist)
    */
   async ttl(key: string): Promise<number> {
-    if (isRedisReady()) {
-      try {
-        return await redisClient.ttl(key);
-      } catch (err: any) {
-        logger.warn("Redis TTL failed", { key, error: err.message });
-      }
-    }
-
-    const item = this.inMemoryFallback.get(key);
+    const item = this.memoryStore.get(key);
     if (!item) return -2;
     if (!item.expiresAt) return -1;
     const diffSeconds = Math.ceil((item.expiresAt - Date.now()) / 1000);
@@ -228,17 +135,6 @@ export class CacheService {
    * Increment integer value of a key
    */
   async increment(key: string, value: number = 1): Promise<number> {
-    if (isRedisReady()) {
-      try {
-        if (value === 1) {
-          return await redisClient.incr(key);
-        }
-        return await redisClient.incrBy(key, value);
-      } catch (err: any) {
-        logger.warn("Redis INCR failed", { key, error: err.message });
-      }
-    }
-
     const current = (await this.get<number>(key)) || 0;
     const nextVal = current + value;
     await this.set(key, nextVal);
@@ -249,17 +145,6 @@ export class CacheService {
    * Decrement integer value of a key
    */
   async decrement(key: string, value: number = 1): Promise<number> {
-    if (isRedisReady()) {
-      try {
-        if (value === 1) {
-          return await redisClient.decr(key);
-        }
-        return await redisClient.decrBy(key, value);
-      } catch (err: any) {
-        logger.warn("Redis DECR failed", { key, error: err.message });
-      }
-    }
-
     const current = (await this.get<number>(key)) || 0;
     const nextVal = current - value;
     await this.set(key, nextVal);
@@ -268,62 +153,21 @@ export class CacheService {
 
   /**
    * Invalidate all keys matching a glob pattern (e.g., "pg:list:*")
-   * Uses non-blocking cursor-based SCAN in batches with UNLINK and a 10,000 key safety cap.
    */
   async invalidatePattern(pattern: string): Promise<void> {
-    const MAX_KEYS_CAP = 10000;
-    const BATCH_SIZE = 200;
-    let totalDeleted = 0;
-    let batch: string[] = [];
-
-    if (isRedisReady()) {
-      try {
-        for await (const entry of (redisClient as any).scanIterator({ MATCH: pattern, COUNT: BATCH_SIZE })) {
-          if (Array.isArray(entry)) {
-            batch.push(...entry);
-          } else if (typeof entry === "string") {
-            batch.push(entry);
-          }
-          if (batch.length >= BATCH_SIZE) {
-            await (redisClient as any).unlink(batch);
-            totalDeleted += batch.length;
-            batch = [];
-          }
-          if (totalDeleted + batch.length >= MAX_KEYS_CAP) {
-            logger.warn("Redis invalidatePattern reached hard safety limit of 10,000 keys", { pattern, totalDeleted: totalDeleted + batch.length });
-            break;
-          }
-        }
-        if (batch.length > 0) {
-          await (redisClient as any).unlink(batch);
-          totalDeleted += batch.length;
-        }
-      } catch (err: any) {
-        logger.warn("Redis pattern invalidation failed", { pattern, error: err.message });
-      }
-    }
-
-    // In-memory fallback pattern match (convert glob pattern to regex)
     const regexPattern = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
-    for (const key of this.inMemoryFallback.keys()) {
+    for (const key of this.memoryStore.keys()) {
       if (regexPattern.test(key)) {
-        this.inMemoryFallback.delete(key);
+        this.memoryStore.delete(key);
       }
     }
   }
 
   /**
-   * Flush all keys (Caution)
+   * Flush all keys
    */
   async flush(): Promise<void> {
-    if (isRedisReady()) {
-      try {
-        await redisClient.flushDb();
-      } catch (err: any) {
-        logger.warn("Redis FLUSHDB failed", { error: err.message });
-      }
-    }
-    this.inMemoryFallback.clear();
+    this.memoryStore.clear();
   }
 }
 

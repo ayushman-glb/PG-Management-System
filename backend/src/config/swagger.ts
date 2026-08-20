@@ -73,7 +73,7 @@ const options: swaggerJSDoc.Options = {
               properties: {
                 rest: { type: "string" },
                 soap: { type: "string" },
-                redis: { type: "string" },
+                cache: { type: "string" },
               },
             },
           },

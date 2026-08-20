@@ -499,6 +499,19 @@ model DeviceHistory {
   createdAt  DateTime @default(now())
 }
 
+model RevokedToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tokenHash String   @unique
+  userId    String?  @db.ObjectId
+  expiresAt DateTime
+  revokedAt DateTime @default(now())
+  reason    String?
+
+  @@index([expiresAt])
+}
+
+
+
 model Owner {
   id               String        @id @default(auto()) @map("_id") @db.ObjectId
   userId           String        @unique @db.ObjectId

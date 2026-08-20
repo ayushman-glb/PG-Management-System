@@ -1,6 +1,5 @@
 import { PrismaClient, User, Role } from '@prisma/client';
 import { prisma as defaultPrisma } from '../../config/prisma';
-import { redisClient, isRedisReady } from '../../config/redis';
 import { SocketServer } from '../../socket/socketServer';
 import { TokenVersionService } from '../security/TokenVersionService';
 import { logger } from '../../utils/logger';
@@ -31,7 +30,7 @@ export class CascadeUpdateService {
   }
 
   /**
-   * Atomically cascades user profile updates across User, Owner, Resident, Redis, and WebSockets.
+   * Atomically cascades user profile updates across User, Owner, Resident, TokenVersion, and WebSockets.
    */
   async updateUserData(
     userId: string,
@@ -113,20 +112,9 @@ export class CascadeUpdateService {
       return user;
     });
 
-    // 5. Invalidate Redis Caches
-    let cacheInvalidated = false;
-    if (isRedisReady()) {
-      try {
-        await Promise.all([
-          redisClient.del(`user:${userId}`),
-          redisClient.del(`user:profile:${userId}`),
-          redisClient.del(`user:auth:${userId}`),
-        ]);
-        cacheInvalidated = true;
-      } catch (err: any) {
-        logger.warn('⚠️ Redis cache invalidation error:', err.message);
-      }
-    }
+    // 5. Invalidate local token version cache
+    await TokenVersionService.invalidateCache(userId);
+    const cacheInvalidated = true;
 
     // 6. Increment Token Version if requested (e.g. role, email, status changes)
     let tokenVersionIncremented = false;

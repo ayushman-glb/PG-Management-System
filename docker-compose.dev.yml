@@ -1,26 +1,6 @@
 version: '3.8'
 
 services:
-  redis:
-    image: valkey/valkey:8
-    container_name: roombae-redis-dev
-    hostname: redis
-    command: valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5}
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-      - ./docker/redis/redis.conf:/usr/local/etc/valkey/valkey.conf:ro
-    healthcheck:
-      test: ["CMD-SHELL", "valkey-cli -a ${REDIS_PASSWORD:-Rdb@RoomBae_dev94a7e2b1c8f5} ping | grep PONG || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 3s
-    networks:
-      - roombae-dev-network
-    restart: unless-stopped
-
   app:
     build:
       context: ./backend
@@ -28,21 +8,12 @@ services:
     container_name: roombae-backend-dev
     env_file:
       - ./backend/.env.development
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_URL=redis://:Rdb@RoomBae_dev94a7e2b1c8f5@redis:6379/0
-      - REDIS_PASSWORD=Rdb@RoomBae_dev94a7e2b1c8f5
-      - REDIS_TLS=false
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
       - /app/node_modules
       - /app/dist
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/live || exit 1"]
       interval: 15s
@@ -57,7 +28,3 @@ networks:
   roombae-dev-network:
     name: roombae-dev-network
     driver: bridge
-
-volumes:
-  redis-data:
-    name: roombae-redis-dev-data

@@ -8,7 +8,6 @@ import hpp from "hpp";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
-import { pingRedis, isRedisReady, getRedisKeyEstimates } from "./config/redis";
 import { getRouteCacheStats } from "./middleware/cacheMiddleware";
 import { getSmtpHealth } from "./modules/email";
 import { swaggerSpec } from "./config/swagger";
@@ -202,9 +201,6 @@ app.get("/health", async (req, res) => {
     isDbHealthy = false;
   }
 
-  const redisLatency = await pingRedis();
-  const redisConnected = isRedisReady();
-  const redisKeyCounts = await getRedisKeyEstimates();
   const routeCacheStats = getRouteCacheStats();
 
   const memoryUsage = process.memoryUsage();
@@ -234,16 +230,6 @@ app.get("/health", async (req, res) => {
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime()),
     latencyMs: Date.now() - startTime,
-    redis: {
-      status: redisConnected ? "CONNECTED" : "DISCONNECTED_MEMORY_FALLBACK",
-      latencyMs: redisLatency >= 0 ? redisLatency : "N/A",
-      readyState: redisConnected,
-      keyEstimates: {
-        rateLimitKeys: redisKeyCounts.rateLimitKeys,
-        otpKeys: redisKeyCounts.otpKeys,
-        blacklistKeys: redisKeyCounts.blacklistKeys,
-      },
-    },
     cache: {
       routeCache: routeCacheStats,
     },
@@ -288,14 +274,11 @@ app.get("/ready", async (req, res) => {
     dbConnected = false;
   }
 
-  const redisConnected = isRedisReady();
-
   if (dbConnected) {
     return res.status(200).json({
       status: "READY",
       message: "Backend and database are accepting incoming traffic.",
       database: "CONNECTED",
-      redis: redisConnected ? "CONNECTED" : "DISCONNECTED_MEMORY_FALLBACK",
       timestamp: new Date().toISOString(),
     });
   } else {
@@ -303,7 +286,6 @@ app.get("/ready", async (req, res) => {
       status: "NOT_READY",
       message: "Database connection unreachable. Backend cannot process transactional requests.",
       database: "DISCONNECTED",
-      redis: redisConnected ? "CONNECTED" : "DISCONNECTED",
       timestamp: new Date().toISOString(),
     });
   }

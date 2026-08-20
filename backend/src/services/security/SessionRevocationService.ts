@@ -134,7 +134,7 @@ export class SessionRevocationService {
       await TokenVersionService.incrementTokenVersion(userId);
     }
 
-    // 2. Post-commit: Sync / invalidate Redis cache
+    // 2. Post-commit: Sync / invalidate local process cache
     await TokenVersionService.syncCache(userId);
 
     // 3. Forcibly close and broadcast revocation to all active WebSockets

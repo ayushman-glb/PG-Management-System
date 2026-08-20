@@ -106,7 +106,7 @@ export class AuthService implements IAuthService {
       logger.debug("RefreshToken DB write skipped:", { userId, error: dbErr?.message });
     }
 
-    // Cache active session token in Redis / Memory store
+    // Cache active session token in fast in-memory store
     try {
       await cacheService.set(`refresh_token:${tokenHash}`, { userId, expiresAt: expiresAt.toISOString() }, ttlSeconds);
     } catch (cacheErr: any) {
@@ -842,7 +842,7 @@ export class AuthService implements IAuthService {
     let userId = userIdOrPreAuthToken;
     let isPreAuth = false;
 
-    // Check PreAuthChallengeService first (dual Redis + MongoDB fallback)
+    // Check PreAuthChallengeService (MongoDB single-use verification)
     const challengeResult = await PreAuthChallengeService.verifyAndConsumeChallenge(
       userIdOrPreAuthToken,
       visitorId

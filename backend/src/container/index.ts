@@ -3,10 +3,10 @@ import { prisma } from '../config/prisma';
 // Infrastructure Services
 import { BcryptCryptoService } from '../infrastructure/crypto/BcryptCryptoService';
 import { JwtTokenService } from '../infrastructure/crypto/JwtTokenService';
-import { RedisLockService } from '../infrastructure/cache/RedisLockService';
+import { DatabaseLockService } from '../infrastructure/cache/DatabaseLockService';
 import { PdfKitInvoiceService } from '../infrastructure/pdf/PdfKitInvoiceService';
 import { PdfKitAgreementService } from '../infrastructure/pdf/PdfKitAgreementService';
-import { RedisOtpService } from '../infrastructure/otp/RedisOtpService';
+import { DatabaseOtpService } from '../infrastructure/otp/DatabaseOtpService';
 import { TotpService } from '../infrastructure/crypto/TotpService';
 
 // Document System
@@ -52,10 +52,10 @@ export class Container {
 
   private static _cryptoService?: BcryptCryptoService;
   private static _tokenService?: JwtTokenService;
-  private static _lockService?: RedisLockService;
+  private static _lockService?: DatabaseLockService;
   private static _pdfInvoiceService?: PdfKitInvoiceService;
   private static _pdfAgreementService?: PdfKitAgreementService;
-  private static _otpService?: RedisOtpService;
+  private static _otpService?: DatabaseOtpService;
 
   private static _userRepository?: AuthRepository;
   private static _propertyRepository?: PropertyRepository;
@@ -124,7 +124,7 @@ export class Container {
 
   public static get lockService() {
     if (!this._lockService) {
-      this._lockService = new RedisLockService();
+      this._lockService = new DatabaseLockService();
     }
     return this._lockService;
   }
@@ -145,7 +145,7 @@ export class Container {
 
   public static get otpService() {
     if (!this._otpService) {
-      this._otpService = new RedisOtpService();
+      this._otpService = new DatabaseOtpService();
     }
     return this._otpService;
   }

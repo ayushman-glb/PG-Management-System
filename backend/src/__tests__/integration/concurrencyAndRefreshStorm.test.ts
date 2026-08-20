@@ -2,7 +2,6 @@ import { TokenVersionService } from '../../services/security/TokenVersionService
 import { SocketSessionService } from '../../services/security/SocketSessionService';
 import { JwtTokenService } from '../../infrastructure/crypto/JwtTokenService';
 import { tokenBlacklistService } from '../../services/tokenBlacklistService';
-import { redisClient, isRedisReady } from '../../config/redis';
 import { prisma } from '../../config/prisma';
 
 jest.mock('../../config/prisma', () => ({
@@ -20,15 +19,6 @@ jest.mock('../../config/prisma', () => ({
   },
 }));
 
-jest.mock('../../config/redis', () => ({
-  redisClient: {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-  },
-  isRedisReady: jest.fn(),
-}));
-
 jest.mock('../../services/tokenBlacklistService', () => ({
   tokenBlacklistService: {
     isTokenBlacklisted: jest.fn(),
@@ -36,13 +26,9 @@ jest.mock('../../services/tokenBlacklistService', () => ({
   },
 }));
 
-describe('Concurrency & Load Simulation: Refresh Storm & Multi-Session Validation', () => {
+describe('Concurrency & Load Simulation: Refresh Storm & Multi-Session Validation (Redis-Free)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (isRedisReady as jest.Mock).mockReturnValue(true);
-    (redisClient.get as jest.Mock).mockResolvedValue('1');
-    (redisClient.set as jest.Mock).mockResolvedValue('OK');
-    (redisClient.del as jest.Mock).mockResolvedValue(1);
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({ tokenVersion: 1 });
     (prisma.user.update as jest.Mock).mockResolvedValue({ tokenVersion: 2 });
     (prisma.refreshToken.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
