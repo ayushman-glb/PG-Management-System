@@ -94,14 +94,17 @@ app.use(
 setupSoapServer(app);
 
 
-// Swagger Documentation Endpoints — only accessible in non-production environments
-if (env.NODE_ENV !== "production") {
-  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.get("/api/docs.json", (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.send(swaggerSpec);
-  });
-}
+// Interactive Swagger Documentation Endpoints
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api/docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+app.get("/api/v1/docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 
 // Public JWKS Endpoint for Asymmetric RS256 Verification
 app.get("/.well-known/jwks.json", (req, res) => {

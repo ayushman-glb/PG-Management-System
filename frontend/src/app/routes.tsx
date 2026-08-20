@@ -4,27 +4,54 @@ import type { Page } from "./App";
 import { RoleGuard } from "@guards/RoleGuard";
 import { RouteGuard } from "@guards/RouteGuard";
 
-const Landing = lazy(() => import("@features/dashboard/pages/Landing"));
-const Dashboard = lazy(() => import("@features/dashboard/pages/Dashboard"));
-const AdminConsole = lazy(() => import("@features/dashboard/pages/AdminConsole"));
-const Properties = lazy(() => import("@features/properties/pages/Properties"));
-const Residents = lazy(() => import("@features/residents/pages/Residents"));
-const Billing = lazy(() => import("@features/billing/pages/Billing"));
-const Complaints = lazy(() => import("@features/complaints/pages/Complaints"));
-const Analytics = lazy(() => import("@features/analytics/pages/Analytics"));
-const PGListing = lazy(() => import("@features/properties/pages/PGListing"));
-const PGDetails = lazy(() => import("@features/properties/pages/PGDetails"));
-const Auth = lazy(() => import("@features/auth/pages/Auth"));
-const CompleteProfile = lazy(() => import("@features/auth/pages/CompleteProfile"));
-const Operations = lazy(() => import("@features/operations/pages/Operations"));
+/**
+ * Enhanced lazy import wrapper that safely recovers from deployment chunk mismatches (404).
+ */
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (err: any) {
+      console.warn("[lazyWithRetry] Module import failed, attempting reload recovery...", err);
+      const isChunkError =
+        err?.message?.includes("Failed to fetch dynamically imported module") ||
+        err?.message?.includes("Importing a module script failed") ||
+        err?.name === "ChunkLoadError";
+      if (isChunkError) {
+        const key = "lazy_chunk_reload_once";
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "true");
+          window.location.reload();
+        }
+      }
+      throw err;
+    }
+  });
+}
 
-const ContentPage = lazy(() => import("@features/dashboard/pages/ContentPage"));
-const ResidentPortal = lazy(() => import("@features/residents/pages/ResidentPortal"));
-const ResidentRegister = lazy(() => import("@features/residents/pages/ResidentRegister"));
-const ShortlistPage = lazy(() => import("@features/search/pages/ShortlistPage"));
-const ToursPage = lazy(() => import("@features/search/pages/ToursPage"));
-const ApplicationPage = lazy(() => import("@features/search/pages/ApplicationPage"));
-const MoveInDashboardPage = lazy(() => import("@features/search/pages/MoveInDashboardPage"));
+const Landing = lazyWithRetry(() => import("@features/dashboard/pages/Landing"));
+const Dashboard = lazyWithRetry(() => import("@features/dashboard/pages/Dashboard"));
+const AdminConsole = lazyWithRetry(() => import("@features/dashboard/pages/AdminConsole"));
+const Properties = lazyWithRetry(() => import("@features/properties/pages/Properties"));
+const Residents = lazyWithRetry(() => import("@features/residents/pages/Residents"));
+const Billing = lazyWithRetry(() => import("@features/billing/pages/Billing"));
+const Complaints = lazyWithRetry(() => import("@features/complaints/pages/Complaints"));
+const Analytics = lazyWithRetry(() => import("@features/analytics/pages/Analytics"));
+const PGListing = lazyWithRetry(() => import("@features/properties/pages/PGListing"));
+const PGDetails = lazyWithRetry(() => import("@features/properties/pages/PGDetails"));
+const Auth = lazyWithRetry(() => import("@features/auth/pages/Auth"));
+const CompleteProfile = lazyWithRetry(() => import("@features/auth/pages/CompleteProfile"));
+const Operations = lazyWithRetry(() => import("@features/operations/pages/Operations"));
+
+const ContentPage = lazyWithRetry(() => import("@features/dashboard/pages/ContentPage"));
+const ResidentPortal = lazyWithRetry(() => import("@features/residents/pages/ResidentPortal"));
+const ResidentRegister = lazyWithRetry(() => import("@features/residents/pages/ResidentRegister"));
+const ShortlistPage = lazyWithRetry(() => import("@features/search/pages/ShortlistPage"));
+const ToursPage = lazyWithRetry(() => import("@features/search/pages/ToursPage"));
+const ApplicationPage = lazyWithRetry(() => import("@features/search/pages/ApplicationPage"));
+const MoveInDashboardPage = lazyWithRetry(() => import("@features/search/pages/MoveInDashboardPage"));
 
 interface RoutesProps {
   page: Page;

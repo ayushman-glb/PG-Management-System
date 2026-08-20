@@ -149,9 +149,13 @@ export class RiskEngine {
       riskScore += 0;
       signals.push("NEW_DEVICE_IDENTIFIED (Alert & Telemetry Workflow)");
     } else {
-      if (existingDevice.status === "BLOCKED" || existingDevice.status === "REVOKED" || existingDevice.status === "REJECTED") {
-        riskScore += 80;
-        signals.push("REVOKED_OR_BLOCKED_DEVICE (+80)");
+      if (existingDevice.status === "BLOCKED") {
+        riskScore += 100;
+        signals.push("ADMIN_BLOCKED_DEVICE (+100)");
+      } else if (existingDevice.status === "REVOKED" || existingDevice.status === "REJECTED") {
+        // Previously revoked/rejected devices trigger the new device alert modal for re-trust, NOT a hard login block
+        riskScore += 0;
+        signals.push("PREVIOUSLY_REJECTED_DEVICE (Alert Modal Required)");
       } else if (existingDevice.status === "TRUSTED" || existingDevice.trustLevel === "TRUSTED") {
         riskScore -= 40;
         signals.push("KNOWN_TRUSTED_DEVICE (-40)");
@@ -243,12 +247,15 @@ export class RiskEngine {
     let decision: "ALLOW" | "STEP_UP" | "BLOCK" = "ALLOW";
     let riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" = "LOW";
 
-    if (finalScore >= 70) {
+    if (existingDevice?.status === "BLOCKED") {
       decision = "BLOCK";
       riskLevel = "CRITICAL";
+    } else if (finalScore >= 70) {
+      decision = "STEP_UP";
+      riskLevel = "HIGH";
     } else if (finalScore >= 40) {
       decision = "STEP_UP";
-      riskLevel = finalScore >= 55 ? "HIGH" : "MEDIUM";
+      riskLevel = "MEDIUM";
     } else {
       decision = "ALLOW";
       riskLevel = "LOW";

@@ -277,7 +277,10 @@ export class DeviceService {
       });
     } else {
       // Existing device
-      requiresAlert = existingDevice.status === "NEW";
+      requiresAlert =
+        existingDevice.status === "NEW" ||
+        existingDevice.status === "REVOKED" ||
+        existingDevice.status === "REJECTED";
 
       await this.deviceRepository.updateDeviceActivity(existingDevice.id, {
         ipAddress: effectiveIp,
@@ -307,8 +310,34 @@ export class DeviceService {
           emailSent: false,
           userAgent: context.userAgent,
         });
-      } else if (existingDevice.status === "NEW") {
-        // Create pending log for this login attempt
+      } else if (requiresAlert) {
+        // Create pending log for this login attempt and trigger email alert
+        let emailSent = false;
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, name: true },
+          });
+
+          if (user && user.email) {
+            const { emailService } = require("../email");
+            emailSent = await emailService.sendNewDeviceLoginAlert({
+              email: user.email,
+              name: user.name,
+              deviceLabel,
+              screenResolution,
+              ipAddress: effectiveIp,
+              location: location.formattedLocation,
+              loginTime: new Date().toUTCString(),
+            }).catch((err: any) => {
+              logger.warn("Failed to dispatch unverified device login alert email:", err);
+              return false;
+            });
+          }
+        } catch (emailErr) {
+          logger.warn("Email alert trigger error for existing unverified device:", emailErr);
+        }
+
         await this.deviceRepository.createLoginLog({
           userId,
           deviceId: existingDevice.id,
@@ -322,7 +351,7 @@ export class DeviceService {
           latitude: location.latitude,
           longitude: location.longitude,
           status: "PENDING_ALERT",
-          emailSent: false,
+          emailSent: !!emailSent,
           userAgent: context.userAgent,
         });
       }
