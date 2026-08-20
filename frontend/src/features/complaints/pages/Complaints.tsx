@@ -189,25 +189,6 @@ export default function Complaints({ navigate }: Props) {
     []
   );
 
-  if (showSkeleton) {
-    return <ComplaintsSkeleton />;
-  }
-
-  const handleCreateComplaint = async (title: string, category: string, description: string, priority: string) => {
-    try {
-      await api.post("/complaints", {
-        title,
-        category,
-        description,
-        priority,
-      });
-
-      setShowModal(false);
-    } catch {
-      setShowModal(false);
-    }
-  };
-
   useEffect(() => {
     api.listComplaints().then(data => {
       if (Array.isArray(data) && data.length > 0) {
@@ -236,6 +217,25 @@ export default function Complaints({ navigate }: Props) {
       }
     }).catch(() => {});
   }, []);
+
+  if (showSkeleton) {
+    return <ComplaintsSkeleton />;
+  }
+
+  const handleCreateComplaint = async (title: string, category: string, description: string, priority: string) => {
+    try {
+      await api.post("/complaints", {
+        title,
+        category,
+        description,
+        priority,
+      });
+
+      setShowModal(false);
+    } catch {
+      setShowModal(false);
+    }
+  };
 
   const handleDrop = (targetCol: string) => {
     if (!dragging || dragging.from === targetCol) return;

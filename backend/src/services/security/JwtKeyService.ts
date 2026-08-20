@@ -95,49 +95,54 @@ export class JwtKeyService {
   public static verifyAccessToken<T = AccessTokenPayload>(token: string): T {
     this.initKeys();
 
-    try {
-      const decodedComplete = jwt.decode(token, { complete: true });
-      const headerKid = decodedComplete?.header?.kid;
-
-      let keyToUse: string | null = null;
-      if (headerKid && this.keyStore.has(headerKid)) {
-        keyToUse = this.keyStore.get(headerKid)!.publicKey;
-      } else {
-        // Fallback to active key or first available key in keyStore
-        const activeKey = this.keyStore.get(this.currentKid);
-        keyToUse = activeKey ? activeKey.publicKey : null;
-      }
-
-      if (keyToUse) {
-        try {
-          return jwt.verify(token, keyToUse, { algorithms: ['RS256'] }) as T;
-        } catch (rsaErr: any) {
-          // If multiple keys exist, attempt verification against older valid keys
-          for (const [kid, entry] of this.keyStore.entries()) {
-            if (entry.publicKey !== keyToUse) {
-              try {
-                return jwt.verify(token, entry.publicKey, { algorithms: ['RS256'] }) as T;
-              } catch {
-                // Continue checking remaining keys
-              }
-            }
-          }
-          throw rsaErr;
-        }
-      }
-    } catch (err: any) {
-      // Graceful fallback to HMAC verification if token was signed with secret (e.g. during test migration)
-      if (env.JWT_SECRET && (err.name === 'JsonWebTokenError' || err.message?.includes('algorithm') || err.message?.includes('invalid signature'))) {
-        try {
-          return jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] }) as T;
-        } catch {
-          throw err;
-        }
-      }
-      throw err;
+    if (!token) {
+      throw new Error("Access token required");
     }
 
-    throw new Error('Access token verification failed: No matching key found');
+    const decodedComplete: any = jwt.decode(token, { complete: true });
+    const alg = decodedComplete?.header?.alg;
+
+    // Direct HMAC verification if signed with HS256/symmetric key
+    if (alg && alg.startsWith("HS")) {
+      const secret = env.JWT_SECRET || "dev_jwt_access_secret_min_32_chars_fallback";
+      return jwt.verify(token, secret, { algorithms: ["HS256", "HS384", "HS512"] }) as T;
+    }
+
+    const headerKid = decodedComplete?.header?.kid;
+    let keyToUse: string | null = null;
+    if (headerKid && this.keyStore.has(headerKid)) {
+      keyToUse = this.keyStore.get(headerKid)!.publicKey;
+    } else {
+      const activeKey = this.keyStore.get(this.currentKid);
+      keyToUse = activeKey ? activeKey.publicKey : null;
+    }
+
+    if (keyToUse) {
+      try {
+        return jwt.verify(token, keyToUse, { algorithms: ["RS256"] }) as T;
+      } catch (rsaErr: any) {
+        for (const [kid, entry] of this.keyStore.entries()) {
+          if (entry.publicKey !== keyToUse) {
+            try {
+              return jwt.verify(token, entry.publicKey, { algorithms: ["RS256"] }) as T;
+            } catch {
+              // Continue checking
+            }
+          }
+        }
+      }
+    }
+
+    // Graceful fallback to HMAC verification
+    if (env.JWT_SECRET) {
+      try {
+        return jwt.verify(token, env.JWT_SECRET) as T;
+      } catch {
+        // Continue to final error
+      }
+    }
+
+    throw new Error("Access token verification failed");
   }
 
   /**

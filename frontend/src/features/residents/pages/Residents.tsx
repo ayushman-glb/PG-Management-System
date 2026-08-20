@@ -35,6 +35,7 @@ export default function Residents({ navigate }: Props) {
   const [residents, setResidents] = useState<any[]>([]);
   const [timeline, setTimeline] = useState<any[]>([]);
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
   const { darkMode } = useTheme();
 
   const { showSkeleton } = useAdaptiveLoading(
@@ -49,10 +50,6 @@ export default function Residents({ navigate }: Props) {
     []
   );
 
-  if (showSkeleton) {
-    return <ResidentsSkeleton />;
-  }
-
   useEffect(() => {
     if (!selected) return;
     const status = (selected.status || "").toLowerCase();
@@ -65,13 +62,15 @@ export default function Residents({ navigate }: Props) {
     ]);
   }, [selected]);
 
+  if (showSkeleton) {
+    return <ResidentsSkeleton />;
+  }
+
   const filtered = residents.filter(
     (r: any) =>
       (r.name || "").toLowerCase().includes(search.toLowerCase()) ||
       (r.room || "").toLowerCase().includes(search.toLowerCase()),
   );
-
-  const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = () => {
     setIsExporting(true);

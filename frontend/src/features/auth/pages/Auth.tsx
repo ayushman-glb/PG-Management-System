@@ -75,6 +75,10 @@ export default function Auth({ navigate }: Props) {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailError, setEmailError] = useState("");
 
+  const [preAuthToken, setPreAuthToken] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState("");
+  const isSubmittingRef = React.useRef(false);
+
   const handlePhoneInputChange = (newVal: string) => {
     const clean = newVal.replace(/\D/g, "").slice(0, 10);
     setPhone(clean);
@@ -387,10 +391,6 @@ export default function Auth({ navigate }: Props) {
       setIsEmailLoading(false);
     }
   };
-
-  const [preAuthToken, setPreAuthToken] = useState<string | null>(null);
-  const [totpCode, setTotpCode] = useState("");
-  const isSubmittingRef = React.useRef(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
