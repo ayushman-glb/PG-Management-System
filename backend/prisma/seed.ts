@@ -523,7 +523,6 @@ async function main() {
       paidAt: new Date(),
       paymentMethod: 'UPI_ONLINE',
       status: PaymentStatus.PAID,
-      transactionId: 'pay_rzp_ankur_2026_001',
       razorpayOrderId: 'order_RB_AURORA_001',
       razorpayPaymentId: 'pay_rzp_ankur_2026_001',
       razorpaySignature: 'sig_rzp_verified_hmac_2026',
@@ -561,10 +560,11 @@ async function main() {
     data: {
       pgId: pg.id,
       dayOfWeek: 'MONDAY',
-      breakfast: 'Masala Dosa, Sambar, Coconut Chutney, Tea/Coffee',
-      lunch: 'Steamed Rice, Dal Tadka, Paneer Butter Masala, Phulka, Curd',
-      eveningSnack: 'Chai, Veg Pakora',
-      dinner: 'Jeera Rice, Dal Fry, Seasonal Mixed Vegetables, Chapati, Gulab Jamun',
+      breakfastMenu: 'Masala Dosa, Sambar, Coconut Chutney, Tea/Coffee',
+      lunchMenu: 'Steamed Rice, Dal Tadka, Paneer Butter Masala, Phulka, Curd',
+      snacksMenu: 'Chai, Veg Pakora',
+      dinnerMenu: 'Jeera Rice, Dal Fry, Seasonal Mixed Vegetables, Chapati, Gulab Jamun',
+      calories: 2200,
     },
   });
 

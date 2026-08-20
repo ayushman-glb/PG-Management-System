@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { prisma } from '../config/prisma';
 import { logger } from '../utils/logger';
 import { TicketStatus, Priority, PaymentStatus, ResidentStatus } from '@prisma/client';
+import { OutboxService } from '../services/outbox/OutboxService';
 
 export class CronWorkerService {
   private static isInitialized = false;
@@ -28,6 +29,14 @@ export class CronWorkerService {
     cron.schedule('0 * * * *', async () => {
       logger.info('🔄 [Cron Worker] Running Hourly Complaint SLA Escalator...');
       await CronWorkerService.escalateOverdueComplaints();
+    });
+
+    // 4. Outbox Event Processor (runs every 2 minutes)
+    cron.schedule('*/2 * * * *', async () => {
+      const count = await OutboxService.processPendingEvents();
+      if (count > 0) {
+        logger.info(`🔄 [Outbox Cron] Processed ${count} pending outbox events.`);
+      }
     });
 
     logger.info('✅ Background cron workers initialized successfully.');

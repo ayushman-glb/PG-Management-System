@@ -58,6 +58,9 @@ export const globalErrorHandler = (
   if (err.code === 'P2003') {
     return ApiResponse.error(res, 'Database foreign key reference violation.', [], 400, 'FOREIGN_KEY_VIOLATION', 'check_relations');
   }
+  if (err.code === 'P2023') {
+    return ApiResponse.error(res, 'Malformed or invalid database identifier format provided.', [], 400, 'INVALID_IDENTIFIER', 'verify_resource_id');
+  }
 
   // 5. JWT Authentication Errors
   if (err.name === 'JsonWebTokenError') {

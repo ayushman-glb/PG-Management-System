@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { RoomController } from './room.controller';
+import { authenticate } from '../../middleware/authMiddleware';
 
 const router = Router();
 const controller = new RoomController();
+
+router.use(authenticate);
 
 router.put('/:roomId/convert', controller.convertType);
 router.get('/pg/:pgId', controller.listByPg);

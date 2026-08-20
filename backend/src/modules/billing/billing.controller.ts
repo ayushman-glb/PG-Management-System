@@ -5,6 +5,7 @@ import { ApiResponse } from '../../utils/apiResponse';
 import { AuthRequest } from '../../middleware/authMiddleware';
 import { Container } from '../../container';
 import { prisma } from '../../config/prisma';
+import { Role } from '@prisma/client';
 
 export class BillingController {
   constructor(private readonly billingService: IBillingService) {}
@@ -202,15 +203,49 @@ export class BillingController {
   });
 
   getAnalytics = catchAsync(async (req: AuthRequest, res: Response) => {
-    const ownerId = req.query.ownerId as string | undefined;
+    const role = req.user?.role;
+    let ownerId: string | undefined;
+
+    if (role === Role.SUPER_ADMIN || role === Role.ADMIN) {
+      // Admins can optionally scope to a specific owner via query param
+      ownerId = req.query.ownerId as string | undefined;
+    } else if (role === Role.OWNER || role === Role.MANAGER) {
+      // OWNER: derive their own ownerId — never trust the client-supplied value
+      const owner = await Container.db.owner.findFirst({ where: { userId: req.user!.id }, select: { id: true } });
+      ownerId = owner?.id;
+    }
+
     const analytics = await this.billingService.getPaymentAnalytics(ownerId);
     return ApiResponse.success(res, 'Payment analytics retrieved', analytics);
   });
 
   getPayments = catchAsync(async (req: AuthRequest, res: Response) => {
     const { pgId, status } = req.query;
+    const role = req.user?.role;
     const where: any = {};
-    if (pgId) where.pgId = pgId as string;
+
+    if (role === Role.SUPER_ADMIN || role === Role.ADMIN) {
+      // Admins can filter by any pgId or see all
+      if (pgId) where.pgId = pgId as string;
+    } else if (role === Role.OWNER || role === Role.MANAGER) {
+      // OWNER: resolve their authorized PG IDs from JWT user
+      const owner = await Container.db.owner.findFirst({ where: { userId: req.user!.id }, select: { id: true } });
+      if (!owner) return ApiResponse.error(res, 'Owner profile not found', [], 404);
+      const ownerPgs = await Container.db.pG.findMany({ where: { ownerId: owner.id }, select: { id: true } });
+      const ownerPgIds = ownerPgs.map((p: any) => p.id);
+
+      if (pgId && !ownerPgIds.includes(pgId as string)) {
+        return ApiResponse.error(res, 'Forbidden: you do not own the requested property', [], 403, 'FORBIDDEN');
+      }
+      // Scope to only their PG IDs
+      where.pgId = pgId ? (pgId as string) : { in: ownerPgIds };
+    } else {
+      // RESIDENT: only see their own payments
+      const resident = await Container.db.resident.findFirst({ where: { userId: req.user!.id }, select: { id: true } });
+      if (!resident) return ApiResponse.error(res, 'Resident profile not found', [], 404);
+      where.residentId = resident.id;
+    }
+
     if (status) where.status = status as string;
     const payments = await Container.db.payment.findMany({ where, orderBy: { createdAt: 'desc' } });
     return ApiResponse.success(res, 'Payments retrieved', payments);
@@ -223,7 +258,30 @@ export class BillingController {
   });
 
   getResidentFines = catchAsync(async (req: AuthRequest, res: Response) => {
-    const residentId = req.params.residentId || (req.query.residentId as string);
+    const role = req.user?.role;
+    let residentId = req.params.residentId || (req.query.residentId as string);
+
+    if (role === Role.RESIDENT) {
+      // RESIDENT: can only view their own fines — derive residentId from JWT
+      const resident = await Container.db.resident.findFirst({ where: { userId: req.user!.id }, select: { id: true } });
+      if (!resident) return ApiResponse.error(res, 'Resident profile not found', [], 404);
+      residentId = resident.id; // Override any client-supplied ID
+    } else if (role === Role.OWNER || role === Role.MANAGER) {
+      // OWNER: verify the target resident belongs to one of their PGs
+      if (residentId) {
+        const resident = await Container.db.resident.findUnique({ where: { id: residentId }, select: { pgId: true } });
+        if (resident?.pgId) {
+          const owner = await Container.db.owner.findFirst({ where: { userId: req.user!.id }, select: { id: true } });
+          const ownerPgs = owner ? await Container.db.pG.findMany({ where: { ownerId: owner.id }, select: { id: true } }) : [];
+          const ownerPgIds = ownerPgs.map((p: any) => p.id);
+          if (!ownerPgIds.includes(resident.pgId)) {
+            return ApiResponse.error(res, 'Forbidden: resident does not belong to your property', [], 403, 'FORBIDDEN');
+          }
+        }
+      }
+    }
+    // SUPER_ADMIN/ADMIN: no additional scoping
+
     const fines = await Container.db.fine.findMany({ where: { residentId }, orderBy: { createdAt: 'desc' } });
     return ApiResponse.success(res, 'Resident fines retrieved', fines);
   });

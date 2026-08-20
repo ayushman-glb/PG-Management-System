@@ -439,33 +439,24 @@ sequenceDiagram
 ## 13. Enterprise CORS & Cross-Site Security Architecture
 
 ### 13.1 Single Source of Truth (`backend/src/config/corsOrigins.ts`)
-Both Express REST and Socket.IO use identical origin normalization:
+Both Express REST and Socket.IO use a centralized dynamic origin validator supporting exact matches and RegExp patterns:
 ```typescript
-export const getAllowedOrigins = (): string[] => {
-  const allowed = new Set<string>();
-  allowed.add("https://ayushman-glb.github.io");
+// backend/src/config/corsOrigins.ts
+export const allowedOriginPatterns: (string | RegExp)[] = [
+  'https://ayushman-glb.github.io',
+  /^https:\/\/.*\.vercel\.app$/, // Dynamic Vercel preview & production deployments
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+];
 
-  if (env.NODE_ENV !== "production") {
-    allowed.add("http://localhost:5173");
-    allowed.add("http://localhost:3000");
-    allowed.add("http://127.0.0.1:5173");
-    allowed.add("http://127.0.0.1:3000");
-  }
-
-  if (env.CORS_ORIGIN) {
-    env.CORS_ORIGIN.split(",").forEach((origin) => {
-      const trimmed = origin.trim();
-      if (trimmed) {
-        try {
-          const parsed = new URL(trimmed);
-          allowed.add(parsed.origin);
-        } catch {
-          allowed.add(trimmed.replace(/\/$/, ""));
-        }
-      }
-    });
-  }
-  return Array.from(allowed);
+export const isOriginAllowed = (origin: string): boolean => {
+  return allowedOriginPatterns.some((pattern) => {
+    if (typeof pattern === 'string') return pattern === origin;
+    if (pattern instanceof RegExp) return pattern.test(origin);
+    return false;
+  });
 };
 ```
 
@@ -479,7 +470,23 @@ export const getAllowedOrigins = (): string[] => {
 
 ## 14. Authentication & Authorization Communication Flow
 
-### 14.1 Role-Based Access Control (RBAC) Hierarchy
+### 14.1 Authoritative Seed Personas
+The system incorporates three authoritative role representations for local development and testing:
+1. **Super Admin ("GOD")**: `ayushman@globussoft.in` (`Role.SUPER_ADMIN`), password `987456`, phone OTP `123456`, email OTP `000000`.
+2. **PG Owner (Ayushman Saha)**: `ayushmansaha917@gmail.com` (`Role.OWNER`), phone `+916297750585`, password `123456`, KYC `VERIFIED`, Subscription `PROFESSIONAL`, Company: *Ayushman Living Solutions Pvt Ltd*, Property: *RoomBae Aurora Residency*.
+3. **Resident (Ankur Saha)**: `ankursaha985@gmail.com` (`Role.RESIDENT`), phone `+918653826643`, code `RES1001`, password `654123`, allocated to *Building A → Floor 1 → Room 101 → Bed 101-A*.
+
+### 14.2 Fail-Closed OTP Override Security Invariant
+In `backend/src/config/env.ts`, a fail-closed startup check guarantees that `OTP_DEV_OVERRIDE` cannot be activated in production:
+```typescript
+if (env.NODE_ENV === "production" && (env.OTP_DEV_OVERRIDE === "true" || process.env.OTP_DEV_OVERRIDE === "true")) {
+  const fatalMsg = "FATAL SECURITY ERROR: OTP_DEV_OVERRIDE is strictly forbidden in production mode!";
+  console.error(`🚨 ${fatalMsg}`);
+  throw new Error(fatalMsg);
+}
+```
+
+### 14.3 Role-Based Access Control (RBAC) Hierarchy
 
 ```mermaid
 graph TD

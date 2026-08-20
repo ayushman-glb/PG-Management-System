@@ -332,12 +332,12 @@ graph LR
 
 | Configuration Attribute | Local Development | Production Environment |
 |---|---|---|
-| **Frontend Web App** | `http://localhost:5173` | `https://ayushman-glb.github.io` (GitHub Pages) |
+| **Frontend Web App** | `http://localhost:5173` | `https://ayushman-glb.github.io` (GitHub Pages) / Vercel Previews |
 | **Backend REST API Base**| `http://localhost:5000/api/v1` | `https://pg-management-system.onrender.com/api/v1` (Render) |
 | **WebSocket Engine (WSS)**| `ws://localhost:5000` | `wss://pg-management-system.onrender.com` |
 | **SOAP ERP Billing WSDL** | `http://localhost:5000/soap/billing?wsdl` | `https://pg-management-system.onrender.com/soap/billing?wsdl` |
 | **Cookie Security Flags** | `SameSite=Lax; HttpOnly` | `SameSite=None; Secure; HttpOnly` |
-| **Media CDN Storage** | Cloudinary Dev Prefix | Cloudinary Production (`RoomBae-Production`) |
+| **Media CDN Storage** | Cloudinary Dev Prefix | Cloudinary Production (`RoomBae-development` / `RoomBae-Production`) |
 
 ---
 
@@ -345,36 +345,25 @@ graph LR
 
 ### 7.1 Cross-Origin Resource Sharing (CORS) Engine (`backend/src/config/corsOrigins.ts`)
 
-RoomBae enforces a centralized, synchronized origin whitelist across both Express HTTP and Socket.IO engines:
+RoomBae enforces a centralized, dynamic origin validation engine across both Express HTTP and Socket.IO engines supporting exact matches and RegExp patterns:
 
 ```typescript
-export const getAllowedOrigins = (): string[] => {
-  const allowed = new Set<string>();
-  // Production Frontend
-  allowed.add("https://ayushman-glb.github.io");
+// backend/src/config/corsOrigins.ts
+export const allowedOriginPatterns: (string | RegExp)[] = [
+  'https://ayushman-glb.github.io',
+  /^https:\/\/.*\.vercel\.app$/, // Dynamic Vercel preview & production deployments
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+];
 
-  // Local Development
-  if (env.NODE_ENV !== "production") {
-    allowed.add("http://localhost:5173");
-    allowed.add("http://localhost:3000");
-    allowed.add("http://127.0.0.1:5173");
-    allowed.add("http://127.0.0.1:3000");
-  }
-
-  // Parse CORS_ORIGIN environment variable
-  if (env.CORS_ORIGIN) {
-    env.CORS_ORIGIN.split(",").forEach((origin) => {
-      const trimmed = origin.trim();
-      if (trimmed) {
-        try {
-          allowed.add(new URL(trimmed).origin);
-        } catch {
-          allowed.add(trimmed.replace(/\/$/, ""));
-        }
-      }
-    });
-  }
-  return Array.from(allowed);
+export const isOriginAllowed = (origin: string): boolean => {
+  return allowedOriginPatterns.some((pattern) => {
+    if (typeof pattern === 'string') return pattern === origin;
+    if (pattern instanceof RegExp) return pattern.test(origin);
+    return false;
+  });
 };
 ```
 
@@ -387,24 +376,35 @@ export const getAllowedOrigins = (): string[] => {
 
 # 8. Server Initialization & Internal Lifecycle Pipeline
 
-### 8.1 Bootstrap Sequence (`backend/src/server.ts` & `backend/src/app.ts`)
+### 8.1 Fail-Closed Security Startup Guard (`backend/src/config/env.ts`)
+During bootstrap, `env.ts` evaluates all configuration schemas using Zod. It enforces a strict **fail-closed security invariant**:
+```typescript
+if (env.NODE_ENV === "production" && (env.OTP_DEV_OVERRIDE === "true" || process.env.OTP_DEV_OVERRIDE === "true")) {
+  const fatalMsg = "FATAL SECURITY ERROR: OTP_DEV_OVERRIDE is strictly forbidden in production mode!";
+  console.error(`🚨 ${fatalMsg}`);
+  throw new Error(fatalMsg);
+}
+```
+If `OTP_DEV_OVERRIDE` is enabled in production, the server crashes immediately before opening network listeners.
+
+### 8.2 Bootstrap Sequence (`backend/src/server.ts` & `backend/src/app.ts`)
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Node as Node.js Runtime
-    participant Env as Zod env.ts
+    participant Env as Zod env.ts (Fail-Closed Check)
     participant DB as MongoDB Atlas (Prisma)
     participant App as Express app.ts
     participant Server as HTTP Server (server.ts)
     participant Socket as Socket.IO Server
 
-    Node->>Env: Validate environment schema
+    Node->>Env: Validate environment schema & fail-closed guards
     Env-->>Node: Environment verified
     Node->>DB: prisma.$runCommandRaw({ ping: 1 })
     DB-->>Node: Database connected (ping acknowledged)
     Node->>App: Register middleware stack in exact order
-    App->>App: trust proxy -> CORS -> CorrelationId -> Helmet -> Compression -> CookieParser -> JsonParser -> MongoSanitize -> HPP -> Idempotency -> ValidateCsrf -> RateLimiter -> Router
+    App->>App: trust proxy -> Dynamic CORS -> CorrelationId -> Helmet -> Compression -> CookieParser -> JsonParser -> MongoSanitize -> HPP -> Idempotency -> ValidateCsrf -> RateLimiter -> Router
     Node->>Server: http.createServer(app)
     Node->>Socket: initSocketServer(server)
     Server->>Server: listen(PORT)
@@ -651,7 +651,18 @@ sequenceDiagram
 
 # 18. Authentication, Authorization & Session Security Architecture
 
-### 18.1 Token Architecture
+### 18.1 Authoritative Seed Personas
+The system incorporates three authoritative role representations:
+1. **Super Admin ("GOD")**: `ayushman@globussoft.in` (`Role.SUPER_ADMIN`), password `987456`, phone OTP `123456`, email OTP `000000`.
+2. **PG Owner (Ayushman Saha)**: `ayushmansaha917@gmail.com` (`Role.OWNER`), phone `+916297750585`, password `123456`, KYC `VERIFIED`, Subscription `PROFESSIONAL`, Company: *Ayushman Living Solutions Pvt Ltd*, Property: *RoomBae Aurora Residency*.
+3. **Resident (Ankur Saha)**: `ankursaha985@gmail.com` (`Role.RESIDENT`), phone `+918653826643`, code `RES1001`, password `654123`, allocated to *Building A → Floor 1 → Room 101 → Bed 101-A*.
+
+### 18.2 Multi-Factor OTP Subsystem
+- **Phone OTP**: Dispatched via Twilio SMS. In local development with `OTP_DEV_OVERRIDE=true`, generates deterministic `123456` and accepts `123456`.
+- **Email OTP**: Dispatched via Brevo / SMTP Nodemailer. In local development with `OTP_DEV_OVERRIDE=true`, generates deterministic `000000` and accepts `000000` or `123456`.
+- **Fail-Closed Guard**: If `NODE_ENV === 'production'` and `OTP_DEV_OVERRIDE === 'true'`, the application process crashes at startup to prevent test code compromise.
+
+### 18.3 Token Architecture
 - **Access Tokens**: RS256 asymmetric JWTs signed with RSA-2048 private key (with HS256 fallback). Tokens expire in 15 minutes and contain claims: `{ id, email, role, tokenVersion }`.
 - **Public JWKS**: Public keys are exposed at `GET /.well-known/jwks.json` for external service verification.
 - **Refresh Tokens**: Opaque 256-bit cryptographic hex strings stored in `HttpOnly; Secure; SameSite=None` cookies. Stored in MongoDB as SHA-256 hashes with token family chains.

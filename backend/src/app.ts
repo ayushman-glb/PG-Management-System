@@ -266,9 +266,6 @@ app.get("/", (req, res) => {
 // REST API v1 Routes
 app.use(env.API_PREFIX, apiRouter);
 
-// Initialize SOAP ERP Service
-setupSoapServer(app);
-
 // Catch-all 404 handler for unmatched routes (returns standard JSON error envelope)
 app.use((req, res) => {
   res.status(404).json({
