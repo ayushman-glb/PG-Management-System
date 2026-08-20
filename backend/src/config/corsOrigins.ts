@@ -36,8 +36,8 @@ export const getAllowedOrigins = (): string[] => {
             return trimmed.replace(/\/$/, "").toLowerCase();
           }
         })
-        .filter(Boolean)
-    )
+        .filter(Boolean),
+    ),
   );
 };
 
@@ -52,14 +52,27 @@ export const isOriginAllowed = (origin?: string): boolean => {
     // fallback to trimmed
   }
 
-  // In development, allow any localhost / 127.0.0.1 port
+  // 1. In development, allow any localhost / 127.0.0.1 port
   const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
   if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
     return true;
   }
 
+  // 2. Dynamic subdomain pattern matching for trusted cloud deployment platforms
+  const isRenderSubdomain = /^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(cleanOrigin);
+  const isGitHubPages = /^https:\/\/[a-z0-9-]+\.github\.io$/.test(cleanOrigin);
+  const isVercelSubdomain = /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(cleanOrigin);
+  const isNetlifySubdomain = /^https:\/\/[a-z0-9-]+\.netlify\.app$/.test(cleanOrigin);
+
   const allowed = getAllowedOrigins();
-  return allowed.includes(cleanOrigin) || isLocalhost;
+  return (
+    allowed.includes(cleanOrigin) ||
+    isLocalhost ||
+    isRenderSubdomain ||
+    isGitHubPages ||
+    isVercelSubdomain ||
+    isNetlifySubdomain
+  );
 };
 
 export const corsOptions: CorsOptions = {

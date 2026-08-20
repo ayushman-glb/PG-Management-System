@@ -61,8 +61,11 @@ class ApiClient {
     }
 
     let res: Response;
+    const cleanEndpoint = endpoint ? (endpoint.startsWith("/") ? endpoint : `/${endpoint}`) : "";
+    const fullUrl = `${API_CONFIG.BASE_URL.replace(/\/+$/, "")}${cleanEndpoint}`;
+
     try {
-      res = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+      res = await fetch(fullUrl, {
         ...options,
         headers,
         credentials: "include",
