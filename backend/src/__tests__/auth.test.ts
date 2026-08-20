@@ -155,7 +155,7 @@ describe('RoomBae Enterprise Authentication System Unit Tests', () => {
       accountStatus: 'ACTIVE'
     });
 
-    await expect(authService.login('oauth@roombae.com', 'Password123!')).rejects.toThrow('Google OAuth');
+    await expect(authService.login('oauth@roombae.com', '')).rejects.toThrow('Google OAuth');
   });
 
   test('Should refresh access token using valid refresh token', async () => {
