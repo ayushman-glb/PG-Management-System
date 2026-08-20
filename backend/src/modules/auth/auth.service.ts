@@ -15,125 +15,21 @@ import { prisma } from "../../config/prisma";
 import { logger } from "../../utils/logger";
 import { TotpService } from "../../infrastructure/crypto/TotpService";
 import { cacheService } from "../../services/cache.service";
-import { tokenBlacklistService } from "../../services/tokenBlacklistService";
 import { emailService } from "../email";
 import * as crypto from "crypto";
 import { RiskEngine } from "../../services/security/RiskEngine";
 import { PreAuthChallengeService } from "../../services/security/PreAuthChallengeService";
 import { SessionRevocationService } from "../../services/security/SessionRevocationService";
-import { TokenVersionService } from "../../services/security/TokenVersionService";
-import { EncryptionService } from "../../services/security/EncryptionService";
 
-const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
-const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png";
-
-const AUTHORITATIVE_USERS: Record<
-  string,
-  {
-    role: Role;
-    name: string;
-    pass: string;
-    phone?: string;
-    email: string;
-    residentCode?: string;
-  }
-> = {
-  "ayushmansaha917@gmail.com": {
-    role: Role.OWNER,
-    name: "Ayushman Saha",
-    pass: "123456",
-    phone: "+916297750585",
-    email: "ayushmansaha917@gmail.com",
-  },
-  "6297750585": {
-    role: Role.OWNER,
-    name: "Ayushman Saha",
-    pass: "123456",
-    phone: "+916297750585",
-    email: "ayushmansaha917@gmail.com",
-  },
-  "+916297750585": {
-    role: Role.OWNER,
-    name: "Ayushman Saha",
-    pass: "123456",
-    phone: "+916297750585",
-    email: "ayushmansaha917@gmail.com",
-  },
-  "ankursaha985@gmail.com": {
-    role: Role.RESIDENT,
-    name: "Ankur Saha",
-    pass: "654123",
-    phone: "+918653826643",
-    email: "ankursaha985@gmail.com",
-    residentCode: "RES1001",
-  },
-  "res1001": {
-    role: Role.RESIDENT,
-    name: "Ankur Saha",
-    pass: "654123",
-    phone: "+918653826643",
-    email: "ankursaha985@gmail.com",
-    residentCode: "RES1001",
-  },
-  "8653826643": {
-    role: Role.RESIDENT,
-    name: "Ankur Saha",
-    pass: "654123",
-    phone: "+918653826643",
-    email: "ankursaha985@gmail.com",
-    residentCode: "RES1001",
-  },
-  "+918653826643": {
-    role: Role.RESIDENT,
-    name: "Ankur Saha",
-    pass: "654123",
-    phone: "+918653826643",
-    email: "ankursaha985@gmail.com",
-    residentCode: "RES1001",
-  },
-  "ayushman@globussoft.in": {
-    role: Role.SUPER_ADMIN,
-    name: "GOD",
-    pass: "987456",
-    phone: "+919900000001",
-    email: "ayushman@globussoft.in",
-  },
-  "admin@roombae.com": {
-    role: Role.SUPER_ADMIN,
-    name: "Platform Admin",
-    pass: "Admin@12345",
-    email: "admin@roombae.com",
-  },
-  "owner@roombae.com": {
-    role: Role.OWNER,
-    name: "Demo Owner",
-    pass: "Owner@12345",
-    email: "owner@roombae.com",
-  },
-  "resident@roombae.com": {
-    role: Role.RESIDENT,
-    name: "Demo Resident",
-    pass: "Resident@12345",
-    email: "resident@roombae.com",
-  },
-  "manager@roombae.com": {
-    role: Role.MANAGER,
-    name: "Demo Manager",
-    pass: "Manager@12345",
-    email: "manager@roombae.com",
-  },
-};
+export interface LoginOptions {
+  rememberMe?: boolean | string;
+  ipAddress?: string;
+  userAgent?: string;
+  visitorId?: string;
+}
 
 /**
- * AuthService - Production-grade authentication service.
- * Implements:
- *  - password hashing & verification
- *  - JWT access/refresh tokens
- *  - refresh token rotation & revocation
- *  - role-based authorization helpers
- *  - email & phone verification
- *  - Google OAuth
- *  - 2FA TOTP
+ * AuthService - Production-grade authentication and session security service.
  */
 export class AuthService implements IAuthService {
   private get db(): any {
@@ -148,7 +44,28 @@ export class AuthService implements IAuthService {
   ) {}
 
   /**
-   * Hash a refresh token so we never store raw refresh tokens in the database.
+   * Validates password strength server-side (Min 8 chars, 3 of: lower, upper, digit, symbol)
+   */
+  public static validatePasswordStrength(password: string): void {
+    if (!password || password.length < 8) {
+      throw new AppError("Password must be at least 8 characters long.", 400, "WEAK_PASSWORD");
+    }
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    const criteriaCount = [hasLower, hasUpper, hasDigit, hasSpecial].filter(Boolean).length;
+    if (criteriaCount < 3) {
+      throw new AppError(
+        "Password must contain at least 3 of: uppercase letters, lowercase letters, numbers, and special characters.",
+        400,
+        "WEAK_PASSWORD"
+      );
+    }
+  }
+
+  /**
+   * Hash a refresh token so raw refresh tokens are never persisted.
    */
   private hashRefreshToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
@@ -171,13 +88,24 @@ export class AuthService implements IAuthService {
   private async persistRefreshToken(
     userId: string,
     refreshToken: string,
-    rememberMeOrIp?: boolean | string,
-    ipAddress?: string,
-    userAgent?: string,
+    options?: { rememberMe?: boolean; ipAddress?: string; userAgent?: string } | boolean | string,
+    optionalIp?: string,
+    optionalUa?: string
   ) {
-    const rememberMe = typeof rememberMeOrIp === "boolean" ? rememberMeOrIp : false;
-    const actualIp = typeof rememberMeOrIp === "string" ? rememberMeOrIp : ipAddress;
-    const actualUserAgent = typeof rememberMeOrIp === "string" ? ipAddress : userAgent;
+    let rememberMe = false;
+    let actualIp = optionalIp;
+    let actualUserAgent = optionalUa;
+
+    if (typeof options === "object" && options !== null) {
+      rememberMe = options.rememberMe || false;
+      actualIp = options.ipAddress || actualIp;
+      actualUserAgent = options.userAgent || actualUserAgent;
+    } else if (typeof options === "boolean") {
+      rememberMe = options;
+    } else if (typeof options === "string") {
+      actualIp = options;
+      actualUserAgent = optionalIp;
+    }
 
     const expiresAt = new Date();
     const days = rememberMe ? 30 : 7;
@@ -186,7 +114,7 @@ export class AuthService implements IAuthService {
     const tokenHash = this.hashRefreshToken(refreshToken);
     const ttlSeconds = days * 24 * 60 * 60;
 
-    // Persist in DB (if model exists in Prisma client)
+    // Persist in DB
     try {
       if (this.db?.refreshToken) {
         await this.db.refreshToken.create({
@@ -200,14 +128,14 @@ export class AuthService implements IAuthService {
         });
       }
     } catch (dbErr: any) {
-      logger.debug("RefreshToken DB write skipped:", { userId, error: dbErr?.message });
+      logger.error("RefreshToken DB write failed", { userId, error: dbErr?.message });
     }
 
     // Cache active session token in fast in-memory store
     try {
       await cacheService.set(`refresh_token:${tokenHash}`, { userId, expiresAt: expiresAt.toISOString() }, ttlSeconds);
     } catch (cacheErr: any) {
-      logger.debug("RefreshToken cache storage skipped:", { userId, error: cacheErr?.message });
+      logger.error("RefreshToken cache storage failed", { userId, error: cacheErr?.message });
     }
   }
 
@@ -238,23 +166,8 @@ export class AuthService implements IAuthService {
           where: { tokenHash },
         });
       }
-    } catch {}
-
-    if (!storedToken) {
-      // No valid session found in DB or cache — reject immediately.
-      // Do NOT fabricate a storedToken from decoded JWT alone; that bypasses session validation.
-      if (decoded?.id) {
-        try {
-          if (this.db?.refreshToken) {
-            await this.db.refreshToken.updateMany({
-              where: { userId: decoded.id, revokedAt: null },
-              data: { revokedAt: new Date() },
-            });
-          }
-        } catch {}
-      }
-      await cacheService.del(`refresh_token:${tokenHash}`);
-      throw new AppError("Invalid refresh token. Please log in again.", 401, "INVALID_REFRESH_TOKEN", "login");
+    } catch (findErr: any) {
+      logger.error("Failed to query refresh token", { error: findErr?.message });
     }
 
     if (!storedToken) {
@@ -266,7 +179,9 @@ export class AuthService implements IAuthService {
               data: { revokedAt: new Date() },
             });
           }
-        } catch {}
+        } catch (revokeErr: any) {
+          logger.error("Failed to revoke refresh tokens on missing token", { userId: decoded.id, error: revokeErr?.message });
+        }
       }
       await cacheService.del(`refresh_token:${tokenHash}`);
       throw new AppError("Invalid refresh token. Please log in again.", 401, "INVALID_REFRESH_TOKEN", "login");
@@ -307,7 +222,9 @@ export class AuthService implements IAuthService {
           data: { revokedAt: new Date() },
         });
       }
-    } catch {}
+    } catch (revErr: any) {
+      logger.error("Failed to mark rotated refresh token revoked", { tokenId: storedToken.id, error: revErr?.message });
+    }
     await cacheService.del(`refresh_token:${tokenHash}`);
 
     // Generate new tokens
@@ -316,7 +233,7 @@ export class AuthService implements IAuthService {
     const newRefreshToken = this.tokenService.generateRefreshToken(payload);
 
     // Persist new rotated token
-    await this.persistRefreshToken(user.id, newRefreshToken, ipAddress, userAgent);
+    await this.persistRefreshToken(user.id, newRefreshToken, { ipAddress, userAgent });
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
@@ -408,7 +325,7 @@ export class AuthService implements IAuthService {
     const newAccessToken = this.tokenService.generateAccessToken(payload);
     const newRefreshToken = this.tokenService.generateRefreshToken(payload);
 
-    await this.persistRefreshToken(user.id, newRefreshToken, ipAddress, userAgent);
+    await this.persistRefreshToken(user.id, newRefreshToken, { ipAddress, userAgent });
 
     return {
       user: {
@@ -431,109 +348,113 @@ export class AuthService implements IAuthService {
     const payload = this.buildAccessPayload(user);
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
-    await this.persistRefreshToken(user.id, refreshToken, ipAddress, userAgent);
+    await this.persistRefreshToken(user.id, refreshToken, { ipAddress, userAgent });
     return { accessToken, refreshToken };
   }
 
   async login(
     identifier: string,
     password: string,
-    rememberMe?: boolean | string,
-    ipAddress?: string,
-    userAgent?: string,
-    visitorId?: string
+    optionsOrRememberMe?: LoginOptions | boolean | string,
+    legacyIp?: string,
+    legacyUa?: string,
+    legacyVisitorId?: string
   ): Promise<IAuthUserResult | any> {
     const rawId = (identifier || "").trim();
     const cleanPass = password || "";
 
-    const isRememberMe = typeof rememberMe === "boolean" ? rememberMe : false;
-    const actualIp = typeof rememberMe === "string" ? rememberMe : ipAddress;
-    const actualUserAgent = typeof rememberMe === "string" ? ipAddress : userAgent;
+    let isRememberMe = false;
+    let actualIp = legacyIp;
+    let actualUserAgent = legacyUa;
+    let visitorId = legacyVisitorId;
+
+    if (typeof optionsOrRememberMe === "object" && optionsOrRememberMe !== null) {
+      isRememberMe = Boolean(optionsOrRememberMe.rememberMe);
+      actualIp = optionsOrRememberMe.ipAddress || actualIp;
+      actualUserAgent = optionsOrRememberMe.userAgent || actualUserAgent;
+      visitorId = optionsOrRememberMe.visitorId || visitorId;
+    } else if (typeof optionsOrRememberMe === "boolean") {
+      isRememberMe = optionsOrRememberMe;
+    } else if (typeof optionsOrRememberMe === "string") {
+      actualIp = optionsOrRememberMe;
+      actualUserAgent = legacyIp;
+      visitorId = legacyUa;
+    }
 
     logger.info("Login request received", { identifierType: rawId.includes("@") ? "email" : "other" });
 
-    let user = await this.userRepository.findByIdentifier(rawId);
-
-    const lookupKey = rawId.toLowerCase();
-    const authConfig =
-      AUTHORITATIVE_USERS[lookupKey] ||
-      (user?.email ? AUTHORITATIVE_USERS[user.email.toLowerCase()] : undefined) ||
-      (user?.phone ? AUTHORITATIVE_USERS[user.phone] : undefined) ||
-      (user?.residentCode ? AUTHORITATIVE_USERS[user.residentCode.toLowerCase()] : undefined);
+    const user = await this.userRepository.findByIdentifier(rawId);
 
     if (!user) {
-      if (authConfig && cleanPass === authConfig.pass) {
-        logger.info("Auto-initializing authoritative user on login", { email: authConfig.email, role: authConfig.role });
-        const passHash = await this.cryptoService.hashPassword(cleanPass);
-        user = await this.userRepository.create({
-          name: authConfig.name,
-          email: authConfig.email,
-          passwordHash: passHash,
-          phone: authConfig.phone,
-          role: authConfig.role,
-          residentCode: authConfig.residentCode,
-        });
-        await this.userRepository.ensureUserProfile(user);
-      } else {
-        logger.warn("Login failed: user not found", { identifier: rawId });
-        throw new AppError(
-          "We couldn't find an account with these details. Would you like to sign up instead?",
-          401,
-          "ACCOUNT_NOT_FOUND_OR_INVALID"
-        );
-      }
-    }
-
-    if (!user.passwordHash) {
-      if (cleanPass) {
-        logger.info("Setting password for OAuth-registered account upon password login", { userId: user.id });
-        const newHash = await this.cryptoService.hashPassword(cleanPass);
-        try {
-          if (this.db?.user?.update) {
-            await this.db.user.update({
-              where: { id: user.id },
-              data: { passwordHash: newHash },
-            });
-          }
-        } catch {}
-        user.passwordHash = newHash;
-      } else {
-        logger.warn("Login failed: OAuth account without password provided", { userId: user.id });
-        throw new AppError(
-          "This account uses Google OAuth or Single Sign-On. Please sign in with Google.",
-          401,
-          "OAUTH_ACCOUNT_REQUIRES_SSO"
-        );
-      }
-    }
-
-    let isValid = await this.cryptoService.comparePassword(
-      cleanPass,
-      user.passwordHash,
-    );
-
-    if (!isValid && authConfig && cleanPass === authConfig.pass) {
-      logger.info("Synchronizing authoritative user password hash", { userId: user.id });
-      const syncedHash = await this.cryptoService.hashPassword(cleanPass);
-      try {
-        if (this.db?.user?.update) {
-          await this.db.user.update({
-            where: { id: user.id },
-            data: { passwordHash: syncedHash },
-          });
-        }
-      } catch {}
-      user.passwordHash = syncedHash;
-      isValid = true;
-    }
-
-    if (!isValid) {
-      logger.warn("Login failed: invalid password", { userId: user.id });
+      logger.warn("Login failed: user not found", { identifier: rawId });
       throw new AppError(
         "We couldn't find an account with these details. Would you like to sign up instead?",
         401,
         "ACCOUNT_NOT_FOUND_OR_INVALID"
       );
+    }
+
+    // Check account lockout due to failed brute-force attempts
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      logger.warn("Login blocked: Account locked due to excessive failed attempts", { userId: user.id });
+      throw new AppError(
+        "Too many failed login attempts. Account temporarily locked for 15 minutes.",
+        429,
+        "ACCOUNT_LOCKED"
+      );
+    }
+
+    // If account signed up via Google OAuth and has no password set, reject password login
+    if (!user.passwordHash) {
+      logger.warn("Login failed: OAuth account without password provided", { userId: user.id });
+      throw new AppError(
+        "This account uses Google OAuth or Single Sign-On. Please sign in with Google.",
+        401,
+        "OAUTH_ACCOUNT_REQUIRES_SSO"
+      );
+    }
+
+    const isValid = await this.cryptoService.comparePassword(
+      cleanPass,
+      user.passwordHash,
+    );
+
+    if (!isValid) {
+      logger.warn("Login failed: invalid password", { userId: user.id });
+      const failedAttempts = (user.failedLoginAttempts || 0) + 1;
+      let lockedUntil: Date | null = null;
+      if (failedAttempts >= 10) {
+        lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15-minute lock
+      }
+      try {
+        await this.db.user.update({
+          where: { id: user.id },
+          data: {
+            failedLoginAttempts: failedAttempts >= 10 ? 0 : failedAttempts,
+            lockedUntil,
+          },
+        });
+      } catch (err: any) {
+        logger.error("Failed to record failed login attempt count", { userId: user.id, error: err.message });
+      }
+
+      throw new AppError(
+        "We couldn't find an account with these details. Would you like to sign up instead?",
+        401,
+        "ACCOUNT_NOT_FOUND_OR_INVALID"
+      );
+    }
+
+    // Reset failed login attempts on successful password verification
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      try {
+        await this.db.user.update({
+          where: { id: user.id },
+          data: { failedLoginAttempts: 0, lockedUntil: null },
+        });
+      } catch (resetErr: any) {
+        logger.error("Failed to reset failedLoginAttempts on user", { userId: user.id, error: resetErr.message });
+      }
     }
 
     if (user.accountStatus !== "ACTIVE") {
@@ -565,9 +486,9 @@ export class AuthService implements IAuthService {
         },
       });
       throw new AppError(
-        "Login blocked due to high-risk security signals. Please contact support.",
+        riskAssessment.recoveryGuidance || "Login blocked due to high-risk security signals. Please contact support.",
         403,
-        "LOGIN_BLOCKED"
+        riskAssessment.errorCode || "LOGIN_BLOCKED"
       );
     }
 
@@ -582,7 +503,7 @@ export class AuthService implements IAuthService {
         effectiveVisitorId
       );
 
-      // Dispatch 2FA verification OTP if email or phone is present
+      // Dispatch 2FA verification OTP if email is present
       if (user.email) {
         await this.otpService.generateAndSendOtp(user.email).catch(() => {});
       }
@@ -616,9 +537,9 @@ export class AuthService implements IAuthService {
       false
     );
 
-    // Record login history (best-effort)
+    // Record login history
     try {
-      await prisma.loginHistory.create({
+      await this.db.loginHistory.create({
         data: {
           userId: user.id,
           ipAddress: actualIp || "unknown",
@@ -626,12 +547,12 @@ export class AuthService implements IAuthService {
           status: "SUCCESS",
         },
       });
-      await prisma.user.update({
+      await this.db.user.update({
         where: { id: user.id },
         data: { lastLogin: new Date() },
       });
     } catch (err: any) {
-      logger.debug("LoginHistory record creation skipped", { userId: user.id, error: err.message });
+      logger.error("LoginHistory record creation failed", { userId: user.id, error: err.message });
     }
 
     // Ensure linked Owner or Resident profile record exists for active user
@@ -645,7 +566,7 @@ export class AuthService implements IAuthService {
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
-    await this.persistRefreshToken(user.id, refreshToken, isRememberMe, actualIp, actualUserAgent);
+    await this.persistRefreshToken(user.id, refreshToken, { rememberMe: isRememberMe, ipAddress: actualIp, userAgent: actualUserAgent });
 
     await SessionRevocationService.writeAuditLog({
       userId: user.id,
@@ -690,6 +611,9 @@ export class AuthService implements IAuthService {
       );
     }
 
+    // Enforce server-side password strength
+    AuthService.validatePasswordStrength(data.password);
+
     const forcedRole = (data.role && (data.role === Role.OWNER || data.role === Role.RESIDENT)) ? data.role : Role.RESIDENT;
     const passwordHash = await this.cryptoService.hashPassword(data.password);
 
@@ -718,7 +642,7 @@ export class AuthService implements IAuthService {
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
-    await this.persistRefreshToken(newUser.id, refreshToken, ipAddress, userAgent);
+    await this.persistRefreshToken(newUser.id, refreshToken, { ipAddress, userAgent });
 
     return {
       user: {
@@ -750,12 +674,11 @@ export class AuthService implements IAuthService {
       ? await this.otpService.generateAndSendOtp(identifier)
       : await this.otpService.generateAndSendPhoneOtp(identifier);
 
-    // DEV-ONLY: remove or verify gated before production deploy
-    const devOtp = process.env.NODE_ENV !== "production" ? (res as any)?.otp || (res as any)?.devOtp : undefined;
+    const devOtp = env.EXPOSE_DEV_OTP === "true" ? (res as any)?.otp || (res as any)?.devOtp : undefined;
 
     return {
       message: res.message,
-      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+      ...(env.EXPOSE_DEV_OTP === "true" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -811,15 +734,13 @@ export class AuthService implements IAuthService {
     }
 
     const result = await this.otpService.generateAndSendPhoneOtp(cleanPhone);
-
-    // DEV-ONLY: remove or verify gated before production deploy
-    const devOtp = process.env.NODE_ENV !== "production" ? result.otp || result.devOtp : undefined;
+    const devOtp = env.EXPOSE_DEV_OTP === "true" ? result.otp || result.devOtp : undefined;
 
     return {
       success: true,
       message: result.message,
       timerSeconds: result.timerSeconds,
-      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+      ...(env.EXPOSE_DEV_OTP === "true" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -853,22 +774,20 @@ export class AuthService implements IAuthService {
     if (!email) throw new AppError("Email address is required", 400);
     if (this.otpService) {
       const res = await this.otpService.generateAndSendEmailVerification(email);
-      // DEV-ONLY: remove or verify gated before production deploy
-      const devOtp = process.env.NODE_ENV !== "production" ? res.code || res.devOtp : undefined;
+      const devOtp = env.EXPOSE_DEV_OTP === "true" ? res.code || res.devOtp : undefined;
       return {
         success: true,
         message: res.message,
-        ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+        ...(env.EXPOSE_DEV_OTP === "true" && devOtp ? { devOtp } : {}),
       };
     }
     const emailRes = await emailService.sendOtp(email, name);
-    // DEV-ONLY: remove or verify gated before production deploy
-    const devOtp = process.env.NODE_ENV !== "production" ? (emailRes as any)?.devOtp : undefined;
+    const devOtp = env.EXPOSE_DEV_OTP === "true" ? (emailRes as any)?.devOtp : undefined;
     return {
       success: emailRes.success,
       message: emailRes.message,
       cooldownSeconds: emailRes.cooldownSeconds,
-      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+      ...(env.EXPOSE_DEV_OTP === "true" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -908,13 +827,12 @@ export class AuthService implements IAuthService {
 
     await emailService.sendPasswordResetEmail(email, resetLink, user.name);
 
-    // DEV-ONLY: remove or verify gated before production deploy
-    const devOtp = process.env.NODE_ENV !== "production" ? code : undefined;
+    const devOtp = env.EXPOSE_DEV_OTP === "true" ? code : undefined;
 
     return {
       success: true,
       message: `Password reset instructions sent to ${email}`,
-      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+      ...(env.EXPOSE_DEV_OTP === "true" && devOtp ? { devOtp } : {}),
     };
   }
 
@@ -933,12 +851,13 @@ export class AuthService implements IAuthService {
     }
 
     if (newPassword) {
+      AuthService.validatePasswordStrength(newPassword);
       const user = await this.userRepository.findByEmail(email);
       if (!user) throw new AppError("User not found", 404);
       const hashedPassword = await this.cryptoService.hashPassword(newPassword);
       await this.db.user.update({
         where: { id: user.id },
-        data: { passwordHash: hashedPassword },
+        data: { passwordHash: hashedPassword, failedLoginAttempts: 0, lockedUntil: null },
       });
       // Invalidate all active sessions upon password reset
       await SessionRevocationService.revokeAllSessions(
@@ -967,49 +886,40 @@ export class AuthService implements IAuthService {
 
     await this.userRepository.updateTwoFactor(userId, secret, true, "TOTP");
 
-    // DEV-ONLY: remove or verify gated before production deploy
-    const devOtp = process.env.NODE_ENV !== "production" ? TotpService.generateCurrentToken(secret) : undefined;
+    const devOtp = env.EXPOSE_DEV_OTP === "true" ? TotpService.generateCurrentToken(secret) : undefined;
 
     return {
       secret,
       qrCodeUrl,
       qrCodeImage,
-      ...(process.env.NODE_ENV !== "production" && devOtp ? { devOtp } : {}),
+      ...(env.EXPOSE_DEV_OTP === "true" && devOtp ? { devOtp } : {}),
     };
   }
 
   async verifyTwoFactor(
-    userIdOrPreAuthToken: string,
+    preAuthToken: string,
     token: string,
     rememberMe?: boolean,
     ipAddress?: string,
     userAgent?: string,
     visitorId?: string,
   ): Promise<any> {
-    let userId = userIdOrPreAuthToken;
-    let isPreAuth = false;
-
-    // Check PreAuthChallengeService (MongoDB single-use verification)
-    const challengeResult = await PreAuthChallengeService.verifyAndConsumeChallenge(
-      userIdOrPreAuthToken,
-      visitorId
-    );
-
-    if (challengeResult && challengeResult.userId) {
-      userId = challengeResult.userId;
-      isPreAuth = true;
-    } else if (this.tokenService.verifyPreAuthToken) {
-      try {
-        const decoded = this.tokenService.verifyPreAuthToken(userIdOrPreAuthToken);
-        if (decoded && decoded.userId) {
-          userId = decoded.userId;
-          isPreAuth = true;
-        }
-      } catch (e) {
-        // Not a pre-auth token, treat as userId directly
-      }
+    if (!preAuthToken) {
+      throw new AppError("PreAuth challenge session is required", 401, "INVALID_PREAUTH");
     }
 
+    // Atomically verify and consume the PreAuth challenge
+    let challengeResult: { userId: string; visitorId: string };
+    try {
+      challengeResult = await PreAuthChallengeService.verifyAndConsumeChallenge(
+        preAuthToken,
+        visitorId
+      );
+    } catch (challengeErr: any) {
+      throw new AppError(challengeErr?.message || "Invalid or expired verification session", 401, "INVALID_PREAUTH");
+    }
+
+    const userId = challengeResult.userId;
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
 
@@ -1032,66 +942,61 @@ export class AuthService implements IAuthService {
       throw new AppError("Invalid two-factor authentication code", 401, "TWO_FACTOR_INVALID");
     }
 
-    if (isPreAuth) {
-      if (visitorId) {
-        await RiskEngine.recordDeviceSuccess(
-          user.id,
-          visitorId,
-          ipAddress || "127.0.0.1",
-          userAgent || "unknown",
-          true // trust device after successful 2FA
-        );
-      }
-
-      const payload = this.buildAccessPayload(user);
-      const accessToken = this.tokenService.generateAccessToken(payload);
-      const refreshToken = this.tokenService.generateRefreshToken(payload);
-
-      await this.persistRefreshToken(user.id, refreshToken, rememberMe, ipAddress, userAgent);
-
-      try {
-        await prisma.loginHistory.create({
-          data: {
-            userId: user.id,
-            ipAddress: ipAddress || "unknown",
-            userAgent: userAgent || "unknown",
-            status: "SUCCESS",
-          },
-        });
-      } catch {}
-
-      await SessionRevocationService.writeAuditLog({
-        userId: user.id,
-        eventType: "LOGIN_SUCCESS_2FA",
-        severity: "INFO",
-        riskScore: 0,
-        riskLevel: "LOW",
-        ipAddress,
-        userAgent,
-      });
-
-      return {
-        success: true,
-        message: "Two-factor authentication verified successfully!",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          residentCode: user.residentCode || undefined,
-          avatarUrl: user.avatarUrl,
-          phone: user.phone,
-          emailVerified: user.emailVerified,
-          phoneVerified: user.phoneVerified,
-        },
-        accessToken,
-        refreshToken,
-      };
+    if (visitorId) {
+      await RiskEngine.recordDeviceSuccess(
+        user.id,
+        visitorId,
+        ipAddress || "127.0.0.1",
+        userAgent || "unknown",
+        true // trust device after successful 2FA
+      );
     }
+
+    const payload = this.buildAccessPayload(user);
+    const accessToken = this.tokenService.generateAccessToken(payload);
+    const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+    await this.persistRefreshToken(user.id, refreshToken, { rememberMe, ipAddress, userAgent });
+
+    try {
+      await this.db.loginHistory.create({
+        data: {
+          userId: user.id,
+          ipAddress: ipAddress || "unknown",
+          userAgent: userAgent || "unknown",
+          status: "SUCCESS",
+        },
+      });
+    } catch (histErr: any) {
+      logger.error("Failed to write loginHistory on 2FA success", { userId: user.id, error: histErr?.message });
+    }
+
+    await SessionRevocationService.writeAuditLog({
+      userId: user.id,
+      eventType: "LOGIN_SUCCESS_2FA",
+      severity: "INFO",
+      riskScore: 0,
+      riskLevel: "LOW",
+      ipAddress,
+      userAgent,
+    });
 
     return {
       success: true,
-      message: "Two-factor authentication verified and activated!",
+      message: "Two-factor authentication verified successfully!",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        residentCode: user.residentCode || undefined,
+        avatarUrl: user.avatarUrl,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
+      },
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -1099,7 +1004,6 @@ export class AuthService implements IAuthService {
     userId: string,
   ): Promise<{ success: boolean; message: string }> {
     await this.userRepository.updateTwoFactor(userId, null, false, "NONE");
-
     return { success: true, message: "Two-factor authentication disabled" };
   }
 
@@ -1109,12 +1013,12 @@ export class AuthService implements IAuthService {
 
     let profile: any = null;
     if (user.role === Role.OWNER) {
-      profile = await prisma.owner.findFirst({
+      profile = await this.db.owner.findFirst({
         where: { userId: user.id },
         include: { pgs: true, kyc: true, business: true, subscription: true },
       });
     } else if (user.role === Role.RESIDENT) {
-      profile = await prisma.resident.findFirst({
+      profile = await this.db.resident.findFirst({
         where: { userId: user.id },
         include: { bed: true, pg: true },
       });
@@ -1139,22 +1043,21 @@ export class AuthService implements IAuthService {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
 
-    let owner = await prisma.owner.findFirst({
+    let owner = await this.db.owner.findFirst({
       where: { userId: user.id },
       include: { pgs: true },
     });
 
     if (!owner) {
       logger.info("Auto-creating owner profile", { userId: user.id });
-      // Create owner profile with empty/placeholder values - user will complete KYC later
       try {
-        owner = await prisma.owner.create({
+        owner = await this.db.owner.create({
           data: {
             userId: user.id,
             name: user.name,
             email: user.email,
             phone: user.phone || "",
-            photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+            photo: user.avatarUrl || env.DEFAULT_OWNER_PHOTO_URL,
             address: "",
             aadhaarNumber: "",
             panNumber: "",
@@ -1166,8 +1069,8 @@ export class AuthService implements IAuthService {
           },
           include: { pgs: true },
         });
-      } catch (err) {
-        logger.warn("Could not auto-create owner record", { userId: user.id, error: err });
+      } catch (err: any) {
+        logger.error("Could not auto-create owner record", { userId: user.id, error: err.message });
       }
     }
 
@@ -1178,7 +1081,7 @@ export class AuthService implements IAuthService {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new AppError("User not found", 404);
 
-    let resident = await prisma.resident.findFirst({
+    let resident = await this.db.resident.findFirst({
       where: { userId: user.id },
       include: { bed: true, pg: true },
     });
@@ -1186,19 +1089,19 @@ export class AuthService implements IAuthService {
     if (!resident) {
       logger.info("Creating resident profile with user data", { userId: user.id });
       try {
-        resident = await prisma.resident.create({
+        resident = await this.db.resident.create({
           data: {
             userId: user.id,
             name: user.name,
             email: user.email,
             phone: user.phone || "",
-            profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
+            profilePicture: user.avatarUrl || env.DEFAULT_AVATAR_URL,
             status: "ACTIVE",
           },
           include: { bed: true, pg: true },
         });
-      } catch (err) {
-        logger.warn("Could not auto-create resident record", { userId: user.id, error: err });
+      } catch (err: any) {
+        logger.error("Could not auto-create resident record", { userId: user.id, error: err.message });
       }
     }
 

@@ -4,9 +4,8 @@ import {
   ICreateUserData,
 } from "../../interfaces/repositories/IUserRepository";
 import { AppError } from "../../utils/appError";
-
-const CLOUDINARY_DEFAULT_AVATAR = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png";
-const CLOUDINARY_DEFAULT_OWNER_PHOTO = "https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png";
+import { env } from "../../config/env";
+import { logger } from "../../utils/logger";
 
 export class AuthRepository implements IUserRepository {
   constructor(private readonly db: PrismaClient) { }
@@ -102,20 +101,19 @@ export class AuthRepository implements IUserRepository {
       return updatedUser;
     }
 
-    // 3. Create a brand-new user (Strictly RESIDENT or OWNER — ADMIN/SUPER_ADMIN never publicly self-served)
-    const allowedRole = (data.role === Role.OWNER || data.role === Role.RESIDENT)
+    // 3. Auto-detect Role: default to RESIDENT if not provided
+    const userRole = data.role && (data.role === Role.OWNER || data.role === Role.RESIDENT)
       ? data.role
       : Role.RESIDENT;
 
-    const cleanEmail = data.email.trim().toLowerCase();
     const newUser = await this.client.user.create({
       data: {
-        name: data.name,
-        email: cleanEmail,
         googleSubId: data.googleSubId,
+        email: data.email.toLowerCase(),
+        name: data.name,
         avatarUrl: data.avatarUrl,
-        role: allowedRole,
         emailVerified: true,
+        role: userRole,
         authProvider: "GOOGLE",
       },
     });
@@ -140,7 +138,7 @@ export class AuthRepository implements IUserRepository {
                 name: user.name,
                 email: user.email,
                 phone: user.phone || "",
-                photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+                photo: user.avatarUrl || env.DEFAULT_OWNER_PHOTO_URL,
                 address: "",
                 aadhaarNumber: "",
                 panNumber: "",
@@ -151,8 +149,8 @@ export class AuthRepository implements IUserRepository {
                 emergencyContact: "",
               },
             });
-          } catch (createErr) {
-            console.warn("⚠️ Owner profile create note:", createErr);
+          } catch (createErr: any) {
+            logger.warn("Owner profile create note:", { userId: user.id, error: createErr?.message });
           }
         }
       } else if (user.role === Role.RESIDENT) {
@@ -167,17 +165,17 @@ export class AuthRepository implements IUserRepository {
                 name: user.name,
                 email: user.email,
                 phone: user.phone || "",
-                profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
+                profilePicture: user.avatarUrl || env.DEFAULT_AVATAR_URL,
                 status: "ACTIVE",
               },
             });
-          } catch (createErr) {
-            console.warn("⚠️ Resident profile create note:", createErr);
+          } catch (createErr: any) {
+            logger.warn("Resident profile create note:", { userId: user.id, error: createErr?.message });
           }
         }
       }
-    } catch (profileErr) {
-      console.warn("⚠️ Could not auto-create signup profile record:", profileErr);
+    } catch (profileErr: any) {
+      logger.warn("Could not auto-create signup profile record:", { userId: user.id, error: profileErr?.message });
     }
   }
 
@@ -241,8 +239,8 @@ export class AuthRepository implements IUserRepository {
           },
         });
       }
-    } catch (err) {
-      console.warn("⚠️ Could not auto-create phone resident profile:", err);
+    } catch (err: any) {
+      logger.warn("Could not auto-create phone resident profile:", { userId: newUser.id, error: err?.message });
     }
 
     return newUser;
@@ -269,7 +267,7 @@ export class AuthRepository implements IUserRepository {
             name: newUser.name,
             email: newUser.email,
             phone: newUser.phone || "",
-            photo: newUser.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+            photo: newUser.avatarUrl || env.DEFAULT_OWNER_PHOTO_URL,
             address: "",
             aadhaarNumber: "",
             panNumber: "",
@@ -291,8 +289,8 @@ export class AuthRepository implements IUserRepository {
           },
         });
       }
-    } catch (err) {
-      console.warn("⚠️ Could not auto-create profile for new user:", err);
+    } catch (err: any) {
+      logger.warn("Could not auto-create profile for new user:", { userId: newUser.id, error: err?.message });
     }
 
     return newUser;

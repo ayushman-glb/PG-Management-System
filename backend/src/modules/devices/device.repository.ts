@@ -1,35 +1,28 @@
-import crypto from "crypto";
 import { PrismaClient } from "@prisma/client";
 import {
   DeviceStatus,
   TrustLevel,
   SecurityAuditEventInput,
 } from "./device.types";
+import {
+  hashVisitorId,
+  hashIpAddress,
+  hashUserAgent,
+} from "../../utils/hashing";
 
 export class DeviceRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   public hashVisitorId(visitorId: string): string {
-    return crypto
-      .createHash("sha256")
-      .update(`roombae_visitor_salt_${visitorId}`)
-      .digest("hex");
+    return hashVisitorId(visitorId);
   }
 
   public hashIpAddress(ipAddress?: string): string | undefined {
-    if (!ipAddress) return undefined;
-    return crypto
-      .createHash("sha256")
-      .update(`roombae_ip_salt_${ipAddress}`)
-      .digest("hex");
+    return hashIpAddress(ipAddress);
   }
 
   public hashUserAgent(userAgent?: string): string | undefined {
-    if (!userAgent) return undefined;
-    return crypto
-      .createHash("sha256")
-      .update(`roombae_ua_salt_${userAgent}`)
-      .digest("hex");
+    return hashUserAgent(userAgent);
   }
 
   public async findByUserIdAndVisitorId(userId: string, visitorId: string) {
@@ -79,14 +72,56 @@ export class DeviceRepository {
     const lastIpHash = this.hashIpAddress(data.ipAddress);
     const userAgentHash = this.hashUserAgent(data.userAgent);
 
-    return this.prisma.userDevice.upsert({
-      where: {
-        userId_visitorIdHash: {
+    if (typeof this.prisma.userDevice?.upsert === "function") {
+      return this.prisma.userDevice.upsert({
+        where: {
+          userId_visitorIdHash: {
+            userId: data.userId,
+            visitorIdHash,
+          },
+        },
+        create: {
           userId: data.userId,
           visitorIdHash,
+          provider: data.provider || "fingerprintjs",
+          providerVersion: data.providerVersion || "5.x",
+          deviceLabel: data.deviceLabel,
+          browser: data.browser,
+          os: data.os,
+          deviceType: data.deviceType,
+          screenResolution: data.screenResolution,
+          ipAddress: data.ipAddress,
+          region: data.region,
+          city: data.city,
+          country: data.country,
+          status: data.status || "NEW",
+          trustLevel: data.trustLevel || "UNTRUSTED",
+          lastIpHash,
+          userAgentHash,
+          firstSeenAt: new Date(),
+          lastSeenAt: new Date(),
+          lastLoginAt: new Date(),
         },
-      },
-      create: {
+        update: {
+          deviceLabel: data.deviceLabel,
+          browser: data.browser,
+          os: data.os,
+          deviceType: data.deviceType,
+          screenResolution: data.screenResolution,
+          ipAddress: data.ipAddress,
+          region: data.region,
+          city: data.city,
+          country: data.country,
+          lastIpHash,
+          userAgentHash,
+          lastSeenAt: new Date(),
+          lastLoginAt: new Date(),
+        },
+      });
+    }
+
+    return this.prisma.userDevice.create({
+      data: {
         userId: data.userId,
         visitorIdHash,
         provider: data.provider || "fingerprintjs",
@@ -105,21 +140,6 @@ export class DeviceRepository {
         lastIpHash,
         userAgentHash,
         firstSeenAt: new Date(),
-        lastSeenAt: new Date(),
-        lastLoginAt: new Date(),
-      },
-      update: {
-        deviceLabel: data.deviceLabel,
-        browser: data.browser,
-        os: data.os,
-        deviceType: data.deviceType,
-        screenResolution: data.screenResolution,
-        ipAddress: data.ipAddress,
-        region: data.region,
-        city: data.city,
-        country: data.country,
-        lastIpHash,
-        userAgentHash,
         lastSeenAt: new Date(),
         lastLoginAt: new Date(),
       },

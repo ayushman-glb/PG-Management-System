@@ -38,8 +38,22 @@ export interface IRefreshResult {
   refreshToken: string;
 }
 
+export interface LoginOptions {
+  rememberMe?: boolean | string;
+  ipAddress?: string;
+  userAgent?: string;
+  visitorId?: string;
+}
+
 export interface IAuthService {
-  login(identifier: string, password: string, rememberMe?: boolean | string, ipAddress?: string, userAgent?: string, visitorId?: string): Promise<IAuthUserResult | any>;
+  login(
+    identifier: string,
+    password: string,
+    optionsOrRememberMe?: LoginOptions | boolean | string,
+    ipAddress?: string,
+    userAgent?: string,
+    visitorId?: string
+  ): Promise<IAuthUserResult | any>;
   register(data: IRegisterData, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   googleAuth(code: string, role?: Role, ipAddress?: string, userAgent?: string): Promise<IAuthUserResult>;
   generateOAuthTokens(user: any, ipAddress?: string, userAgent?: string): Promise<{ accessToken: string; refreshToken: string }>;

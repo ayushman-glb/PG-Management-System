@@ -1,7 +1,11 @@
 import { prisma } from "../../config/prisma";
-import crypto from "crypto";
 import { logger } from "../../utils/logger";
 import { SecurityAuditService } from "./SecurityAuditService";
+import {
+  hashVisitorId,
+  hashIpAddress,
+  hashUserAgent,
+} from "../../utils/hashing";
 
 export interface GeoLocationData {
   latitude?: number;
@@ -18,6 +22,8 @@ export interface RiskEvaluationResult {
   riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   signals: string[];
   deviceRecord?: any;
+  errorCode?: string;
+  recoveryGuidance?: string;
 }
 
 /**
@@ -25,44 +31,20 @@ export interface RiskEvaluationResult {
  * 
  * Evaluates multi-signal risk vectors including probabilistic browser fingerprinting (FingerprintJS),
  * network rotation, ASN shifts, VPN/Tor usage, and geographic velocity (impossible travel).
- * 
- * Note: FingerprintJS generates a probabilistic browser identifier derived from canvas, audio,
- * and webgl contexts, which is evaluated in combination with network and behavioral telemetry.
- * 
- * Risk Scoring Matrix:
- * - New Probabilistic Fingerprint: +30
- * - Known Trusted Device:         -40
- * - IP Address Rotation:          +15
- * - User-Agent Mismatch:          +20
- * - Failed Attempts on Device:    +30
- * - Impossible Travel Speed:      +35 (>800 km/h velocity) [lowered from +60 to prevent single-signal block]
- * - New Country:                  +25 [lowered from +40 to prevent single-signal block]
- * - ASN Changed:                  +20
- * - VPN / Tor / Proxy:            +25
- * - Revoked or Blocked Device:    +80
- *
- * Design rationale: IMPOSSIBLE_TRAVEL and NEW_COUNTRY can both fire from the same
- * geolocation reading (which is unreliable for mobile/VPN/CGNAT users). Keeping
- * each at a weight that individually or jointly reaches >=70 would cause false
- * positive hard-blocks for legitimate users. At +35/+25 they firmly land in
- * STEP_UP territory (40-69), while genuinely multi-signal compromise scenarios
- * (e.g. REVOKED_DEVICE+80; or NEW_FINGERPRINT+NEW_COUNTRY+IP_ROTATION=70) still
- * correctly BLOCK.
- *
- * Action Thresholds:
- * - Score < 40:   ALLOW (Pass without 2FA step-up)
- * - Score 40-69:  STEP_UP (Trigger short-lived 2FA challenge)
- * - Score >= 70:  BLOCK (Reject login and write CRITICAL audit event)
  */
 export class RiskEngine {
   private static readonly MAX_REALISTIC_TRAVEL_SPEED_KMH = 800; // Commercial jet speed threshold
 
   public static hashVisitorId(val: string): string {
-    return crypto.createHash("sha256").update(`roombae_visitor_salt_${val}`).digest("hex");
+    return hashVisitorId(val);
   }
 
-  private static hashValue(val: string): string {
-    return crypto.createHash("sha256").update(val).digest("hex");
+  public static hashIpAddress(ip?: string): string | undefined {
+    return hashIpAddress(ip);
+  }
+
+  public static hashUserAgent(ua?: string): string | undefined {
+    return hashUserAgent(ua);
   }
 
   /**
@@ -113,8 +95,8 @@ export class RiskEngine {
 
     const cleanVisitorId = visitorId?.trim() || "";
     const visitorIdHash = cleanVisitorId ? this.hashVisitorId(cleanVisitorId) : "";
-    const ipHash = ipAddress ? this.hashValue(ipAddress.trim()) : "";
-    const uaHash = userAgent ? this.hashValue(userAgent.trim()) : "";
+    const ipHash = ipAddress ? this.hashIpAddress(ipAddress.trim()) : undefined;
+    const uaHash = userAgent ? this.hashUserAgent(userAgent.trim()) : undefined;
 
     // 1. Query existing device records for this user
     let existingDevice: any = null;
@@ -144,20 +126,18 @@ export class RiskEngine {
       logger.debug("RiskEngine last login lookup skipped", { userId, error: loginErr?.message });
     }
 
-    // Signal: Device Fingerprint Assessment (Dedicated Alert & Logging System)
+    // Signal: Device Fingerprint Assessment
     if (cleanVisitorId === "anonymous_device" || !cleanVisitorId) {
-      // Headless / non-browser request without hardware fingerprint
-      riskScore += 0;
+      riskScore += 30;
+      signals.push("MISSING_DEVICE_FINGERPRINT (+30)");
     } else if (!existingDevice) {
-      // New devices trigger the dedicated alert modal, email notification, and telemetry logging
-      riskScore += 0;
-      signals.push("NEW_DEVICE_IDENTIFIED (Alert & Telemetry Workflow)");
+      riskScore += 15;
+      signals.push("NEW_DEVICE_IDENTIFIED (+15) (Alert & Telemetry Workflow)");
     } else {
       if (existingDevice.status === "BLOCKED") {
         riskScore += 100;
         signals.push("ADMIN_BLOCKED_DEVICE (+100)");
       } else if (existingDevice.status === "REVOKED" || existingDevice.status === "REJECTED") {
-        // Previously revoked/rejected devices trigger the new device alert modal for re-trust, NOT a hard login block
         riskScore += 0;
         signals.push("PREVIOUSLY_REJECTED_DEVICE (Alert Modal Required)");
       } else if (existingDevice.status === "TRUSTED" || existingDevice.trustLevel === "TRUSTED") {
@@ -195,7 +175,6 @@ export class RiskEngine {
     }
 
     // Signal: Country Shift
-    // Weight: +25 (lowered from +40 — single geolocation signal must not hard-block alone)
     if (geoData?.country && existingDevice?.country && geoData.country !== existingDevice.country) {
       riskScore += 25;
       signals.push("NEW_COUNTRY (+25)");
@@ -226,20 +205,19 @@ export class RiskEngine {
 
       if (timeElapsedHours > 0.001) {
         const speedKmH = distanceKm / timeElapsedHours;
-        // Weight: +35 (lowered from +60 — single travel anomaly must not hard-block alone;
-        // IP geo is unreliable for mobile/VPN/CGNAT. +35 firmly reaches STEP_UP (40-69)
-        // while multiple strong independent signals are still needed to reach BLOCK.)
         if (speedKmH > this.MAX_REALISTIC_TRAVEL_SPEED_KMH && distanceKm > 100) {
           riskScore += 35;
           signals.push(`IMPOSSIBLE_TRAVEL (+35) - Speed: ${Math.round(speedKmH)} km/h across ${Math.round(distanceKm)} km`);
 
-          // Asynchronously log audit event for impossible travel
+          // Asynchronously log audit event for impossible travel with error catch
           SecurityAuditService.logImpossibleTravel(
             userId,
             lastLogin.city || "Unknown",
             geoData.city || "Unknown",
             Math.round(speedKmH),
             ipAddress
+          ).catch((err: any) =>
+            logger.error("logImpossibleTravel failed", { userId, error: err?.message })
           );
         }
       }
@@ -279,14 +257,9 @@ export class RiskEngine {
       riskLevel,
       signals,
       deviceRecord: existingDevice,
-      // Structured error code and recovery guidance for BLOCK decisions.
-      // NOTE: No automated email recovery mechanism exists yet — this is a
-      // known gap that requires a product decision before implementing.
-      // When implemented, it should send a security alert to the user's
-      // verified email with an account unlock link.
       ...(decision === 'BLOCK' ? {
         errorCode: 'ACCOUNT_LOGIN_BLOCKED_HIGH_RISK',
-        recoveryGuidance: 'Your login was blocked due to multiple high-risk signals. Please contact support or attempt login from a recognized device. A security alert has been noted for your account.'
+        recoveryGuidance: 'Your login was blocked due to multiple high-risk signals. Please contact support or attempt login from a recognized device.'
       } : {}),
     };
   }
@@ -305,8 +278,8 @@ export class RiskEngine {
     if (!userId || !visitorId) return null;
 
     const visitorIdHash = this.hashVisitorId(visitorId);
-    const ipHash = ipAddress ? this.hashValue(ipAddress) : null;
-    const uaHash = userAgent ? this.hashValue(userAgent) : null;
+    const ipHash = ipAddress ? this.hashIpAddress(ipAddress) : null;
+    const uaHash = userAgent ? this.hashUserAgent(userAgent) : null;
 
     try {
       // 1. Record Login History
@@ -382,7 +355,7 @@ export class RiskEngine {
    */
   public static async recordDeviceFailure(userId: string, visitorId: string): Promise<void> {
     if (!userId || !visitorId) return;
-    const visitorIdHash = this.hashValue(visitorId);
+    const visitorIdHash = this.hashVisitorId(visitorId);
 
     try {
       if ((prisma as any).userDevice) {

@@ -89,10 +89,6 @@ router.post(
   (req, res, next) => Container.authController.refreshToken(req, res, next)
 );
 
-router.post("/test-email", (req, res, next) =>
-  Container.authController.testEmail(req, res, next),
-);
-
 // ── Phone Authentication Subsystem (Twilio SMS) ───────────────────────────
 router.use("/phone", phoneAuthRoutes);
 
@@ -119,6 +115,7 @@ router.post(
 
 router.post(
   "/email/verify-otp",
+  verifyOtpLimiter,
   (req, res, next) => Container.authController.verifyEmailOtp(req, res, next),
 );
 
@@ -137,15 +134,16 @@ router.post(
 
 router.post(
   "/password/verify",
+  verifyOtpLimiter,
   (req, res, next) => Container.authController.verifyPasswordReset(req, res, next),
 );
 
 // ── Backwards Compatible Aliases ──────────────────────────────────────────
-router.post("/send-email-verification", (req, res, next) =>
+router.post("/send-email-verification", sendOtpLimiter, (req, res, next) =>
   Container.authController.sendEmailVerification(req, res, next),
 );
 
-router.post("/verify-email", (req, res, next) =>
+router.post("/verify-email", verifyOtpLimiter, (req, res, next) =>
   Container.authController.verifyEmail(req, res, next),
 );
 
@@ -157,7 +155,7 @@ router.post(
   (req, res, next) => Container.authController.enableTwoFactor(req, res, next),
 );
 
-router.post("/2fa/verify", (req, res, next) =>
+router.post("/2fa/verify", verifyOtpLimiter, (req, res, next) =>
   Container.authController.verifyTwoFactor(req, res, next),
 );
 

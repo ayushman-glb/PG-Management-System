@@ -1,45 +1,41 @@
-import { Request, Response, NextFunction, CookieOptions } from "express";
-import crypto from "crypto";
-import passport from "passport";
-import { Container } from "../../container";
-import { env } from "../../config/env";
-import { resolveFrontendUrl, normalizeFrontendUrl } from "../../config/frontendUrl";
-import { logger } from "../../utils/logger";
+import { Request, Response, NextFunction } from "express";
 import { IAuthService } from "../../interfaces/services/IAuthService";
-import { catchAsync } from "../../utils/appError";
 import { ApiResponse } from "../../utils/apiResponse";
+import { catchAsync } from "../../utils/appError";
+import { env } from "../../config/env";
+import { Container } from "../../container";
+import { logger } from "../../utils/logger";
+import passport from "passport";
+import crypto from "crypto";
 
-const getRefreshTokenCookieOptions = (maxAge: number): CookieOptions => {
-  const isProduction = env.NODE_ENV === "production";
-  return {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-    path: "/",
-    maxAge,
-  };
-};
+const isProduction = env.NODE_ENV === "production";
+
+const getRefreshTokenCookieOptions = (maxAge: number) => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  path: "/",
+  maxAge,
+});
 
 export class AuthController {
   constructor(private readonly authService: IAuthService) {}
 
   login = catchAsync(async (req: Request, res: Response) => {
-    const { identifier, email, phone, residentCode, password, rememberMe } = req.body;
+    const { email, phone, residentCode, identifier, password, rememberMe, isRememberMe: isRememberMeParam } = req.body;
     const loginId = identifier || email || phone || residentCode;
+    const isRememberMe = typeof isRememberMeParam === "boolean" ? isRememberMeParam : Boolean(rememberMe);
+
     const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
     const userAgent = req.headers["user-agent"];
-
-    if (!loginId || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Identifier (email/phone/residentCode) and password are required",
-      });
-    }
-
-    const isRememberMe = Boolean(rememberMe);
     const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
 
-    const result = await this.authService.login(loginId, password, isRememberMe, ipAddress, userAgent, visitorId);
+    const result = await this.authService.login(loginId, password, {
+      rememberMe: isRememberMe,
+      ipAddress,
+      userAgent,
+      visitorId,
+    });
 
     if (result && result.requiresTwoFactor) {
       return ApiResponse.success(res, result.message || "Two-factor authentication code required", {
@@ -49,16 +45,17 @@ export class AuthController {
     }
 
     let deviceSecurity: any = null;
+    const effectiveVisitorId = visitorId || "anonymous_device";
 
-    if (visitorId && result?.user?.id) {
+    if (result?.user?.id) {
       try {
         const requestId = (req as any).correlationId;
 
         const evalResult = await Container.deviceService.identifyAndEvaluateDevice(
           result.user.id,
           {
-            visitorId,
-            deviceLabel: req.body.deviceLabel,
+            visitorId: effectiveVisitorId,
+            deviceLabel: req.body.deviceLabel || "Browser Client",
             screenResolution: req.body.screenResolution,
           },
           { ipAddress, userAgent, requestId },
@@ -80,7 +77,7 @@ export class AuthController {
           isNewDevice: evalResult.isNew,
           requiresAlert: evalResult.requiresAlert,
           deviceId: evalResult.device?.id,
-          visitorId,
+          visitorId: effectiveVisitorId,
           deviceLabel: evalResult.device?.deviceLabel || evalResult.telemetry?.deviceLabel,
           screenResolution: evalResult.telemetry?.screenResolution || evalResult.device?.screenResolution,
           ipAddress: evalResult.telemetry?.ip,
@@ -100,7 +97,6 @@ export class AuthController {
     return ApiResponse.success(res, "Login successful", {
       user: result.user,
       accessToken: result.accessToken,
-      // refreshToken intentionally omitted — httpOnly cookie only (see RFC 6749 §10.3)
       deviceSecurity,
     });
   });
@@ -117,7 +113,6 @@ export class AuthController {
 
     res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
 
-    // Strip refreshToken from the response data — cookie-only, never in body
     const { refreshToken: _rt, ...safeResult } = result as any;
     return ApiResponse.success(res, "User registered successfully", safeResult, 201);
   });
@@ -164,7 +159,6 @@ export class AuthController {
     if (refreshToken || accessToken) {
       await this.authService.logout(refreshToken || "", accessToken, ipAddress, userAgent);
     }
-    const isProduction = env.NODE_ENV === "production";
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: isProduction,
@@ -192,7 +186,6 @@ export class AuthController {
       await this.authService.logoutAll(userId, ipAddress, userAgent);
     }
 
-    const isProduction = env.NODE_ENV === "production";
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: isProduction,
@@ -207,18 +200,6 @@ export class AuthController {
     });
     return ApiResponse.success(res, "All active sessions revoked successfully", { success: true });
   });
-
-  testEmail = catchAsync(async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const { emailService } = await import("../../services/email");
-    const success = await emailService.sendOTPEmail(email || "test@roombae.com", "998877", "Test User");
-    if (success) {
-      return ApiResponse.success(res, "Test email sent successfully", { email });
-    }
-    return res.status(500).json({ success: false, message: "Failed to send test email" });
-  });
-
-
 
   sendEmailOtp = catchAsync(async (req: Request, res: Response) => {
     const { email, name } = req.body;
@@ -272,7 +253,10 @@ export class AuthController {
   });
 
   enableTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id || req.body.userId || "USER_CURRENT";
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
     const result = await this.authService.enableTwoFactor(userId);
     return ApiResponse.success(
       res,
@@ -282,20 +266,26 @@ export class AuthController {
   });
 
   verifyTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const { preAuthToken, userId: bodyUserId, token, rememberMe } = req.body;
-    const tokenOrUserId = preAuthToken || bodyUserId || (req as any).user?.id || "USER_CURRENT";
+    const { preAuthToken, token, rememberMe } = req.body;
+    if (!preAuthToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Verification session token (preAuthToken) required",
+      });
+    }
+
     const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
     const userAgent = req.headers["user-agent"];
     const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
 
-    const result = await this.authService.verifyTwoFactor(tokenOrUserId, token, rememberMe, ipAddress, userAgent, visitorId);
+    const result = await this.authService.verifyTwoFactor(preAuthToken, token, rememberMe, ipAddress, userAgent, visitorId);
 
     if (result && result.refreshToken) {
       const cookieMaxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
       res.cookie("refreshToken", result.refreshToken, {
         httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: cookieMaxAge,
       });
     }
@@ -304,7 +294,10 @@ export class AuthController {
   });
 
   disableTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id || req.body.userId || "USER_CURRENT";
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
     const result = await this.authService.disableTwoFactor(userId);
     return ApiResponse.success(res, result.message, result);
   });
@@ -317,7 +310,6 @@ export class AuthController {
 
     return ApiResponse.success(res, "Access token refreshed and rotated", {
       accessToken: result.accessToken,
-      // refreshToken intentionally omitted — httpOnly cookie only
     });
   });
 
@@ -335,7 +327,6 @@ export class AuthController {
     const result = await this.authService.me(userId);
     return ApiResponse.success(res, "Current user details", {
       user: result,
-      ...result,
     });
   });
 
@@ -364,7 +355,8 @@ export class AuthController {
       nonce: crypto.randomBytes(16).toString("hex"),
       timestamp: Date.now(),
     });
-    const stateSig = crypto.createHmac("sha256", env.JWT_SECRET).update(statePayload).digest("hex");
+    const oauthSecret = env.OAUTH_STATE_SECRET || env.JWT_SECRET;
+    const stateSig = crypto.createHmac("sha256", oauthSecret).update(statePayload).digest("hex");
     const state = Buffer.from(JSON.stringify({ p: statePayload, s: stateSig })).toString("base64url");
 
     passport.authenticate("google", {
@@ -386,12 +378,12 @@ export class AuthController {
         if (req.query?.state) {
           try {
             const rawState = req.query.state as string;
-            // Handle both base64url and standard base64 for resilience
             const decodedJson = JSON.parse(
               Buffer.from(rawState, rawState.includes("-") || rawState.includes("_") ? "base64url" : "base64").toString("utf-8")
             );
             if (decodedJson?.p && decodedJson?.s) {
-              const expectedSig = crypto.createHmac("sha256", env.JWT_SECRET).update(decodedJson.p).digest("hex");
+              const oauthSecret = env.OAUTH_STATE_SECRET || env.JWT_SECRET;
+              const expectedSig = crypto.createHmac("sha256", oauthSecret).update(decodedJson.p).digest("hex");
               if (expectedSig === decodedJson.s) {
                 const payload = JSON.parse(decodedJson.p);
                 if (payload?.frontendUrl) {
@@ -402,7 +394,7 @@ export class AuthController {
               targetFrontendUrl = normalizeFrontendUrl(decodedJson.frontendUrl);
             }
           } catch {
-            // keep resolved fallback
+            // keep fallback
           }
         }
 
@@ -457,4 +449,27 @@ export class AuthController {
       }
     )(req, res, next);
   };
+}
+
+function normalizeFrontendUrl(rawUrl: string): string {
+  let url = rawUrl.trim();
+  if (url.includes("ayushman-glb.github.io") && !url.includes("PG-Management-System")) {
+    url = `${url.replace(/\/$/, "")}/PG-Management-System`;
+  }
+  return url;
+}
+
+function resolveFrontendUrl(req: Request): string {
+  let candidate = (req.headers.origin as string) || (req.headers.referer as string);
+  if (candidate) {
+    try {
+      const parsed = new URL(candidate);
+      let origin = parsed.origin;
+      if (origin.includes("ayushman-glb.github.io")) {
+        return "https://ayushman-glb.github.io/PG-Management-System";
+      }
+      return origin;
+    } catch {}
+  }
+  return env.FRONTEND_URL || env.CLIENT_URL || "http://localhost:5173";
 }

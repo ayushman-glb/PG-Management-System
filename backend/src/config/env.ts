@@ -175,6 +175,14 @@ const envSchema = z.object({
   SMS_OTP_LENGTH: z.string().default("6"),
   SMS_OTP_EXPIRY_MINUTES: z.string().default("10"),
   OTP_DEV_OVERRIDE: z.string().default("false"),
+  EXPOSE_DEV_OTP: z.string().default("false"),
+
+  DEVICE_VISITOR_SALT: z.string().default("roombae_default_visitor_salt_32_chars!"),
+  DEVICE_IP_SALT: z.string().default("roombae_default_ip_salt_32_chars!"),
+  DEVICE_UA_SALT: z.string().default("roombae_default_ua_salt_32_chars!"),
+  OAUTH_STATE_SECRET: z.string().default("oauth_state_signing_secret_32_chars!"),
+  DEFAULT_AVATAR_URL: z.string().default("https://res.cloudinary.com/roombae/image/upload/v1700000000/default-avatar.png"),
+  DEFAULT_OWNER_PHOTO_URL: z.string().default("https://res.cloudinary.com/roombae/image/upload/v1700000000/default-owner.png"),
 });
 
 const parseResult = envSchema.safeParse(process.env);
@@ -189,9 +197,15 @@ if (!parseResult.success) {
 
 export const env = parseResult.data;
 
-// ── Mandatory Fail-Closed Startup Guard: Refuse to boot if OTP_DEV_OVERRIDE is active in production ──
+// ── Mandatory Fail-Closed Startup Guards ──
 if (env.NODE_ENV === "production" && (env.OTP_DEV_OVERRIDE === "true" || process.env.OTP_DEV_OVERRIDE === "true")) {
   const fatalMsg = "FATAL SECURITY ERROR: OTP_DEV_OVERRIDE is strictly forbidden in production mode!";
+  console.error(`🚨 ${fatalMsg}`);
+  throw new Error(fatalMsg);
+}
+
+if (env.NODE_ENV === "production" && (env.EXPOSE_DEV_OTP === "true" || process.env.EXPOSE_DEV_OTP === "true")) {
+  const fatalMsg = "FATAL SECURITY ERROR: EXPOSE_DEV_OTP is strictly forbidden in production mode!";
   console.error(`🚨 ${fatalMsg}`);
   throw new Error(fatalMsg);
 }

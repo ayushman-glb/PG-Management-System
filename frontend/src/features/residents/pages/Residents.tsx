@@ -198,7 +198,7 @@ export default function Residents({ navigate }: Props) {
                 transition={{ duration: 0.15 }}
                 onClick={() => setSelected(r)}
                 className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer ${
-                  selected.id === r.id
+                  selected?.id === r.id
                     ? darkMode
                       ? "bg-[#332D2B] border-l-4 border-[#C89A4B]"
                       : "bg-[#F8EEE5] border-l-4 border-[#D9A87C]"
@@ -217,7 +217,7 @@ export default function Residents({ navigate }: Props) {
                     </p>
                     <ChevronRight
                       className={`w-4 h-4 flex-shrink-0 ml-1 ${
-                        selected.id === r.id
+                        selected?.id === r.id
                           ? darkMode
                             ? "text-[#C89A4B]"
                             : "text-[#C58B63]"
@@ -251,6 +251,25 @@ export default function Residents({ navigate }: Props) {
           </div>
         </div>
 
+        {!selected ? (
+          <div
+            className={`flex min-h-[520px] flex-1 flex-col items-center justify-center p-8 text-center ${darkMode ? "bg-slate-900 text-slate-400" : "bg-slate-50 text-slate-500"}`}
+          >
+            <div className="max-w-md space-y-3">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-[#C89A4B]/20 flex items-center justify-center text-2xl">
+                👥
+              </div>
+              <h3 className={`text-lg font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>
+                {residents.length === 0 ? "No Residents Found" : "Select a Resident"}
+              </h3>
+              <p className="text-sm">
+                {residents.length === 0
+                  ? "No residents have been onboarded to this property yet."
+                  : "Choose a resident from the directory to inspect profile, rent dues, agreement status, and room assignment."}
+              </p>
+            </div>
+          </div>
+        ) : (
         <div
           className={`flex min-h-[520px] flex-1 flex-col overflow-y-auto ${darkMode ? "bg-slate-900" : "bg-slate-50"}`}
         >
@@ -628,6 +647,7 @@ export default function Residents({ navigate }: Props) {
             )}
           </div>
         </div>
+        )}
       </div>
     </DashboardLayout>
   );

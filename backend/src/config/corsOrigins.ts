@@ -4,18 +4,18 @@ import { env } from "./env";
 /**
  * Enterprise Cross-Origin Resource Sharing (CORS) Configuration
  * 
- * Single source of truth for allowed origins across Express REST API and Socket.IO servers.
+ * Strict, explicit allow-list for cross-origin credentials to prevent
+ * cross-site data theft and CSRF from multi-tenant hosting platforms.
  */
 export const getRawAllowedOrigins = (): string[] => [
   ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
   env.CLIENT_URL,
   env.FRONTEND_URL,
   "https://ayushman-glb.github.io",
-  "https://ayushman-glb.github.io/PG-Management-System",
   "https://pg-management-system-boxb.onrender.com",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3000",
+  ...(env.NODE_ENV !== "production"
+    ? ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]
+    : []),
 ];
 
 export const getAllowedOrigins = (): string[] => {
@@ -52,27 +52,14 @@ export const isOriginAllowed = (origin?: string): boolean => {
     // fallback to trimmed
   }
 
-  // 1. In development, allow any localhost / 127.0.0.1 port
+  // 1. In development, allow localhost / 127.0.0.1 on any port
   const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
-  if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
+  if ((env.NODE_ENV || "development") !== "production" && isLocalhost) {
     return true;
   }
 
-  // 2. Dynamic subdomain pattern matching for trusted cloud deployment platforms
-  const isRenderSubdomain = /^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(cleanOrigin);
-  const isGitHubPages = /^https:\/\/[a-z0-9-]+\.github\.io$/.test(cleanOrigin);
-  const isVercelSubdomain = /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(cleanOrigin);
-  const isNetlifySubdomain = /^https:\/\/[a-z0-9-]+\.netlify\.app$/.test(cleanOrigin);
-
   const allowed = getAllowedOrigins();
-  return (
-    allowed.includes(cleanOrigin) ||
-    isLocalhost ||
-    isRenderSubdomain ||
-    isGitHubPages ||
-    isVercelSubdomain ||
-    isNetlifySubdomain
-  );
+  return allowed.includes(cleanOrigin);
 };
 
 export const corsOptions: CorsOptions = {
@@ -80,7 +67,7 @@ export const corsOptions: CorsOptions = {
     if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-    // Return callback(null, false) to avoid crashing preflight with Express 500 error
+    // Return callback(null, false) to reject unallowed origin safely
     return callback(null, false);
   },
   credentials: true,
