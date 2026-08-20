@@ -63,7 +63,14 @@ export class DeviceRepository {
     provider?: string;
     providerVersion?: string;
     deviceLabel: string;
+    browser?: string;
+    os?: string;
+    deviceType?: string;
+    screenResolution?: string;
     ipAddress?: string;
+    region?: string;
+    city?: string;
+    country?: string;
     userAgent?: string;
     status?: DeviceStatus;
     trustLevel?: TrustLevel;
@@ -77,8 +84,16 @@ export class DeviceRepository {
         userId: data.userId,
         visitorIdHash,
         provider: data.provider || "fingerprintjs",
-        providerVersion: data.providerVersion || "4.x",
+        providerVersion: data.providerVersion || "5.x",
         deviceLabel: data.deviceLabel,
+        browser: data.browser,
+        os: data.os,
+        deviceType: data.deviceType,
+        screenResolution: data.screenResolution,
+        ipAddress: data.ipAddress,
+        region: data.region,
+        city: data.city,
+        country: data.country,
         status: data.status || "NEW",
         trustLevel: data.trustLevel || "UNTRUSTED",
         lastIpHash,
@@ -102,7 +117,7 @@ export class DeviceRepository {
     if (trustLevel) {
       data.trustLevel = trustLevel;
     }
-    if (status === "REVOKED") {
+    if (status === "REVOKED" || status === "REJECTED") {
       data.revokedAt = new Date();
     }
     return this.prisma.userDevice.update({
@@ -116,6 +131,10 @@ export class DeviceRepository {
     data: {
       ipAddress?: string;
       userAgent?: string;
+      screenResolution?: string;
+      region?: string;
+      city?: string;
+      country?: string;
       incrementFailed?: boolean;
       resetFailed?: boolean;
     },
@@ -127,8 +146,15 @@ export class DeviceRepository {
     };
 
     if (data.ipAddress) {
+      updateData.ipAddress = data.ipAddress;
       updateData.lastIpHash = this.hashIpAddress(data.ipAddress);
     }
+    if (data.screenResolution) {
+      updateData.screenResolution = data.screenResolution;
+    }
+    if (data.region) updateData.region = data.region;
+    if (data.city) updateData.city = data.city;
+    if (data.country) updateData.country = data.country;
     if (data.userAgent) {
       updateData.userAgentHash = this.hashUserAgent(data.userAgent);
     }
@@ -141,6 +167,115 @@ export class DeviceRepository {
     return this.prisma.userDevice.update({
       where: { id: deviceId },
       data: updateData,
+    });
+  }
+
+  public async createLoginLog(data: {
+    userId: string;
+    deviceId?: string;
+    visitorId?: string;
+    deviceLabel: string;
+    screenResolution?: string;
+    ipAddress: string;
+    region?: string;
+    city?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    status: "PENDING_ALERT" | "ACCEPTED" | "REJECTED" | "AUTO_TRUSTED";
+    actionTaken?: string;
+    emailSent?: boolean;
+    userAgent?: string;
+    metadata?: Record<string, any>;
+  }) {
+    const visitorIdHash = data.visitorId ? this.hashVisitorId(data.visitorId) : undefined;
+    if (!this.prisma.deviceLoginLog?.create) {
+      return null as any;
+    }
+    return this.prisma.deviceLoginLog.create({
+      data: {
+        userId: data.userId,
+        deviceId: data.deviceId,
+        visitorIdHash,
+        deviceLabel: data.deviceLabel,
+        screenResolution: data.screenResolution,
+        ipAddress: data.ipAddress,
+        region: data.region,
+        city: data.city,
+        country: data.country,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        status: data.status,
+        actionTaken: data.actionTaken,
+        emailSent: data.emailSent || false,
+        emailSentAt: data.emailSent ? new Date() : null,
+        userAgent: data.userAgent,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      },
+    });
+  }
+
+  public async updateLoginLogDecision(
+    logIdOrUserIdVisitorId: { id?: string; userId?: string; visitorId?: string },
+    data: {
+      status: "ACCEPTED" | "REJECTED";
+      actionTaken: "USER_ACCEPTED" | "USER_REJECTED";
+      deviceId?: string;
+      screenResolution?: string;
+    },
+  ) {
+    if (!this.prisma.deviceLoginLog) {
+      return null as any;
+    }
+    if (logIdOrUserIdVisitorId.id) {
+      return this.prisma.deviceLoginLog.update({
+        where: { id: logIdOrUserIdVisitorId.id },
+        data: {
+          status: data.status,
+          actionTaken: data.actionTaken,
+          actionAt: new Date(),
+          ...(data.deviceId ? { deviceId: data.deviceId } : {}),
+          ...(data.screenResolution ? { screenResolution: data.screenResolution } : {}),
+        },
+      });
+    }
+
+    const visitorIdHash = logIdOrUserIdVisitorId.visitorId
+      ? this.hashVisitorId(logIdOrUserIdVisitorId.visitorId)
+      : undefined;
+
+    const existingLog = await this.prisma.deviceLoginLog.findFirst({
+      where: {
+        userId: logIdOrUserIdVisitorId.userId,
+        ...(visitorIdHash ? { visitorIdHash } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (existingLog) {
+      return this.prisma.deviceLoginLog.update({
+        where: { id: existingLog.id },
+        data: {
+          status: data.status,
+          actionTaken: data.actionTaken,
+          actionAt: new Date(),
+          ...(data.deviceId ? { deviceId: data.deviceId } : {}),
+          ...(data.screenResolution ? { screenResolution: data.screenResolution } : {}),
+        },
+      });
+    }
+
+    return null;
+  }
+
+  public async getLoginLogs(userId: string, limit = 50) {
+    if (!this.prisma.deviceLoginLog?.findMany) {
+      return [];
+    }
+    return this.prisma.deviceLoginLog.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
     });
   }
 

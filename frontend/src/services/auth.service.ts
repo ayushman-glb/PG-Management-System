@@ -269,12 +269,14 @@ export class AuthService {
 
     let visitorId: string | undefined;
     let deviceLabel: string | undefined;
+    let screenResolution: string | undefined;
 
     try {
       const { deviceIdentityProvider } = await import("./deviceIdentity");
       const identity = await deviceIdentityProvider.getDeviceIdentity();
       visitorId = identity.visitorId;
       deviceLabel = identity.deviceLabel;
+      screenResolution = identity.screenResolution;
     } catch {
       // Ignore if fingerprinting unavailable
     }
@@ -287,7 +289,8 @@ export class AuthService {
         password, 
         rememberMe, 
         visitorId, 
-        deviceLabel 
+        deviceLabel,
+        screenResolution,
       }),
     });
 
@@ -298,12 +301,18 @@ export class AuthService {
       this.setRefreshToken(res.data.refreshToken, rememberMe);
     }
 
-    if (res.data?.deviceSecurity?.isNewDevice) {
-      useUIStore.getState().openNewDeviceModal(
-        deviceLabel || "New Browser",
-        res.data.deviceSecurity.status,
-        res.data.deviceSecurity.riskLevel,
-      );
+    if (res.data?.deviceSecurity?.isNewDevice || res.data?.deviceSecurity?.requiresAlert) {
+      const ds = res.data.deviceSecurity;
+      useUIStore.getState().openNewDeviceModal({
+        deviceLabel: ds.deviceLabel || deviceLabel || "New Browser",
+        deviceId: ds.deviceId,
+        visitorId: ds.visitorId || visitorId,
+        screenResolution: ds.screenResolution || screenResolution,
+        ipAddress: ds.ipAddress,
+        region: ds.region,
+        status: ds.status,
+        riskLevel: ds.riskLevel,
+      });
     }
 
     return res.data || res;

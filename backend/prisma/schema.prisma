@@ -311,6 +311,7 @@ model User {
   passwordResets     PasswordResetToken[]
   userDevices        UserDevice[]
   securityAuditEvents SecurityAuditEvent[]
+  deviceLoginLogs    DeviceLoginLog[]
 
   @@index([residentCode])
   @@index([phone])
@@ -434,33 +435,67 @@ model LoginHistory {
 }
 
 model UserDevice {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String    @db.ObjectId
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  visitorIdHash   String
-  provider        String    @default("fingerprintjs")
-  providerVersion String?
-  deviceLabel     String
-  status          String    @default("NEW") // NEW, TRUSTED, BLOCKED, REVOKED
-  trustLevel      String    @default("UNTRUSTED") // TRUSTED, UNTRUSTED
-  lastIpHash      String?
-  userAgentHash   String?
-  latitude        Float?
-  longitude       Float?
-  city            String?
-  country         String?
-  asn             String?
-  failedAttempts  Int       @default(0)
-  firstSeenAt     DateTime  @default(now())
-  lastSeenAt      DateTime  @default(now())
-  lastLoginAt     DateTime?
-  revokedAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visitorIdHash    String
+  provider         String    @default("fingerprintjs")
+  providerVersion  String?
+  deviceLabel      String
+  browser          String?
+  os               String?
+  deviceType       String?   // DESKTOP, MOBILE, TABLET
+  screenResolution String?   // e.g. "1920x1080 (24-bit)"
+  status           String    @default("NEW") // NEW, TRUSTED, BLOCKED, REVOKED, REJECTED
+  trustLevel       String    @default("UNTRUSTED") // TRUSTED, UNTRUSTED
+  lastIpHash       String?
+  ipAddress        String?
+  userAgentHash    String?
+  latitude         Float?
+  longitude        Float?
+  region           String?
+  city             String?
+  country          String?
+  asn              String?
+  failedAttempts   Int       @default(0)
+  firstSeenAt      DateTime  @default(now())
+  lastSeenAt       DateTime  @default(now())
+  lastLoginAt      DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@unique([userId, visitorIdHash])
   @@index([userId])
   @@index([visitorIdHash])
+  @@index([status])
+}
+
+model DeviceLoginLog {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId         String?
+  visitorIdHash    String?
+  deviceLabel      String
+  screenResolution String?
+  ipAddress        String
+  region           String?
+  city             String?
+  country          String?
+  latitude         Float?
+  longitude        Float?
+  status           String    @default("PENDING_ALERT") // PENDING_ALERT, ACCEPTED, REJECTED, AUTO_TRUSTED
+  actionTaken      String?   // USER_ACCEPTED, USER_REJECTED, AUTO_TRUSTED
+  emailSent        Boolean   @default(false)
+  emailSentAt      DateTime?
+  userAgent        String?
+  metadata         String?
+  createdAt        DateTime  @default(now())
+  actionAt         DateTime?
+
+  @@index([userId])
+  @@index([userId, createdAt])
   @@index([status])
 }
 

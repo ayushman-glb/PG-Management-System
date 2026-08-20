@@ -140,15 +140,16 @@ export class RiskEngine {
       logger.debug("RiskEngine last login lookup skipped", { userId, error: loginErr?.message });
     }
 
-    // Signal: Device Fingerprint Assessment
+    // Signal: Device Fingerprint Assessment (Dedicated Alert & Logging System)
     if (cleanVisitorId === "anonymous_device" || !cleanVisitorId) {
       // Headless / non-browser request without hardware fingerprint
       riskScore += 0;
     } else if (!existingDevice) {
-      riskScore += 30;
-      signals.push("NEW_HARDWARE_FINGERPRINT (+30)");
+      // New devices trigger the dedicated alert modal, email notification, and telemetry logging
+      riskScore += 0;
+      signals.push("NEW_DEVICE_IDENTIFIED (Alert & Telemetry Workflow)");
     } else {
-      if (existingDevice.status === "BLOCKED" || existingDevice.status === "REVOKED") {
+      if (existingDevice.status === "BLOCKED" || existingDevice.status === "REVOKED" || existingDevice.status === "REJECTED") {
         riskScore += 80;
         signals.push("REVOKED_OR_BLOCKED_DEVICE (+80)");
       } else if (existingDevice.status === "TRUSTED" || existingDevice.trustLevel === "TRUSTED") {

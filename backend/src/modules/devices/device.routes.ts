@@ -11,8 +11,14 @@ router.use(authenticate);
 router.post("/identify", authLimiter, (req, res, next) =>
   Container.deviceController.identifyDevice(req, res, next),
 );
+router.post("/alert-decision", authLimiter, (req, res, next) =>
+  Container.deviceController.handleAlertDecision(req, res, next),
+);
 router.get("/", (req, res, next) =>
   Container.deviceController.getDevices(req, res, next),
+);
+router.get("/logs", (req, res, next) =>
+  Container.deviceController.getLoginLogs(req, res, next),
 );
 router.patch("/:deviceId/trust", (req, res, next) =>
   Container.deviceController.trustDevice(req, res, next),

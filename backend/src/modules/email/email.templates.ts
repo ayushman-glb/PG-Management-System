@@ -10,6 +10,7 @@ import {
   ComplaintEmailData,
   SupportReplyEmailData,
   MarketingCampaignData,
+  NewDeviceLoginEmailData,
 } from './email.types';
 import { env } from '../../config/env';
 
@@ -512,5 +513,73 @@ export const emailTemplates = {
       ` : ''}
     `;
     return bentoWrapper(content, { preheader: data.subject, categoryBadge: 'Announcements' });
+  },
+
+  // 13. New Device Login Alert
+  newDeviceLoginAlert: (data: NewDeviceLoginEmailData) => {
+    const safeName = escapeHtml(data.name || 'User');
+    const safeDevice = escapeHtml(data.deviceLabel || 'Unknown Device');
+    const safeScreen = escapeHtml(data.screenResolution || 'Standard Display');
+    const safeIp = escapeHtml(data.ipAddress || '127.0.0.1');
+    const safeLocation = escapeHtml(data.location || 'Unknown Location');
+    const safeTime = escapeHtml(data.loginTime || new Date().toUTCString());
+    const frontendUrl = env.FRONTEND_URL || 'https://ayushman-glb.github.io/PG-Management-System';
+    const safeUrl = escapeHtml(data.reviewUrl || frontendUrl);
+
+    const content = `
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="display: inline-block; width: 52px; height: 52px; line-height: 52px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 14px; font-size: 26px; margin-bottom: 16px;">
+          🛡️
+        </div>
+        <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">New Device Sign-in Detected</h1>
+        <p style="margin: 0; font-size: 14px; color: #9ca3af; line-height: 1.5;">
+          Hello <strong style="color: #f3f4f6;">${safeName}</strong>, a new device or browser recently signed in to your RoomBae account.
+        </p>
+      </div>
+
+      <!-- Bento Telemetry Box -->
+      <div style="background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 24px; margin: 24px 0;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #9ca3af; font-size: 13px;">💻 Device / Browser:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #fbbf24; font-size: 13px; font-weight: 600; text-align: right;">${safeDevice}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #9ca3af; font-size: 13px;">🖥️ Screen Size:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #f3f4f6; font-size: 13px; font-weight: 500; text-align: right;">${safeScreen}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #9ca3af; font-size: 13px;">🌐 IP Address:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #f3f4f6; font-size: 13px; font-family: monospace; text-align: right;">${safeIp}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #9ca3af; font-size: 13px;">📍 Location / Region:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #1e293b; color: #f3f4f6; font-size: 13px; font-weight: 500; text-align: right;">${safeLocation}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #9ca3af; font-size: 13px;">⏱️ Sign-in Time:</td>
+            <td style="padding: 8px 0; color: #f3f4f6; font-size: 13px; text-align: right;">${safeTime}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Action Guidance -->
+      <div style="background: rgba(245, 158, 11, 0.08); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 16px; margin-bottom: 28px;">
+        <p style="margin: 0; font-size: 13px; color: #d1d5db; line-height: 1.6;">
+          If this was you, simply <strong>Accept</strong> the alert in your browser to trust this device. If you don't recognize this sign-in, please <strong>Reject</strong> the prompt or reset your password immediately.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="${safeUrl}" style="display: inline-block; padding: 12px 28px; background: #f59e0b; color: #0b0f17; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 10px;">
+          Review Account Security &rarr;
+        </a>
+      </div>
+    `;
+
+    return bentoWrapper(content, {
+      preheader: `Security Alert: New Sign-in from ${safeDevice}`,
+      categoryBadge: 'Security Alert',
+    });
   },
 };

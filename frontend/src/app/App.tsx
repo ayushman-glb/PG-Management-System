@@ -221,28 +221,46 @@ export default function App() {
         <NewDeviceNotificationModal
           isOpen={newDeviceModal.isOpen}
           deviceLabel={newDeviceModal.deviceLabel}
-          onTrust={async () => {
+          ipAddress={newDeviceModal.ipAddress}
+          region={newDeviceModal.region}
+          screenResolution={newDeviceModal.screenResolution}
+          onAccept={async () => {
             try {
-              const devices = await deviceService.getUserDevices();
-              if (devices.length > 0) {
-                await deviceService.trustDevice(devices[0].id);
-              }
-            } catch {
-              // Ignore if trust call fails
+              const { deviceIdentityProvider } = await import("../services/deviceIdentity");
+              const identity = await deviceIdentityProvider.getDeviceIdentity();
+              await deviceService.respondToNewDeviceAlert({
+                visitorId: newDeviceModal.visitorId || identity.visitorId,
+                decision: "ACCEPT",
+                screenResolution: newDeviceModal.screenResolution || identity.screenResolution,
+                deviceLabel: newDeviceModal.deviceLabel || identity.deviceLabel,
+                deviceId: newDeviceModal.deviceId,
+              });
+            } catch (err: any) {
+              console.warn("Failed to accept new device login:", err);
             } finally {
               closeNewDeviceModal();
             }
           }}
-          onRevoke={async () => {
+          onReject={async () => {
             try {
-              const devices = await deviceService.getUserDevices();
-              if (devices.length > 0) {
-                await deviceService.revokeDevice(devices[0].id);
-              }
-            } catch {
-              // Ignore if revoke fails
+              const { deviceIdentityProvider } = await import("../services/deviceIdentity");
+              const identity = await deviceIdentityProvider.getDeviceIdentity();
+              await deviceService.respondToNewDeviceAlert({
+                visitorId: newDeviceModal.visitorId || identity.visitorId,
+                decision: "REJECT",
+                screenResolution: newDeviceModal.screenResolution || identity.screenResolution,
+                deviceLabel: newDeviceModal.deviceLabel || identity.deviceLabel,
+                deviceId: newDeviceModal.deviceId,
+              });
+            } catch (err: any) {
+              console.warn("Failed to reject new device login:", err);
             } finally {
               closeNewDeviceModal();
+              authService.clearToken();
+              try {
+                await authService.logout().catch(() => {});
+              } catch {}
+              navigate("auth");
             }
           }}
           onClose={closeNewDeviceModal}

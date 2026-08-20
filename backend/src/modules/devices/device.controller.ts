@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { DeviceService } from "./device.service";
 import { catchAsync } from "../../utils/appError";
 import { ApiResponse } from "../../utils/apiResponse";
+import { env } from "../../config/env";
+import { GeoIpUtil } from "../../utils/geoIp.util";
 
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
@@ -15,18 +17,65 @@ export class DeviceController {
       });
     }
 
-    const { visitorId, provider, providerVersion, deviceLabel } = req.body;
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
+    const { visitorId, provider, providerVersion, deviceLabel, screenResolution } = req.body;
+    const ipAddress = GeoIpUtil.extractClientIp(req);
+    const userAgent = req.headers["user-agent"] as string | undefined;
     const requestId = (req as any).correlationId;
 
     const result = await this.deviceService.identifyAndEvaluateDevice(
       userId,
-      { visitorId, provider, providerVersion, deviceLabel },
+      { visitorId, provider, providerVersion, deviceLabel, screenResolution },
       { ipAddress, userAgent, requestId },
     );
 
     return ApiResponse.success(res, "Device evaluated successfully", result);
+  });
+
+  handleAlertDecision = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required to respond to device alert",
+      });
+    }
+
+    const { visitorId, decision, screenResolution, deviceLabel, deviceId } = req.body;
+
+    if (!decision || (decision !== "ACCEPT" && decision !== "REJECT")) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid decision ('ACCEPT' or 'REJECT') is required",
+      });
+    }
+
+    const ipAddress = GeoIpUtil.extractClientIp(req);
+    const userAgent = req.headers["user-agent"] as string | undefined;
+    const requestId = (req as any).correlationId;
+
+    const result = await this.deviceService.processAlertDecision(
+      userId,
+      { visitorId: visitorId || "unknown_visitor", decision, screenResolution, deviceLabel, deviceId },
+      { ipAddress, userAgent, requestId },
+    );
+
+    if (decision === "REJECT") {
+      const isProduction = env.NODE_ENV === "production";
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+      });
+      res.clearCookie("accessToken", {
+        httpOnly: false,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+      });
+    }
+
+    return ApiResponse.success(res, result.message, result);
   });
 
   getDevices = catchAsync(async (req: Request, res: Response) => {
@@ -39,6 +88,16 @@ export class DeviceController {
     return ApiResponse.success(res, "Devices retrieved successfully", { devices });
   });
 
+  getLoginLogs = catchAsync(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const logs = await this.deviceService.getDeviceLoginLogs(userId);
+    return ApiResponse.success(res, "Device login logs retrieved successfully", { logs });
+  });
+
   trustDevice = catchAsync(async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
     const { deviceId } = req.params;
@@ -46,8 +105,8 @@ export class DeviceController {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
+    const ipAddress = GeoIpUtil.extractClientIp(req);
+    const userAgent = req.headers["user-agent"] as string | undefined;
     const requestId = (req as any).correlationId;
 
     const device = await this.deviceService.trustDevice(userId, deviceId, {
@@ -66,8 +125,8 @@ export class DeviceController {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
+    const ipAddress = GeoIpUtil.extractClientIp(req);
+    const userAgent = req.headers["user-agent"] as string | undefined;
     const requestId = (req as any).correlationId;
 
     const device = await this.deviceService.revokeDevice(userId, deviceId, {
@@ -87,8 +146,8 @@ export class DeviceController {
       return res.status(403).json({ success: false, message: "Forbidden: Admin access required" });
     }
 
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
+    const ipAddress = GeoIpUtil.extractClientIp(req);
+    const userAgent = req.headers["user-agent"] as string | undefined;
     const requestId = (req as any).correlationId;
 
     const device = await this.deviceService.blockDevice(deviceId, user.id, {
@@ -108,8 +167,8 @@ export class DeviceController {
       return res.status(403).json({ success: false, message: "Forbidden: Admin access required" });
     }
 
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
+    const ipAddress = GeoIpUtil.extractClientIp(req);
+    const userAgent = req.headers["user-agent"] as string | undefined;
     const requestId = (req as any).correlationId;
 
     const device = await this.deviceService.unblockDevice(deviceId, user.id, {

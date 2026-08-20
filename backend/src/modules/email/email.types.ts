@@ -146,3 +146,14 @@ export interface MarketingCampaignData {
   ctaUrl?: string;
   recipients?: Array<{ email: string; name?: string }>;
 }
+
+export interface NewDeviceLoginEmailData {
+  email: string;
+  name?: string;
+  deviceLabel: string;
+  screenResolution?: string;
+  ipAddress: string;
+  location?: string;
+  loginTime?: string;
+  reviewUrl?: string;
+}

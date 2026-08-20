@@ -6,6 +6,7 @@ export interface DeviceIdentityResult {
   provider: string;
   providerVersion: string;
   deviceLabel: string;
+  screenResolution: string;
   isAvailable: boolean;
 }
 
@@ -45,6 +46,9 @@ class FingerprintJSProvider implements DeviceIdentityProvider {
       return this.cachedIdentity;
     }
 
+    const screenResolution = this.getScreenResolution();
+    const deviceLabel = this.generateClientDeviceLabel();
+
     try {
       await this.initialize();
       if (!this.fpPromise) {
@@ -58,8 +62,9 @@ class FingerprintJSProvider implements DeviceIdentityProvider {
         visitorId: result.visitorId,
         confidenceScore: result.confidence?.score || 0.9,
         provider: "fingerprintjs",
-        providerVersion: "4.x",
-        deviceLabel: this.generateClientDeviceLabel(),
+        providerVersion: "5.x",
+        deviceLabel,
+        screenResolution,
         isAvailable: true,
       };
 
@@ -67,13 +72,13 @@ class FingerprintJSProvider implements DeviceIdentityProvider {
       return identity;
     } catch (error) {
       console.warn("[DeviceIdentity] Fingerprint generation failed or blocked:", error);
-      // Fallback graceful object - app authentication will continue without crashing
       const fallback: DeviceIdentityResult = {
         visitorId: this.getOrCreateFallbackId(),
         confidenceScore: 0,
         provider: "fingerprintjs-fallback",
         providerVersion: "1.0",
-        deviceLabel: this.generateClientDeviceLabel(),
+        deviceLabel,
+        screenResolution,
         isAvailable: false,
       };
       this.cachedIdentity = fallback;
@@ -83,6 +88,16 @@ class FingerprintJSProvider implements DeviceIdentityProvider {
 
   public clearCache(): void {
     this.cachedIdentity = null;
+  }
+
+  public getScreenResolution(): string {
+    if (typeof window === "undefined" || !window.screen) {
+      return "Unknown Screen";
+    }
+    const width = window.screen.width || 0;
+    const height = window.screen.height || 0;
+    const colorDepth = window.screen.colorDepth || 24;
+    return `${width}x${height} (${colorDepth}-bit)`;
   }
 
   private generateClientDeviceLabel(): string {

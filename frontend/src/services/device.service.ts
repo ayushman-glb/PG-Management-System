@@ -4,13 +4,40 @@ import { deviceIdentityProvider } from "./deviceIdentity";
 export interface UserDeviceItem {
   id: string;
   deviceLabel: string;
-  status: "NEW" | "TRUSTED" | "BLOCKED" | "REVOKED";
+  browser?: string;
+  os?: string;
+  deviceType?: string;
+  screenResolution?: string;
+  region?: string;
+  city?: string;
+  country?: string;
+  ipAddress?: string;
+  status: "NEW" | "TRUSTED" | "BLOCKED" | "REVOKED" | "REJECTED";
   trustLevel: "TRUSTED" | "UNTRUSTED";
   provider: string;
   firstSeenAt: string;
   lastSeenAt: string;
   lastLoginAt?: string;
   revokedAt?: string;
+}
+
+export interface DeviceLoginLogItem {
+  id: string;
+  userId: string;
+  deviceId?: string | null;
+  deviceLabel: string;
+  screenResolution?: string | null;
+  ipAddress: string;
+  region?: string | null;
+  city?: string | null;
+  country?: string | null;
+  status: "PENDING_ALERT" | "ACCEPTED" | "REJECTED" | "AUTO_TRUSTED";
+  actionTaken?: string | null;
+  emailSent: boolean;
+  emailSentAt?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+  actionAt?: string | null;
 }
 
 export interface SecurityEventItem {
@@ -28,6 +55,13 @@ export interface SecurityEventItem {
 export interface IdentifyDeviceResponse {
   device: UserDeviceItem;
   isNew: boolean;
+  requiresAlert: boolean;
+  telemetry: {
+    ip: string;
+    region: string;
+    screenResolution?: string;
+    deviceLabel: string;
+  };
   risk: {
     score: number;
     level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -55,6 +89,7 @@ export const deviceService = {
             provider: identity.provider,
             providerVersion: identity.providerVersion,
             deviceLabel: identity.deviceLabel,
+            screenResolution: identity.screenResolution,
           }),
         },
       );
@@ -66,6 +101,28 @@ export const deviceService = {
   },
 
   /**
+   * Responds to a new device login alert with Accept or Reject decision.
+   */
+  async respondToNewDeviceAlert(payload: {
+    visitorId: string;
+    decision: "ACCEPT" | "REJECT";
+    screenResolution?: string;
+    deviceLabel?: string;
+    deviceId?: string;
+  }): Promise<{ status: "ACCEPTED" | "REJECTED"; loggedOut?: boolean; message: string }> {
+    const response = await api.request<
+      ApiResponse<{ status: "ACCEPTED" | "REJECTED"; loggedOut?: boolean; message: string }>
+    >("/security/devices/alert-decision", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    return response.data;
+  },
+
+  /**
    * Fetches user's registered devices.
    */
   async getUserDevices(): Promise<UserDeviceItem[]> {
@@ -73,6 +130,16 @@ export const deviceService = {
       "/security/devices",
     );
     return response.data?.devices || [];
+  },
+
+  /**
+   * Fetches device sign-in telemetry logs.
+   */
+  async getDeviceLoginLogs(): Promise<DeviceLoginLogItem[]> {
+    const response = await api.request<ApiResponse<{ logs: DeviceLoginLogItem[] }>>(
+      "/security/devices/logs",
+    );
+    return response.data?.logs || [];
   },
 
   /**

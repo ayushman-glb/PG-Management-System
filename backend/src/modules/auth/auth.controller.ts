@@ -56,7 +56,11 @@ export class AuthController {
 
         const evalResult = await Container.deviceService.identifyAndEvaluateDevice(
           result.user.id,
-          { visitorId, deviceLabel: req.body.deviceLabel },
+          {
+            visitorId,
+            deviceLabel: req.body.deviceLabel,
+            screenResolution: req.body.screenResolution,
+          },
           { ipAddress, userAgent, requestId },
         );
 
@@ -74,6 +78,13 @@ export class AuthController {
 
         deviceSecurity = {
           isNewDevice: evalResult.isNew,
+          requiresAlert: evalResult.requiresAlert,
+          deviceId: evalResult.device?.id,
+          visitorId,
+          deviceLabel: evalResult.device?.deviceLabel || evalResult.telemetry?.deviceLabel,
+          screenResolution: evalResult.telemetry?.screenResolution || evalResult.device?.screenResolution,
+          ipAddress: evalResult.telemetry?.ip,
+          region: evalResult.telemetry?.region,
           status: evalResult.device?.status,
           riskLevel: evalResult.risk?.level,
           stepUpRequired,

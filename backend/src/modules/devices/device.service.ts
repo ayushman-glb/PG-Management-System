@@ -1,12 +1,15 @@
 import { DeviceRepository } from "./device.repository";
-import { DeviceRiskEngine } from "./device.riskEngine";
 import {
   DeviceIdentifyRequest,
+  DeviceAlertDecisionRequest,
   DeviceStatus,
   TrustLevel,
   RiskEvaluationResult,
 } from "./device.types";
 import { logger } from "../../utils/logger";
+import { GeoIpUtil } from "../../utils/geoIp.util";
+import { prisma } from "../../config/prisma";
+import { SessionRevocationService } from "../../services/security/SessionRevocationService";
 
 export class DeviceService {
   constructor(private readonly deviceRepository: DeviceRepository) {}
@@ -28,12 +31,37 @@ export class DeviceService {
 
     let os = "Desktop";
     if (userAgent.includes("Windows")) os = "Windows";
-    else if (userAgent.includes("Mac OS")) os = "macOS";
+    else if (userAgent.includes("Mac OS") || userAgent.includes("Macintosh")) os = "macOS";
     else if (userAgent.includes("Linux")) os = "Linux";
     else if (userAgent.includes("Android")) os = "Android";
     else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
 
     return `${browser} on ${os}`;
+  }
+
+  /**
+   * Extracts detailed browser, os, and category information from user agent.
+   */
+  public parseBrowserAndOs(userAgent?: string): { browser: string; os: string; deviceType: "DESKTOP" | "MOBILE" | "TABLET" } {
+    if (!userAgent) {
+      return { browser: "Unknown Browser", os: "Unknown OS", deviceType: "DESKTOP" };
+    }
+
+    let browser = "Browser";
+    if (userAgent.includes("Firefox")) browser = "Firefox";
+    else if (userAgent.includes("Edg")) browser = "Edge";
+    else if (userAgent.includes("Chrome")) browser = "Chrome";
+    else if (userAgent.includes("Safari")) browser = "Safari";
+
+    let os = "Desktop";
+    if (userAgent.includes("Windows")) os = "Windows";
+    else if (userAgent.includes("Mac OS") || userAgent.includes("Macintosh")) os = "macOS";
+    else if (userAgent.includes("Linux")) os = "Linux";
+    else if (userAgent.includes("Android")) os = "Android";
+    else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
+
+    const deviceType = this.classifyDeviceCategory(userAgent);
+    return { browser, os, deviceType };
   }
 
   /**
@@ -66,11 +94,10 @@ export class DeviceService {
 
     for (const dev of userDevices) {
       if (dev.id === currentDeviceId) continue;
-      if (dev.status === "REVOKED" || dev.status === "BLOCKED") continue;
+      if (dev.status === "REVOKED" || dev.status === "BLOCKED" || dev.status === "REJECTED") continue;
 
       const devCategory = this.classifyDeviceCategory(dev.deviceLabel);
 
-      // If existing active device is in the same category (e.g. desktop + desktop or mobile + mobile)
       if (devCategory === currentCategory) {
         evictedDeviceId = dev.id;
         await this.deviceRepository.updateDeviceStatus(dev.id, "REVOKED", "UNTRUSTED");
@@ -94,7 +121,6 @@ export class DeviceService {
         });
 
         try {
-          // Broadcast real-time eviction to client sockets
           const { SocketServer } = require("../../socket/socketServer");
           SocketServer.emitToUser(userId, "security:session-revoked", {
             deviceId: dev.id,
@@ -110,7 +136,8 @@ export class DeviceService {
   }
 
   /**
-   * Identify device and evaluate security risk.
+   * Identify device via FingerprintJS, determine if it is a new device,
+   * log the telemetry to the database, and trigger email alert if new.
    */
   public async identifyAndEvaluateDevice(
     userId: string,
@@ -119,97 +146,186 @@ export class DeviceService {
   ): Promise<{
     device: any;
     isNew: boolean;
+    requiresAlert: boolean;
+    telemetry: {
+      ip: string;
+      region: string;
+      screenResolution?: string;
+      deviceLabel: string;
+    };
     risk: RiskEvaluationResult;
-    evictedDeviceId?: string;
   }> {
     const visitorId = payload.visitorId?.trim();
+    const effectiveIp = context.ipAddress || "127.0.0.1";
+    const location = GeoIpUtil.resolveLocation(effectiveIp);
+    const { browser, os, deviceType } = this.parseBrowserAndOs(context.userAgent);
+    const deviceLabel = this.parseDeviceLabel(context.userAgent, payload.deviceLabel);
+    const screenResolution = payload.screenResolution || "Unknown Resolution";
+
     if (!visitorId) {
       logger.warn(`Device identification requested without visitorId for user ${userId}`);
-      const fallbackRisk: RiskEvaluationResult = {
-        score: 40,
-        level: "MEDIUM",
-        reasons: ["Fingerprint visitorId unavailable or blocked"],
-        requiresStepUp: false,
-      };
       return {
         device: null,
         isNew: false,
-        risk: fallbackRisk,
+        requiresAlert: false,
+        telemetry: {
+          ip: effectiveIp,
+          region: location.formattedLocation,
+          screenResolution,
+          deviceLabel,
+        },
+        risk: {
+          score: 40,
+          level: "MEDIUM",
+          reasons: ["Fingerprint visitorId unavailable or blocked"],
+          requiresStepUp: false,
+        },
       };
     }
 
-    const deviceLabel = this.parseDeviceLabel(context.userAgent, payload.deviceLabel);
     let existingDevice = await this.deviceRepository.findByUserIdAndVisitorId(
       userId,
       visitorId,
     );
 
     let isNew = false;
-    let deviceStatus: DeviceStatus = "NEW";
+    let requiresAlert = false;
 
     if (!existingDevice) {
       isNew = true;
+      requiresAlert = true;
+
       existingDevice = await this.deviceRepository.createDevice({
         userId,
         visitorId,
         provider: payload.provider || "fingerprintjs",
-        providerVersion: payload.providerVersion,
+        providerVersion: payload.providerVersion || "5.x",
         deviceLabel,
-        ipAddress: context.ipAddress,
+        browser,
+        os,
+        deviceType,
+        screenResolution,
+        ipAddress: effectiveIp,
+        region: location.formattedLocation,
+        city: location.city,
+        country: location.country,
         userAgent: context.userAgent,
         status: "NEW",
         trustLevel: "UNTRUSTED",
       });
 
+      // Maintain initial pending login log in database
+      let emailSent = false;
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true, name: true },
+        });
+
+        if (user && user.email) {
+          const { emailService } = require("../email");
+          emailSent = await emailService.sendNewDeviceLoginAlert({
+            email: user.email,
+            name: user.name,
+            deviceLabel,
+            screenResolution,
+            ipAddress: effectiveIp,
+            location: location.formattedLocation,
+            loginTime: new Date().toUTCString(),
+          }).catch((err: any) => {
+            logger.warn("Failed to dispatch new device login alert email:", err);
+            return false;
+          });
+        }
+      } catch (emailErr) {
+        logger.warn("Email alert trigger error:", emailErr);
+      }
+
+      await this.deviceRepository.createLoginLog({
+        userId,
+        deviceId: existingDevice.id,
+        visitorId,
+        deviceLabel,
+        screenResolution,
+        ipAddress: effectiveIp,
+        region: location.formattedLocation,
+        city: location.city,
+        country: location.country,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        status: "PENDING_ALERT",
+        emailSent,
+        userAgent: context.userAgent,
+      });
+
       await this.deviceRepository.createAuditEvent({
         userId,
         deviceId: existingDevice.id,
-        eventType: "NEW_DEVICE",
+        eventType: "NEW_DEVICE_DETECTED",
         severity: "INFO",
-        riskScore: 25,
-        riskLevel: "MEDIUM",
-        ipAddress: context.ipAddress,
+        riskScore: 0,
+        riskLevel: "LOW",
+        ipAddress: effectiveIp,
         userAgent: context.userAgent,
         requestId: context.requestId,
-        metadata: { deviceLabel, visitorIdHash: existingDevice.visitorIdHash },
+        metadata: {
+          deviceLabel,
+          screenResolution,
+          location: location.formattedLocation,
+          visitorIdHash: existingDevice.visitorIdHash,
+        },
       });
     } else {
-      deviceStatus = existingDevice.status as DeviceStatus;
+      // Existing device
+      requiresAlert = existingDevice.status === "NEW";
+
       await this.deviceRepository.updateDeviceActivity(existingDevice.id, {
-        ipAddress: context.ipAddress,
+        ipAddress: effectiveIp,
         userAgent: context.userAgent,
+        screenResolution,
+        region: location.formattedLocation,
+        city: location.city,
+        country: location.country,
       });
-    }
 
-    // Enforce 1 Desktop + 1 Mobile concurrent session cap policy
-    let evictedDeviceId: string | undefined;
-    try {
-      const sessionResult = await this.enforceConcurrentSessionPolicy(userId, existingDevice.id, context);
-      evictedDeviceId = sessionResult.evictedDeviceId;
-    } catch (policyErr) {
-      logger.debug("Concurrent session policy enforcement notice:", policyErr);
-    }
-
-    const risk = DeviceRiskEngine.evaluate({
-      isNewDevice: isNew,
-      deviceStatus,
-      failedAttempts: existingDevice.failedAttempts,
-      ipChanged: false,
-    });
-
-    if (risk.level === "HIGH" || risk.level === "CRITICAL") {
-      await this.deviceRepository.createAuditEvent({
-        userId,
-        deviceId: existingDevice.id,
-        eventType: "SUSPICIOUS_LOGIN",
-        severity: risk.level === "CRITICAL" ? "CRITICAL" : "WARNING",
-        riskScore: risk.score,
-        riskLevel: risk.level,
-        ipAddress: context.ipAddress,
-        userAgent: context.userAgent,
-        requestId: context.requestId,
-        metadata: { reasons: risk.reasons },
-      });
+      // If existing device is already TRUSTED, log an auto-trusted sign-in
+      if (existingDevice.status === "TRUSTED") {
+        await this.deviceRepository.createLoginLog({
+          userId,
+          deviceId: existingDevice.id,
+          visitorId,
+          deviceLabel,
+          screenResolution,
+          ipAddress: effectiveIp,
+          region: location.formattedLocation,
+          city: location.city,
+          country: location.country,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          status: "AUTO_TRUSTED",
+          actionTaken: "AUTO_TRUSTED",
+          emailSent: false,
+          userAgent: context.userAgent,
+        });
+      } else if (existingDevice.status === "NEW") {
+        // Create pending log for this login attempt
+        await this.deviceRepository.createLoginLog({
+          userId,
+          deviceId: existingDevice.id,
+          visitorId,
+          deviceLabel,
+          screenResolution,
+          ipAddress: effectiveIp,
+          region: location.formattedLocation,
+          city: location.city,
+          country: location.country,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          status: "PENDING_ALERT",
+          emailSent: false,
+          userAgent: context.userAgent,
+        });
+      }
     }
 
     return {
@@ -218,21 +334,163 @@ export class DeviceService {
         deviceLabel: existingDevice.deviceLabel,
         status: existingDevice.status,
         trustLevel: existingDevice.trustLevel,
+        screenResolution: (existingDevice as any).screenResolution || screenResolution,
+        region: (existingDevice as any).region || location.formattedLocation,
         isNew,
         firstSeenAt: existingDevice.firstSeenAt,
         lastSeenAt: existingDevice.lastSeenAt,
       },
       isNew,
-      risk,
-      evictedDeviceId,
+      requiresAlert,
+      telemetry: {
+        ip: effectiveIp,
+        region: location.formattedLocation,
+        screenResolution,
+        deviceLabel,
+      },
+      risk: {
+        score: existingDevice.status === "BLOCKED" ? 100 : existingDevice.status === "REJECTED" ? 80 : 0,
+        level: existingDevice.status === "BLOCKED" ? "CRITICAL" : "LOW",
+        reasons: isNew ? ["New device login detected"] : [],
+        requiresStepUp: false,
+      },
     };
+  }
+
+  /**
+   * Processes the user's Accept or Reject decision for a new device login alert.
+   */
+  public async processAlertDecision(
+    userId: string,
+    payload: DeviceAlertDecisionRequest,
+    context: { ipAddress?: string; userAgent?: string; requestId?: string },
+  ): Promise<{
+    status: "ACCEPTED" | "REJECTED";
+    loggedOut?: boolean;
+    message: string;
+    device?: any;
+  }> {
+    const { visitorId, decision, screenResolution, deviceId } = payload;
+    const effectiveIp = context.ipAddress || "127.0.0.1";
+    const location = GeoIpUtil.resolveLocation(effectiveIp);
+
+    // Locate device record
+    let device = deviceId
+      ? await this.deviceRepository.findById(deviceId)
+      : await this.deviceRepository.findByUserIdAndVisitorId(userId, visitorId);
+
+    if (decision === "ACCEPT") {
+      if (device) {
+        device = await this.deviceRepository.updateDeviceStatus(
+          device.id,
+          "TRUSTED",
+          "TRUSTED",
+        );
+      }
+
+      await this.deviceRepository.updateLoginLogDecision(
+        { userId, visitorId, id: undefined },
+        {
+          status: "ACCEPTED",
+          actionTaken: "USER_ACCEPTED",
+          deviceId: device?.id,
+          screenResolution,
+        },
+      );
+
+      await this.deviceRepository.createAuditEvent({
+        userId,
+        deviceId: device?.id,
+        eventType: "DEVICE_ALERT_ACCEPTED",
+        severity: "INFO",
+        riskScore: 0,
+        riskLevel: "LOW",
+        ipAddress: effectiveIp,
+        userAgent: context.userAgent,
+        requestId: context.requestId,
+        metadata: {
+          deviceLabel: device?.deviceLabel,
+          screenResolution,
+          location: location.formattedLocation,
+        },
+      });
+
+      return {
+        status: "ACCEPTED",
+        message: "Device login accepted and marked as trusted.",
+        device,
+      };
+    } else {
+      // REJECT decision
+      if (device) {
+        device = await this.deviceRepository.updateDeviceStatus(
+          device.id,
+          "REJECTED",
+          "UNTRUSTED",
+        );
+      }
+
+      await this.deviceRepository.updateLoginLogDecision(
+        { userId, visitorId, id: undefined },
+        {
+          status: "REJECTED",
+          actionTaken: "USER_REJECTED",
+          deviceId: device?.id,
+          screenResolution,
+        },
+      );
+
+      await this.deviceRepository.createAuditEvent({
+        userId,
+        deviceId: device?.id,
+        eventType: "DEVICE_ALERT_REJECTED",
+        severity: "CRITICAL",
+        riskScore: 90,
+        riskLevel: "HIGH",
+        ipAddress: effectiveIp,
+        userAgent: context.userAgent,
+        requestId: context.requestId,
+        metadata: {
+          deviceLabel: device?.deviceLabel,
+          screenResolution,
+          location: location.formattedLocation,
+        },
+      });
+
+      // Terminate / revoke session for this user
+      try {
+        await SessionRevocationService.revokeAllSessions(
+          userId,
+          "USER_REJECTED_NEW_DEVICE_ALERT",
+          effectiveIp,
+          context.userAgent,
+        );
+      } catch (revErr) {
+        logger.warn("Session revocation on device rejection notice:", revErr);
+      }
+
+      return {
+        status: "REJECTED",
+        loggedOut: true,
+        message: "Device login rejected and session terminated for security.",
+        device,
+      };
+    }
   }
 
   public async getUserDevices(userId: string) {
     const devices = await this.deviceRepository.findByUserId(userId);
-    return devices.map((d) => ({
+    return devices.map((d: any) => ({
       id: d.id,
       deviceLabel: d.deviceLabel,
+      browser: d.browser,
+      os: d.os,
+      deviceType: d.deviceType,
+      screenResolution: d.screenResolution,
+      region: d.region,
+      city: d.city,
+      country: d.country,
+      ipAddress: d.ipAddress,
       status: d.status,
       trustLevel: d.trustLevel,
       provider: d.provider,
@@ -241,6 +499,10 @@ export class DeviceService {
       lastLoginAt: d.lastLoginAt,
       revokedAt: d.revokedAt,
     }));
+  }
+
+  public async getDeviceLoginLogs(userId: string) {
+    return this.deviceRepository.getLoginLogs(userId, 40);
   }
 
   public async trustDevice(userId: string, deviceId: string, context?: any) {

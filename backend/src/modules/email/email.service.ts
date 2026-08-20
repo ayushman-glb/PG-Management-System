@@ -18,6 +18,7 @@ import {
   ComplaintEmailData,
   SupportReplyEmailData,
   MarketingCampaignData,
+  NewDeviceLoginEmailData,
 } from './email.types';
 import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
@@ -243,6 +244,25 @@ export class EmailService {
       subject: 'Welcome to RoomBae 🎉',
       html,
       template: EMAIL_CONSTANTS.TEMPLATES.WELCOME,
+    });
+  }
+
+  /**
+   * New Device Login Alert Email
+   */
+  async sendNewDeviceLoginAlert(data: NewDeviceLoginEmailData): Promise<boolean> {
+    const html = emailTemplates.newDeviceLoginAlert(data);
+    return this.sendEmail({
+      to: data.email,
+      subject: `Security Alert: New sign-in from ${data.deviceLabel || 'New Device'}`,
+      html,
+      template: EMAIL_CONSTANTS.TEMPLATES.NEW_DEVICE_LOGIN_ALERT,
+      metadata: {
+        deviceLabel: data.deviceLabel,
+        screenResolution: data.screenResolution,
+        ipAddress: data.ipAddress,
+        location: data.location,
+      },
     });
   }
 
