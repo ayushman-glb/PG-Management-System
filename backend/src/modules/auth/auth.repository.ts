@@ -129,39 +129,51 @@ export class AuthRepository implements IUserRepository {
   async ensureUserProfile(user: User): Promise<void> {
     try {
       if (user.role === Role.OWNER) {
-        const existingOwner = await this.client.owner.findFirst({ where: { userId: user.id } });
+        const existingOwner = await this.client.owner.findFirst({
+          where: { OR: [{ userId: user.id }, { email: user.email }] },
+        });
         if (!existingOwner) {
-          await this.client.owner.create({
-            data: {
-              userId: user.id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone || "",
-              photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
-              address: "",
-              aadhaarNumber: "",
-              panNumber: "",
-              upiId: "",
-              bankName: "",
-              accountNumber: "",
-              ifscCode: "",
-              emergencyContact: "",
-            },
-          });
+          try {
+            await this.client.owner.create({
+              data: {
+                userId: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone || "",
+                photo: user.avatarUrl || CLOUDINARY_DEFAULT_OWNER_PHOTO,
+                address: "",
+                aadhaarNumber: "",
+                panNumber: "",
+                upiId: "",
+                bankName: "",
+                accountNumber: "",
+                ifscCode: "",
+                emergencyContact: "",
+              },
+            });
+          } catch (createErr) {
+            console.warn("⚠️ Owner profile create note:", createErr);
+          }
         }
       } else if (user.role === Role.RESIDENT) {
-        const existingResident = await this.client.resident.findFirst({ where: { userId: user.id } });
+        const existingResident = await this.client.resident.findFirst({
+          where: { OR: [{ userId: user.id }, { email: user.email }] },
+        });
         if (!existingResident) {
-          await this.client.resident.create({
-            data: {
-              userId: user.id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone || "",
-              profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
-              status: "ACTIVE",
-            },
-          });
+          try {
+            await this.client.resident.create({
+              data: {
+                userId: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone || "",
+                profilePicture: user.avatarUrl || CLOUDINARY_DEFAULT_AVATAR,
+                status: "ACTIVE",
+              },
+            });
+          } catch (createErr) {
+            console.warn("⚠️ Resident profile create note:", createErr);
+          }
         }
       }
     } catch (profileErr) {

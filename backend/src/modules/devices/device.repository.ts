@@ -79,8 +79,14 @@ export class DeviceRepository {
     const lastIpHash = this.hashIpAddress(data.ipAddress);
     const userAgentHash = this.hashUserAgent(data.userAgent);
 
-    return this.prisma.userDevice.create({
-      data: {
+    return this.prisma.userDevice.upsert({
+      where: {
+        userId_visitorIdHash: {
+          userId: data.userId,
+          visitorIdHash,
+        },
+      },
+      create: {
         userId: data.userId,
         visitorIdHash,
         provider: data.provider || "fingerprintjs",
@@ -99,6 +105,21 @@ export class DeviceRepository {
         lastIpHash,
         userAgentHash,
         firstSeenAt: new Date(),
+        lastSeenAt: new Date(),
+        lastLoginAt: new Date(),
+      },
+      update: {
+        deviceLabel: data.deviceLabel,
+        browser: data.browser,
+        os: data.os,
+        deviceType: data.deviceType,
+        screenResolution: data.screenResolution,
+        ipAddress: data.ipAddress,
+        region: data.region,
+        city: data.city,
+        country: data.country,
+        lastIpHash,
+        userAgentHash,
         lastSeenAt: new Date(),
         lastLoginAt: new Date(),
       },

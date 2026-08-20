@@ -57,6 +57,10 @@ export interface RiskEvaluationResult {
 export class RiskEngine {
   private static readonly MAX_REALISTIC_TRAVEL_SPEED_KMH = 800; // Commercial jet speed threshold
 
+  public static hashVisitorId(val: string): string {
+    return crypto.createHash("sha256").update(`roombae_visitor_salt_${val}`).digest("hex");
+  }
+
   private static hashValue(val: string): string {
     return crypto.createHash("sha256").update(val).digest("hex");
   }
@@ -108,7 +112,7 @@ export class RiskEngine {
     }
 
     const cleanVisitorId = visitorId?.trim() || "";
-    const visitorIdHash = cleanVisitorId ? this.hashValue(cleanVisitorId) : "";
+    const visitorIdHash = cleanVisitorId ? this.hashVisitorId(cleanVisitorId) : "";
     const ipHash = ipAddress ? this.hashValue(ipAddress.trim()) : "";
     const uaHash = userAgent ? this.hashValue(userAgent.trim()) : "";
 
@@ -300,7 +304,7 @@ export class RiskEngine {
   ): Promise<any> {
     if (!userId || !visitorId) return null;
 
-    const visitorIdHash = this.hashValue(visitorId);
+    const visitorIdHash = this.hashVisitorId(visitorId);
     const ipHash = ipAddress ? this.hashValue(ipAddress) : null;
     const uaHash = userAgent ? this.hashValue(userAgent) : null;
 

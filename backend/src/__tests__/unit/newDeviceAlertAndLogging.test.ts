@@ -68,6 +68,7 @@ describe("New Device Alert & Telemetry Logging Suite", () => {
           findUnique: jest.fn(),
           findMany: jest.fn(),
           create: jest.fn(),
+          upsert: jest.fn(),
           update: jest.fn(),
         },
         deviceLoginLog: {
@@ -95,7 +96,7 @@ describe("New Device Alert & Telemetry Logging Suite", () => {
 
     it("should identify a new device, create PENDING_ALERT log and flag requiresAlert = true", async () => {
       mockPrisma.userDevice.findUnique.mockResolvedValue(null);
-      mockPrisma.userDevice.create.mockResolvedValue({
+      mockPrisma.userDevice.upsert.mockResolvedValue({
         id: "dev_rec_1",
         userId: testUserId,
         visitorIdHash: "hash_123",
@@ -129,7 +130,7 @@ describe("New Device Alert & Telemetry Logging Suite", () => {
       expect(result.isNew).toBe(true);
       expect(result.requiresAlert).toBe(true);
       expect(result.device.status).toBe("NEW");
-      expect(mockPrisma.userDevice.create).toHaveBeenCalled();
+      expect(mockPrisma.userDevice.upsert).toHaveBeenCalled();
       expect(mockPrisma.deviceLoginLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

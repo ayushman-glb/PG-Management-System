@@ -1,396 +1,462 @@
-# RoomBae — Full-Stack Authentication, Multi-Step Signup, Authorization & System Architecture Master Blueprint
+# RoomBae — Master Architecture & Complete Sign-Up & Sign-In Workflow Blueprint
 
-This document is the definitive, production-grade technical specification for RoomBae's end-to-end **Authentication (AuthN)**, **Authorization (AuthZ)**, **Multi-Step Signup Wizard**, **Owner KYC Gate**, **Device Intelligence (FingerprintJS)**, **Session Management & Token Rotation**, **Database Architecture (MongoDB Atlas + Redis)**, **Network & Transport Protocols**, **System Design & Scalability**, **Resilience Fallback Matrix**, **API Contracts & Envelopes**, and **Enterprise Security Architecture**.
-
----
-
-## Master Architecture Reports & Companion Specifications
-
-The following architectural, migration, and security audit reports serve as companion specifications to this master blueprint:
-
-| Document / Specification | Primary Focus & Coverage | Key Architectural Guarantees |
-| :--- | :--- | :--- |
-| [`SYSTEM.MD`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/SYSTEM.MD) | Master System Architecture & Full-Stack Communication Blueprint (24 Chapters) | Complete end-to-end dataflow, middleware pipelines, Prisma models |
-| [`api_design.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/api_design.md) | Single Source of Truth API Reference across all 26 mounted route modules | Request/Response envelopes, Controller/Service/Repo mapping |
-| [`USER_CREDENTIALS.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/USER_CREDENTIALS.md) | Authoritative Personas (GOD, Ayushman Saha, Ankur Saha), Local Seed Data | Local development credentials (Git-Ignored) |
-| [`FINAL_SECURITY_REPORT.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/FINAL_SECURITY_REPORT.md) | Final security verification across cryptography, CSRF, encryption, and authorization | Zero open vulnerabilities across all attack surfaces |
-| [`FINAL_ARCHITECTURE_REPORT.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/FINAL_ARCHITECTURE_REPORT.md) | Pre- vs. post-refactor component comparison, reliability guarantees, topology | Zero duplicate logic, unified container lifecycle |
-| [`PERFORMANCE_REPORT.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/PERFORMANCE_REPORT.md) | Latency SLAs, cache hit ratios (94.2%), and concurrency load benchmarks | Sub-50ms read response times, stampede mutex locks |
-| [`TEST_REPORT.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/TEST_REPORT.md) | Complete breakdown of unit, integration, and regression test suites | 100% passing test execution across all 46 test suites |
-| [`docs/JWKS_ROTATION_GUIDE.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/docs/JWKS_ROTATION_GUIDE.md) | Zero-downtime key rotation runbook, `kid` header matching, public JWKS JSON export | Asymmetric RS256 token verification with retirement window |
-| [`docs/WEBSOCKET_SECURITY_REPORT.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/docs/WEBSOCKET_SECURITY_REPORT.md) | Continuous packet authorization, dynamic expiration disconnect timers, live eviction | Real-time `auth:revoked` eviction across cluster nodes |
-| [`UPLOAD_ARCHITECTURE.md`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/UPLOAD_ARCHITECTURE.md) | Secure direct client-to-CDN document upload architecture | Cryptographic HMAC-SHA1 upload signatures, zero backend blob lag |
+This document is the definitive, production-grade technical specification for RoomBae's end-to-end **Authentication (AuthN)**, **Authorization (AuthZ)**, **Sign-In Flow**, **Multi-Step Sign-Up Wizards (Resident & Owner)**, **Device Intelligence & FingerprintJS Alert Lifecycle**, **CORS & Gateway Middleware Pipeline**, **Database Architecture (MongoDB Atlas + Prisma ORM)**, **Network Protocols & Servers**, and **UI Component & Button Action Matrix**.
 
 ---
 
-# 1. Full-Stack System Architecture Topology
+# 1. Full-Stack Architecture, Server Layer & Network Protocols
 
-RoomBae employs a **Zero-Trust, Multi-Tier, Distributed Enterprise Full-Stack Architecture** engineered with React 19, TypeScript 5, Express 4, Prisma ORM 6.19.3, MongoDB Atlas, Redis v6+, Socket.IO v4.8.3, BullMQ v5.41, and Cloudinary.
+RoomBae is architected as an enterprise, zero-trust, distributed web platform engineered with **React 19**, **TypeScript 5**, **Express 4**, **Prisma ORM 6.19.3**, **MongoDB Atlas**, **Socket.IO v4.8.3**, **Cloudinary CDN**, **Twilio SMS**, and **Razorpay**.
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 FRONTEND CLIENT (React 19 + Vite 8)                                    │
-│   ├── Multi-Step Wizard: Resident & Owner Flows (Zod v4 + Framer Motion v12 + Tailwind CSS)            │
-│   ├── Device Fingerprinting: @fingerprintjs/fingerprintjs v5.2.0 (Canvas, WebGL, Audio Probabilistic)  │
-│   ├── State & Networking: Custom AuthService + Zustand v5 + Native Fetch API Wrapper                  │
-│   ├── CSRF Bootstrap & Double Submit: `bootstrapCsrf()` on boot; auto `x-csrf-token` header injection │
-│   ├── Session Storage: In-Memory RS256 Access Token + HTTP-Only Cookie (SameSite=None; Secure; Path=/)│
-│   ├── Resilient Draft Engine: LocalStorage Draft (`roombae_incomplete_signup`, Excludes Financials)    │
-│   └── 401 Queue: Centralized Singleton `refreshPromise` (Deduplicates Concurrent Token Rotations)      │
-└───────────────────────────────────────────────────┬────────────────────────────────────────────────────┘
-                                                    │
-                         HTTPS / REST (HTTP/2)      │ WebSocket (WSS)
-                         JSON-RPC API Payloads      │ Real-Time Bidirectional Duplex
-                                                    │
-┌───────────────────────────────────────────────────▼────────────────────────────────────────────────────┐
-│                             API GATEWAY & BACKEND SERVER (Node.js v20 + Express 4)                     │
-│   ├── Dynamic CORS Shield: Dynamic Regex Origin Validator (`corsOrigins.ts` + Vercel / Localhost)     │
-│   ├── Fail-Closed Guard: Fatal boot crash if `NODE_ENV === 'production' && OTP_DEV_OVERRIDE === 'true'` │
-│   ├── Edge CDN Shield: `app.set("trust proxy", 1)` + `Cache-Control: private, no-store`                │
-│   ├── Distributed Tracing: `correlationIdMiddleware` (`x-correlation-id`, `x-request-id`)              │
-│   ├── CSRF Double Submit: `csrfMiddleware` (Validates /register, /login, /refresh-token, /logout)      │
-│   ├── CSRF Bootstrap Route: `GET /api/v1/auth/csrf-token` (Issues HttpOnly-false cookie for visitors) │
-│   ├── Idempotency Guard: `idempotencyMiddleware` (`Idempotency-Key` on Mutating Transactions)          │
-│   ├── Transactional Outbox: `OutboxService` (`OutboxEvent` Table -> BullMQ Dispatcher)                 │
-│   ├── Security Stack: Helmet v8 (CSP, HSTS), Express-Mongo-Sanitize, HPP, Compression, Cookie-Parser   │
-│   ├── JWKS Key Rotation: `JwtKeyService` with 2x TTL retention window (`/.well-known/jwks.json`, RS256)│
-│   ├── Dynamic JWT Blacklist: Exact `exp - nowUnix` TTL Calculation (Discards Expired Tokens)           │
-│   ├── Device Risk Engine: Multi-Signal Scoring (<40 Allow / 40-69 Step-Up / 70+ Block) + Geo Velocity  │
-│   ├── Dual-Storage PreAuth: Fast Redis Cache + MongoDB Authoritative Persistence with Fallback         │
-│   ├── Single KYC Gate: Authoritative `OwnerKYC.verificationStatus` with Atomic Transaction Sync        │
-│   ├── Token Version Cache: MongoDB Authoritative State + Optimistic Memory/Redis Write-Through Cache   │
-│   ├── Session Family & Token Rotation: 256-bit Opaque Refresh Tokens + Replay Detection                │
-│   ├── Unified Session Revocation: DB Token Invalidation + Version Bump + Live WebSocket Eviction       │
-│   ├── Policy Governance: Centralized `PolicyEngine` (RBAC, Single-Source KYC, Resource Ownership)      │
-│   ├── Distributed Rate Limiting: Tiered Rate Limiters (`loginLimiter`, `registerLimiter`, `otpLimiter`)│
-│   ├── Cryptographic Engine: Bcrypt (12 Rounds), AES-256-GCM Envelope Encryption (PII & Bank Details)   │
-│   ├── Multi-Channel OTP Engine: Twilio SMS OTP + Brevo/SMTP Email OTP with dev override & fallback     │
-│   ├── ERP Billing Interface: SOAP 1.2 XML Billing Protocol (`/soap/billing`)                           │
-│   └── Real-Time Pub/Sub Engine: Socket.IO Server v4.8.3 with Continuous Packet Guard & Live Eviction   │
-└───────────────────────────────────┬───────────────────────────────────┬────────────────────────────────┘
-                                    │                                   │
-             ┌──────────────────────▼──────┐                    ┌───────▼─────────────────────┐
-             │    MONGODB ATLAS (Replica)  │                    │         REDIS (v6+)         │
-             │   Prisma Client ORM 6.19.3  │                    │  High-Performance Memory   │
-             ├─────────────────────────────┤                    ├─────────────────────────────┤
-             │ • Users & RBAC Roles        │                    │ • Route JSON Caches         │
-             │ • Resident & Owner Profiles │                    │ • Atomic Sliding-Window RPM │
-             │ • Owner KYC Verification    │                    │ • Dynamic JWT Blacklist TTL │
-             │ • PG, Rooms, Beds Hierarchy │                    │ • PreAuth Step-Up Challenges│
-             │ • SessionFamily & Tokens    │                    │ • Token Version Cache       │
-             │ • IdempotencyRequest & Outbox│                   │ • Socket.IO Cluster Bus     │
-             │ • Authoritative OtpTokens   │                    │ • BullMQ Worker Queues      │
-             │ • UserDevices & Audit Events│                    │ • Distributed Mutex Locks   │
-             │ • Soft Deletes (`deletedAt`)│                    │ • Fail-Closed Rate Limiter  │
-             └──────────────┬──────────────┘                    └──────────────┬──────────────┘
-                            │                                                  │
-                            └────────────────────────┬─────────────────────────┘
-                                                     │
-                        ┌────────────────────────────▼─────────────────────────────┐
-                        │             EXTERNAL CLOUD PLATFORMS & SERVICES          │
-                        ├──────────────────────────────────────────────────────────┤
-                        │ • Cloudinary CDN: Direct signed media & document storage │
-                        │ • Twilio SMS API: Multi-factor phone OTP SMS delivery    │
-                        │ • Brevo / Nodemailer SMTP: Email verification & invoices │
-                        │ • Razorpay PG: Webhook signature HMAC-SHA256 payments    │
-                        │ • FingerprintJS Pro: Browser visitor identification      │
-                        │ • Google OAuth 2.0: Social authentication via PKCE flow  │
-                        └──────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       FRONTEND CLIENT (React 19 + Vite 8 + Tailwind CSS)                           │
+│  ├── UI Shell: Dark/Light Theme Provider, Responsive Breakpoints, Custom Micro-Animations (Framer Motion v12)    │
+│  ├── Auth Views: Unified Sign-In Portal (/auth), Multi-Step Resident/Owner Sign-Up Wizards, Forgot Password Modal │
+│  ├── Device Telemetry: @fingerprintjs/fingerprintjs v5.2.0 (Canvas, WebGL, Audio, Screen Resolution, Hardware)    │
+│  ├── Alert Modal: NewDeviceNotificationModal.tsx (Live IP, Region, Device, Resolution Telemetry, Accept/Deny)    │
+│  ├── State & Networking: Zustand v5 Stores (useAuthStore, useUIStore) + Custom Fetch ApiClient Wrapper            │
+│  ├── Dynamic Chunk Resilience: `vite:preloadError` & `lazyWithRetry` auto-reload listeners for deployment updates│
+│  └── Session Management: In-Memory RS256 Access Token + HttpOnly SameSite=None Secure Refresh Cookie              │
+└────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────┘
+                                                         │
+                             HTTPS / REST (HTTP/2)       │ WebSocket (WSS)
+                             JSON-RPC API Payloads       │ Real-Time Duplex / Live Eviction
+                                                         │
+┌────────────────────────────────────────────────────────▼──────────────────────────────────────────────────────────┐
+│                               API GATEWAY & BACKEND SERVER (Node.js v20 + Express 4)                              │
+│  ├── Trust Proxy: `app.set("trust proxy", 1)` for accurate client IP detection behind Render / Cloudflare CDN     │
+│  ├── Dynamic CORS Shield: `corsOrigins.ts` with wildcard regex for *.onrender.com, *.github.io, *.vercel.app      │
+│  ├── Security Stack: Helmet v8 (HSTS, CSP), Mongo-Sanitize, XSS Protection, JSON Body Parsers (10mb)             │
+│  ├── Correlation & Tracing: `correlationIdMiddleware` (`x-correlation-id`, `x-request-id`)                       │
+│  ├── CSRF Double Submit: `csrfMiddleware` validating `x-csrf-token` header against non-httpOnly cookie           │
+│  ├── Service Discovery & Health: `GET /api/v1` (Service Directory), `GET /api/v1/health`, `GET /health`           │
+│  ├── Interactive Documentation: Swagger UI mounted at `/api/docs`, `/api/v1/docs`, `/api/docs.json`               │
+│  ├── Public Cryptographic JWKS: `GET /.well-known/jwks.json` exposing active RSA public keys (RS256)             │
+│  ├── ERP Billing Interface: SOAP 1.2 XML WSDL Billing Service (`/soap/billing?wsdl`)                              │
+│  ├── Rate Limiters: Tiered express-rate-limit (`loginLimiter`: 10 req/15min, `generalLimiter`: 300 req/15min)    │
+│  ├── Risk Engine: Multi-signal scoring with safe thresholds (Never hard-blocks legitimate credentials)           │
+│  ├── Device Security Engine: Salted SHA-256 fingerprint hashing, idempotent upserts, pending alert log generator│
+│  ├── Transactional Outbox: Event bus for asynchronous email alerts, SMS dispatch, and audit logging              │
+│  └── Real-Time Pub/Sub: Socket.IO Server with per-packet token verification & immediate live session eviction    │
+└────────────────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────┘
+                                             │                                  │
+                      ┌──────────────────────▼──────┐                   ┌───────▼─────────────────────┐
+                      │    MONGODB ATLAS (Replica)  │                   │     IN-MEMORY CACHE ENGINE  │
+                      │   Prisma Client ORM 6.19.3  │                   │  Fast Key-Value Storage     │
+                      ├─────────────────────────────┤                   ├─────────────────────────────┤
+                      │ • User (Accounts & Roles)   │                   │ • Route Cache & Blacklist   │
+                      │ • Owner & Resident Profiles │                   │ • Active Session Tokens     │
+                      │ • UserDevice & DeviceLogin  │                   │ • Pre-Auth Step-Up Tokens   │
+                      │ • RefreshToken & Families   │                   │ • Sliding-Window Rate Limits│
+                      │ • SecurityAuditEvent        │                   │ • Idempotency Replay Store  │
+                      │ • PG, Room, Bed Hierarchy   │                   │ • Token Version In-Memory   │
+                      │ • Agreement, Invoice, Pay   │                   │ • Socket.IO Cluster Hub     │
+                      └──────────────┬──────────────┘                   └──────────────┬──────────────┘
+                                     │                                                 │
+                                     └────────────────────────┬────────────────────────┘
+                                                              │
+                                 ┌────────────────────────────▼─────────────────────────────┐
+                                 │             EXTERNAL CLOUD PLATFORMS & APIS              │
+                                 ├──────────────────────────────────────────────────────────┤
+                                 │ • Cloudinary CDN: Direct signed media & KYC storage      │
+                                 │ • Twilio SMS API: Multi-factor phone OTP SMS delivery    │
+                                 │ • Gmail / SMTP: New device alerts, OTPs, invoices        │
+                                 │ • Razorpay Gateway: Payment orders & webhook HMAC verify │
+                                 │ • Google Cloud OAuth 2.0: Single Sign-On authentication  │
+                                 └──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-# 2. Authoritative Platform Personas & Accounts
+# 2. CORS, Cross-Origin Protocols & Gateway Middleware Pipeline
 
-The platform is seeded with three authoritative accounts mapped to realistic entities:
-
-```
-Platform Ecosystem
- ├── 🛡️ Super Admin ("GOD"): ayushman@globussoft.in (Pass: 987456 | OTP: 123456 / 000000)
- ├── 🏢 PG Owner: Ayushman Saha (ayushmansaha917@gmail.com | Phone: +916297750585 | Pass: 123456)
- │    ├── 🏢 Business: Ayushman Living Solutions Pvt Ltd (GSTIN: 29ABCDE1234F1Z5)
- │    ├── 🏦 Banking: HDFC Bank Enterprise (Acc: 50100234567890, IFSC: HDFC0001234, UPI: ayushman@okaxis)
- │    ├── 📋 KYC: VERIFIED (OwnerKYCStatus.VERIFIED)
- │    ├── 💎 Tier: PROFESSIONAL (SubscriptionPlanType.PROFESSIONAL)
- │    └── 🏬 Property: RoomBae Aurora Residency (Koramangala, Bengaluru)
- │         └── 🏢 Building A (2 Floors, 3 Rooms, 7 Beds)
- └── 🏠 Resident: Ankur Saha (ankursaha985@gmail.com | Phone: +918653826643 | Pass: 654123)
-      ├── 🆔 Resident Code: RES1001
-      ├── 🛏️ Assigned Bed: Building A → Floor 1 → Room 101 → Bed A (OCCUPIED)
-      ├── 📜 Agreement: AGR-AURORA-1001 (COMPLETED, Rent: ₹14,500/mo, Deposit: ₹29,000)
-      └── 💳 Payment & Invoice: INV-AURORA-1001 (PAID via UPI_ONLINE, Total: ₹17,110.00 with 18% GST)
-```
-
----
-
-# 3. End-to-End Multi-Step Signup Architecture
-
-RoomBae implements a **7-Step Wizard** tailored specifically for each role, guaranteeing zero unverified account creation and strict data integrity.
+All incoming HTTP requests to RoomBae travel through a strict, ordered middleware pipeline before reaching controllers:
 
 ```
-                    ┌───────────────────────────────────────────────┐
-                    │               ROLE SELECTION                  │
-                    │         [ RESIDENT ]   or   [ OWNER ]         │
-                    └───────┬───────────────────────────────┬───────┘
-                            │                               │
-            ┌───────────────▼───────────────┐ ┌─────────────▼─────────────────┐
-            │   RESIDENT SIGNUP WIZARD      │ │      OWNER SIGNUP WIZARD      │
-            ├───────────────────────────────┤ ├───────────────────────────────┤
-            │ Step 1: Account Credentials   │ │ Step 1: Account Credentials   │
-            │ Step 2: Phone & Email OTP     │ │ Step 2: Phone & Email OTP     │
-            │ Step 3: Profile & Emergency   │ │ Step 3: Business Entity Info  │
-            │ Step 4: Identity Documents    │ │ Step 4: Owner KYC Documents   │
-            │ Step 5: Room/Bed Selection    │ │ Step 5: Property Onboarding   │
-            │ Step 6: Tenancy Agreement SVG │ │ Step 6: Building/Room Setup   │
-            │ Step 7: Rent & Deposit Pay    │ │ Step 7: Subscription Tier     │
-            └───────────────┬───────────────┘ └─────────────┬─────────────────┘
-                            │                               │
-                            └───────────────┬───────────────┘
-                                            │
-                                ┌───────────▼───────────┐
-                                │   SESSION ACTIVATION  │
-                                │ • Issue RS256 Access  │
-                                │ • Set Opaque Cookie   │
-                                │ • Connect Socket.IO   │
-                                │ • Redirect Dashboard  │
-                                └───────────────────────┘
+Incoming Request
+  │
+  ├─► 1. Trust Proxy (`app.set("trust proxy", 1)`)
+  │      Extracts authoritative client IP from `x-forwarded-for` (Render/Cloudflare edge proxy).
+  │
+  ├─► 2. Security Headers (`helmet()`)
+  │      Sets HSTS, X-Content-Type-Options: nosniff, FrameGuard, Referrer-Policy, and CSP.
+  │
+  ├─► 3. Dynamic CORS Shield (`cors(corsOptions)`)
+  │      Validates `Origin` header dynamically against:
+  │      • Localhost ports: `http://localhost:5173`, `http://localhost:3000`, `http://127.0.0.1:*`
+  │      • Cloud deployment subdomains via Regex: `*.onrender.com`, `*.github.io`, `*.vercel.app`, `*.netlify.app`
+  │      • Configured URLs: `CLIENT_URL`, `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS`
+  │      • Headers allowed: `Content-Type`, `Authorization`, `X-Visitor-Id`, `X-Correlation-ID`, `X-CSRF-Token`, `Idempotency-Key`
+  │      • Credentials enabled: `credentials: true` (allows `Set-Cookie` and `Cookie` transmission).
+  │
+  ├─► 4. Rate Limiter (`loginLimiter` / `generalLimiter`)
+  │      Protects authentication routes (10 requests per 15 minutes per IP).
+  │
+  ├─► 5. Parsers & Sanitizers (`express.json({ limit: "10mb" })`, `mongoSanitize()`, `cookieParser()`)
+  │      Parses JSON payloads, parses HTTP cookies, and strips `$`, `.` from request objects to prevent NoSQL injection.
+  │
+  ├─► 6. Distributed Tracing (`correlationIdMiddleware`)
+  │      Generates or propagates `x-correlation-id` and `x-request-id` across request logs and response headers.
+  │
+  ├─► 7. CSRF Double-Submit Guard (`csrfMiddleware`)
+  │      For state-changing methods (`POST`, `PUT`, `PATCH`, `DELETE`), validates `x-csrf-token` header against cookie.
+  │
+  ├─► 8. Tenant & Routing Dispatcher (`app.use('/api/v1', apiRouter)`)
+  │      Attaches tenant metadata and routes request to modular controllers.
+  │
+  ├─► 9. Authentication Guard (`authMiddleware` / `jwtVerification`)
+  │      Verifies RS256 JWT access token via public JWKS, validates `tokenVersion`, and attaches `req.user`.
+  │
+  ├─► 10. Authorization Guard (`roleGuard` / `permissionMiddleware`)
+  │       Verifies user role (`OWNER`, `RESIDENT`, `ADMIN`, `SUPER_ADMIN`) matches endpoint permissions.
+  │
+  └─► 11. Global Error Handler (`errorHandler` / `errorMiddleware`)
+          Catches `AppError`, Prisma `P2002` duplicate key errors (409), validation errors (400), and unhandled exceptions (500).
 ```
 
 ---
 
-## 3.1 Resident Signup Flow (7-Step Wizard)
+# 3. Complete Sign-In (Log In) Flow
 
-### Step 1: Account Credentials & Password Validation
-- **Frontend Page**: `/signup/resident` (Component: `ResidentSignupStep1.tsx`)
-- **Data Captured**:
-  - `name`: Full legal name (`Ankur Saha`)
-  - `email`: Normalized lowercase email (`ankursaha985@gmail.com`)
-  - `phone`: 10-digit Indian mobile number (`8653826643`)
-  - `password`: Strong password validated via Zod (`654123` or complex string)
-  - `visitorId`: FingerprintJS 32-character hardware identifier
-- **API Request**: `POST /api/v1/auth/register-step1`
-- **Backend Validation**:
-  - Checks uniqueness of `email` and `phone` in `User` collection.
-  - Hashes password with `bcrypt` (12 rounds).
-  - Creates draft user in `PENDING_VERIFICATION` state.
+The Sign-In system provides a high-security, seamless authentication experience across all platform roles (**PG Owner**, **Resident**, **Admin / Super Admin**) and **Google OAuth 2.0**.
 
-### Step 2: Multi-Factor Phone & Email OTP Verification
-- **Frontend Page**: `/signup/resident?step=2` (Component: `OtpVerificationStep.tsx`)
-- **Action**:
-  - Triggers `POST /api/v1/auth/request-otp` (Phone OTP via Twilio SMS)
-  - Triggers `POST /api/v1/auth/request-email-otp` (Email OTP via Brevo/SMTP)
-- **OTP Fallback & Dev Override**:
-  - In development mode with `OTP_DEV_OVERRIDE=true`:
-    - Phone OTP auto-generates `123456` and accepts `123456`.
-    - Email OTP auto-generates `000000` and accepts `000000` or `123456`.
-  - In production mode:
-    - Cryptographically random 6-digit integers generated via `crypto.randomInt(100000, 1000000)`.
-    - Hashed with `bcrypt` in `PhoneOTP` and `EmailOTP` collections with 10-minute TTL.
-- **Verification API**: `POST /api/v1/auth/verify-otp` (Phone) & `POST /api/v1/auth/verify-email-otp` (Email)
-- **State Transition**: User `phoneVerified: true`, `emailVerified: true`.
-
-### Step 3: Personal Demographics & Emergency Contact
-- **Frontend Page**: `/signup/resident?step=3` (Component: `ResidentProfileStep.tsx`)
-- **Data Captured**:
-  - `gender`: `Male` | `Female` | `Other`
-  - `age` / `dateOfBirth`: Integer age / ISO date (`24`)
-  - `bloodGroup`: `O+`, `A+`, `B+`, `AB+`, etc.
-  - `foodPreference`: `VEG` | `NON_VEG` | `EGGETARIAN`
-  - `occupation` & `company`: Professional metadata (`Software Engineer @ Globussoft`)
-  - `permanentAddress`: Full legal address
-  - `emergencyContact`: Contact name, relationship, and phone (`Ayushman Saha - Brother - +916297750585`)
-  - `guardian`: Father/Mother/Guardian details (`Subhash Saha - Father - +919830012345`)
-- **API Request**: `POST /api/v1/residents/profile-draft`
-- **Database Operations**: Creates/Updates `Resident`, `EmergencyContact`, and `Guardian` records.
-
-### Step 4: Identity & KYC Document Verification
-- **Frontend Page**: `/signup/resident?step=4` (Component: `DocumentUploadStep.tsx`)
-- **Action**:
-  - Direct Cloudinary CDN Signed Upload via `POST /api/v1/upload/sign-upload`
-  - Client uploads Aadhaar card PDF/Image and College/Work ID directly to Cloudinary.
-  - Submits document URL and metadata to `POST /api/v1/documents`.
-- **Database Model**: `Document` (`documentType: "AADHAAR"`, `fileUrl: "..."`, `isVerified: true`).
-
-### Step 5: Property, Room & Bed Selection
-- **Frontend Page**: `/signup/resident?step=5` (Component: `BedSelectionStep.tsx`)
-- **Action**:
-  - Fetches available inventory: `GET /api/v1/properties/roombae-aurora-residency/available-beds`
-  - Resident selects property ("RoomBae Aurora Residency"), Room ("Room 101"), and Bed ("101-Bed A").
-  - Claims temporary bed reservation lock: `POST /api/v1/beds/hold` (15-minute distributed Redis mutex lock).
-
-### Step 6: Digital Tenancy Agreement & E-Signature
-- **Frontend Page**: `/signup/resident?step=6` (Component: `AgreementSigningStep.tsx`)
-- **Action**:
-  - Renders dynamic 11-month rental contract with terms, rent (₹14,500), deposit (₹29,000), house rules, notice period (30 days).
-  - Resident signs via HTML5 Canvas / SVG E-Signature pad.
-  - Computes HMAC-SHA256 signature hash: `crypto.createHmac('sha256', secret).update(svgData).digest('hex')`.
-  - Submits signature to `POST /api/v1/agreements/sign`:
-    - Generates contract PDF (`AGR-AURORA-1001.pdf`).
-    - Updates `Agreement` status to `SIGNED_BY_RESIDENT` / `COMPLETED`.
-
-### Step 7: Rent & Security Deposit Payment (Razorpay)
-- **Frontend Page**: `/signup/resident?step=7` (Component: `PaymentCheckoutStep.tsx`)
-- **Action**:
-  - Initializes payment order: `POST /api/v1/payments/create-order`
-  - Computes itemized breakdown:
-    - Base Rent: ₹14,500.00
-    - CGST (9%): ₹1,305.00
-    - SGST (9%): ₹1,305.00
-    - Total Invoice: **₹17,110.00**
-    - Security Deposit: ₹29,000.00
-  - Resident completes payment via Razorpay Modal (UPI, Cards, NetBanking).
-  - Webhook verification: `POST /api/v1/payments/webhook` verifies `x-razorpay-signature` HMAC-SHA256.
-  - Generates `Invoice` (`INV-AURORA-1001`), marks `Payment` as `PAID`, sets `Bed.status = OCCUPIED`, and sets `Resident.status = ACTIVE`.
-  - Issues production RS256 JWT access token and HTTP-only refresh cookie, redirecting to `/resident-portal`.
+```
+                           ┌────────────────────────────────────────────────┐
+                           │          USER NAVIGATES TO /auth (Sign In)     │
+                           └───────────────────────┬────────────────────────┘
+                                                   │
+                   ┌───────────────────────────────┼───────────────────────────────┐
+                   │                               │                               │
+        ┌──────────▼──────────┐         ┌──────────▼──────────┐         ┌──────────▼──────────┐
+        │   PG OWNER SIGN IN  │         │   RESIDENT SIGN IN  │         │    ADMIN SIGN IN    │
+        │ • Business Email/Ph │         │ • Resident Code/Eml │         │ • Admin Email       │
+        │ • Password          │         │ • Password          │         │ • Admin Password    │
+        └──────────┬──────────┘         └──────────┬──────────┘         └──────────┬──────────┘
+                   │                               │                               │
+                   └───────────────────────────────┼───────────────────────────────┘
+                                                   │
+                                     [ CLICK: "Sign In to RoomBae" ]
+                                                   │
+                                                   ▼
+                                 Frontend Collects Device Telemetry:
+                              • @fingerprintjs/fingerprintjs (visitorId)
+                              • Screen Resolution (e.g. 1920x1080)
+                              • Device Label (e.g. Chrome on Windows)
+                                                   │
+                                                   ▼
+                                       POST /api/v1/auth/login
+                                 Headers: X-Visitor-Id, X-CSRF-Token
+                                                   │
+                                                   ▼
+                                       Backend Authenticates:
+                                1. Lookup User by Email/Phone/Code
+                                2. Compare Password Hash (Bcrypt 12)
+                                3. Check Account Status (ACTIVE)
+                                4. RiskEngine.evaluateLoginRisk()
+                                                   │
+                                ┌──────────────────┴──────────────────┐
+                                │                                     │
+                     [ Score < 70 (Normal) ]               [ 2FA Step-Up Required ]
+                                │                                     │
+                   1. Issue RS256 Access Token            1. Create PreAuth Challenge
+                   2. Set HttpOnly Refresh Cookie         2. Send OTP via Twilio/Email
+                   3. Identify Device via FingerprintJS   3. Return requiresTwoFactor: true
+                   4. Generate PENDING_ALERT Log                      │
+                   5. Send Alert Email if New Device                  │
+                                │                                     ▼
+                                │                           User Enters 6-Digit OTP
+                                │                           POST /api/v1/auth/verify-otp
+                                │                                     │
+                                └──────────────────┬──────────────────┘
+                                                   │
+                                                   ▼
+                                      Response 200 OK Returned:
+                                  { user, accessToken, deviceSecurity }
+                                                   │
+                                ┌──────────────────┴──────────────────┐
+                                │                                     │
+                     [ requiresAlert === true ]            [ requiresAlert === false ]
+                                │                                     │
+                   NewDeviceNotificationModal Opens!         Navigate Directly to Dashboard:
+                   Shows: IP, City, Device, Screen           • Owner: /dashboard
+                   Buttons:                                  • Resident: /resident-portal
+                   • [ Yes, It's Me (Accept & Trust) ]       • Admin: /admin-console
+                   • [ Not Me (Deny & Log Out) ]
+```
 
 ---
 
-## 3.2 Owner Signup Flow (7-Step Wizard)
+# 4. FingerprintJS Device Intelligence & Alert/Telemetry Workflow
 
-### Step 1: Owner Account Credentials
-- **Frontend Page**: `/signup/owner` (Component: `OwnerSignupStep1.tsx`)
-- **Data Captured**:
-  - `name`: Full legal name (`Ayushman Saha`)
-  - `email`: Business email (`ayushmansaha917@gmail.com`)
-  - `phone`: Mobile number (`6297750585`)
-  - `password`: Password (`123456`)
-  - `visitorId`: FingerprintJS device identifier
-- **API Request**: `POST /api/v1/auth/register-step1` (with `role: "OWNER"`)
+RoomBae uses **FingerprintJS Pro / Open-Source v5.2.0** as a non-intrusive **security alert and audit logging system**. It ensures users are immediately notified whenever their account is accessed from an unfamiliar browser or machine.
 
-### Step 2: Multi-Factor OTP Verification
-- **Frontend Page**: `/signup/owner?step=2` (Component: `OtpVerificationStep.tsx`)
-- **Verification**: Phone OTP (Twilio/Fallback `123456`) and Email OTP (Brevo/Fallback `000000` / `123456`).
-- **Database**: Creates `Owner` record linked to `User.id`.
-
-### Step 3: Business Entity & Banking Profile
-- **Frontend Page**: `/signup/owner?step=3` (Component: `BusinessDetailsStep.tsx`)
-- **Data Captured**:
-  - `businessName`: `Ayushman Living Solutions Pvt Ltd`
-  - `businessType`: `PVT_LIMITED`
-  - `gstin`: `29ABCDE1234F1Z5`
-  - `panNumber`: `ABCDE1234F`
-  - `bankName`: `HDFC Bank Enterprise`
-  - `accountNumber`: `50100234567890` (Encrypted with AES-256-GCM)
-  - `ifscCode`: `HDFC0001234`
-  - `upiId`: `ayushman@okaxis`
-- **API Request**: `POST /api/v1/owners/business-profile`
-- **Database**: Creates `Business` entity and updates `Owner` banking records.
-
-### Step 4: Owner KYC Document Submission & Verification Gate
-- **Frontend Page**: `/signup/owner?step=4` (Component: `OwnerKycStep.tsx`)
-- **Action**:
-  - Uploads Aadhaar and PAN documents to Cloudinary.
-  - Submits to `POST /api/v1/onboarding/owner-kyc`.
-  - Authoritative `OwnerKYC` record created with status `OwnerKYCStatus.VERIFIED`.
-  - `KycAuthorizationService` grants owner full access to property and resident management routes.
-
-### Step 5: Primary Property Onboarding
-- **Frontend Page**: `/signup/owner?step=5` (Component: `PropertyCreationStep.tsx`)
-- **Data Captured**:
-  - `name`: `RoomBae Aurora Residency`
-  - `slug`: `roombae-aurora-residency`
-  - `city`: `Bengaluru`, `pincode`: `560034`
-  - `address`: `No. 45, 80ft Road, 4th Block, Koramangala`
-  - `latitude`: `12.9352`, `longitude`: `77.6245`
-  - `rentStartingFrom`: `14500`, `securityDeposit`: `29000`
-  - `amenities`: `['WiFi', 'Laundry', 'CCTV', 'Power Backup', 'Lift', 'Mess', 'Security', 'Gym', 'Biometric Gate', 'Gaming Zone']`
-  - `rules`: `['No loud music after 10:30 PM', 'Visitors allowed in common areas till 8:00 PM', 'Biometric check-in mandatory']`
-  - `galleryImages`: 8 high-resolution WebP gallery URLs.
-- **API Request**: `POST /api/v1/properties`
-- **Database**: Creates `PG` entity in MongoDB Atlas.
-
-### Step 6: Building Hierarchy & Room/Bed Configuration
-- **Frontend Page**: `/signup/owner?step=6` (Component: `BuildingStructureStep.tsx`)
-- **Action**:
-  - Submits building hierarchy to `POST /api/v1/properties/:id/structure`:
-    - **Building A** (`floorsCount: 2`)
-      - **Floor 1**:
-        - Room 101: Double Sharing, AC, Attached Washroom (₹14,500/mo) → Bed 101-A (`OCCUPIED`), Bed 101-B (`AVAILABLE`)
-      - **Floor 2**:
-        - Room 201: Double Sharing, AC, Attached Washroom (₹15,000/mo) → Bed 201-A (`AVAILABLE`), Bed 201-B (`AVAILABLE`)
-        - Room 202: Triple Sharing, AC, Attached Washroom (₹12,500/mo) → Bed 202-A (`AVAILABLE`), Bed 202-B (`AVAILABLE`), Bed 202-C (`AVAILABLE`)
-- **Database**: Creates `Building`, `Floor`, `Room`, and `Bed` records.
-
-### Step 7: SaaS Subscription Tier Selection
-- **Frontend Page**: `/signup/owner?step=7` (Component: `SubscriptionStep.tsx`)
-- **Options**:
-  - `STARTER`: 1 Property, up to 30 beds.
-  - `PROFESSIONAL` (Selected): Up to 5 Properties, up to 150 beds, full financial analytics, automated WhatsApp notifications.
-  - `ENTERPRISE`: Unlimited properties & residents, dedicated database replica, custom domain.
-- **API Request**: `POST /api/v1/owners/subscription`
-- **Database**: Creates `Subscription` record (`planType: PROFESSIONAL`, `status: ACTIVE`).
-- **Completion**: Redirects to `/dashboard` (Owner Command Center).
-
----
-
-# 4. Security & Cryptographic Invariants
-
-## 4.1 Fail-Closed `OTP_DEV_OVERRIDE` Startup Guard
-
-To guarantee that development override codes (`123456` / `000000`) never compromise production environments, `backend/src/config/env.ts` enforces a **fail-closed fatal startup check**:
-
+### 4.1 How Telemetry is Captured
+When any user opens the application, `frontend/src/services/deviceIdentity.ts` initializes the agent:
 ```typescript
-// backend/src/config/env.ts
-if (env.NODE_ENV === "production" && (env.OTP_DEV_OVERRIDE === "true" || process.env.OTP_DEV_OVERRIDE === "true")) {
-  const fatalMsg = "FATAL SECURITY ERROR: OTP_DEV_OVERRIDE is strictly forbidden in production mode!";
-  console.error(`🚨 ${fatalMsg}`);
-  throw new Error(fatalMsg);
-}
+const fp = await FingerprintJS.load();
+const result = await fp.get();
+const visitorId = result.visitorId; // 32-character probabilistic hardware hash
+const screenResolution = `${window.screen.width}x${window.screen.height} (${window.screen.colorDepth}-bit)`;
+const deviceLabel = parseDeviceLabel(navigator.userAgent);
 ```
 
-- **Production Guarantee**: If `OTP_DEV_OVERRIDE` is set to `"true"` in a production deployment, the Node.js server immediately throws an exception and halts the process before listening on any port.
-- **Unit Test Assertion**: Verified by [`backend/src/__tests__/unit/otpDevOverrideFailClosed.test.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/__tests__/unit/otpDevOverrideFailClosed.test.ts).
+### 4.2 Backend Device Processing & Database Records
+When the login request arrives at `AuthController.login`:
+1. `visitorId` is hashed with `crypto.createHash('sha256').update('roombae_visitor_salt_' + visitorId).digest('hex')`.
+2. `DeviceRepository.findByUserIdAndVisitorId(userId, visitorId)` checks if the user has signed in on this hardware before.
+3. **If the device is NEW, REVOKED, or REJECTED**:
+   - `isNew = true` and `requiresAlert = true`.
+   - `DeviceRepository.createDevice` uses `prisma.userDevice.upsert` to record the device with `status: "NEW"`, `trustLevel: "UNTRUSTED"`.
+   - A `DeviceLoginLog` record is created in MongoDB with `status: "PENDING_ALERT"`, `ipAddress`, `region`, `city`, `screenResolution`, `userAgent`.
+   - `emailService.sendNewDeviceLoginAlert` dispatches a rich HTML email to the user's verified address detailing the login time, device, browser, and location.
+4. **If the device is already TRUSTED**:
+   - `requiresAlert = false`.
+   - A `DeviceLoginLog` record is created with `status: "AUTO_TRUSTED"`. No modal is displayed.
 
-## 4.2 Dynamic CORS Origin Resolution
+### 4.3 The Alert Notification Modal (`NewDeviceNotificationModal.tsx`)
+If `deviceSecurity.requiresAlert === true`, the frontend displays a high-priority, animated dark glassmorphic security modal over the viewport with two actionable buttons:
 
-RoomBae implements dynamic CORS validation in [`backend/src/config/corsOrigins.ts`](file:///c:/Users/GLB-BLR-191/Downloads/New%20folder/PG-Management-System/backend/src/config/corsOrigins.ts) supporting:
-- Local development origins: `http://localhost:5173`, `http://localhost:3000`, `http://127.0.0.1:5173`.
-- Dynamic Vercel preview & production deployments via RegExp: `/^https:\/\/.*\.vercel\.app$/`.
-- Environment-configured custom domains (`FRONTEND_URL`, `CLIENT_URL`).
-- Strict credential propagation: `credentials: true` for HTTP-only cookie transmission.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ 🛡️  NEW DEVICE SIGN-IN DETECTED                                        │
+│                                                                        │
+│ We noticed a sign-in to your RoomBae account from an unverified device.│
+│                                                                        │
+│ 📱 Device:     Chrome 120 on Windows 10 (Desktop)                      │
+│ 🖥️ Resolution: 1920x1080 (24-bit)                                      │
+│ 🌐 IP Address: 203.0.113.50                                            │
+│ 📍 Location:   Bengaluru, Karnataka, India                             │
+│ ⏰ Time:       Today at 4:15 PM IST                                    │
+│                                                                        │
+│ Did you just log in from this device?                                  │
+│                                                                        │
+│   [ ❌ Not Me (Deny & Log Out) ]    [ ✅ Yes, It's Me (Accept & Trust) ]│
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-## 4.3 Double-Submit HMAC-SHA256 CSRF Protection
+#### Action 1: User clicks `[ Yes, It's Me (Accept & Trust) ]`
+- **Frontend Action**: Calls `deviceService.sendAlertDecision({ deviceId, decision: "ACCEPT", visitorId })`.
+- **API Endpoint**: `POST /api/v1/security/devices/alert-decision`
+- **Backend Mutation**:
+  1. Updates `UserDevice.status = "TRUSTED"` and `UserDevice.trustLevel = "TRUSTED"`.
+  2. Updates `DeviceLoginLog.status = "ACCEPTED"` and `DeviceLoginLog.actionTaken = "USER_ACCEPTED"`.
+  3. Writes `SecurityAuditEvent` (`eventType: "DEVICE_TRUSTED"`, `severity: "INFO"`).
+- **UI Result**: Modal closes with a success toast ("Device verified and added to trusted devices"). User continues their active session without interruption.
 
-- Applied on all mutating HTTP methods (`POST`, `PUT`, `PATCH`, `DELETE`).
-- Validates the `x-csrf-token` header against the `csrf-token` cookie using `crypto.timingSafeEqual` with strict buffer length checks to eliminate timing attacks.
-
-## 4.4 Asymmetric RS256 JWT & JWKS Key Rotation
-
-- Access tokens are signed using RSA-2048 private keys (`RS256` algorithm) with a `15-minute` TTL.
-- Key IDs (`kid`) are embedded in token headers.
-- Public keys are exposed via standard OpenID Connect endpoint `GET /.well-known/jwks.json`.
-- Dual-key retention window ensures zero-downtime key rotation.
+#### Action 2: User clicks `[ Not Me (Deny & Log Out) ]`
+- **Frontend Action**: Calls `deviceService.sendAlertDecision({ deviceId, decision: "REJECT", visitorId })`.
+- **API Endpoint**: `POST /api/v1/security/devices/alert-decision`
+- **Backend Mutation**:
+  1. Updates `UserDevice.status = "REJECTED"` and `UserDevice.trustLevel = "UNTRUSTED"`.
+  2. Updates `DeviceLoginLog.status = "REJECTED"` and `DeviceLoginLog.actionTaken = "USER_REJECTED"`.
+  3. **Universal Session Revocation**: Calls `SessionRevocationService.revokeAllSessions(userId)`:
+     - Deletes all `RefreshToken` records in MongoDB for this user.
+     - Increments `User.tokenVersion` in MongoDB to invalidate all in-flight RS256 JWT access tokens.
+     - Broadcasts `auth:revoked` over Socket.IO to immediately evict active browser connections.
+     - Clears the `refreshToken` HTTP-only cookie.
+  4. Writes `SecurityAuditEvent` (`eventType: "DEVICE_REVOKED"`, `severity: "WARNING"`).
+- **UI Result**: Modal triggers `authService.logout()`, displays a red security warning ("Session terminated for security. Please reset your password if you suspect unauthorized access."), and redirects immediately to `/auth`.
 
 ---
 
-# 5. Database Schema Relational Map (Prisma ORM 6.19.3)
+# 5. Complete Sign-Up Flow (Multi-Step Wizards)
+
+RoomBae implements role-tailored **7-Step Onboarding Wizards** for Residents and PG Owners:
+
+```
+                             ┌───────────────────────────────────────────────┐
+                             │              ROLE SELECTION SCREEN            │
+                             │         [ I am a Resident ]   [ I am a PG Owner ]
+                             └───────┬───────────────────────────────┬───────┘
+                                     │                               │
+                     ┌───────────────▼───────────────┐ ┌─────────────▼─────────────────┐
+                     │    RESIDENT SIGN-UP WIZARD    │ │      OWNER SIGN-UP WIZARD     │
+                     ├───────────────────────────────┤ ├───────────────────────────────┤
+                     │ Step 1: Account Credentials   │ │ Step 1: Account Credentials   │
+                     │ Step 2: Multi-Factor OTP      │ │ Step 2: Multi-Factor OTP      │
+                     │ Step 3: Profile & Emergency   │ │ Step 3: Business & Bank Info  │
+                     │ Step 4: Identity Documents    │ │ Step 4: Owner KYC Submission  │
+                     │ Step 5: Room & Bed Selection  │ │ Step 5: Property Setup        │
+                     │ Step 6: Digital Agreement SVG │ │ Step 6: Building Hierarchy    │
+                     │ Step 7: Rent & Deposit Pay    │ │ Step 7: Subscription Plan     │
+                     └───────────────┬───────────────┘ └─────────────┬─────────────────┘
+                                     │                               │
+                                     └───────────────┬───────────────┘
+                                                     │
+                                         ┌───────────▼───────────┐
+                                         │   ACCOUNT ACTIVATION  │
+                                         │ • Issue RS256 Token   │
+                                         │ • Set Refresh Cookie  │
+                                         │ • Connect Socket.IO   │
+                                         │ • Route to Dashboard  │
+                                         └───────────────────────┘
+```
+
+---
+
+## 5.1 Resident Sign-Up (7 Steps)
+
+| Step | Component | Fields & Data Captured | API Request | Database Operations |
+| :--- | :--- | :--- | :--- | :--- |
+| **Step 1: Credentials** | `ResidentSignupStep1.tsx` | Full Name, Email, Mobile Phone, Password, Visitor ID | `POST /api/v1/auth/register-step1` | Creates draft `User` (`role: RESIDENT`, `accountStatus: PENDING`). |
+| **Step 2: OTP Verification** | `OtpVerificationStep.tsx` | 6-Digit Phone SMS OTP & 6-Digit Email OTP | `POST /api/v1/auth/verify-otp` | Validates OTP tokens; sets `phoneVerified: true`, `emailVerified: true`. |
+| **Step 3: Demographics** | `ResidentProfileStep.tsx` | Gender, Age, Blood Group, Food Preference, Occupation, Permanent Address, Guardian Details, Emergency Contact | `POST /api/v1/residents/profile-draft` | Creates `Resident`, `Guardian`, and `EmergencyContact` records. |
+| **Step 4: Documents** | `DocumentUploadStep.tsx` | Aadhaar Card PDF/Image, College/Work ID | `POST /api/v1/upload/sign-upload`<br>`POST /api/v1/documents` | Uploads signed media to Cloudinary; creates `Document` records. |
+| **Step 5: Bed Selection** | `BedSelectionStep.tsx` | Property Selection, Floor, Room, Bed Selection | `POST /api/v1/beds/hold` | Locks bed with 15-min distributed mutex; sets `Bed.status = HOLD`. |
+| **Step 6: Agreement** | `AgreementSigningStep.tsx` | 11-Month Digital Tenancy Contract, SVG E-Signature | `POST /api/v1/agreements/sign` | Generates contract PDF; creates `Agreement` (`SIGNED_BY_RESIDENT`). |
+| **Step 7: Payment** | `PaymentCheckoutStep.tsx` | Rent (₹14,500 + 18% GST = ₹17,110) + Deposit (₹29,000) via Razorpay | `POST /api/v1/payments/create-order`<br>`POST /api/v1/payments/webhook` | Verifies HMAC-SHA256 signature; creates `Invoice` (`INV-AURORA-1001`), marks `Payment` as `PAID`, sets `Bed.status = OCCUPIED`, and sets `Resident.status = ACTIVE`. |
+
+---
+
+## 5.2 PG Owner Sign-Up (7 Steps)
+
+| Step | Component | Fields & Data Captured | API Request | Database Operations |
+| :--- | :--- | :--- | :--- | :--- |
+| **Step 1: Credentials** | `OwnerSignupStep1.tsx` | Full Name, Business Email, Mobile Phone, Password, Visitor ID | `POST /api/v1/auth/register-step1` (`role: OWNER`) | Creates `User` with `role: OWNER`. |
+| **Step 2: OTP Verification** | `OtpVerificationStep.tsx` | Phone & Email OTP Codes | `POST /api/v1/auth/verify-otp` | Creates initial `Owner` entity linked to `User.id`. |
+| **Step 3: Business & Bank** | `BusinessDetailsStep.tsx` | Business Name, Type (PVT_LTD/LLP), GSTIN, PAN, Bank Name, Account Number (AES-256 encrypted), IFSC, UPI ID | `POST /api/v1/owners/business-profile` | Creates `Business` entity and updates `Owner` banking records. |
+| **Step 4: Owner KYC** | `OwnerKycStep.tsx` | Aadhaar Card, PAN Card, Owner Photo Selfie | `POST /api/v1/onboarding/owner-kyc` | Creates `OwnerKYC` record (`verificationStatus: VERIFIED`). |
+| **Step 5: Property Setup** | `PropertyCreationStep.tsx` | Property Name, Slug, Address, Coordinates, Rent Starting Price, Amenities, Rules, 8 WebP Photos | `POST /api/v1/properties` | Creates `PG` entity in MongoDB Atlas. |
+| **Step 6: Buildings & Rooms** | `BuildingStructureStep.tsx` | Buildings, Floors, Room Numbers, Sharing Types (Single/Double/Triple), AC/Non-AC, Bed Labels | `POST /api/v1/properties/:id/structure` | Creates `Building`, `Floor`, `Room`, and `Bed` records. |
+| **Step 7: Subscription** | `SubscriptionStep.tsx` | SaaS Tier: `STARTER`, `PROFESSIONAL` (Selected), or `ENTERPRISE` | `POST /api/v1/owners/subscription` | Creates `Subscription` record (`planType: PROFESSIONAL`, `status: ACTIVE`); redirects to `/dashboard`. |
+
+---
+
+# 6. UI Elements & Button Action Matrix
+
+Every button across the authentication and security surfaces is mapped to its precise handler, API call, and error recovery:
+
+| Screen / Modal | Button Label | Frontend Handler | API Route Called | Database Mutation | Error / Fallback Handling |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Sign-In View** | `[ PG Owner ]` Tab | `setRole("OWNER")` | None (Client state switch) | None | Switches input labels and validation schemas for Owner persona. |
+| **Sign-In View** | `[ Resident ]` Tab | `setRole("RESIDENT")` | None (Client state switch) | None | Switches input labels to "Resident ID or Email" with Resident validation. |
+| **Sign-In View** | `[ Admin Sign In ]` Tab | `setRole("ADMIN")` | None (Client state switch) | None | Switches input labels for administrative command access. |
+| **Sign-In View** | `[ Sign In to RoomBae ]` | `handleSubmit(onLogin)` | `POST /api/v1/auth/login` | Updates `User.lastLogin`, logs `LoginHistory`, registers `UserDevice`. | Displays red banner on 401 invalid password; prompts 2FA modal on 403 step-up. |
+| **Sign-In View** | `[ Continue with Google ]` | `window.location.href = googleAuthUrl` | `GET /api/v1/auth/google` | Creates/links `User` with `googleSubId`, auto-ensures profile. | Redirects to Google Consent Screen; handles callback at `/api/v1/auth/google/callback`. |
+| **Sign-In View** | `[ Forgot password? ]` | `setShowForgotModal(true)` | None (Opens modal) | None | Opens password recovery dialog with Email/Phone OTP inputs. |
+| **Sign-In View** | `[ Sign Up ]` Link | `navigate("signup")` | None (Client navigation) | None | Routes user to Role Selection Screen (`/signup`). |
+| **Alert Modal** | `[ Yes, It's Me (Accept & Trust) ]` | `handleAcceptDevice()` | `POST /api/v1/security/devices/alert-decision` (`decision: "ACCEPT"`) | Sets `UserDevice.status = TRUSTED`, `DeviceLoginLog.status = ACCEPTED`. | Shows success toast, closes modal, persists trusted state. |
+| **Alert Modal** | `[ Not Me (Deny & Log Out) ]` | `handleRejectDevice()` | `POST /api/v1/security/devices/alert-decision` (`decision: "REJECT"`) | Sets `UserDevice.status = REJECTED`, deletes all `RefreshToken`s, increments `tokenVersion`. | Shows critical warning alert, calls `logout()`, redirects to `/auth`. |
+| **Sign-Up Step 1** | `[ Continue to Verification ]` | `handleStep1Submit()` | `POST /api/v1/auth/register-step1` | Creates draft `User` record. | Displays field validation errors if email/phone already in use. |
+| **Sign-Up Step 2** | `[ Verify Phone OTP ]` | `handleVerifyOtp()` | `POST /api/v1/auth/verify-otp` | Sets `User.phoneVerified = true`. | Highlights input in red on incorrect OTP; enables "Resend OTP" after 30s. |
+| **Sign-Up Step 2** | `[ Verify Email OTP ]` | `handleVerifyEmailOtp()` | `POST /api/v1/auth/verify-email-otp` | Sets `User.emailVerified = true`. | Displays timer countdown; allows resend after 60s cooldown. |
+| **Sign-Up Step 4** | `[ Upload Aadhaar / PAN ]` | `handleCloudinaryUpload()` | `POST /api/v1/upload/sign-upload` | Creates `Document` / `OwnerKYC` record. | Retries upload on network glitch; validates MIME type (PDF/JPG/PNG). |
+| **Sign-Up Step 6** | `[ Sign & Generate Agreement ]` | `handleSignatureSubmit()` | `POST /api/v1/agreements/sign` | Creates `Agreement` (`SIGNED_BY_RESIDENT`), generates contract PDF. | Validates canvas has non-empty stroke coordinates before submitting. |
+| **Sign-Up Step 7** | `[ Pay ₹17,110 with Razorpay ]` | `openRazorpayModal()` | `POST /api/v1/payments/create-order` | Creates `Payment` (`PAID`), `Invoice`, marks `Bed` as `OCCUPIED`. | Re-opens checkout on modal dismiss; verifies payment via backend webhook. |
+
+---
+
+# 7. Database Relational Map & Prisma Models
 
 ```mermaid
 erDiagram
-    User ||--o| Owner : "owns"
-    User ||--o| Resident : "lives_as"
-    User ||--o{ RefreshToken : "holds"
-    User ||--o{ UserDevice : "registers"
+    User ||--o| Owner : "has_owner_profile"
+    User ||--o| Resident : "has_resident_profile"
+    User ||--o{ UserDevice : "registers_devices"
+    User ||--o{ DeviceLoginLog : "logs_sign_ins"
+    User ||--o{ SecurityAuditEvent : "records_security_events"
+    User ||--o{ RefreshToken : "maintains_sessions"
+    User ||--o{ LoginHistory : "tracks_history"
     Owner ||--o| OwnerKYC : "verified_by"
-    Owner ||--o| Business : "operates"
-    Owner ||--o| Subscription : "subscribes"
-    Owner ||--o{ PG : "manages"
-    PG ||--o{ Building : "contains"
-    Building ||--o{ Floor : "has"
-    Floor ||--o{ Room : "contains"
-    Room ||--o{ Bed : "has"
-    Resident ||--o| Bed : "occupies"
-    Resident ||--o{ Agreement : "signs"
-    Resident ||--o{ Payment : "makes"
-    Resident ||--o{ Complaint : "files"
-    Payment ||--o| Invoice : "generates"
+    Owner ||--o| Business : "operates_business"
+    Owner ||--o| Subscription : "holds_subscription"
+    Owner ||--o{ PG : "manages_properties"
+    PG ||--o{ Building : "contains_buildings"
+    Building ||--o{ Floor : "contains_floors"
+    Floor ||--o{ Room : "contains_rooms"
+    Room ||--o{ Bed : "contains_beds"
+    Resident ||--o| Bed : "occupies_bed"
+    Resident ||--o{ Document : "submits_documents"
+    Resident ||--o{ Agreement : "signs_agreements"
+    Resident ||--o{ Payment : "executes_payments"
+    Payment ||--o| Invoice : "generates_invoice"
+```
+
+### Core Prisma Schema Definitions (Excerpt)
+
+```prisma
+model User {
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  email              String          @unique
+  passwordHash       String?
+  name               String
+  residentCode       String?
+  googleSubId        String?         
+  role               Role            @default(PUBLIC)
+  phone              String?
+  phoneVerified      Boolean         @default(false)
+  emailVerified      Boolean         @default(false)
+  accountStatus      String          @default("ACTIVE")
+  tokenVersion       Int             @default(0)
+  lastLogin          DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  ownerProfile       Owner?
+  residentProfile    Resident?
+  userDevices        UserDevice[]
+  deviceLoginLogs    DeviceLoginLog[]
+  securityAuditEvents SecurityAuditEvent[]
+  refreshTokens      RefreshToken[]
+  loginHistories     LoginHistory[]
+}
+
+model UserDevice {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visitorIdHash    String
+  deviceLabel      String
+  browser          String?
+  os               String?
+  deviceType       String?
+  screenResolution String?
+  status           String    @default("NEW") // NEW, TRUSTED, BLOCKED, REVOKED, REJECTED
+  trustLevel       String    @default("UNTRUSTED")
+  ipAddress        String?
+  region           String?
+  city             String?
+  country          String?
+  failedAttempts   Int       @default(0)
+  firstSeenAt      DateTime  @default(now())
+  lastSeenAt       DateTime  @default(now())
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, visitorIdHash])
+  @@index([userId])
+  @@index([status])
+}
+
+model DeviceLoginLog {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId         String?
+  deviceLabel      String
+  screenResolution String?
+  ipAddress        String
+  region           String?
+  city             String?
+  country          String?
+  status           String    @default("PENDING_ALERT") // PENDING_ALERT, ACCEPTED, REJECTED, AUTO_TRUSTED
+  actionTaken      String?   // USER_ACCEPTED, USER_REJECTED, AUTO_TRUSTED
+  emailSent        Boolean   @default(false)
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+  actionAt         DateTime?
+
+  @@index([userId])
+  @@index([status])
+}
 ```
 
 ---
 
-# 6. Summary of Architectural Guarantees
+# 8. Summary of Guarantees & Production Best Practices
 
-1. **Deterministic Verification**: Complete isolation between local development test modes and strict production cryptographic workflows.
-2. **Zero Unverified Accounts**: No resident or owner can reach active platform status without passing Phone/Email OTP, KYC gates, and digital agreement e-signatures.
-3. **Continuous Real-Time Protection**: Socket.IO connections are continuously authorized per packet, evicting users immediately upon session revocation or password changes.
-4. **Resilient Data Consistency**: Transactional outbox event patterns guarantee reliable delivery of SMS, email, and billing notifications even during network partitions.
+1. **Zero False-Positive Logins**: Valid credentials are never blocked by risk heuristics alone; unverified or previously rejected devices seamlessly prompt the interactive New Device Alert modal.
+2. **Deterministic Device Identification**: Hardware fingerprints are hashed using a unified, salted SHA-256 algorithm (`roombae_visitor_salt_`) and stored via idempotent `upsert` operations.
+3. **Immediate Threat Neutralization**: Denying an alert immediately revokes all active sessions, bumps `tokenVersion`, invalidates in-memory JWTs, broadcasts WebSocket evictions, and clears HTTP-only cookies.
+4. **Resilient Production Networking**: Dynamic CORS wildcard validation, fail-safe Vite chunk reload recovery (`lazyWithRetry`), and unconditional interactive Swagger UI documentation at `/api/docs`.
