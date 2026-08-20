@@ -17,25 +17,34 @@ export class AuthRepository implements IUserRepository {
   async findByIdentifier(identifier: string): Promise<User | null> {
     const clean = identifier.trim();
     const lower = clean.toLowerCase();
+    const upper = clean.toUpperCase();
     const stripped = clean.replace(/\s+/g, "");
+    const digitsOnly = clean.replace(/\D/g, "");
 
-    // If identifier is an email address, use exact point lookup on canonical lowercase index
-    if (clean.includes("@")) {
-      return await this.client.user.findFirst({
-        where: { email: lower },
-      });
+    const orConditions: any[] = [
+      { email: lower },
+      { residentCode: clean },
+      { residentCode: upper },
+      { residentCode: stripped },
+      { residentCode: stripped.toUpperCase() },
+      { phone: clean },
+      { phone: stripped },
+    ];
+
+    if (digitsOnly.length >= 10) {
+      const tenDigits = digitsOnly.slice(-10);
+      orConditions.push(
+        { phone: tenDigits },
+        { phone: `+91${tenDigits}` },
+        { phone: `+91 ${tenDigits}` },
+        { phone: `+91 ${tenDigits.slice(0, 5)} ${tenDigits.slice(5)}` },
+        { phone: `91${tenDigits}` }
+      );
     }
 
-    // Otherwise check exact matching against residentCode, phone, or email
     return await this.client.user.findFirst({
       where: {
-        OR: [
-          { residentCode: clean },
-          { residentCode: stripped },
-          { phone: clean },
-          { phone: stripped },
-          { email: lower },
-        ],
+        OR: orConditions,
       },
     });
   }

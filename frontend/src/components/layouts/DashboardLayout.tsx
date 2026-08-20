@@ -20,6 +20,7 @@ import {
   Sparkles,
   AlertCircle,
   Trash2,
+  LogOut,
 } from "lucide-react";
 import type { Page } from "../../App";
 import { ThemeToggle, useTheme } from "../../theme";
@@ -65,7 +66,7 @@ interface Props {
 }
 
 export default function DashboardLayout({ children, navigate, activePage }: Props) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const rawRole = String(user?.role || "").toUpperCase();
   const isAdmin = rawRole === "ADMIN" || rawRole === "SUPER_ADMIN";
 
@@ -215,15 +216,29 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
               </div>
             )}
             {!collapsed && (
-              <button
-                type="button"
-                onClick={() => setIsDeleteAccountOpen(true)}
-                title="Account Settings & Delete"
-                aria-label="Account Settings & Delete"
-                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logout();
+                    navigate("auth");
+                  }}
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteAccountOpen(true)}
+                  title="Account Settings & Delete"
+                  aria-label="Account Settings & Delete"
+                  className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -339,7 +354,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
               )}
             </button>
 
-            <div className="flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <Avatar
                 name={user?.name || "User"}
                 initials={
@@ -352,6 +367,22 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                 }
                 size="sm"
               />
+              <button
+                type="button"
+                className={`p-2 rounded-xl transition-colors flex-shrink-0 cursor-pointer ${
+                  darkMode
+                    ? "text-[#756A63] bg-[#332D2B] hover:bg-[#3D3632] hover:text-rose-400"
+                    : "text-[#A8907F] bg-[#F8EEE5] hover:bg-[#EDE0D4] hover:text-rose-600"
+                }`}
+                aria-label="Sign Out"
+                title="Sign Out"
+                onClick={async () => {
+                  await logout();
+                  navigate("auth");
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
 

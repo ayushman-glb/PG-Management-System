@@ -24,6 +24,7 @@ import { UploadCard } from "../../../components/UploadCard";
 import { env } from "../../../config/env";
 import { EmailOtpVerificationModal } from "../../../components/auth/EmailOtpVerificationModal";
 import { PhoneOtpModal } from "../components/PhoneOtpModal";
+import { useAuth } from "../../../hooks/useAuth";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -32,6 +33,7 @@ interface Props {
 type AuthMode = "login" | "register" | "forgot" | "otp";
 
 export default function Auth({ navigate }: Props) {
+  const { setUser } = useAuth();
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
@@ -413,16 +415,20 @@ export default function Auth({ navigate }: Props) {
         setMode("otp");
         return;
       }
-      const userRole = loginRes?.user?.role;
+      
+      if (loginRes?.user) {
+        setUser(loginRes.user);
+      }
 
-      if (userRole === "RESIDENT") {
+      const rawRole = (loginRes?.user?.role || "").toUpperCase();
+      if (rawRole === "RESIDENT") {
         navigate("resident-portal");
-      } else if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+      } else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") {
         navigate("admin-console");
-      } else if (userRole === "OWNER" || userRole === "MANAGER" || userRole === "STAFF") {
+      } else if (rawRole === "OWNER" || rawRole === "MANAGER" || rawRole === "STAFF") {
         navigate("dashboard");
       } else {
-        setAuthError("Your account role could not be determined. Please contact support.");
+        navigate("dashboard");
       }
     } catch (err: any) {
       const isSignupNudge = err?.code === "ACCOUNT_NOT_FOUND_OR_INVALID" || err?.message?.includes("couldn't find an account");
@@ -447,17 +453,20 @@ export default function Auth({ navigate }: Props) {
     try {
       const tokenOrUserId = preAuthToken || "USER_CURRENT";
       const res = await authService.verifyTwoFactor(tokenOrUserId, totpCode, rememberMe);
-      const userRole = res?.user?.role;
+      if (res?.user) {
+        setUser(res.user);
+      }
+      const rawRole = (res?.user?.role || "").toUpperCase();
       setAuthSuccessMsg("✓ Two-factor authentication verified successfully!");
       setTimeout(() => {
-        if (userRole === "RESIDENT") {
+        if (rawRole === "RESIDENT") {
           navigate("resident-portal");
-        } else if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+        } else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") {
           navigate("admin-console");
         } else {
           navigate("dashboard");
         }
-      }, 600);
+      }, 300);
     } catch (err: any) {
       setAuthError(err?.message || "Invalid two-factor code. Please try again.");
     } finally {
@@ -701,7 +710,7 @@ export default function Auth({ navigate }: Props) {
                       </div>
 
                       {/* Role Tabs */}
-                      <div className="mb-6">
+                      <div className="mb-4">
                         <AnimatedTabs
                           tabs={[
                             { id: "owner", label: "🏢 PG Owner" },
@@ -712,6 +721,29 @@ export default function Auth({ navigate }: Props) {
                           onChange={(id: string) => setLoginRole(id as any)}
                           layoutId="auth-role-tab"
                         />
+                      </div>
+
+                      {/* Quick Test Demo Account Fill Pill */}
+                      <div className="mb-4 flex items-center justify-between px-1">
+                        <span className="text-[11px] font-medium text-neutral-400">Authoritative Demo:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (loginRole === "owner") {
+                              setLoginIdentifier("ayushmansaha917@gmail.com");
+                              setLoginPassword("123456");
+                            } else if (loginRole === "resident") {
+                              setLoginIdentifier("ankursaha985@gmail.com");
+                              setLoginPassword("654123");
+                            } else if (loginRole === "admin") {
+                              setLoginIdentifier("ayushman@globussoft.in");
+                              setLoginPassword("987456");
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                        >
+                          ⚡ Fill {loginRole === "resident" ? "Resident (Ankur)" : loginRole === "admin" ? "Admin (GOD)" : "PG Owner (Ayushman)"}
+                        </button>
                       </div>
 
                       <form onSubmit={handleLoginSubmit} className="space-y-4">

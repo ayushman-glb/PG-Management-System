@@ -54,7 +54,7 @@ export default function ResidentPortal({ navigate }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const { darkMode } = useTheme();
 
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [selectedAgreement, setSelectedAgreement] = useState<any>(null);
   const [residentStatus, setResidentStatus] = useState("ACTIVE");
   const [isRoomTransferModalOpen, setIsRoomTransferModalOpen] = useState(false);
@@ -246,7 +246,10 @@ export default function ResidentPortal({ navigate }: Props) {
           <ThemeToggle />
           <button
             type="button"
-            onClick={() => navigate("auth")}
+            onClick={async () => {
+              await logout();
+              navigate("auth");
+            }}
             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
           >
             <LogOut className="w-4 h-4" />

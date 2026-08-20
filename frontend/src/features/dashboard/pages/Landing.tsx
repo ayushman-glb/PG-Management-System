@@ -41,6 +41,7 @@ import { ThemeToggle } from "@theme/index";
 import { Avatar } from "@components/ui/Avatar";
 import { Logo } from "@components/ui/Logo";
 import { Button } from "@components/ui/Button";
+import { useAuth } from "@hooks/useAuth";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -236,6 +237,8 @@ const logos = [
 ];
 
 export default function Landing({ navigate }: Props) {
+  const { user, isAuthenticated, logout } = useAuth();
+  const rawRole = String(user?.role || "").toUpperCase();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -395,20 +398,52 @@ export default function Landing({ navigate }: Props) {
 
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("auth")}
-            >
-              Sign in
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate("auth")}
-            >
-              Start Free Trial
-            </Button>
+            {isAuthenticated && user ? (
+              <>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    if (rawRole === "RESIDENT") navigate("resident-portal");
+                    else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") navigate("admin-console");
+                    else navigate("dashboard");
+                  }}
+                >
+                  {rawRole === "RESIDENT"
+                    ? "Resident Portal 🏠"
+                    : rawRole === "ADMIN" || rawRole === "SUPER_ADMIN"
+                    ? "Admin Console 🛡️"
+                    : "Owner Dashboard 🏢"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    await logout();
+                    navigate("auth");
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("auth")}
+                >
+                  Sign in
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => navigate("auth")}
+                >
+                  Start Free Trial
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
@@ -463,20 +498,54 @@ export default function Landing({ navigate }: Props) {
                 Find PGs
               </button>
               <div className="pt-2 flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  fullWidth
-                  onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
-                >
-                  Sign in
-                </Button>
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
-                >
-                  Start Free Trial
-                </Button>
+                {isAuthenticated && user ? (
+                  <>
+                    <Button
+                      variant="primary"
+                      fullWidth
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        if (rawRole === "RESIDENT") navigate("resident-portal");
+                        else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") navigate("admin-console");
+                        else navigate("dashboard");
+                      }}
+                    >
+                      {rawRole === "RESIDENT"
+                        ? "Resident Portal 🏠"
+                        : rawRole === "ADMIN" || rawRole === "SUPER_ADMIN"
+                        ? "Admin Console 🛡️"
+                        : "Owner Dashboard 🏢"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      onClick={async () => {
+                        setMobileMenuOpen(false);
+                        await logout();
+                        navigate("auth");
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
+                    >
+                      Sign in
+                    </Button>
+                    <Button
+                      variant="primary"
+                      fullWidth
+                      onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
+                    >
+                      Start Free Trial
+                    </Button>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
