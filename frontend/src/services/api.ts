@@ -22,10 +22,8 @@ export interface ApiResponse<T = any> {
   };
 }
 
-function getCsrfCookie(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+function getCsrfToken(): string | null {
+  return authService.getCsrfToken();
 }
 
 class ApiClient {
@@ -44,7 +42,10 @@ class ApiClient {
 
     // Attach Double-Submit CSRF Header for state-mutating requests
     if (isMutating) {
-      const csrf = getCsrfCookie();
+      let csrf = getCsrfToken();
+      if (!csrf && !endpoint.includes('/auth/csrf-token')) {
+        csrf = await authService.bootstrapCsrf();
+      }
       if (csrf) {
         headers["x-csrf-token"] = csrf;
       }

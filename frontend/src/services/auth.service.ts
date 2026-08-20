@@ -130,28 +130,52 @@ export class AuthService {
     );
   }
 
-  private getCsrfToken(): string | null {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
-    return match ? decodeURIComponent(match[1]) : null;
+  private inMemoryCsrfToken: string | null = null;
+
+  public getCsrfToken(): string | null {
+    if (this.inMemoryCsrfToken) return this.inMemoryCsrfToken;
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('roombae_csrf_token');
+        if (stored) {
+          this.inMemoryCsrfToken = stored;
+          return stored;
+        }
+      } catch {}
+    }
+    if (typeof document !== 'undefined') {
+      const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
+      if (match) return decodeURIComponent(match[1]);
+    }
+    return null;
   }
 
   /**
    * Fetches a fresh CSRF token from the backend bootstrap endpoint.
-   * Should be called once on app boot (before any protected request) and
-   * lazily from refreshToken() when no cookie is present yet.
-   * Does NOT require a CSRF token itself (bootstrap is unauthenticated).
+   * Extracts token from response body (for cross-origin environments like GitHub Pages -> Render)
+   * and sets cookie header.
    */
-  async bootstrapCsrf(): Promise<void> {
+  async bootstrapCsrf(): Promise<string | null> {
     try {
-      await fetch(`${env.API_URL}/auth/csrf-token`, {
+      const res = await fetch(`${env.API_URL}/auth/csrf-token`, {
         method: 'GET',
         credentials: 'include',
       });
-      // The response sets the csrf-token cookie; no need to read the body.
+      if (res.ok) {
+        const json = await res.json().catch(() => ({}));
+        const token = json?.data?.csrfToken || json?.csrfToken || res.headers.get('x-csrf-token');
+        if (token) {
+          this.inMemoryCsrfToken = token;
+          try {
+            sessionStorage.setItem('roombae_csrf_token', token);
+          } catch {}
+          return token;
+        }
+      }
     } catch {
-      // Non-fatal — request will fail CSRF check and surface a clear 403
+      // Non-fatal fallback
     }
+    return this.getCsrfToken();
   }
 
   private async request<T = any>(
@@ -171,7 +195,10 @@ export class AuthService {
 
     const method = options.method?.toUpperCase() || 'GET';
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-      const csrf = this.getCsrfToken();
+      let csrf = this.getCsrfToken();
+      if (!csrf && !endpoint.includes('/auth/csrf-token')) {
+        csrf = await this.bootstrapCsrf();
+      }
       if (csrf) {
         headers['x-csrf-token'] = csrf;
       }
@@ -198,6 +225,24 @@ export class AuthService {
       } catch (refreshErr) {
         console.warn("⚠️ Token auto-refresh failed:", refreshErr);
       }
+    }
+
+    // Automatic 403 CSRF Recovery
+    if (response.status === 403 && !isRetry && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      try {
+        const errorClone = response.clone();
+        const errJson = await errorClone.json().catch(() => ({}));
+        const isCsrfError =
+          errJson?.error?.code === 'CSRF_INVALID' ||
+          errJson?.error?.code === 'CSRF_MISSING' ||
+          errJson?.error?.code === 'CSRF_SIGNATURE_INVALID' ||
+          errJson?.message?.toLowerCase().includes('csrf');
+
+        if (isCsrfError) {
+          await this.bootstrapCsrf();
+          return this.request<T>(endpoint, options, true);
+        }
+      } catch {}
     }
 
     const data = await response.json();

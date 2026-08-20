@@ -126,7 +126,7 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
   const headerToken = req.headers[CSRF_HEADER_NAME] || req.headers[CSRF_HEADER_NAME.toLowerCase()];
 
-  if (!cookieToken || !headerToken || typeof headerToken !== 'string') {
+  if (!headerToken || typeof headerToken !== 'string') {
     // In test harness without cookies or headers, allow unit tests not exercising CSRF to proceed
     if (env.NODE_ENV === 'test' && !cookieToken && !headerToken && !req.cookies?.refreshToken) {
       return next();
@@ -145,8 +145,8 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   }
 
   try {
-    // 1. Validate HMAC signature of both cookie and header tokens
-    if (!verifyCsrfTokenSignature(cookieToken) || !verifyCsrfTokenSignature(headerToken)) {
+    // 1. Validate HMAC signature of header token
+    if (!verifyCsrfTokenSignature(headerToken)) {
       res.status(403).json({
         success: false,
         message: 'Invalid CSRF token signature',
@@ -159,18 +159,20 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
       return;
     }
 
-    // 2. Perform crash-proof constant-time comparison between cookie and header
-    if (!safeCompareCsrf(cookieToken, headerToken)) {
-      res.status(403).json({
-        success: false,
-        message: 'CSRF token mismatch',
-        error: {
-          code: 'CSRF_INVALID',
-          message: 'The x-csrf-token header did not match the CSRF cookie',
-          action: 'retry',
-        },
-      });
-      return;
+    // 2. If cookie token is present, perform constant-time comparison
+    if (cookieToken) {
+      if (!verifyCsrfTokenSignature(cookieToken) || !safeCompareCsrf(cookieToken, headerToken)) {
+        res.status(403).json({
+          success: false,
+          message: 'CSRF token mismatch',
+          error: {
+            code: 'CSRF_INVALID',
+            message: 'The x-csrf-token header did not match the CSRF cookie',
+            action: 'retry',
+          },
+        });
+        return;
+      }
     }
 
     next();
