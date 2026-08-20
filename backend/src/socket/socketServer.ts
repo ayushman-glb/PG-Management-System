@@ -33,37 +33,7 @@ export class SocketServer {
   private static io: SocketIOServer | null = null;
 
   public static init(server: HttpServer): SocketIOServer {
-    const rawOrigins = [
-      ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
-      env.CLIENT_URL,
-      env.FRONTEND_URL,
-      "https://ayushman-glb.github.io",
-      "https://ayushman-glb.github.io/PG-Management-System",
-      "https://pg-management-system-boxb.onrender.com",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:3000",
-    ];
-
-    const allowedOrigins = Array.from(
-      new Set(
-        rawOrigins
-          .filter(Boolean)
-          .map((item) => {
-            const trimmed = item.trim();
-            if (!trimmed) return "";
-            try {
-              if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-                return new URL(trimmed).origin.toLowerCase();
-              }
-              return trimmed.replace(/\/$/, "").toLowerCase();
-            } catch {
-              return trimmed.replace(/\/$/, "").toLowerCase();
-            }
-          })
-          .filter(Boolean)
-      )
-    );
+    const { isOriginAllowed } = require("../config/corsOrigins");
 
     SocketServer.io = new SocketIOServer(server, {
       cors: {
@@ -71,16 +41,7 @@ export class SocketServer {
           origin: string | undefined,
           callback: (err: Error | null, allow?: boolean) => void,
         ) => {
-          if (!origin) return callback(null, true);
-          const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
-
-          const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
-          if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
-            return callback(null, true);
-          }
-
-          const isAllowed = allowedOrigins.includes(cleanOrigin) || isLocalhost;
-          if (isAllowed) {
+          if (isOriginAllowed(origin)) {
             return callback(null, true);
           }
 

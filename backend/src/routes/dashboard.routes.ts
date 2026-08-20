@@ -3,8 +3,8 @@ import { dashboardController } from '../controllers/dashboard.controller';
 
 const router = Router();
 
-router.get('/overview', (req, res) => dashboardController.getOverview(req, res));
-router.get('/revenue', (req, res) => dashboardController.getRevenueAnalytics(req, res));
-router.get('/occupancy', (req, res) => dashboardController.getOccupancyAnalytics(req, res));
+router.get('/overview', (req, res, next) => dashboardController.getOverview(req, res, next));
+router.get('/revenue', (req, res, next) => dashboardController.getRevenueAnalytics(req, res, next));
+router.get('/occupancy', (req, res, next) => dashboardController.getOccupancyAnalytics(req, res, next));
 
 export const dashboardRoutes = router;

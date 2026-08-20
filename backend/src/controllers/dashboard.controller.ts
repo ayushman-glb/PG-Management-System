@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { DashboardService } from '../services/DashboardService';
+import { catchAsync } from '../utils/appError';
+import { ApiResponse } from '../utils/apiResponse';
 
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService = new DashboardService()) {}
@@ -8,50 +10,28 @@ export class DashboardController {
    * GET /api/v1/dashboard/overview
    * Returns aggregated real-time metrics for Dashboard Cards
    */
-  getOverview = async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const data = await this.dashboardService.getOverview();
-      res.status(200).json({
-        success: true,
-        data,
-      });
-    } catch (error: any) {
-      console.error('❌ Error fetching dashboard overview:', error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  };
+  getOverview = catchAsync(async (_req: Request, res: Response): Promise<void> => {
+    const data = await this.dashboardService.getOverview();
+    ApiResponse.success(res, 'Dashboard overview fetched successfully', data);
+  });
 
   /**
    * GET /api/v1/dashboard/revenue
    * Returns monthly revenue trends and breakups
    */
-  getRevenueAnalytics = async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const data = await this.dashboardService.getRevenueAnalytics();
-      res.status(200).json({
-        success: true,
-        data,
-      });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  };
+  getRevenueAnalytics = catchAsync(async (_req: Request, res: Response): Promise<void> => {
+    const data = await this.dashboardService.getRevenueAnalytics();
+    ApiResponse.success(res, 'Revenue analytics fetched successfully', data);
+  });
 
   /**
    * GET /api/v1/dashboard/occupancy
    * Returns occupancy breakdown by room type & property
    */
-  getOccupancyAnalytics = async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const data = await this.dashboardService.getOccupancyAnalytics();
-      res.status(200).json({
-        success: true,
-        data,
-      });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  };
+  getOccupancyAnalytics = catchAsync(async (_req: Request, res: Response): Promise<void> => {
+    const data = await this.dashboardService.getOccupancyAnalytics();
+    ApiResponse.success(res, 'Occupancy analytics fetched successfully', data);
+  });
 }
 
 export const dashboardController = new DashboardController();

@@ -1,4 +1,4 @@
-import { RedisOtpService } from '../src/infrastructure/otp/RedisOtpService';
+import { DatabaseOtpService } from '../src/infrastructure/otp/DatabaseOtpService';
 import { TotpService } from '../src/infrastructure/crypto/TotpService';
 import { emailService } from '../src/modules/email/email.service';
 import { ApiResponse } from '../src/utils/apiResponse';
@@ -15,7 +15,7 @@ async function runDevOtpChecks() {
 
   // Test 2: In development mode (NODE_ENV=development)
   process.env.NODE_ENV = 'development';
-  const otpService = new RedisOtpService();
+  const otpService = new DatabaseOtpService();
 
   // Test ApiResponse.success in dev mode
   let devResPayload: any = null;

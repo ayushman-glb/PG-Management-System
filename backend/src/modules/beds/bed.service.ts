@@ -6,7 +6,7 @@ export class BedService {
   constructor(private readonly db: PrismaClient) {}
 
   async updateBedStatus(bedId: string, status: string, notes?: string): Promise<boolean> {
-    // Acquire Redlock concurrency lock on bed ID to prevent double booking or conflicting status mutations
+    // Acquire process-safe concurrency lock on bed ID to prevent double booking or conflicting status mutations
     const lock = await Container.lockService.acquireLock(`bed:lock:${bedId}`, 10000);
     if (!lock.lockAcquired) {
       throw new AppError('Bed status edit locked by concurrent operation. Please try again.', 409);

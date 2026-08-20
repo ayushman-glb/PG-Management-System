@@ -29,6 +29,20 @@ const apiRouter = Router();
 
 apiRouter.use(tenantMiddleware);
 
+// Middleware Pipeline Health & Self-Diagnostic Endpoint
+apiRouter.get('/health/pipeline-test', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Full middleware pipeline operational',
+    data: {
+      status: 'HEALTHY',
+      timestamp: new Date().toISOString(),
+      correlationId: (req.headers['x-correlation-id'] as string) || (res.getHeader('x-correlation-id') as string) || 'none',
+      ip: req.ip,
+    },
+  });
+});
+
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/security/devices', deviceRoutes);
 apiRouter.use('/upload', uploadRoutes);

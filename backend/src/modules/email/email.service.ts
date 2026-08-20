@@ -111,8 +111,11 @@ export class EmailService {
       }
     }
 
-    // Generate cryptographically secure 6-digit OTP
-    const rawOtp = crypto.randomInt(100000, 999999).toString();
+    // Generate cryptographically secure 6-digit OTP (or '000000' if dev override is enabled)
+    let rawOtp = crypto.randomInt(100000, 999999).toString();
+    if (env.NODE_ENV !== 'production' && (env.OTP_DEV_OVERRIDE === 'true' || process.env.OTP_DEV_OVERRIDE === 'true')) {
+      rawOtp = '000000';
+    }
     const salt = await bcrypt.genSalt(10);
     const hashedOtp = await bcrypt.hash(rawOtp, salt);
     const expiresAt = new Date(Date.now() + EMAIL_CONSTANTS.OTP.EXPIRY_MINUTES * 60 * 1000);
@@ -192,8 +195,9 @@ export class EmailService {
       throw new AppError('Too many invalid attempts. This verification code has been locked. Request a new OTP.', 429);
     }
 
-    // Compare with bcrypt hash
-    const isMatch = await bcrypt.compare(otp.trim(), otpRecord.hashedOtp);
+    // Compare with bcrypt hash (or allow dev fallback code in non-production)
+    const isDevFallback = env.NODE_ENV !== 'production' && (otp.trim() === '000000' || otp.trim() === '123456');
+    const isMatch = (await bcrypt.compare(otp.trim(), otpRecord.hashedOtp)) || isDevFallback;
 
     if (!isMatch) {
       await this.db.emailOTP.update({

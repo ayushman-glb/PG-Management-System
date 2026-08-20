@@ -15,13 +15,25 @@ export interface ApiResponse<T = any> {
   message: string;
   data: T;
   errors?: any[];
+  error?: {
+    code: string;
+    message: string;
+    action?: string;
+  };
+}
+
+function getCsrfCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 class ApiClient {
   public async request<T = any>(endpoint: string, options: RequestInit = {}, isRetry: boolean = false): Promise<T> {
-    // Access token is in-memory only (managed by AuthService). Never read
-    // from localStorage directly — that would re-introduce the XSS exposure.
     const token = authService.getToken();
+    const method = (options.method || "GET").toUpperCase();
+    const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string>),
     };
@@ -30,13 +42,21 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Attach Double-Submit CSRF Header for state-mutating requests
+    if (isMutating) {
+      const csrf = getCsrfCookie();
+      if (csrf) {
+        headers["x-csrf-token"] = csrf;
+      }
+    }
+
     try {
       const identity = await deviceIdentityProvider.getDeviceIdentity();
       if (identity && identity.visitorId) {
         headers["X-Visitor-Id"] = identity.visitorId;
       }
     } catch {
-      // Ignore device identity error if blocked
+      // Non-fatal device fingerprinting fallback
     }
 
     let res: Response;
@@ -47,14 +67,25 @@ class ApiClient {
         credentials: "include",
       });
     } catch (networkErr: any) {
-      throw new Error(networkErr?.message?.includes("Failed to fetch") ? "Network connection unavailable. Please check your internet connection." : (networkErr?.message || "Network request failed"));
+      const isFetchFailed = networkErr?.message?.includes("Failed to fetch") || networkErr?.name === "TypeError";
+      throw new Error(
+        isFetchFailed
+          ? "Unable to reach RoomBae server. Please check your internet connection or verify cross-origin network access."
+          : (networkErr?.message || "Network request failed")
+      );
     }
 
-    if (res.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
+    // 1. Automatic 401 Unauthorized Recovery (Single-Flight Refresh Mutex)
+    if (
+      res.status === 401 &&
+      !isRetry &&
+      !endpoint.includes("/auth/login") &&
+      !endpoint.includes("/auth/refresh") &&
+      authService.hasStoredSession()
+    ) {
       try {
         const refreshed = await authService.refreshToken();
-        if (refreshed?.accessToken) {
-          authService.setToken(refreshed.accessToken);
+        if (refreshed?.accessToken || authService.getToken()) {
           return this.request<T>(endpoint, options, true);
         }
       } catch {
@@ -62,12 +93,32 @@ class ApiClient {
       }
     }
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP Error ${res.status}`);
+    // 2. Automatic 403 CSRF Recovery (Re-bootstrap CSRF Token & Single Retry)
+    if (res.status === 403 && !isRetry && isMutating) {
+      try {
+        const errorClone = res.clone();
+        const errJson = await errorClone.json().catch(() => ({}));
+        const isCsrfError =
+          errJson?.error?.code === 'CSRF_INVALID' ||
+          errJson?.error?.code === 'CSRF_MISSING' ||
+          errJson?.error?.code === 'CSRF_SIGNATURE_INVALID' ||
+          errJson?.message?.toLowerCase().includes('csrf');
+
+        if (isCsrfError) {
+          await authService.bootstrapCsrf();
+          return this.request<T>(endpoint, options, true);
+        }
+      } catch {
+        // Fall through to standard error handling
+      }
     }
 
-    const method = (options.method || "GET").toUpperCase();
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const errorMsg = errorData.message || errorData.error?.message || `HTTP Error ${res.status}`;
+      throw new Error(errorMsg);
+    }
+
     if (method !== "GET" && typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("roombae-data-changed", { detail: { endpoint, method } }));
     }

@@ -1,44 +1,45 @@
 # 🏛️ RoomBae — Complete System, API, Services, Middleware & Communication Architecture (`SYSTEM.MD`)
 
-> **Enterprise Technical Blueprint & Architecture Contract**  
+> **Enterprise Technical Architecture Blueprint & Implementation Contract**  
 > **Author**: Core Architecture & Security Engineering Team  
 > **System**: RoomBae Enterprise PG & Coliving Automation Platform  
-> **Target Audience**: Principal Architects, Backend Leads, DevOps Engineers, Senior Fullstack Engineers  
-> **Revision**: `2.4.0-production`
+> **Target Audience**: Principal Architects, Backend Leads, DevOps Engineers, Senior Fullstack Engineers, Security Auditors  
+> **Revision**: `3.0.0-production`
 
 ---
 
-## 📑 Table of Contents
+## 📑 Master Table of Contents
 
 1. [Introduction & Architectural Philosophy](#1-introduction--architectural-philosophy)
-2. [Complete System Architecture](#2-complete-system-architecture)
-3. [Frontend ↔ Backend Communication](#3-frontend--backend-communication)
-4. [API Base URL Architecture](#4-api-base-url-architecture)
-5. [CORS (Cross-Origin Resource Sharing) Architecture](#5-cors-cross-origin-resource-sharing-architecture)
-6. [Backend Folder Architecture](#6-backend-folder-architecture)
-7. [Services Layer Architecture](#7-services-layer-architecture)
-8. [Middleware Layer Architecture](#8-middleware-layer-architecture)
-9. [Controllers Layer Architecture](#9-controllers-layer-architecture)
-10. [Complete REST API Documentation](#10-complete-rest-api-documentation)
-11. [Frontend Pages → Backend Mapping](#11-frontend-pages--backend-mapping)
-12. [CRUD Architecture & Operational Flows](#12-crud-architecture--operational-flows)
-13. [Database Communication & Prisma ORM Layer](#13-database-communication--prisma-orm-layer)
-14. [Request Lifecycle Pipeline](#14-request-lifecycle-pipeline)
-15. [Response Lifecycle & Envelope Contracts](#15-response-lifecycle--envelope-contracts)
-16. [Authentication & Authorization Architecture](#16-authentication--authorization-architecture)
-17. [Socket.IO Real-Time Communication Architecture](#17-socketio-real-time-communication-architecture)
-18. [External Service Integrations](#18-external-service-integrations)
-19. [Environment Variable Architecture](#19-environment-variable-architecture)
-20. [Error Handling Architecture](#20-error-handling-architecture)
-21. [Module Dependency Architecture](#21-module-dependency-architecture)
-22. [Complete API Inventory Master Catalog](#22-complete-api-inventory-master-catalog)
-23. [Complete Project Repository Structure](#23-complete-project-repository-structure)
+2. [Complete System Architecture & Topological Diagrams](#2-complete-system-architecture--topological-diagrams)
+3. [Frontend → Backend Communication Engine](#3-frontend--backend-communication-engine)
+4. [Frontend Pages → Backend Feature Mapping Matrix](#4-frontend-pages--backend-feature-mapping-matrix)
+5. [Complete API Architecture & Domain Boundaries](#5-complete-api-architecture--domain-boundaries)
+6. [API URL & Environment Architecture](#6-api-url--environment-architecture)
+7. [Enterprise CORS & Cross-Site Security Architecture](#7-enterprise-cors--cross-site-security-architecture)
+8. [Server Initialization & Internal Lifecycle Pipeline](#8-server-initialization--internal-lifecycle-pipeline)
+9. [Backend Directory & Modular Component Architecture](#9-backend-directory--modular-component-architecture)
+10. [Middleware Architecture & Execution Pipeline](#10-middleware-architecture--execution-pipeline)
+11. [Controller Layer Architecture](#11-controller-layer-architecture)
+12. [Service Layer Architecture & Domain Logic](#12-service-layer-architecture--domain-logic)
+13. [Repository Pattern & Data Access Layer](#13-repository-pattern--data-access-layer)
+14. [Database Communication & MongoDB Atlas ReplicaSet Layer](#14-database-communication--mongodb-atlas-replicaset-layer)
+15. [Complete CRUD Operational Communication Flows](#15-complete-crud-operational-communication-flows)
+16. [End-to-End Request Lifecycle Pipelines](#16-end-to-end-request-lifecycle-pipelines)
+17. [Response Lifecycle & Envelope Contracts](#17-response-lifecycle--envelope-contracts)
+18. [Authentication, Authorization & Session Security Architecture](#18-authentication-authorization--session-security-architecture)
+19. [Socket.IO & Real-Time Communication Architecture](#19-socketio--real-time-communication-architecture)
+20. [External Third-Party Service Integrations](#20-external-third-party-service-integrations)
+21. [Environment Variable Matrix & Configuration Contracts](#21-environment-variable-matrix--configuration-contracts)
+22. [Enterprise Error Handling & Resilience Architecture](#22-enterprise-error-handling--resilience-architecture)
+23. [Module Dependency Architecture](#23-module-dependency-architecture)
+24. [Master API Route & Operational Inventory](#24-master-api-route--operational-inventory)
 
 ---
 
 # 1. Introduction & Architectural Philosophy
 
-RoomBae is architected as an **enterprise-grade, multi-tenant Coliving and Paying Guest (PG) property management ecosystem**. The platform automates property onboarding, building hierarchy management, room and bed allocations, resident lifecycle workflows, automated GST billing, Razorpay payments, KYC verifications, maintenance ticketing, and real-time operational notifications.
+RoomBae is an enterprise-grade multi-tenant Coliving and Paying Guest (PG) property management ecosystem. The platform automates property onboarding, building hierarchy management, room and bed allocations, resident lifecycle workflows, automated GST billing, Razorpay payments, KYC verifications, maintenance ticketing, and real-time operational notifications.
 
 ### 1.1 Architectural Paradigms
 
@@ -51,7 +52,7 @@ graph TD
     DataAbstraction["Repository Layer (Prisma Data Access Abstraction)"]
     Persistence["MongoDB Atlas ReplicaSet (Document Database)"]
     RealtimeEngine["Socket.IO Engine (Bidirectional Event Multiplexing)"]
-    ThirdPartyBridge["Third-Party Providers (Razorpay, Cloudinary, Twilio, Brevo, ClamAV)"]
+    ThirdPartyBridge["Third-Party Providers (Razorpay, Cloudinary, Twilio, Brevo)"]
 
     Client -->|HTTPS REST API / JSON| Gateway
     Client <-->|WSS WebSockets| RealtimeEngine
@@ -66,30 +67,25 @@ graph TD
 1. **Why REST API?**
    - REST over HTTPS provides a stateless, highly cacheable, deterministic interface for state-changing mutations and structured CRUD operations.
    - It facilitates standardized HTTP error semantics (`400`, `401`, `403`, `404`, `409`, `422`, `429`, `500`), idempotent request processing, and seamless client validation with Zod DTOs.
-
 2. **Why Socket.IO Exists Alongside REST?**
    - While REST handles synchronous transactional execution (e.g., initiating payment orders or signing lease agreements), Socket.IO provides low-latency, bidirectional event distribution.
-   - Real-time invalidation signals (e.g., `bed:status_updated`, `resident:status_updated`, `billing:payment_received`, `complaint:ticket_updated`) eliminate wasteful client polling and synchronize multi-tab / multi-user operational dashboards instantly.
-
+   - Real-time invalidation signals (e.g., `bed:status_updated`, `resident:status_updated`, `billing:payment_completed`, `complaint:status_updated`) eliminate wasteful client polling and synchronize multi-tab / multi-user operational dashboards instantly.
 3. **Why Service Layer Architecture?**
    - Controllers are strictly isolated from business logic; they only parse HTTP input parameters and return HTTP envelopes.
    - Domain services encapsulate pure business rules (e.g., fine calculation, GST tax split computation, double-booking race condition prevention, automated PDF document triggers), making the codebase modular, testable, and reusable across REST, WebSockets, and SOAP adapters.
-
 4. **Why the Repository Pattern?**
    - The Repository Pattern decouples business logic from Prisma ORM query syntax.
    - It centralizes database aggregation pipelines, multi-document atomic transactions (`prisma.$transaction`), sorting criteria, and soft-delete filters behind strongly typed TypeScript interfaces.
-
 5. **Prisma ORM & MongoDB Atlas Integration**
    - Prisma acts as a type-safe query engine generating deterministic MongoDB BSON queries while providing compile-time type safety.
    - MongoDB Atlas provides schema flexibility for complex nested models (such as building floors, bed histories, amenity tags, and dynamic metadata) combined with replica-set high availability and horizontal scalability.
-
 6. **Scalability Philosophy (Redis-Free Authoritative Architecture)**
    - RoomBae avoids hard runtime dependencies on external caching clusters like Redis for session state.
    - Authoritative session versioning (`User.tokenVersion`), refresh token family chains, and bed hold locks are persisted directly in MongoDB Atlas with short-lived (10-second) in-memory fast-path caches in Node.js, guaranteeing zero stale authorization states across cluster restarts.
 
 ---
 
-# 2. Complete System Architecture
+# 2. Complete System Architecture & Topological Diagrams
 
 ### 2.1 Multi-Layered Component Diagram
 
@@ -98,1088 +94,717 @@ flowchart TD
     subgraph ClientTier ["Client Tier (Browser / Mobile)"]
         UI["React 19 SPA (Vite + TypeScript)"]
         ApiClient["ApiClient (In-Memory JWT & CSRF Wrapper)"]
-        SocketClient["Socket.IO Client (Engine.IO WebSocket)"]
+        SocketClient["Socket.IO Client (socket.ts)"]
+        Fingerprint["FingerprintJS Device Identity Provider"]
     end
 
-    subgraph GatewayTier ["Express Gateway & Security Tier"]
-        Proxy["Reverse Proxy (Render / Cloudflare)"]
-        CorsGuard["CORS Origin Validator"]
-        SecHeaders["Helmet Security Headers & HSTS"]
-        Sanitize["MongoSanitize & HPP Parameter Pollution Guard"]
-        RateLimit["Sliding-Window Rate Limiter Engine"]
-        CSRF["Double-Submit HMAC-SHA256 CSRF Guard"]
-        AuthMid["RS256 JWT & TokenVersion Authenticator"]
-        RoleGuard["RBAC & KYC Review Gate"]
+    subgraph IngressGateway ["Ingress & Reverse Proxy Gateway"]
+        Edge["Render Edge Proxy / Cloudflare (SSL/TLS Termination)"]
+        TrustProxy["Express Trust Proxy (Hop 1)"]
     end
 
-    subgraph AppTier ["Application & Domain Logic Tier"]
-        Router["Express Modular API Router (/api/v1)"]
-        Controllers["Domain Controllers (DTO Parsing & Serialization)"]
-        Services["Domain Business Services (Orchestration & Rules)"]
-        CryptoEngine["Crypto & Token Engine (RSA-2048 / AES-256-GCM)"]
-        SocketServer["Socket.IO Real-Time Server (Room Multiplexer)"]
+    subgraph SecurityPipeline ["Security & Pre-Processing Pipeline"]
+        CorsMid["CORS Engine (corsOrigins.ts)"]
+        CorrId["Correlation ID Tracing (x-correlation-id)"]
+        HelmetMid["Helmet Security Headers (CSP, HSTS, Sniff Guard)"]
+        CompressMid["Compression (Gzip/Brotli)"]
+        CookieMid["CookieParser (Signed & HTTPOnly)"]
+        BodyMid["BodyParsers (JSON 10MB / URL-Encoded)"]
+        SanitizeMid["MongoSanitize & HPP (Injection & Parameter Pollution)"]
+        IdempotencyMid["Idempotency Protection (x-idempotency-key)"]
+        CsrfMid["validateCsrf (HMAC Constant-Time Double-Submit)"]
+        RateLimiter["Rate Limiting Engine (resolveClientIp)"]
     end
 
-    subgraph DataTier ["Data Access & Storage Tier"]
-        Repos["Domain Repositories (Prisma Abstraction)"]
-        PrismaClient["Prisma ORM Client Engine"]
-        MongoDB[("MongoDB Atlas ReplicaSet (roombae-db)")]
+    subgraph RoutingTier ["Routing & Multi-Tenant Isolation"]
+        ApiRouter["apiRouter (/api/v1)"]
+        TenantMid["tenantMiddleware (Multi-Tenant Context Binding)"]
+        AuthMid["authenticate & authorize (RBAC + TokenVersion Check)"]
     end
 
-    subgraph IntegrationTier ["Third-Party Service Gateways"]
-        RazorpayGW["Razorpay Payments & Webhooks"]
-        CloudinaryCDN["Cloudinary Asset Storage & Transformations"]
-        TwilioSMS["Twilio Programmable SMS (OTP)"]
-        BrevoMail["Brevo SMTP / Transactional Mailer"]
-        ClamAVScan["ClamAV Antivirus Daemon"]
+    subgraph ControllerTier ["Domain Controllers"]
+        AuthCtrl["AuthController"]
+        PropCtrl["PropertyController"]
+        RoomCtrl["RoomController"]
+        ResCtrl["ResidentController"]
+        BillCtrl["BillingController"]
+        PayCtrl["PaymentController"]
+        CompCtrl["ComplaintController"]
+        AggrCtrl["AgreementController"]
+        ResMgmtCtrl["ResidentManagementController"]
+        DocCtrl["DocumentController"]
+        DevCtrl["DeviceController"]
+        MediaCtrl["MediaController"]
+    end
+
+    subgraph ServiceTier ["Domain Services (Business Logic)"]
+        AuthSvc["AuthService"]
+        PropSvc["PropertyService"]
+        ResSvc["ResidentService"]
+        BillSvc["BillingService"]
+        PaySvc["PaymentService"]
+        CompSvc["ComplaintService"]
+        AggrSvc["AgreementService"]
+        ResMgmtSvc["ResidentManagementService"]
+        DocSvc["DocumentService"]
+        DevSvc["DeviceService"]
+        SocketSvc["SocketSessionService"]
+    end
+
+    subgraph RepositoryTier ["Repository Pattern (Data Access)"]
+        AuthRepo["AuthRepository"]
+        PropRepo["PropertyRepository"]
+        ResRepo["ResidentRepository"]
+        BillRepo["BillingRepository"]
+        CompRepo["ComplaintRepository"]
+        AggrRepo["AgreementRepository"]
+        ResMgmtRepo["ResidentManagementRepository"]
+        DocRepo["DocumentRepository"]
+        DevRepo["DeviceRepository"]
+    end
+
+    subgraph PersistenceTier ["Database & Storage Tier"]
+        PrismaClient["Prisma Client ORM Engine"]
+        MongoAtlas[("MongoDB Atlas Cluster (WiredTiger Encrypted)")]
+        CloudinaryStore[("Cloudinary Cloud Media CDN")]
     end
 
     UI --> ApiClient
-    UI <--> SocketClient
-    ApiClient --> Proxy
-    SocketClient <--> Proxy
-    Proxy --> CorsGuard
-    CorsGuard --> SecHeaders --> Sanitize --> RateLimit --> CSRF --> AuthMid --> RoleGuard --> Router
-    Router --> Controllers
-    Controllers --> Services
-    Services --> CryptoEngine
-    Services --> Repos
-    Services --> SocketServer
-    Services --> IntegrationTier
-    Repos --> PrismaClient
-    PrismaClient --> MongoDB
+    UI --> SocketClient
+    UI --> Fingerprint
+    ApiClient --> Edge
+    SocketClient <--> Edge
+    Edge --> TrustProxy
+    TrustProxy --> CorsMid
+    CorsMid --> CorrId --> HelmetMid --> CompressMid --> CookieMid --> BodyMid --> SanitizeMid --> HPP --> IdempotencyMid --> CsrfMid --> RateLimiter
+    RateLimiter --> ApiRouter
+    ApiRouter --> TenantMid --> AuthMid
+    AuthMid --> AuthCtrl & PropCtrl & RoomCtrl & ResCtrl & BillCtrl & PayCtrl & CompCtrl & AggrCtrl & ResMgmtCtrl & DocCtrl & DevCtrl & MediaCtrl
+    AuthCtrl --> AuthSvc
+    PropCtrl --> PropSvc
+    ResCtrl --> ResSvc
+    BillCtrl --> BillSvc
+    PayCtrl --> PaySvc
+    CompCtrl --> CompSvc
+    AggrCtrl --> AggrSvc
+    ResMgmtCtrl --> ResMgmtSvc
+    DocCtrl --> DocSvc
+    DevCtrl --> DevSvc
+    AuthSvc --> AuthRepo
+    PropSvc --> PropRepo
+    ResSvc --> ResRepo
+    BillSvc --> BillRepo
+    CompSvc --> CompRepo
+    AggrSvc --> AggrRepo
+    ResMgmtSvc --> ResMgmtRepo
+    DocSvc --> DocRepo
+    DevSvc --> DevRepo
+    AuthRepo & PropRepo & ResRepo & BillRepo & CompRepo & AggrRepo & ResMgmtRepo & DocRepo & DevRepo --> PrismaClient
+    PrismaClient --> MongoAtlas
+    MediaCtrl --> CloudinaryStore
 ```
-
-### 2.2 Layer Responsibilities
-
-1. **Client Tier (`frontend/src/`)**: Renders reactive user interfaces using Tailwind CSS and Lucide icons. Dispatches all network communication through a centralized `ApiClient` singleton. Never stores long-lived JWTs in `localStorage` to eliminate Cross-Site Scripting (XSS) token exfiltration vulnerabilities.
-2. **Gateway Tier (`backend/src/middleware/`)**: Performs perimeter defense: validates CORS origins, enforces HTTP Strict Transport Security (HSTS), strips NoSQL query injections (`$`, `.`), enforces per-IP sliding rate limits, verifies signed double-submit CSRF cookies, and checks RS256 token validity against the user's live `tokenVersion`.
-3. **Application & Domain Tier (`backend/src/modules/` & `backend/src/services/`)**: Enforces multi-tenant data isolation, executes financial pricing and tax calculations, coordinates atomic multi-document transactions, and broadcasts state updates to subscribed Socket.IO rooms.
-4. **Data Access Tier (`backend/src/repositories/` & `backend/src/config/prisma.ts`)**: Encapsulates Prisma ORM queries, handles sparse index fallbacks, and executes atomic `$transaction` blocks across MongoDB collections.
-5. **Integration Tier (`backend/src/services/`)**: Interfaces with Razorpay API (HMAC verification), Cloudinary (stream uploads), Twilio (SMS delivery), and Brevo (transactional email templates).
 
 ---
 
-# 3. Frontend ↔ Backend Communication
+# 3. Frontend → Backend Communication Engine
 
-### 3.1 Fetch Engine Architecture (`frontend/src/services/api.ts`)
+### 3.1 `ApiClient` Core Architecture (`frontend/src/services/api.ts`)
 
-The frontend uses a custom-built, resilient `ApiClient` wrapping the browser's native `fetch` API.
+RoomBae frontend encapsulates all HTTP communication through a singleton `ApiClient` class providing:
+1. **In-Memory JWT Injection**: Attaches `Authorization: Bearer <accessToken>` retrieved from `authService.getToken()`. Tokens are never read directly from `localStorage` in request headers, mitigating XSS token extraction.
+2. **Double-Submit CSRF Attachment**: For all state-mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`), automatically extracts `csrf-token` from `document.cookie` and attaches the `x-csrf-token` header.
+3. **Single-Flight 401 Refresh Mutex**: If an API request returns HTTP 401 Unauthorized, `ApiClient` triggers `authService.refreshToken()`. Concurrent requests wait on the same `refreshPromise`, preventing race conditions during refresh token rotation. Once refreshed, the original request is automatically replayed with the new token.
+4. **Automatic 403 CSRF Recovery**: If a request receives HTTP 403 with `CSRF_INVALID` or `CSRF_MISSING`, `ApiClient` automatically invokes `authService.bootstrapCsrf()`, obtains a fresh signed token, and replays the request once.
+5. **Cross-Site Credentials**: Configures `credentials: "include"` on all fetch calls to ensure secure cookies (`refreshToken`, `csrf-token`) are passed across origins.
+6. **Network Error Discrimination**: Differentiates between browser CORS/network connectivity blocks and structured application errors.
+
+### 3.2 Request Interception & Transformation Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Component as React Component
+    participant ApiClient as ApiClient (api.ts)
+    participant AuthState as AuthService (Memory)
+    participant DeviceId as DeviceIdentityProvider
+    participant Server as Express REST API
+
+    Component->>ApiClient: api.post(endpoint, payload)
+    ApiClient->>AuthState: getToken()
+    AuthState-->>ApiClient: accessToken (or null)
+    ApiClient->>ApiClient: headers['Authorization'] = `Bearer ${token}`
+    ApiClient->>ApiClient: Extract `csrf-token` cookie -> headers['x-csrf-token']
+    ApiClient->>DeviceId: getDeviceIdentity()
+    DeviceId-->>ApiClient: visitorId (FingerprintJS)
+    ApiClient->>ApiClient: headers['X-Visitor-Id'] = visitorId
+    ApiClient->>Server: fetch(url, { method, headers, body, credentials: 'include' })
+    alt HTTP 401 Unauthorized
+        Server-->>ApiClient: 401 Unauthorized
+        ApiClient->>AuthState: refreshToken() [Single-Flight Mutex]
+        AuthState->>Server: POST /auth/refresh-token
+        Server-->>AuthState: New accessToken
+        AuthState-->>ApiClient: Refreshed token
+        ApiClient->>Server: Replay original request with new token
+        Server-->>ApiClient: HTTP 200 Success
+    else HTTP 403 CSRF Invalid
+        Server-->>ApiClient: 403 CSRF_INVALID
+        ApiClient->>AuthState: bootstrapCsrf()
+        AuthState->>Server: GET /auth/csrf-token
+        Server-->>AuthState: Set-Cookie csrf-token + JSON
+        ApiClient->>Server: Replay original request with new CSRF token
+        Server-->>ApiClient: HTTP 200 Success
+    else Normal Response
+        Server-->>ApiClient: HTTP 200 JSON Payload
+    end
+    ApiClient-->>Component: Parsed JSON data
+```
+
+---
+
+# 4. Frontend Pages → Backend Feature Mapping Matrix
+
+| Frontend Page / Route | Triggering Component / Element | Custom Hook / Service Call | Frontend API Method | Backend Endpoint & Method | Controller & Service Invoked | Database Model / Collection |
+|---|---|---|---|---|---|---|
+| **Auth** (`/auth`) | `LoginForm.tsx` (Submit Button) | `useAuth()` | `api.login({ identifier, password })` | `POST /api/v1/auth/login` | `AuthController.login` → `AuthService.login` | `User`, `RefreshToken`, `UserDevice` |
+| **Auth** (`/auth`) | `RegisterForm.tsx` (Submit Button) | `useAuth()` | `api.register(payload)` | `POST /api/v1/auth/register` | `AuthController.register` → `AuthService.register` | `User`, `OwnerProfile`, `RefreshToken` |
+| **Auth** (`/auth`) | `OtpModal.tsx` (Send OTP) | `useAuth()` | `api.sendOtp({ phone })` | `POST /api/v1/auth/send-otp` | `AuthController.sendOtp` → `AuthService.sendOtp` | `OtpToken`, `User` |
+| **Auth** (`/auth`) | `OtpModal.tsx` (Verify OTP) | `useAuth()` | `api.verifyOtp({ phone, otp })` | `POST /api/v1/auth/verify-otp` | `AuthController.verifyOtp` → `AuthService.verifyOtp` | `OtpToken`, `User`, `RefreshToken` |
+| **Dashboard** (`/dashboard`) | `Dashboard.tsx` (Mount) | `useDashboard()` | `api.get('/dashboard/overview')` | `GET /api/v1/dashboard/overview` | `DashboardController.getOverview` → `PropertyService.getOverview` | `PGProperty`, `Room`, `Bed`, `Resident` |
+| **Dashboard** (`/dashboard`) | `RevenueChart.tsx` (Mount) | `useAnalytics()` | `api.get('/dashboard/revenue')` | `GET /api/v1/dashboard/revenue` | `DashboardController.getRevenueAnalytics` → `BillingService.getRevenueAnalytics` | `BillingInvoice`, `PaymentTransaction` |
+| **Dashboard** (`/dashboard`) | `OccupancyCard.tsx` (Mount) | `useAnalytics()` | `api.get('/dashboard/occupancy')` | `GET /api/v1/dashboard/occupancy` | `DashboardController.getOccupancyAnalytics` → `ResidentService.getOccupancy` | `Bed`, `Room`, `Resident` |
+| **PG Listing** (`/explore`) | `PGListing.tsx` (Search Filters) | `usePublicProperties()` | `api.getPublicProperties(params)` | `GET /api/v1/properties/search` | `PropertyController.searchPublic` → `PropertyService.searchPublic` | `PGProperty`, `Room` |
+| **PG Details** (`/pg/:id`) | `PGDetails.tsx` (Mount) | `usePropertyDetails(id)` | `api.getPropertyById(id)` | `GET /api/v1/properties/:id` | `PropertyController.getById` → `PropertyService.getById` | `PGProperty`, `Room`, `Bed`, `OwnerProfile` |
+| **Properties** (`/properties`) | `AddPropertyModal.tsx` (Save) | `useProperties()` | `api.createProperty(formData)` | `POST /api/v1/properties` | `PropertyController.create` → `PropertyService.createProperty` | `PGProperty`, `OwnerProfile` |
+| **Properties** (`/properties`) | `PropertiesTable.tsx` (Mount) | `useProperties()` | `api.getOwnerSummary()` | `GET /api/v1/properties/owner-summary` | `PropertyController.getOwnerSummary` → `PropertyService.getOwnerSummary` | `PGProperty`, `Room`, `Bed`, `Resident` |
+| **Rooms** (`/rooms`) | `RoomsTable.tsx` (Mount) | `useRooms(pgId)` | `api.get('/rooms/pms')` | `GET /api/v1/rooms/pms` | `RoomController.list` → `RoomService.listRooms` | `Room`, `Bed`, `PGProperty` |
+| **Rooms** (`/rooms`) | `RoomTransferModal.tsx` (Submit) | `useRoomTransfer()` | `api.createRoomTransferRequest(data)` | `POST /api/v1/rooms/transfers` | `ResidentManagementController.createRoomTransferRequest` → `ResidentManagementService.createRoomTransferRequest` | `RoomTransferRequest`, `Resident`, `Bed` |
+| **Beds** (`/beds`) | `BedsGrid.tsx` (Hold Bed Button) | `useBeds()` | `api.createBedHold(data)` | `POST /api/v1/beds/hold` | `ResidentManagementController.createBedHold` → `ResidentManagementService.createBedHold` | `BedHold`, `Bed` |
+| **Beds** (`/beds`) | `BedsGrid.tsx` (Release Hold) | `useBeds()` | `api.releaseBedHold(holdId)` | `POST /api/v1/beds/hold/:holdId/release` | `ResidentManagementController.releaseBedHold` → `ResidentManagementService.releaseBedHold` | `BedHold`, `Bed` |
+| **Residents** (`/residents`) | `ResidentRegister.tsx` (Submit) | `useResidents()` | `api.onboardResident(data)` | `POST /api/v1/residents/onboard` | `ResidentController.onboard` → `ResidentService.onboardResident` | `Resident`, `User`, `Bed`, `RentalAgreement` |
+| **Residents** (`/residents`) | `ResidentsTable.tsx` (Mount) | `useResidents()` | `api.getResidentDirectory(pgId)` | `GET /api/v1/residents/directory` | `ResidentController.getDirectory` → `ResidentService.getDirectory` | `Resident`, `User`, `Bed`, `Room` |
+| **Resident Portal** (`/portal`) | `ResidentPortal.tsx` (Mount) | `useResidentPortal()` | `api.getPortalMe()` | `GET /api/v1/residents/me` | `ResidentController.getMe` → `ResidentService.getResidentProfile` | `Resident`, `User`, `Bed`, `Room`, `PGProperty` |
+| **Billing** (`/billing`) | `InvoiceList.tsx` (Mount) | `useBilling()` | `api.get('/billing/invoices')` | `GET /api/v1/billing/invoices` | `BillingController.listInvoices` → `BillingService.listInvoices` | `BillingInvoice`, `Resident`, `PGProperty` |
+| **Billing** (`/billing`) | `PayRentModal.tsx` (Initiate) | `usePayment()` | `api.createBillingOrder(invoiceId)` | `POST /api/v1/payments/razorpay/create-order` | `PaymentController.createOrder` → `PaymentService.createOrder` | `BillingInvoice`, `PaymentTransaction` |
+| **Billing** (`/billing`) | `PayRentModal.tsx` (Verify) | `usePayment()` | `api.verifyPayment(payload)` | `POST /api/v1/payments/razorpay/verify` | `PaymentController.verifyPayment` → `PaymentService.verifyPayment` | `BillingInvoice`, `PaymentTransaction` |
+| **Complaints** (`/complaints`) | `ComplaintForm.tsx` (Submit) | `useComplaints()` | `api.createComplaint(data)` | `POST /api/v1/complaints` | `ComplaintController.create` → `ComplaintService.createComplaint` | `Complaint`, `Resident`, `PGProperty` |
+| **Complaints** (`/complaints`) | `ComplaintList.tsx` (Update) | `useComplaints()` | `api.updateComplaintStatus(id, st)`| `PATCH /api/v1/complaints/:id/status` | `ComplaintController.updateStatus` → `ComplaintService.updateStatus` | `Complaint`, `ComplaintComment` |
+| **Agreements** (`/agreements`) | `SignAgreementModal.tsx` (Sign) | `useAgreements()` | `api.signAgreement(id, sigData)` | `POST /api/v1/agreements/:id/sign` | `AgreementController.sign` → `AgreementService.signAgreement` | `RentalAgreement`, `Resident` |
+| **Agreements** (`/agreements`) | `AgreementViewer.tsx` (Download)| `useDocumentDownload()` | `api.get('/documents/agreement/:id')`| `GET /api/v1/documents/agreement/:id` | `DocumentController.downloadAgreement` → `DocumentService.getAgreementPdf` | `RentalAgreement`, `DocumentVault` |
+| **Tours** (`/tours`) | `ScheduleTourModal.tsx` (Book) | `useTours()` | `api.requestTour(data)` | `POST /api/v1/tours` | `ToursController.createTour` → `ToursService.requestTour` | `TourBooking`, `PGProperty`, `User` |
+| **Shortlist** (`/shortlist`) | `PropertyCard.tsx` (Heart Icon) | `useShortlist()` | `api.toggleShortlist(propId)` | `POST /api/v1/shortlist/:id` | `ToursController.toggleShortlist` → `ToursService.toggleShortlist` | `Shortlist`, `PGProperty`, `User` |
+| **Applications** (`/apps`) | `ApplicationForm.tsx` (Submit) | `useApplications()` | `api.createApplication(data)` | `POST /api/v1/applications` | `ApplicationsController.create` → `ApplicationsService.createApplication` | `RentalApplication`, `PGProperty`, `User` |
+| **Messages** (`/messages`) | `ChatWindow.tsx` (Send Message) | `useChat(threadId)` | `api.sendMessage({ threadId, msg })`| `POST /api/v1/messages` | `MessagesController.sendMessage` → `MessagesService.sendMessage` | `ChatMessage`, `MessageThread` |
+| **Move-In** (`/move-in`) | `MoveInDashboard.tsx` (Mount) | `useMoveIn(propId)` | `api.getMoveInInfo(propertyId)` | `GET /api/v1/move-in/:propertyId` | `MoveInController.getInfo` → `MoveInService.getMoveInInfo` | `Resident`, `PGProperty`, `Room`, `Bed` |
+| **Media Upload** (Various) | `ImageUpload.tsx` (File Pick) | `useUpload()` | `api.post('/media/upload/single', form)`| `POST /api/v1/media/upload/single` | `MediaController.uploadSingle` → `CloudinaryService.upload` | `Cloudinary Asset`, `DocumentVault` |
+| **Notifications** (Global) | `NotificationBell.tsx` (Mount) | `useNotifications()` | `api.get('/notifications')` | `GET /api/v1/notifications` | `NotificationController.list` → `NotificationService.getForUser` | `Notification`, `User` |
+| **Admin** (`/admin`) | `AdminConsole.tsx` (Mount) | `useAdmin()` | `api.get('/settings/audit-logs')` | `GET /api/v1/settings/audit-logs` | `ResidentManagementController.getAuditLogs` → `ResidentManagementService.getAuditLogs` | `AuditLog`, `SecurityAuditLog` |
+
+---
+
+# 5. Complete API Architecture & Domain Boundaries
+
+RoomBae organizes all HTTP APIs under domain-specific modular boundaries prefixed with `/api/v1`:
+
+```mermaid
+graph LR
+    ApiGateway["/api/v1 (apiRouter.ts)"]
+    ApiGateway --> AuthModule["/auth (Authentication & OTP)"]
+    ApiGateway --> SecurityModule["/security (Device Fingerprinting)"]
+    ApiGateway --> PropertiesModule["/properties (Marketplace & Buildings)"]
+    ApiGateway --> RoomsModule["/rooms (Inventory & PMS)"]
+    ApiGateway --> BedsModule["/beds (Bed Holds & Status)"]
+    ApiGateway --> ResidentsModule["/residents (Directory & Portal)"]
+    ApiGateway --> BillingModule["/billing (Invoices & Fines)"]
+    ApiGateway --> PaymentsModule["/payments (Razorpay Webhooks)"]
+    ApiGateway --> ComplaintsModule["/complaints (Maintenance Tickets)"]
+    ApiGateway --> AgreementsModule["/agreements (Digital E-Signatures)"]
+    ApiGateway --> DocumentsModule["/documents (PDF Downloads)"]
+    ApiGateway --> MediaModule["/media (Cloudinary Uploads)"]
+    ApiGateway --> DashboardModule["/dashboard (Analytics Aggregates)"]
+    ApiGateway --> SettingsModule["/settings (Audit Logs & Configuration)"]
+```
+
+---
+
+# 6. API URL & Environment Architecture
+
+### 6.1 Environment Topology
+
+| Configuration Attribute | Local Development | Production Environment |
+|---|---|---|
+| **Frontend Web App** | `http://localhost:5173` | `https://ayushman-glb.github.io` (GitHub Pages) |
+| **Backend REST API Base**| `http://localhost:5000/api/v1` | `https://pg-management-system.onrender.com/api/v1` (Render) |
+| **WebSocket Engine (WSS)**| `ws://localhost:5000` | `wss://pg-management-system.onrender.com` |
+| **SOAP ERP Billing WSDL** | `http://localhost:5000/soap/billing?wsdl` | `https://pg-management-system.onrender.com/soap/billing?wsdl` |
+| **Cookie Security Flags** | `SameSite=Lax; HttpOnly` | `SameSite=None; Secure; HttpOnly` |
+| **Media CDN Storage** | Cloudinary Dev Prefix | Cloudinary Production (`RoomBae-Production`) |
+
+---
+
+# 7. Enterprise CORS & Cross-Site Security Architecture
+
+### 7.1 Cross-Origin Resource Sharing (CORS) Engine (`backend/src/config/corsOrigins.ts`)
+
+RoomBae enforces a centralized, synchronized origin whitelist across both Express HTTP and Socket.IO engines:
 
 ```typescript
-class ApiClient {
-  public async request<T = any>(endpoint: string, options: RequestInit = {}, isRetry: boolean = false): Promise<T> {
-    const token = authService.getToken(); // In-memory JWT access
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      ...(options.headers as Record<string, string>),
-    };
+export const getAllowedOrigins = (): string[] => {
+  const allowed = new Set<string>();
+  // Production Frontend
+  allowed.add("https://ayushman-glb.github.io");
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    // Inject Device Identity from FingerprintJS
-    try {
-      const identity = await deviceIdentityProvider.getDeviceIdentity();
-      if (identity?.visitorId) {
-        headers["X-Visitor-Id"] = identity.visitorId;
-      }
-    } catch { /* graceful fallback */ }
-
-    // Inject Double-Submit CSRF Token for State-Mutating Methods
-    const method = (options.method || "GET").toUpperCase();
-    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-      const csrfToken = authService.getCsrfToken();
-      if (csrfToken) {
-        headers["X-CSRF-Token"] = csrfToken;
-      }
-    }
-
-    let res: Response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: "include", // Transmits HttpOnly refreshToken cookie across origins
-    });
-
-    // Single-Flight 401 Refresh Queue Interceptor
-    if (res.status === 401 && !isRetry && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
-      try {
-        const refreshed = await authService.refreshToken();
-        if (refreshed?.accessToken) {
-          authService.setToken(refreshed.accessToken);
-          return this.request<T>(endpoint, options, true); // Replay original request
-        }
-      } catch {
-        authService.clearToken();
-      }
-    }
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${res.status}`);
-    }
-
-    return await res.json();
+  // Local Development
+  if (env.NODE_ENV !== "production") {
+    allowed.add("http://localhost:5173");
+    allowed.add("http://localhost:3000");
+    allowed.add("http://127.0.0.1:5173");
+    allowed.add("http://127.0.0.1:3000");
   }
-}
-```
 
-### 3.2 Key Communication Mechanisms
-
-1. **In-Memory JWT Access Token**: Stored in a closure variable in `AuthService` (cleared on page reload or logout). Never written to `localStorage` or `sessionStorage`.
-2. **HttpOnly Secure Refresh Token**: Issued by Express as a signed, HttpOnly, Secure, `SameSite=None` cookie (`refreshToken`), preventing JavaScript access.
-3. **Double-Submit CSRF Protection**: A signed HMAC-SHA256 cookie (`csrf-token`) is read on boot via `GET /api/v1/auth/csrf-token` and attached as `X-CSRF-Token` header on all `POST`, `PUT`, `PATCH`, and `DELETE` requests.
-4. **Single-Flight Refresh Token Queue**: When multiple parallel API requests encounter a `401 Unauthorized`, a mutex ensures only one refresh call is made to `/api/v1/auth/refresh-token`; all waiting requests are queued and replayed upon receipt of the new token.
-5. **Cross-Tab Synchronization**: A native `BroadcastChannel('roombae-auth')` propagates `LOGIN`, `LOGOUT`, and `TOKEN_REFRESHED` events across all browser tabs without exposing raw token strings.
-6. **Secure Multipart File Uploads**: Single file uploads use `multipart/form-data` with field name `file`; batch uploads use field name `files` (capped at 10 items, 10MB per file). Streamed directly through ClamAV virus scanning to Cloudinary.
-
----
-
-# 4. API Base URL Architecture
-
-RoomBae uses dynamic environment resolution in `frontend/src/config/env.ts` to determine the target API endpoint seamlessly between local development and production.
-
-```typescript
-// frontend/src/config/env.ts
-const isDev = import.meta.env.DEV ?? import.meta.env.MODE === "development";
-const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
-const PROD_API_URL = "https://pg-management-system-boxb.onrender.com/api/v1";
-const PROD_SOCKET_URL = "https://pg-management-system-boxb.onrender.com";
-
-export const env = {
-  API_URL:
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    (isLocalhost || isDev ? "http://localhost:5000/api/v1" : PROD_API_URL),
-  SOCKET_URL:
-    import.meta.env.VITE_SOCKET_URL ||
-    (isLocalhost || isDev ? "http://localhost:5000" : PROD_SOCKET_URL),
-  MODE: import.meta.env.MODE ?? (isDev ? "development" : "production"),
-  IS_DEV: isDev,
-  IS_PROD: !isDev,
+  // Parse CORS_ORIGIN environment variable
+  if (env.CORS_ORIGIN) {
+    env.CORS_ORIGIN.split(",").forEach((origin) => {
+      const trimmed = origin.trim();
+      if (trimmed) {
+        try {
+          allowed.add(new URL(trimmed).origin);
+        } catch {
+          allowed.add(trimmed.replace(/\/$/, ""));
+        }
+      }
+    });
+  }
+  return Array.from(allowed);
 };
 ```
 
-### Environment Comparison Matrix
-
-| Environment Parameter | Local Development (`.env.development`) | Production Deployment (`.env.production`) |
-| :--- | :--- | :--- |
-| **Frontend URL** | `http://localhost:5173` | `https://ayushman-glb.github.io/PG-Management-System` |
-| **Backend Root URL** | `http://localhost:5000` | `https://pg-management-system-boxb.onrender.com` |
-| **REST API Base URL** | `http://localhost:5000/api/v1` | `https://pg-management-system-boxb.onrender.com/api/v1` |
-| **Socket.IO Engine URL** | `ws://localhost:5000` | `wss://pg-management-system-boxb.onrender.com` |
-| **SOAP ERP WSDL** | `http://localhost:5000/soap/billing?wsdl` | `https://pg-management-system-boxb.onrender.com/soap/billing?wsdl` |
-| **Public JWKS URL** | `http://localhost:5000/.well-known/jwks.json`| `https://pg-management-system-boxb.onrender.com/.well-known/jwks.json` |
-| **Cookie Security** | `SameSite=Lax; Secure=false; HttpOnly` | `SameSite=None; Secure=true; HttpOnly` |
+### 7.2 Preflight `OPTIONS` & Cross-Site Credentials
+- **Credentials Support**: `Access-Control-Allow-Credentials: true` is explicitly enabled.
+- **Allowed Headers**: `Content-Type, Authorization, x-csrf-token, x-correlation-id, x-idempotency-key, X-Visitor-Id`.
+- **Preflight Handling**: Returns HTTP 204 No Content with strict origin reflection against the verified whitelist.
 
 ---
 
-# 5. CORS (Cross-Origin Resource Sharing) Architecture
+# 8. Server Initialization & Internal Lifecycle Pipeline
 
-### 5.1 Why CORS is Critical in RoomBae
-
-Because the frontend is hosted on **GitHub Pages** (`https://ayushman-glb.github.io`) and the backend is deployed on **Render** (`https://pg-management-system-boxb.onrender.com`), all client requests cross top-level domain boundaries. The browser's Same-Origin Policy (SOP) blocks unauthorized cross-origin data reads unless explicitly permitted by backend CORS response headers.
-
-### 5.2 Implementation Architecture (`backend/src/app.ts`)
-
-```typescript
-// Dynamic Origin Whitelisting & Normalization
-const allowedOrigins = Array.from(
-  new Set(
-    [
-      env.CLIENT_URL,
-      env.FRONTEND_URL,
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:3000",
-      "https://ayushman-glb.github.io",
-      "https://ayushman-glb.github.io/PG-Management-System",
-      "https://pg-management-system-boxb.onrender.com",
-    ]
-      .map((item) => {
-        if (!item) return "";
-        const trimmed = item.trim();
-        try {
-          if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-            return new URL(trimmed).origin.toLowerCase();
-          }
-          return trimmed.replace(/\/$/, "").toLowerCase();
-        } catch {
-          return trimmed.replace(/\/$/, "").toLowerCase();
-        }
-      })
-      .filter(Boolean)
-  )
-);
-
-const corsMiddleware = cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // Server-to-server or mobile app requests
-    const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
-
-    // In development mode, allow any localhost / 127.0.0.1 port
-    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
-    if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
-      return callback(null, true);
-    }
-
-    const isAllowed = allowedOrigins.includes(cleanOrigin) || isLocalhost;
-    if (isAllowed) {
-      return callback(null, true);
-    }
-    // Return callback(null, false) without Error to avoid Express 500 crashes
-    return callback(null, false);
-  },
-  credentials: true, // Allows HttpOnly cookies and authorization headers
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type", "Authorization", "X-Requested-With",
-    "X-Visitor-Id", "X-Correlation-ID", "X-Request-ID", "X-CSRF-Token", "Accept"
-  ],
-  exposedHeaders: ["X-Correlation-ID", "X-Request-ID", "X-CSRF-Token", "Set-Cookie"],
-  optionsSuccessStatus: 204, // Responds with 204 No Content on preflight OPTIONS
-});
-
-app.use(corsMiddleware);
-app.options("*", corsMiddleware);
-```
-
-### 5.3 CORS Preflight Sequence Diagram
+### 8.1 Bootstrap Sequence (`backend/src/server.ts` & `backend/src/app.ts`)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Browser as Client Browser (GitHub Pages)
-    participant Gateway as Express Gateway (Render)
-    participant Controller as Auth Controller
-
-    Note over Browser, Gateway: Preflight Check (OPTIONS)
-    Browser->>Gateway: OPTIONS /api/v1/auth/login<br/>Origin: https://ayushman-glb.github.io<br/>Access-Control-Request-Method: POST<br/>Access-Control-Request-Headers: Content-Type, Authorization, X-Visitor-Id, X-CSRF-Token
-    Gateway->>Gateway: Matches Origin against allowedOrigins array
-    Gateway-->>Browser: 204 No Content<br/>Access-Control-Allow-Origin: https://ayushman-glb.github.io<br/>Access-Control-Allow-Credentials: true<br/>Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS<br/>Access-Control-Allow-Headers: Content-Type, Authorization, X-Visitor-Id, X-CSRF-Token
-
-    Note over Browser, Gateway: Actual Request Execution
-    Browser->>Gateway: POST /api/v1/auth/login (credentials: "include")<br/>Header: Authorization: Bearer <token><br/>Cookie: refreshToken=...; csrf-token=...
-    Gateway->>Controller: Executes login pipeline
-    Controller-->>Gateway: 200 OK Response Payload
-    Gateway-->>Browser: 200 OK<br/>Access-Control-Allow-Origin: https://ayushman-glb.github.io<br/>Access-Control-Allow-Credentials: true<br/>Set-Cookie: refreshToken=...; SameSite=None; Secure; HttpOnly
-```
-
----
-
-# 6. Backend Folder Architecture
-
-```text
-backend/src/
-├── app.ts                         # Core Express application assembly & security pipeline
-├── server.ts                      # HTTP/HTTPS bootstrap, cluster manager, Socket.IO init
-├── cluster.ts                     # Multi-core process cluster fork manager
-├── config/                        # Configuration singletons (env, prisma, cloudinary, passport)
-├── container/                     # Dependency Injection Container wiring services & repositories
-├── controllers/                   # General controllers (Upload, Media, Dashboard, Residents)
-├── infrastructure/                # Low-level infrastructure adapters (Crypto, PDF, OTP, SMS)
-├── interfaces/                    # Domain interfaces & abstract contracts
-├── jobs/                          # Scheduled cron jobs (Daily rent dues, auto-lock releases)
-├── middleware/                    # HTTP interceptors (Auth, RBAC, KYC, RateLimit, CSRF, Idempotency)
-├── modules/                       # Domain feature packages (Auth, Properties, Billing, etc.)
-│   ├── agreements/                # Digital lease agreements & SVG signatures
-│   ├── analytics/                 # Property occupancy & revenue intelligence
-│   ├── applications/              # Tenant marketplace applications & vetting
-│   ├── auth/                      # Primary authentication, sessions & 2FA
-│   ├── beds/                      # Bed inventory slots & hold locks
-│   ├── billing/                   # Invoicing, fine engines & tax split computations
-│   ├── complaints/                # Maintenance tickets & Kanban tracking
-│   ├── devices/                   # FingerprintJS device intelligence & trust scoring
-│   ├── documents/                 # Centralized secure PDF streaming
-│   ├── marketing/                 # Transactional email campaigns & templates
-│   ├── messages/                  # Real-time tenant-owner chat messaging
-│   ├── moveIn/                    # Move-in checklists & key handover guides
-│   ├── notifications/             # In-app alerts & broadcast dispatchers
-│   ├── owners/                    # 10-step owner onboarding wizard & bank info
-│   ├── payments/                  # Razorpay orders, HMAC verification & webhooks
-│   ├── phone-auth/                # Twilio SMS OTP authentication subsystem
-│   ├── properties/                # PG properties & public marketplace search
-│   ├── residents/                 # Resident directory & resident self-service portal
-│   ├── rooms/                     # Room layouts & room transfer request workflows
-│   ├── search/                    # Global full-text property & resident search
-│   ├── settings/                  # Admin verification queue & account deletion
-│   └── tours/                     # Property tour scheduling & shortlists
-├── repositories/                  # Prisma data access abstractions
-├── routes/                        # Central apiRouter.ts mounting all v1 domain modules
-├── services/                      # Domain services & business logic orchestrators
-│   ├── data/                      # Cascade update & data integrity services
-│   ├── documents/                 # PDF generator & Cloudinary storage bridge
-│   ├── email/                     # Brevo / SMTP transporter & HTML templates
-│   ├── outbox/                    # Reliable transactional outbox event pattern
-│   └── security/                  # RS256 JwtKeyService, TokenVersion, SessionRevocation
-├── socket/                        # Socket.IO event handlers & room dispatchers
-└── utils/                         # AppError, ApiResponse envelopes, Logger, Token Blacklist
-```
-
-### Folder Responsibilities Table
-
-| Directory | Responsibility | Primary Dependents |
-| :--- | :--- | :--- |
-| `config/` | Validates environment schemas (Zod) and initializes Prisma & Cloudinary clients. | All modules & services |
-| `container/` | IoC container; instantiates singletons and injects dependencies into controllers. | `routes/`, `app.ts` |
-| `middleware/` | Executes cross-cutting security, authentication, and validation pipelines. | Express route definitions |
-| `modules/` | Self-contained domain feature slices containing routes, controllers, services, and DTOs. | `apiRouter.ts`, `container/` |
-| `repositories/`| Encapsulates Prisma ORM queries and multi-document transactions. | Domain services |
-| `services/` | Executes business rules, pricing logic, calculations, and external API calls. | Controllers, Socket handlers |
-| `socket/` | Manages real-time WebSockets, room subscriptions, and event broadcasts. | Domain services, UI clients |
-| `infrastructure/`| Provides low-level crypto hashing, PDF generation (PDFKit), and SMS bridges. | Domain services |
-
----
-
-# 7. Services Layer Architecture
-
-Every business operation in RoomBae is orchestrated by a dedicated Domain Service.
-
-```mermaid
-graph TD
-    Controller["Controller Layer"]
-    
-    subgraph ServiceLayer ["Domain Services Layer"]
-        AuthSvc["AuthService"]
-        OwnerSvc["OwnerOnboardingService"]
-        PropertySvc["PropertyService"]
-        BedSvc["BedService"]
-        ResidentSvc["ResidentService"]
-        BillingSvc["BillingService"]
-        PaymentSvc["PaymentService"]
-        ComplaintSvc["ComplaintService"]
-        DocSvc["DocumentService"]
-        DeviceSvc["DeviceService"]
-        TokenVerSvc["TokenVersionService"]
-        RevokeSvc["SessionRevocationService"]
-    end
-
-    subgraph Infrastructure ["Infrastructure & Repositories"]
-        Repos["Domain Repositories"]
-        Prisma["Prisma ORM Client"]
-        Socket["Socket.IO Server"]
-        ThirdParty["External Gateways (Razorpay, Cloudinary, Twilio)"]
-    end
-
-    Controller --> AuthSvc
-    Controller --> OwnerSvc
-    Controller --> PropertySvc
-    Controller --> BedSvc
-    Controller --> ResidentSvc
-    Controller --> BillingSvc
-    Controller --> PaymentSvc
-    Controller --> ComplaintSvc
-    Controller --> DocSvc
-    Controller --> DeviceSvc
-
-    AuthSvc --> TokenVerSvc
-    AuthSvc --> RevokeSvc
-    AuthSvc --> Repos
-    PaymentSvc --> Repos
-    PaymentSvc --> Socket
-    PaymentSvc --> ThirdParty
-    BedSvc --> Repos
-    BedSvc --> Socket
-    ComplaintSvc --> Repos
-    ComplaintSvc --> Socket
-    Repos --> Prisma
-```
-
-### 7.1 Core Services Breakdown
-
-#### 1. `AuthService` (`backend/src/modules/auth/auth.service.ts`)
-- **Dependencies**: `IUserRepository`, `ITokenService`, `TokenVersionService`, `SessionRevocationService`, `EmailService`.
-- **Key Methods**:
-  - `register(dto)`: Validates email uniqueness, hashes password with Argon2/Bcrypt, creates User record, initializes SessionFamily, and returns tokens.
-  - `login(identifier, password, rememberMe, ip, ua, visitorId)`: Validates credentials, verifies `accountStatus === 'ACTIVE'`, checks 2FA requirement, evaluates device risk, creates opaque refresh token, and returns RS256 access token.
-  - `refreshToken(rawToken)`: Validates token family, detects token reuse (triggering immediate session compromise revocation), rotates refresh token, and issues fresh 15-minute RS256 access token.
-  - `logoutAll(userId, ip, ua)`: Atomically increments `User.tokenVersion` in MongoDB and disconnects all active user WebSockets.
-
-#### 2. `OwnerOnboardingService` (`backend/src/services/OwnerOnboardingService.ts`)
-- **Dependencies**: `PrismaClient`, `EncryptionService`.
-- **Key Methods**:
-  - `onboard(dto)`: Executes a 10-step atomic `prisma.$transaction`: creates Owner, encrypts BankAccount and KYC data with AES-256-GCM, registers Business, provisions PG property, and builds Floor -> Room -> Bed inventory hierarchy.
-
-#### 3. `BedService` (`backend/src/modules/beds/bed.service.ts`)
-- **Dependencies**: `IBedRepository`, `SocketServer`.
-- **Key Methods**:
-  - `updateStatus(bedId, status)`: Transitions bed state (`AVAILABLE`, `OCCUPIED`, `MAINTENANCE`, `BLOCKED`), records `BedHistory`, and emits `bed:status_updated` to the property's Socket.IO room.
-  - `createHold(bedId, reason, startDate)`: Acquires an optimistic hold lock on a bed, setting `lockExpiresAt` to prevent concurrent resident assignments.
-
-#### 4. `PaymentService` (`backend/src/modules/payments/payment.service.ts`)
-- **Dependencies**: `IPaymentRepository`, `BillingService`, `SocketServer`, `Razorpay`.
-- **Key Methods**:
-  - `createOrder(residentId, baseAmount, isInterstate)`: Computes GST split (CGST 9% + SGST 9% or IGST 18%), creates Razorpay order, generates draft `Payment` and `Invoice` records.
-  - `verifyPayment(paymentId, orderId, paymentId, signature)`: Computes HMAC-SHA256 signature, validates authenticity against Razorpay secret, marks payment `PAID`, triggers asynchronous PDF invoice rendering, and emits `billing:payment_received`.
-
-#### 5. `DocumentService` (`backend/src/modules/documents/documents.service.ts`)
-- **Dependencies**: `PrismaClient`, `CloudinaryService`, `PdfKitInvoiceService`.
-- **Key Methods**:
-  - `downloadDocument(entityId, type, res)`: Streams pre-generated PDFs from Cloudinary CDN or compiles high-resolution PDFs on the fly using PDFKit, piping raw bytes directly to the HTTP response with `Content-Type: application/pdf`.
-
----
-
-# 8. Middleware Layer Architecture
-
-### 8.1 Complete Middleware Execution Pipeline
-
-```mermaid
-flowchart TD
-    Req[Incoming HTTP Request]
-    Trust[1. Trust Proxy Header Normalization]
-    Cors[2. CORS Origin Validator & Preflight 204]
-    Corr[3. X-Correlation-ID Distributed Tracing Injection]
-    Helm[4. Helmet CSP, HSTS & Sniff Defense]
-    Comp[5. Compression Engine Gzip/Deflate]
-    Cookie[6. CookieParser Header Decryption]
-    Body[7. Express JSON & URL-Encoded Parsers 10MB]
-    Pass[8. Passport Google OAuth Initializer]
-    Sanitize[9. MongoSanitize NoSQL Query Stripper]
-    Hpp[10. HPP HTTP Parameter Pollution Defense]
-    Idemp[11. Idempotency-Key Cache Hit Check]
-    Rate[12. General Sliding-Window Rate Limiter]
-    Csrf[13. Double-Submit HMAC CSRF Validator]
-    Auth[14. RS256 JWT & TokenVersion Authenticator]
-    Role[15. RBAC RoleGuard & KYC Approval Gate]
-    Zod[16. Zod DTO Body Schema Validator]
-    Ctrl[17. Domain Controller Execution]
-    Err[18. Global Error Handler Catch & Envelope]
-
-    Req --> Trust --> Cors --> Corr --> Helm --> Comp --> Cookie --> Body --> Pass --> Sanitize --> Hpp --> Idemp --> Rate --> Csrf --> Auth --> Role --> Zod --> Ctrl
-    Ctrl -.->|Unhandled Exception| Err
-    Zod -.->|Validation Rejection| Err
-    Auth -.->|Invalid / Expired Token| Err
-    Csrf -.->|CSRF Mismatch| Err
-```
-
-### 8.2 Detailed Middleware Specifications
-
-| Middleware Name | File Location | Responsibility & Security Impact |
-| :--- | :--- | :--- |
-| `corsMiddleware` | `backend/src/app.ts` | Validates origin against whitelist, allows `credentials: true`, handles preflight with `204 No Content`. |
-| `correlationIdMiddleware`| `backend/src/middleware/correlationIdMiddleware.ts` | Attaches unique UUID `req.correlationId` (`X-Correlation-ID`) for distributed log tracing. |
-| `helmet` | `backend/src/app.ts` | Injects Content Security Policy, X-Frame-Options (`DENY`), X-Content-Type-Options (`nosniff`), and HSTS. |
-| `mongoSanitize` | `backend/src/app.ts` | Strips prohibited characters (`$`, `.`) from request bodies to eliminate NoSQL injection attacks. |
-| `hpp` | `backend/src/app.ts` | Prevents HTTP Parameter Pollution by rejecting duplicate query array injections. |
-| `idempotencyMiddleware` | `backend/src/middleware/idempotencyMiddleware.ts` | Checks `Idempotency-Key` against `IdempotencyRequest` collection; returns cached response on replay. |
-| `generalLimiter` | `backend/src/middleware/rateLimiter.ts` | Enforces 100 requests per 15 minutes per IP sliding-window threshold. |
-| `validateCsrf` | `backend/src/middleware/csrfMiddleware.ts` | Compares `x-csrf-token` header against signed `csrf-token` cookie using `crypto.timingSafeEqual`. |
-| `authenticate` | `backend/src/middleware/authMiddleware.ts` | Decodes RS256 JWT, checks token blacklist, and verifies user `tokenVersion` against MongoDB. |
-| `authorize(roles...)` | `backend/src/middleware/authMiddleware.ts` | Enforces Role-Based Access Control (`SUPER_ADMIN`, `ADMIN`, `OWNER`, `RESIDENT`). |
-| `requireKycApproved` | `backend/src/middleware/authMiddleware.ts` | Blocks unverified owners from listing public PGs or processing financial transactions. |
-| `validate(Schema)` | `backend/src/middleware/validateMiddleware.ts` | Validates incoming JSON against Zod schemas; returns `400 Bad Request` with field error array. |
-| `globalErrorHandler` | `backend/src/middleware/errorMiddleware.ts` | Catches unhandled errors, formats `ApiResponse.error`, masks production stack traces. |
-
----
-
-# 9. Controllers Layer Architecture
-
-Controllers act as lightweight HTTP adapters. They extract parameters (`req.body`, `req.params`, `req.query`), invoke Domain Services, and wrap results in standard `ApiResponse` envelopes.
-
-```mermaid
-flowchart LR
-    Req[Express Request] --> Ctrl[Domain Controller]
-    Ctrl -->|Extract DTO| Service[Domain Service]
-    Service -->|Return Entity| Ctrl
-    Ctrl -->|Serialize| Envelope[ApiResponse.success 200/201]
-    Envelope --> Res[Express Response JSON]
-```
-
-### 9.1 Controllers Inventory
-
-| Controller Name | File Location | Endpoints Handled | Injected Dependencies |
-| :--- | :--- | :--- | :--- |
-| `AuthController` | `backend/src/modules/auth/auth.controller.ts` | `/auth/*` (Login, Register, Refresh, Logout, 2FA, OAuth) | `IAuthService` |
-| `PhoneAuthController` | `backend/src/modules/phone-auth/phoneAuth.controller.ts`| `/auth/phone/*` (SMS OTP, Resend, Verify) | `IPhoneAuthService` |
-| `DeviceController` | `backend/src/modules/devices/device.controller.ts` | `/security/devices/*` (Identify, Trust, Revoke, Block) | `IDeviceService` |
-| `OwnerController` | `backend/src/modules/owners/owner.controller.ts` | `/owners/*`, `/onboarding/*` (Full Onboarding, KYC, Bank) | `IOwnerService` |
-| `PropertyController` | `backend/src/modules/properties/property.controller.ts` | `/properties/*` (Public Search, Add PG, Meal Plans) | `IPropertyService` |
-| `RoomController` | `backend/src/modules/rooms/room.controller.ts` | `/rooms/*` (Convert Type, Room Transfers) | `IRoomService` |
-| `BedController` | `backend/src/modules/beds/bed.controller.ts` | `/beds/*` (Status Updates, Bed Holds) | `IBedService` |
-| `ResidentController` | `backend/src/modules/residents/resident.controller.ts` | `/residents/*` (Directory, Portal Me, Passes, Status) | `IResidentService` |
-| `BillingController` | `backend/src/modules/billing/billing.controller.ts` | `/billing/*` (Fine Rules, Issue Fines, Waive Dues) | `IBillingService` |
-| `PaymentController` | `backend/src/modules/payments/payment.controller.ts` | `/payments/*` (Create Order, Verify, Webhook, Refunds) | `IPaymentService` |
-| `ComplaintController` | `backend/src/modules/complaints/complaint.controller.ts`| `/complaints/*` (File Ticket, Status Updates) | `IComplaintService` |
-| `AgreementController` | `backend/src/modules/agreements/agreement.controller.ts`| `/agreements/*` (Generate Lease, SVG Sign, QR Verify) | `IAgreementService` |
-| `DocumentController` | `backend/src/modules/documents/documents.controller.ts`| `/documents/*` (Invoice, Receipt, Agreement, KYC PDFs) | `IDocumentService` |
-| `SearchController` | `backend/src/modules/search/search.controller.ts` | `/search` (Global Full-Text Multi-Entity Search) | `ISearchService` |
-| `DashboardController` | `backend/src/controllers/dashboard.controller.ts` | `/dashboard/*` (Overview KPIs, Revenue, Occupancy) | `IDashboardService` |
-
----
-
-# 10. Complete REST API Documentation
-
-### 10.1 Authentication Endpoints
-
-#### `POST /api/v1/auth/login`
-- **Purpose**: Authenticates credentials, assesses device risk, and issues RS256 access token with HttpOnly refresh cookie.
-- **Frontend Caller**: `frontend/src/features/auth/pages/Auth.tsx` (`LoginForm` component).
-- **Route Handler**: `backend/src/modules/auth/auth.routes.ts` -> `AuthController.login`.
-- **Middleware**: `loginLimiter` (10 req/15m), `validate(LoginSchema)`.
-- **Request Payload**:
-  ```json
-  {
-    "identifier": "owner@roombae.com",
-    "password": "SecurePassword123!",
-    "rememberMe": true,
-    "visitorId": "f9028cb9e8172da0",
-    "deviceLabel": "Chrome on Windows"
-  }
-  ```
-- **Response Payload (`200 OK`)**:
-  ```json
-  {
-    "success": true,
-    "message": "Login successful",
-    "data": {
-      "user": {
-        "id": "67b43a9b89c31e2b4f0011a1",
-        "email": "owner@roombae.com",
-        "name": "Vikram Malhotra",
-        "role": "OWNER",
-        "tokenVersion": 0
-      },
-      "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "deviceSecurity": {
-        "isNewDevice": false,
-        "status": "TRUSTED",
-        "riskLevel": "LOW",
-        "stepUpRequired": false
-      }
-    }
-  }
-  ```
-- **Cookies Set**: `refreshToken` (`HttpOnly; Secure; SameSite=None; Max-Age=2592000`).
-
----
-
-### 10.2 Financial & Payment Endpoints
-
-#### `POST /api/v1/payments/create-order`
-- **Purpose**: Generates a Razorpay payment order with automated GST tax split.
-- **Frontend Caller**: `frontend/src/features/billing/components/PayRentModal.tsx`.
-- **Route Handler**: `backend/src/modules/payments/payment.routes.ts` -> `PaymentController.createOrder`.
-- **Middleware**: `authenticate`, `idempotencyMiddleware`, `validate(CreatePaymentOrderSchema)`.
-- **Request Payload**:
-  ```json
-  {
-    "residentId": "67b4450189c31e2b4f001401",
-    "baseAmount": 12000,
-    "isInterstate": false,
-    "description": "Monthly Rent - August 2026"
-  }
-  ```
-- **Response Payload (`201 Created`)**:
-  ```json
-  {
-    "success": true,
-    "message": "Payment order created",
-    "data": {
-      "paymentId": "67b4499089c31e2b4f001601",
-      "invoiceNumber": "INV-2026-08-0089",
-      "razorpayOrderId": "order_Qx91823kLm",
-      "baseAmount": 12000,
-      "cgstAmount": 1080,
-      "sgstAmount": 1080,
-      "totalAmount": 14160,
-      "currency": "INR",
-      "keyId": "rzp_test_TM4mpVud9kvppK"
-    }
-  }
-  ```
-
----
-
-# 11. Frontend Pages → Backend Mapping
-
-| Frontend Route / Page | Component / Modal | Triggering Hook / Service | Target Endpoint | HTTP Method | Backend Controller |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `/auth` | `LoginForm` | `useAuth().login()` | `/api/v1/auth/login` | `POST` | `AuthController.login` |
-| `/auth` | `RegisterForm` | `useAuth().register()` | `/api/v1/auth/register` | `POST` | `AuthController.register` |
-| `/auth` | `PhoneOtpModal` | `authService.sendPhoneOtp()` | `/api/v1/auth/phone/send-otp` | `POST` | `PhoneAuthController.sendOtp` |
-| `/dashboard` | `BentoDashboard` | `api.getOwnerSummary()` | `/api/v1/dashboard/overview` | `GET` | `DashboardController.getOverview` |
-| `/admin-console` | `AdminVerificationTable` | `api.getVerificationQueue()` | `/api/v1/settings/admin/verification-queue`| `GET` | `SettingsController.getVerificationQueue`|
-| `/properties` | `PropertyGrid` | `api.getPublicProperties()` | `/api/v1/properties/public` | `GET` | `PropertyController.searchPublic` |
-| `/residents` | `ResidentDirectoryTable` | `residentService.getDirectory()` | `/api/v1/residents/directory` | `GET` | `ResidentController.getDirectory` |
-| `/resident-portal` | `PortalProfileHeader` | `residentService.getPortalMe()` | `/api/v1/residents/portal/me` | `GET` | `ResidentController.getPortalMe` |
-| `/billing` | `PayRentModal` | `billingService.createOrder()` | `/api/v1/payments/create-order` | `POST` | `PaymentController.createOrder` |
-| `/complaints` | `KanbanBoardView` | `api.getRoomTransferRequests()`| `/api/v1/rooms/transfer-requests` | `GET` | `RoomController.listTransferRequests` |
-| `/operations` (Rooms) | `RoomConversionModal` | `api.convertRoomType()` | `/api/v1/rooms/:roomId/convert` | `PUT` | `RoomController.convertType` |
-| `/operations` (Beds) | `BedHoldModal` | `bedService.createHold()` | `/api/v1/beds/holds` | `POST` | `BedController.createHold` |
-| `/operations` (Settings)| `DeviceManagementSection`| `deviceService.getUserDevices()`| `/api/v1/security/devices` | `GET` | `DeviceController.getDevices` |
-
----
-
-# 12. CRUD Architecture & Operational Flows
-
-### 12.1 Resident Management CRUD Pipeline
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Owner as PG Owner UI
-    participant Router as Resident Routes
-    participant Controller as Resident Controller
-    participant Service as Resident Service
-    participant Repo as Resident Management Repo
-    participant Prisma as Prisma Client
-    participant DB as MongoDB Atlas
+    participant Node as Node.js Runtime
+    participant Env as Zod env.ts
+    participant DB as MongoDB Atlas (Prisma)
+    participant App as Express app.ts
+    participant Server as HTTP Server (server.ts)
     participant Socket as Socket.IO Server
 
-    Owner->>Router: PATCH /api/v1/residents/:id/status { status: "CHECKED_OUT" }
-    Router->>Controller: updateStatus(req, res)
-    Controller->>Service: updateResidentStatus(id, "CHECKED_OUT")
-    Service->>Repo: findResidentWithBed(id)
-    Repo->>Prisma: prisma.resident.findUnique({ include: { bed: true } })
-    Prisma->>DB: MongoDB Query
-    DB-->>Prisma: Resident Document
-    Prisma-->>Repo: Entity
-    
-    Note over Service, DB: Atomic Status & Bed Release Transaction
-    Service->>Repo: executeCheckoutTransaction(residentId, bedId)
-    Repo->>Prisma: prisma.$transaction([ resident.update, bed.update, statusHistory.create ])
-    Prisma->>DB: Multi-Document Commit
-    DB-->>Prisma: Success
-    Prisma-->>Repo: Updated Records
-    
-    Service->>Socket: SocketServer.emitToPg(pgId, "resident:status_updated", payload)
-    Service->>Socket: SocketServer.emitToPg(pgId, "bed:status_updated", { bedId, status: "AVAILABLE" })
-    Service-->>Controller: Checkout Result
-    Controller-->>Owner: 200 OK { success: true, message: "Resident checked out" }
+    Node->>Env: Validate environment schema
+    Env-->>Node: Environment verified
+    Node->>DB: prisma.$runCommandRaw({ ping: 1 })
+    DB-->>Node: Database connected (ping acknowledged)
+    Node->>App: Register middleware stack in exact order
+    App->>App: trust proxy -> CORS -> CorrelationId -> Helmet -> Compression -> CookieParser -> JsonParser -> MongoSanitize -> HPP -> Idempotency -> ValidateCsrf -> RateLimiter -> Router
+    Node->>Server: http.createServer(app)
+    Node->>Socket: initSocketServer(server)
+    Server->>Server: listen(PORT)
+    Server-->>Node: Server listening on PORT 5000
 ```
 
 ---
 
-# 13. Database Communication & Prisma ORM Layer
+# 9. Backend Directory & Modular Component Architecture
 
-### 13.1 Schema Model Hierarchy (`backend/prisma/schema.prisma`)
+```
+backend/
+├── prisma/
+│   └── schema.prisma           # Authoritative Prisma ORM data models and indexes
+├── src/
+│   ├── app.ts                  # Express application pipeline and middleware assembly
+│   ├── server.ts               # HTTP and Socket.IO server bootstrap and graceful shutdown
+│   ├── config/
+│   │   ├── env.ts              # Zod-validated environment schema
+│   │   ├── prisma.ts           # Prisma client singleton
+│   │   ├── corsOrigins.ts      # Single source of truth for CORS whitelist
+│   │   ├── cloudinary.ts       # Cloudinary SDK client configuration
+│   │   ├── passport.ts         # Google OAuth 2.0 passport strategy
+│   │   └── swagger.ts          # OpenAPI / Swagger specification
+│   ├── container/
+│   │   └── index.ts            # Dependency Injection (DI) Container
+│   ├── controllers/            # Global & cross-domain controllers
+│   ├── core/                   # Shared architectural patterns (TenantMiddleware, EventDispatcher)
+│   ├── infrastructure/         # Crypto, PDF generation, Lock & OTP adapters
+│   ├── middleware/             # Security, auth, rate limiting, and error handling middlewares
+│   ├── modules/                # Feature-based modular domain vertical slices
+│   │   ├── agreements/         # Rental agreement generation and signing
+│   │   ├── analytics/          # Financial and occupancy analytics
+│   │   ├── applications/       # Rental applications and screening
+│   │   ├── auth/               # User authentication and JWT rotation
+│   │   ├── beds/               # Bed inventory, locks, and room allocations
+│   │   ├── billing/            # Invoices, GST calculations, and fines
+│   │   ├── complaints/         # Maintenance ticketing and resolution
+│   │   ├── devices/            # FingerprintJS hardware tracking
+│   │   ├── documents/          # Secure PDF download vault
+│   │   ├── email/              # SMTP and transactional notifications
+│   │   ├── marketing/          # Email campaigns and broadcasts
+│   │   ├── messages/           # Real-time chat messaging
+│   │   ├── moveIn/             # Tenant onboarding and move-in checklist
+│   │   ├── notifications/      # User alert notifications
+│   │   ├── owners/             # Owner profile and KYC approval
+│   │   ├── payments/           # Razorpay payment orders and webhooks
+│   │   ├── phone-auth/         # Twilio SMS OTP authentication
+│   │   ├── properties/         # PG property management and search
+│   │   ├── residents/          # Resident directory and self-service portal
+│   │   ├── rooms/              # Room configurations and transfers
+│   │   ├── search/             # Marketplace property search filters
+│   │   ├── settings/           # System settings and audit logs
+│   │   └── tours/              # Schedule visit tours and shortlists
+│   ├── repositories/           # Data access repository implementations
+│   ├── routes/                 # Express API router definitions
+│   ├── services/               # Core domain business logic services
+│   ├── socket/                 # Socket.IO server engine and event handlers
+│   └── utils/                  # Logger, ApiResponse, AppError, PathResolver
+```
+
+---
+
+# 10. Middleware Architecture & Execution Pipeline
+
+The Express middleware stack executes in a deterministic sequence:
+
+| Order | Middleware | Source File | Purpose & Functionality |
+|---|---|---|---|
+| **1** | `trust proxy` | `backend/src/app.ts` | Configures single-hop reverse proxy awareness (`app.set("trust proxy", 1)`). |
+| **2** | `cors` | `backend/src/config/corsOrigins.ts` | Enforces origin whitelist, preflight handling, and credentials. |
+| **3** | `correlationIdMiddleware` | `backend/src/middleware/correlationMiddleware.ts` | Generates/preserves `x-correlation-id` for distributed request tracing. |
+| **4** | `helmet` | `backend/src/app.ts` | Sets CSP, HSTS (`31536000s`), Sniff Guard, and X-Frame-Options. |
+| **5** | `compression` | `backend/src/app.ts` | Compresses outbound HTTP response bodies using Gzip/Brotli. |
+| **6** | `cookieParser` | `backend/src/app.ts` | Parses signed cookies (`refreshToken`, `csrf-token`). |
+| **7** | `express.json` | `backend/src/app.ts` | Parses inbound JSON request bodies with a 10MB limit. |
+| **8** | `mongoSanitize` | `backend/src/app.ts` | Strips NoSQL injection operators (`$`, `.`) from parameters and body. |
+| **9** | `hpp` | `backend/src/app.ts` | Prevents HTTP Parameter Pollution attacks. |
+| **10**| `idempotencyMiddleware` | `backend/src/middleware/idempotencyMiddleware.ts` | Deduplicates mutating operations based on `x-idempotency-key`. |
+| **11**| `validateCsrf` | `backend/src/middleware/csrfMiddleware.ts` | Validates HMAC-signed Double-Submit CSRF tokens using `safeCompareCsrf`. |
+| **12**| `generalLimiter` | `backend/src/middleware/rateLimiter.ts` | Enforces IP-based rate limiting via `resolveClientIp(req)`. |
+| **13**| `tenantMiddleware` | `backend/src/core/middleware/tenantMiddleware.ts` | Extracts and binds tenant isolation context (`req.tenantContext`). |
+| **14**| `authenticate` | `backend/src/middleware/authMiddleware.ts` | Validates JWT RS256 signature and authoritative `User.tokenVersion`. |
+| **15**| `authorize` | `backend/src/middleware/authMiddleware.ts` | Verifies user's role against permitted endpoint roles. |
+| **16**| `globalErrorHandler` | `backend/src/middleware/errorMiddleware.ts` | Catches exceptions and returns standardized `ApiResponse` error envelopes. |
+
+---
+
+# 11. Controller Layer Architecture
+
+Controllers in RoomBae are lightweight HTTP adapters. They execute within the `catchAsync` wrapper and follow strict conventions:
+1. **Request Unpacking**: Extract typed inputs from `req.body`, `req.params`, `req.query`, and authenticated user context (`req.user`).
+2. **Service Invocation**: Delegate domain operations to the corresponding service obtained from the `Container` DI instance.
+3. **Response Formatting**: Return standardized `ApiResponse.success(res, message, data, statusCode)` envelopes.
+4. **Zero Raw 500s**: All unhandled rejections bubble automatically to `globalErrorHandler`.
+
+---
+
+# 12. Service Layer Architecture & Domain Logic
+
+Domain services encapsulate business logic and invariants:
+- **`AuthService`**: Handles password hashing, asymmetric JWT generation, refresh token family rotation, OTP verification, and session revocation.
+- **`PropertyService`**: Manages property registration, owner association, amenity tags, meal schedule bindings, and public search filters.
+- **`ResidentService`**: Orchestrates resident onboarding, bed occupancy tracking, tenancy history logging, and profile retrieval.
+- **`BillingService`**: Computes monthly rental invoices, GST tax breakdowns, overdue late fines, and automated PDF invoice rendering.
+- **`PaymentService`**: Generates Razorpay payment orders and verifies HMAC-SHA256 payment webhook signatures.
+- **`ComplaintService`**: Manages maintenance ticket lifecycle, priority triage, staff assignment, and real-time status updates.
+- **`AgreementService`**: Generates tenancy agreement PDFs, records cryptographic SHA-256 signatures, and verifies e-sign validity.
+- **`ResidentManagementService`**: Manages bed reservation holds, room type conversions, room transfer approvals, and audit log streams.
+
+---
+
+# 13. Repository Pattern & Data Access Layer
+
+Repositories isolate database logic from domain services:
+- **`AuthRepository`**: User identity lookups, token family storage, and credential updates.
+- **`PropertyRepository`**: Property queries, owner property summaries, and marketplace search aggregation.
+- **`ResidentRepository`**: Resident directory lookups, tenancy status transitions, and bed occupancy binding.
+- **`BillingRepository`**: Monthly invoice generation, payment transaction logging, and financial summaries.
+- **`ComplaintRepository`**: Maintenance ticket filtering, comment threads, and status updates.
+- **`AgreementRepository`**: Tenancy agreement persistence, signature verification, and renewal tracking.
+- **`ResidentManagementRepository`**: Atomic bed holds, room transfer requests, and audit log persistence.
+
+---
+
+# 14. Database Communication & MongoDB Atlas ReplicaSet Layer
+
+### 14.1 Query & Transaction Lifecycle
+```
+Node.js Express App
+  ↓ (Prisma Client JS Engine)
+MongoDB Node.js Driver
+  ↓ (TLS 1.3 Encrypted Socket / mongodb+srv://)
+MongoDB Atlas ReplicaSet (Primary Node)
+  ↓ (Oplog Replication with w: "majority")
+Secondary Replica Nodes
+```
+
+### 14.2 Multi-Document Atomic Transactions
+All multi-collection mutations (e.g. resident checkout with bed release and deposit refund invoice creation) execute via `prisma.$transaction([...])`, guaranteeing ACID consistency across MongoDB collections.
+
+---
+
+# 15. Complete CRUD Operational Communication Flows
+
+### 15.1 Resident Onboarding Flow
+1. **Frontend Form Submission**: Admin/Owner submits resident details on `/residents` (`ResidentRegister.tsx`).
+2. **API Request**: `api.onboardResident(payload)` → `POST /api/v1/residents/onboard`.
+3. **Middleware**: `validateCsrf` → `authenticate` → `authorize(Role.OWNER, Role.STAFF)`.
+4. **Controller**: `ResidentController.onboard` unpacks request and passes DTO to `ResidentService`.
+5. **Service Transaction**:
+   - Creates or verifies `User` account with default generated credentials.
+   - Creates `Resident` record linked to PG property and room.
+   - Atomically updates `Bed` status from `AVAILABLE` to `OCCUPIED`.
+   - Generates initial security deposit and first month `BillingInvoice`.
+   - Generates initial `RentalAgreement` document.
+6. **Repository & Prisma**: Executes all 5 operations inside a single `prisma.$transaction`.
+7. **Real-Time Broadcast**: `io.emit('resident:status_updated')` and `io.emit('bed:status_updated')`.
+8. **Response**: HTTP 201 Created with populated `Resident` entity.
+
+---
+
+# 16. End-to-End Request Lifecycle Pipelines
+
+### 16.1 Rent Payment Flow (Razorpay Integration)
 
 ```mermaid
-erDiagram
-    User ||--o| Owner : "has one"
-    User ||--o| Resident : "has one"
-    User ||--o{ UserDevice : "registers"
-    User ||--o{ RefreshToken : "owns"
-    Owner ||--o{ PG : "owns"
-    Owner ||--o| OwnerKYC : "submits"
-    Owner ||--o| BankAccount : "payouts"
-    PG ||--o{ Building : "contains"
-    Building ||--o{ Floor : "contains"
-    Floor ||--o{ Room : "contains"
-    Room ||--o{ Bed : "contains"
-    Bed ||--o| Resident : "assigned to"
-    PG ||--o{ Resident : "houses"
-    Resident ||--o{ Payment : "makes"
-    Payment ||--o| Invoice : "generates"
-    Resident ||--o{ Complaint : "files"
-    Resident ||--o{ Agreement : "signs"
-```
+sequenceDiagram
+    autonumber
+    actor Resident as Resident User
+    participant App as React Frontend (PayRentModal.tsx)
+    participant ApiClient as ApiClient (api.ts)
+    participant Gateway as Express Gateway (app.ts)
+    participant PayCtrl as PaymentController
+    participant PaySvc as PaymentService
+    participant Razorpay as Razorpay API
+    participant Prisma as PrismaClient (MongoDB)
+    participant Socket as Socket.IO Server
 
-### 13.2 Database Transaction Policies
-- **Atomic Multi-Document Operations**: All compound actions (e.g. resident checkout, owner onboarding, room conversions) execute within `prisma.$transaction([ ... ])`.
-- **Sparse Indexes**: Enforced via `ensureSparseIndexes.ts` on unique optional fields (`residentCode`, `googleSubId`, `aadhaarNumber`) to eliminate MongoDB duplicate `null` collisions.
-- **Audit Trails**: Security actions write immutable logs to `security_audit_events` and `activity_logs`.
-
----
-
-# 14. Request Lifecycle Pipeline
-
-```text
-[1. User Click / Form Submit]
-      │
-      ▼
-[2. Zod Client Schema Validation]
-      │
-      ▼
-[3. ApiClient Request Construction (Bearer JWT + X-Visitor-Id + X-CSRF-Token)]
-      │
-      ▼
-[4. Reverse Proxy TLS Termination (Render Edge)]
-      │
-      ▼
-[5. Express Gateway: CORS Check & Preflight 204]
-      │
-      ▼
-[6. Helmet Security Headers & HSTS Enforcement]
-      │
-      ▼
-[7. X-Correlation-ID Tracing UUID Injection]
-      │
-      ▼
-[8. MongoSanitize NoSQL & HPP Sanitization]
-      │
-      ▼
-[9. Sliding-Window Rate Limiter Evaluation]
-      │
-      ▼
-[10. Double-Submit HMAC CSRF Verification]
-      │
-      ▼
-[11. RS256 JWT Verification & TokenVersion Database Check]
-      │
-      ▼
-[12. RBAC RoleGuard & KYC Status Authorization]
-      │
-      ▼
-[13. Zod DTO Body Schema Validation]
-      │
-      ▼
-[14. Domain Controller Parameter Extraction]
-      │
-      ▼
-[15. Domain Service Business Logic Execution]
-      │
-      ▼
-[16. Repository Prisma Query / Mongo Atomic Transaction]
-      │
-      ▼
-[17. Socket.IO Real-Time Event Emission]
-      │
-      ▼
-[18. Standard JSON Envelope Formatting (ApiResponse)]
-      │
-      ▼
-[19. HTTP Response Dispatch]
-      │
-      ▼
-[20. Frontend React State Update]
+    Resident->>App: Clicks "Pay Rent Now" (Invoice #INV-2026-001)
+    App->>ApiClient: api.createBillingOrder(invoiceId)
+    ApiClient->>Gateway: POST /api/v1/payments/razorpay/create-order
+    Gateway->>PayCtrl: createOrder(req, res)
+    PayCtrl->>PaySvc: createOrder(invoiceId, userId)
+    PaySvc->>Prisma: Find BillingInvoice & verify amount
+    PaySvc->>Razorpay: razorpay.orders.create({ amount, currency: 'INR', receipt })
+    Razorpay-->>PaySvc: Razorpay Order Object (order_id)
+    PaySvc->>Prisma: Create PaymentTransaction (status: 'PENDING')
+    PaySvc-->>PayCtrl: Order Details
+    PayCtrl-->>ApiClient: HTTP 200 { orderId, amount, keyId }
+    ApiClient-->>App: Open Razorpay Checkout Modal
+    Resident->>Razorpay: Enters UPI / NetBanking details & confirms payment
+    Razorpay-->>App: Payment Success { razorpay_payment_id, razorpay_order_id, razorpay_signature }
+    App->>ApiClient: api.verifyPayment(payload)
+    ApiClient->>Gateway: POST /api/v1/payments/razorpay/verify
+    Gateway->>PayCtrl: verifyPayment(req, res)
+    PayCtrl->>PaySvc: verifyPayment(payload)
+    PaySvc->>PaySvc: Verify HMAC SHA-256 signature
+    PaySvc->>Prisma: prisma.$transaction([update BillingInvoice status='PAID', update PaymentTransaction status='SUCCESS'])
+    PaySvc->>Socket: io.emit('billing:payment_completed', { invoiceId, amount })
+    Socket-->>Resident: Real-time payment confirmation
+    PayCtrl-->>ApiClient: HTTP 200 { success: true, message: "Payment verified" }
+    ApiClient-->>App: Close Modal & update invoice badge to PAID
 ```
 
 ---
 
-# 15. Response Lifecycle & Envelope Contracts
+# 17. Response Lifecycle & Envelope Contracts
 
-### 15.1 Unified Success Envelope
-
+### 17.1 Standard Success Envelope
 ```json
 {
   "success": true,
   "message": "Operation completed successfully",
   "data": {
-    "id": "67b43a9b89c31e2b4f0011a1",
-    "name": "Sunrise Luxury PG"
-  },
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 1
+    "id": "usr_67123abcd",
+    "name": "Ayushman",
+    "email": "ayushman@roombae.com",
+    "role": "OWNER"
   }
 }
 ```
 
-### 15.2 Unified Error Envelope
-
+### 17.2 Standard Error Envelope
 ```json
 {
   "success": false,
-  "message": "Authentication token has expired",
-  "errors": [],
+  "message": "Validation failed: Invalid request payload",
+  "errors": [
+    {
+      "field": "phone",
+      "message": "Phone number must be a valid 10-digit mobile number"
+    }
+  ],
   "error": {
-    "code": "TOKEN_EXPIRED",
-    "message": "Authentication token has expired",
-    "action": "refresh"
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed: Invalid request payload",
+    "action": "check_input"
   }
 }
 ```
 
 ---
 
-# 16. Authentication & Authorization Architecture
+# 18. Authentication, Authorization & Session Security Architecture
 
-### 16.1 RS256 Asymmetric Key Lifecycle
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as Browser (React 19)
-    participant Auth as Auth Controller
-    participant KeyServ as JwtKeyService (RS256)
-    participant DB as MongoDB Atlas
-
-    Note over Client, DB: 1. Login Phase
-    Client->>Auth: POST /api/v1/auth/login { identifier, password }
-    Auth->>DB: Find User & Verify Hash
-    Auth->>KeyServ: signAccessToken(payload, '15m')
-    KeyServ-->>Auth: RS256 Signed JWT (Header: kid: rb_key_1)
-    Auth->>DB: Create Opaque SHA-256 Refresh Token (SessionFamily)
-    Auth-->>Client: Set-Cookie: refreshToken=...; HttpOnly; Secure<br/>Body: { accessToken: "eyJ..." }
-
-    Note over Client, DB: 2. Authenticated Request
-    Client->>Auth: GET /api/v1/residents/directory<br/>Header: Authorization: Bearer <accessToken>
-    Auth->>KeyServ: verifyAccessToken(token) -> Verifies with RSA Public Key
-    Auth->>DB: Check User.tokenVersion == decoded.tokenVersion
-    Auth-->>Client: 200 OK Directory Data
-```
+### 18.1 Token Architecture
+- **Access Tokens**: RS256 asymmetric JWTs signed with RSA-2048 private key (with HS256 fallback). Tokens expire in 15 minutes and contain claims: `{ id, email, role, tokenVersion }`.
+- **Public JWKS**: Public keys are exposed at `GET /.well-known/jwks.json` for external service verification.
+- **Refresh Tokens**: Opaque 256-bit cryptographic hex strings stored in `HttpOnly; Secure; SameSite=None` cookies. Stored in MongoDB as SHA-256 hashes with token family chains.
+- **Family Reuse Detection**: If a previously consumed refresh token is presented, the system detects a token reuse attack, revokes all sessions in the family, increments `User.tokenVersion`, and logs a critical security audit event.
 
 ---
 
-# 17. Socket.IO Real-Time Communication Architecture
+# 19. Socket.IO & Real-Time Communication Architecture
 
-### 17.1 Room Partitioning & Event Channels
+### 19.1 Event Distribution Matrix
 
-```mermaid
-graph TD
-    BE["Backend Services"]
-    SocketServer["Socket.IO Server Engine"]
-    
-    subgraph Rooms ["Multiplexed Room Channels"]
-        PGRoom["pg_{pgId} (Property Scope)"]
-        OwnerRoom["owner_{ownerId} (Owner Scope)"]
-        ResidentRoom["resident_{residentId} (Resident Scope)"]
-    end
-
-    BE -->|SocketServer.emitToPg| SocketServer
-    BE -->|SocketServer.emitToOwner| SocketServer
-    BE -->|SocketServer.emitToResident| SocketServer
-
-    SocketServer --> PGRoom
-    SocketServer --> OwnerRoom
-    SocketServer --> ResidentRoom
-```
-
-| Event Name | Scope / Target Room | Triggering Service | Client Consumer |
-| :--- | :--- | :--- | :--- |
-| `bed:status_updated` | `pg_{pgId}` | `BedService.updateStatus` | Bed Management Grid |
-| `resident:status_updated`| `pg_{pgId}` | `ResidentService.updateStatus`| Residents Directory |
-| `billing:payment_received`| `owner_{ownerId}` | `PaymentService.verifyPayment` | Billing Overview |
-| `complaint:ticket_created`| `owner_{ownerId}` | `ComplaintService.create` | Maintenance Kanban |
-| `complaint:ticket_updated`| `resident_{residentId}`| `ComplaintService.updateStatus`| Resident Portal |
-| `room:transfer_request_updated`| `owner_{ownerId}` | `RoomService.createTransfer` | Room Transfer Board |
+| Event Name | Direction | Channels / Rooms | Description |
+|---|---|---|---|
+| `resident:status_updated` | Server → Client | `pg:${pgId}`, `user:${userId}` | Broadcasts resident lifecycle status changes. |
+| `bed:status_updated` | Server → Client | `pg:${pgId}`, `role:OWNER` | Real-time bed availability updates. |
+| `bed:hold_updated` | Server → Client | `pg:${pgId}`, `role:OWNER` | Bed hold lock or release notifications. |
+| `transfer:requested` | Server → Client | `pg:${pgId}`, `role:OWNER` | Room transfer requests submitted by residents. |
+| `transfer:status_updated` | Server → Client | `user:${residentId}` | Room transfer approval or rejection status. |
+| `billing:payment_completed` | Server → Client | `pg:${pgId}`, `user:${residentId}` | Instant confirmation of rent payment settlement. |
+| `complaint:created` | Server → Client | `pg:${pgId}`, `role:STAFF` | Alerts maintenance staff of new complaint tickets. |
+| `complaint:status_updated` | Server → Client | `user:${residentId}` | Updates resident on maintenance resolution. |
+| `message:new` | Server → Client | `thread:${threadId}` | Instant delivery of chat messages. |
+| `notification:broadcast` | Server → Client | `user:${userId}`, `all` | System and operational alert broadcasts. |
 
 ---
 
-# 18. External Service Integrations
+# 20. External Third-Party Service Integrations
 
-1. **Razorpay Payments**:
-   - Order creation via REST API.
-   - Cryptographic verification via HMAC-SHA256 signature calculation.
-   - Webhook processor for asynchronous status capture.
-2. **Cloudinary CDN**:
-   - Streaming media buffer uploads with automatic quality and format optimization (`f_auto, q_auto`).
-   - Secure PDF and KYC document storage.
-3. **Twilio Programmable SMS**:
-   - Dispatches 6-digit phone verification OTPs via Twilio REST API.
-4. **Brevo SMTP / Nodemailer**:
-   - Transports transactional verification emails, password resets, and GST invoices using HTML templates.
-5. **ClamAV Antivirus Daemon**:
-   - Streams multipart file buffers through ClamAV socket to block malware before Cloudinary storage.
-6. **FingerprintJS Pro**:
-   - Evaluates device visitor IDs and computes risk scores to prevent credential stuffing.
+1. **MongoDB Atlas**: Primary persistent document database with WiredTiger encryption and automated replica failover.
+2. **Cloudinary CDN**: Cloud asset storage and transformation pipeline for property photos, resident KYC IDs, and receipts.
+3. **Razorpay**: Payment gateway integration for UPI, NetBanking, Debit/Credit cards, and automated webhook reconciliation.
+4. **Twilio / Database OTP**: SMS gateway for phone authentication and login verification OTPs.
+5. **Nodemailer / Brevo SMTP**: Transactional email relay for welcome emails, billing receipts, and password resets.
+6. **FingerprintJS**: Hardware browser fingerprinting provider for impossible travel detection and trusted device tracking.
+7. **Google OAuth 2.0**: OpenID Connect authentication strategy.
 
 ---
 
-# 19. Environment Variable Architecture
+# 21. Environment Variable Matrix & Configuration Contracts
 
-*(All secret tokens and private keys are masked with `********` for security).*
-
-| Variable Name | Local (`.env.development`) | Production (`.env.production`) | Purpose / Component |
-| :--- | :--- | :--- | :--- |
-| `PORT` | `5000` | `5000` | Express server port |
-| `NODE_ENV` | `development` | `production` | Environment switch |
-| `CLIENT_URL` | `http://localhost:5173` | `https://ayushman-glb.github.io/PG-Management-System` | CORS allowed origin |
-| `API_BASE_URL` | `http://localhost:5000` | `https://pg-management-system-boxb.onrender.com` | Root API host |
-| `DATABASE_URL` | `mongodb+srv://********@pgm.7dp53y4.mongodb.net/roombae-db?...` | `mongodb+srv://********@pgm.7dp53y4.mongodb.net/roombae-db?...` | MongoDB Atlas URI |
-| `JWT_SECRET` | `********` *(64 hex)* | `********` *(64 hex)* | JWT fallback & OAuth signing |
-| `JWT_REFRESH_SECRET` | `********` *(64 hex)* | `********` *(64 hex)* | Refresh token HMAC secret |
-| `CSRF_SECRET` | `********` *(64 hex)* | `********` *(64 hex)* | Double-submit CSRF secret |
-| `SOAP_BILLING_API_KEY`| `********` *(64 hex)* | `********` *(64 hex)* | SOAP `/soap/billing` API key |
-| `CLOUDINARY_CLOUD_NAME`| `RoomBae` | `RoomBae` | Cloudinary account |
-| `CLOUDINARY_API_KEY` | `********` | `********` | Cloudinary API Key |
-| `CLOUDINARY_API_SECRET`| `********` | `********` | Cloudinary API Secret |
-| `RAZORPAY_KEY_ID` | `rzp_test_TQlnZDKJSAnPV0` | `rzp_live_********` | Razorpay Client ID |
-| `RAZORPAY_KEY_SECRET` | `********` | `********` | Razorpay API Secret |
-| `TWILIO_ACCOUNT_SID` | `AC********` | `AC********` | Twilio SID |
-| `TWILIO_AUTH_TOKEN` | `********` | `********` | Twilio Auth Token |
-| `MAIL_HOST` | `smtp.gmail.com` | `smtp-relay.brevo.com` | SMTP Host |
-| `MAIL_PORT` | `587` | `587` | SMTP Port |
-| `MAIL_USER` | `ayushmansaha917@gmail.com` | `ayushman@globussoft.in` | SMTP Auth User |
-| `MAIL_APP_PASSWORD` | `********` | `********` | SMTP Auth Password |
+| Environment Variable | Required | Production Value / Description | Used In |
+|---|---|---|---|
+| `PORT` | Optional | `5000` (Listening port) | `server.ts` |
+| `NODE_ENV` | Required | `production` \| `development` \| `test` | `env.ts` |
+| `DATABASE_URL` | Required | `mongodb+srv://...` (MongoDB Atlas URI) | `prisma.ts` |
+| `JWT_SECRET` | Required | RSA-2048 Private Key or 256-bit secret string | `JwtTokenService.ts` |
+| `JWT_ACCESS_EXPIRATION` | Optional | `15m` (Access token TTL) | `JwtTokenService.ts` |
+| `JWT_REFRESH_EXPIRATION` | Optional | `7d` (Refresh token TTL) | `JwtTokenService.ts` |
+| `CSRF_SECRET` | Required | HMAC-SHA256 secret for CSRF double-submit | `csrfMiddleware.ts` |
+| `CORS_ORIGIN` | Required | `https://ayushman-glb.github.io` | `corsOrigins.ts` |
+| `CLOUDINARY_CLOUD_NAME` | Optional | Cloudinary cloud identifier | `cloudinary.ts` |
+| `CLOUDINARY_API_KEY` | Optional | Cloudinary API Key | `cloudinary.ts` |
+| `CLOUDINARY_API_SECRET` | Optional | Cloudinary API Secret | `cloudinary.ts` |
+| `RAZORPAY_KEY_ID` | Optional | Razorpay Merchant Key | `payment.service.ts` |
+| `RAZORPAY_KEY_SECRET` | Optional | Razorpay Merchant Secret | `payment.service.ts` |
+| `TWILIO_ACCOUNT_SID` | Optional | Twilio Account SID | `twilio.service.ts` |
+| `TWILIO_AUTH_TOKEN` | Optional | Twilio Auth Token | `twilio.service.ts` |
+| `MAIL_HOST` / `MAIL_PORT`| Optional | SMTP Server host & port (`587`) | `email.service.ts` |
 
 ---
 
-# 20. Error Handling Architecture
+# 22. Enterprise Error Handling & Resilience Architecture
 
-RoomBae uses a centralized `AppError` class and global error handler in `backend/src/middleware/errorMiddleware.ts`.
+### 22.1 Error Mapping Table
 
-```mermaid
-flowchart TD
-    Error[Exception Thrown] --> Catch[Global Error Middleware]
-    Catch --> TypeCheck{Error Type}
-    TypeCheck -->|AppError| FormatApp[Format Custom AppError Code & Status]
-    TypeCheck -->|Prisma P2002| FormatPrisma[409 Conflict: DUPLICATE_ENTRY]
-    TypeCheck -->|JsonWebTokenError| FormatJWT[401 Unauthorized: INVALID_TOKEN]
-    TypeCheck -->|TokenExpiredError| FormatExpired[401 Unauthorized: TOKEN_EXPIRED]
-    TypeCheck -->|MulterError| FormatMulter[400 Bad Request: MULTIPART_ERROR]
-    TypeCheck -->|Unhandled 500| Format500[500 Internal Server Error: INTERNAL_SERVER_ERROR]
-    
-    FormatApp --> Serialize[ApiResponse.error Envelope]
-    FormatPrisma --> Serialize
-    FormatJWT --> Serialize
-    FormatExpired --> Serialize
-    FormatMulter --> Serialize
-    Format500 --> Serialize
-```
+| Error Type / Exception | HTTP Status | Error Code | Client Remediation Action |
+|---|---|---|---|
+| `ZodError` | `400 Bad Request` | `VALIDATION_ERROR` | `check_input` |
+| `SyntaxError` (Malformed JSON) | `400 Bad Request` | `INVALID_JSON` | `check_payload_syntax` |
+| `MulterError` (Upload Failure) | `400 Bad Request` | `FILE_UPLOAD_ERROR` | `check_file_format_and_size` |
+| `JsonWebTokenError` | `401 Unauthorized` | `INVALID_TOKEN` | `re_authenticate` |
+| `TokenExpiredError` | `401 Unauthorized` | `TOKEN_EXPIRED` | `refresh_token` |
+| `CSRF_MISSING` / `CSRF_INVALID` | `403 Forbidden` | `CSRF_INVALID` | `retry` |
+| `AppError(..., 403)` | `403 Forbidden` | `FORBIDDEN` | `contact_administrator` |
+| `Prisma P2002` (Unique Constraint) | `409 Conflict` | `DUPLICATE_RESOURCE` | `use_unique_identifier` |
+| `Prisma P2025` (Record Not Found) | `404 Not Found` | `RESOURCE_NOT_FOUND` | `verify_resource_id` |
+| Unhandled Exceptions | `500 Server Error` | `INTERNAL_SERVER_ERROR` | `contact_support` |
 
 ---
 
-# 21. Module Dependency Architecture
+# 23. Module Dependency Architecture
 
 ```mermaid
 graph TD
-    subgraph AuthModule ["Auth Module"]
-        AC[AuthController] --> AS[AuthService]
-        AS --> TVS[TokenVersionService]
-        AS --> SRS[SessionRevocationService]
-        AS --> UR[UserRepository]
-    end
+    AuthController --> AuthService
+    AuthService --> AuthRepository
+    AuthRepository --> PrismaClient
 
-    subgraph PropertyModule ["Property & Inventory Module"]
-        PC[PropertyController] --> PS[PropertyService]
-        RC[RoomController] --> RS[RoomService]
-        BC[BedController] --> BS[BedService]
-        PS --> PR[PropertyRepository]
-        RS --> RR[RoomRepository]
-        BS --> BR[BedRepository]
-    end
+    PropertyController --> PropertyService
+    PropertyService --> PropertyRepository
+    PropertyRepository --> PrismaClient
 
-    subgraph ResidentModule ["Resident & Operations Module"]
-        ResC[ResidentController] --> ResS[ResidentService]
-        ResS --> ResR[ResidentRepository]
-        ResS --> BS
-    end
+    ResidentController --> ResidentService
+    ResidentService --> ResidentRepository
+    ResidentRepository --> PrismaClient
 
-    subgraph BillingModule ["Billing & Payments Module"]
-        PayC[PaymentController] --> PayS[PaymentService]
-        BillC[BillingController] --> BillS[BillingService]
-        PayS --> PayR[PaymentRepository]
-        BillS --> BillR[BillingRepository]
-        PayS --> DocS[DocumentService]
-    end
+    BillingController --> BillingService
+    BillingService --> BillingRepository
+    BillingRepository --> PrismaClient
 
-    UR --> Prisma[(Prisma ORM)]
-    PR --> Prisma
-    RR --> Prisma
-    BR --> Prisma
-    ResR --> Prisma
-    PayR --> Prisma
-    BillR --> Prisma
+    ComplaintController --> ComplaintService
+    ComplaintService --> ComplaintRepository
+    ComplaintRepository --> PrismaClient
+
+    PaymentController --> PaymentService
+    PaymentService --> BillingRepository
+    PaymentService --> RazorpayAPI["Razorpay API"]
+
+    ResidentManagementController --> ResidentManagementService
+    ResidentManagementService --> ResidentManagementRepository
+    ResidentManagementRepository --> PrismaClient
 ```
 
 ---
 
-# 22. Complete API Inventory Master Catalog
+# 24. Master API Route & Operational Inventory
 
-| Method | Endpoint | Primary Controller | Business Service | Middleware Applied | Authentication |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/health` | Health Check | System Probe | None | Public |
-| `GET` | `/.well-known/jwks.json` | `JwksService` | `JwtKeyService` | None | Public |
-| `GET` | `/soap/billing?wsdl` | `setupSoapServer` | `BillingService` | None | Public |
-| `POST` | `/soap/billing` | `soapServiceImplementation`| `BillingService` | `soapBillingLimiter`, `soapBillingAuth`, `soapXxePreFilter` | `X-API-Key` |
-| `GET` | `/api/v1/auth/csrf-token` | CSRF Middleware | `createSignedCsrfToken` | `csrfBootstrapLimiter` | Public |
-| `POST` | `/api/v1/auth/register` | `AuthController` | `AuthService` | `registerLimiter`, `validate(RegisterSchema)` | Public |
-| `POST` | `/api/v1/auth/login` | `AuthController` | `AuthService` | `loginLimiter`, `validate(LoginSchema)` | Public |
-| `POST` | `/api/v1/auth/refresh-token` | `AuthController` | `AuthService` | `refreshTokenLimiter`, `validateCsrf` | Cookie |
-| `POST` | `/api/v1/auth/logout` | `AuthController` | `AuthService` | `validateCsrf` | Optional |
-| `POST` | `/api/v1/auth/logout-all` | `AuthController` | `SessionRevocationService` | `authenticate`, `validateCsrf` | Bearer JWT |
-| `GET` | `/api/v1/auth/me` | `AuthController` | `AuthService` | `authenticate` | Bearer JWT |
-| `POST` | `/api/v1/auth/phone/send-otp` | `PhoneAuthController` | `PhoneAuthService` | `sendOtpLimiter`, `validate(SendOtpSchema)` | Public |
-| `POST` | `/api/v1/auth/phone/verify-otp`| `PhoneAuthController` | `PhoneAuthService` | `verifyOtpLimiter`, `validate(VerifyOtpSchema)` | Public |
-| `POST` | `/api/v1/security/devices/identify`| `DeviceController` | `DeviceService` | `authenticate` | Bearer JWT |
-| `GET` | `/api/v1/security/devices` | `DeviceController` | `DeviceService` | `authenticate` | Bearer JWT |
-| `PATCH` | `/api/v1/security/devices/:id/trust`| `DeviceController` | `DeviceService` | `authenticate` | Bearer JWT |
-| `POST` | `/api/v1/security/devices/:id/revoke`| `DeviceController` | `DeviceService` | `authenticate` | Bearer JWT |
-| `POST` | `/api/v1/owners/onboard` | `OwnerController` | `OwnerOnboardingService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `GET` | `/api/v1/properties/public` | `PropertyController` | `PropertyService` | None | Public |
-| `POST` | `/api/v1/properties` | `PropertyController` | `PropertyService` | `authenticate`, `authorize(OWNER)`, `requireKycApproved` | Bearer JWT (Owner) |
-| `PUT` | `/api/v1/rooms/:id/convert` | `RoomController` | `RoomService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `POST` | `/api/v1/rooms/transfer-requests`| `RoomController` | `RoomService` | `authenticate` | Bearer JWT |
-| `PUT` | `/api/v1/beds/:id/status` | `BedController` | `BedService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `POST` | `/api/v1/beds/holds` | `BedController` | `BedService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `DELETE`| `/api/v1/beds/holds/:id` | `BedController` | `BedService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `GET` | `/api/v1/residents/directory`| `ResidentController` | `ResidentService` | `authenticate`, `authorize(OWNER, ADMIN)` | Bearer JWT |
-| `GET` | `/api/v1/residents/portal/me`| `ResidentController` | `ResidentService` | `authenticate`, `authorize(RESIDENT)` | Bearer JWT |
-| `POST` | `/api/v1/residents/onboard` | `ResidentController` | `ResidentService` | `authenticate` | Bearer JWT |
-| `PATCH` | `/api/v1/residents/:id/status`| `ResidentController` | `ResidentService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `POST` | `/api/v1/payments/create-order`| `PaymentController` | `PaymentService` | `authenticate`, `idempotencyMiddleware` | Bearer JWT |
-| `POST` | `/api/v1/payments/verify` | `PaymentController` | `PaymentService` | `authenticate`, `idempotencyMiddleware` | Bearer JWT |
-| `POST` | `/api/v1/payments/webhook` | `PaymentController` | `PaymentService` | None (Webhook HMAC Verified) | Razorpay Sig |
-| `GET` | `/api/v1/documents/invoice/:id`| `DocumentController` | `DocumentService` | `authenticate` | Bearer JWT |
-| `GET` | `/api/v1/documents/agreement/:id`| `DocumentController` | `DocumentService` | `authenticate` | Bearer JWT |
-| `POST` | `/api/v1/complaints` | `ComplaintController` | `ComplaintService` | `authenticate` | Bearer JWT |
-| `PUT` | `/api/v1/complaints/:id/status`| `ComplaintController` | `ComplaintService` | `authenticate`, `authorize(OWNER)` | Bearer JWT (Owner) |
-| `POST` | `/api/v1/media/upload/single`| `MediaController` | `CloudinaryService` | `authenticate`, `uploadLimiter`, `multer` | Bearer JWT |
+The following table inventories every route registered in `backend/src/routes/apiRouter.ts`:
 
----
-
-# 23. Complete Project Repository Structure
-
-```text
-PG-Management-System/
-├── .agents/                           # AI pair programming rules & developer profiles
-├── .env.example                       # Environment template with dummy variables
-├── api_design.md                      # Authoritative REST API catalog & design reference
-├── SYSTEM.MD                          # Authoritative System & Communication Architecture (This file)
-│
-├── frontend/                          # Client Application (React 19 + TypeScript + Vite)
-│   ├── index.html                     # HTML Entry Point
-│   ├── package.json                   # Dependencies & Scripts
-│   ├── tsconfig.json                  # TypeScript Compiler Configuration
-│   ├── vite.config.ts                 # Vite Bundler & Path Alias Configuration
-│   ├── .env.development               # Local Frontend Environment Variables
-│   ├── .env.production                # Production Frontend Environment Variables
-│   └── src/
-│       ├── main.tsx                   # React DOM Root Injection
-│       ├── app/                       # Application Core (App.tsx, routes.tsx, providers.tsx)
-│       ├── components/                # Shared UI Components (Modals, Buttons, Skeletons, Layouts)
-│       ├── config/                    # Environment & API Configurations (env.ts, api.ts)
-│       ├── features/                  # Domain-Driven Feature Slices
-│       │   ├── analytics/             # Revenue & Occupancy Intelligence Views
-│       │   ├── auth/                  # Login, Register, 2FA, OTP Modals
-│       │   ├── beds/                  # Bed Matrix & Bed Management Modals
-│       │   ├── billing/               # Invoices, Payment History, PayRentModal
-│       │   ├── complaints/            # Maintenance Tickets & Kanban Boards
-│       │   ├── dashboard/             # Bento Dashboard & Admin Console
-│       │   ├── operations/            # Room, Bed, Visitor, and Operations Management
-│       │   ├── owners/                # 10-Step Owner Onboarding Wizard
-│       │   ├── properties/            # Public Marketplace, PG Listing & Details
-│       │   ├── residents/             # Resident Directory & Resident Self-Service Portal
-│       │   ├── rooms/                 # Room Layouts & Transfer Modals
-│       │   ├── search/                # Tours, Shortlists, Applications, Chat Messaging
-│       │   └── settings/              # FingerprintJS Device Management & Security
-│       ├── hooks/                     # Custom Hooks (useAuth, useDocumentDownload, useRealtime)
-│       ├── services/                  # Typed API Client & Service Wrappers (api.ts, auth.service.ts)
-│       └── theme/                     # Dark / Light Theme Context & CSS Design Tokens
-│
-└── backend/                           # Backend Application (Node.js + Express + Prisma + MongoDB)
-    ├── package.json                   # Dependencies & Scripts
-    ├── tsconfig.json                  # TypeScript Compiler Configuration
-    ├── .env.development               # Local Backend Environment Variables
-    ├── .env.production                # Production Backend Environment Variables
-    ├── prisma/
-    │   ├── schema.prisma              # Authoritative MongoDB Data Models & Collections
-    │   └── seed.ts                    # Development Data Seeder
-    └── src/
-        ├── app.ts                     # Core Express App Assembly & Security Pipeline
-        ├── server.ts                  # Server Bootstrap, DNS Validation & Socket.IO Init
-        ├── cluster.ts                 # Multi-core Cluster Fork Manager
-        ├── config/                    # Environment (Zod), Prisma, Cloudinary, Passport Configs
-        ├── container/                 # Dependency Injection Container wiring services & repos
-        ├── controllers/               # Dashboard, Media, Upload, Resident Controllers
-        ├── infrastructure/            # Crypto, PDFKit, Twilio, Nodemailer Infrastructure
-        ├── interfaces/                # TypeScript Contracts & Interfaces
-        ├── jobs/                      # Background Cron Jobs (Rent dues, auto-lock releases)
-        ├── middleware/                # Auth, RBAC, KYC, RateLimiter, CSRF, Idempotency Middlewares
-        ├── modules/                   # 22+ Domain Feature Packages
-        ├── repositories/              # Prisma Data Access Repositories
-        ├── routes/                    # apiRouter.ts Central Route Registry
-        ├── services/                  # Business Logic Domain Services
-        ├── socket/                        # Socket.IO Real-Time Server & Room Handlers
-        └── utils/                     # ApiResponse, AppError, Logger, Token Blacklist
-```
-
----
-
-> **End of Technical Blueprint** — Maintainer: RoomBae Core Architecture & Engineering Team (`v2.4.0`)
+| Method | Endpoint | Frontend Page | Controller Handler | Service Method | Middleware | Auth Required | Database Model |
+|---|---|---|---|---|---|---|---|
+| `GET` | `/health/pipeline-test` | Diagnostic | Inline Handler | N/A | None | Public | N/A |
+| `GET` | `/auth/csrf-token` | Global | `generateCsrfToken` | `createSignedCsrfToken` | None | Public | N/A |
+| `POST` | `/auth/register` | `/auth` | `AuthController.register` | `AuthService.register` | `validateCsrf` | Public | `User`, `OwnerProfile` |
+| `POST` | `/auth/login` | `/auth` | `AuthController.login` | `AuthService.login` | `validateCsrf`, `authLimiter` | Public | `User`, `RefreshToken` |
+| `POST` | `/auth/send-otp` | `/auth` | `AuthController.sendOtp` | `AuthService.sendOtp` | `validateCsrf`, `otpLimiter` | Public | `OtpToken` |
+| `POST` | `/auth/verify-otp` | `/auth` | `AuthController.verifyOtp` | `AuthService.verifyOtp` | `validateCsrf`, `otpLimiter` | Public | `OtpToken`, `User` |
+| `POST` | `/auth/refresh-token` | Global | `AuthController.refreshToken` | `AuthService.refreshToken` | `validateCsrf` | Public | `RefreshToken`, `User` |
+| `POST` | `/auth/logout` | Global | `AuthController.logout` | `AuthService.logout` | `validateCsrf`, `authenticate` | Authenticated | `RefreshToken` |
+| `GET` | `/auth/me` | Global | `AuthController.getMe` | `AuthService.getProfile` | `authenticate` | Authenticated | `User` |
+| `GET` | `/security/devices` | `/profile` | `DeviceController.listDevices` | `DeviceService.listDevices` | `authenticate` | Authenticated | `UserDevice` |
+| `DELETE`| `/security/devices/:id` | `/profile` | `DeviceController.revokeDevice` | `DeviceService.revokeDevice` | `validateCsrf`, `authenticate` | Authenticated | `UserDevice` |
+| `GET` | `/properties/search` | `/explore` | `PropertyController.searchPublic` | `PropertyService.searchPublic` | None | Public | `PGProperty`, `Room` |
+| `POST` | `/properties` | `/properties` | `PropertyController.create` | `PropertyService.createProperty` | `validateCsrf`, `authenticate`, `requireKycApproved` | `OWNER` | `PGProperty` |
+| `GET` | `/properties/owner-summary`| `/properties`| `PropertyController.getOwnerSummary`| `PropertyService.getOwnerSummary`| `authenticate` | `OWNER`, `ADMIN` | `PGProperty`, `Bed` |
+| `GET` | `/rooms/pms` | `/rooms` | `RoomController.list` | `RoomService.listRooms` | `authenticate` | `OWNER`, `STAFF` | `Room`, `Bed` |
+| `POST` | `/beds/hold` | `/beds` | `ResidentManagementController.createBedHold`| `ResidentManagementService.createBedHold`| `validateCsrf`, `authenticate` | `OWNER`, `STAFF` | `BedHold`, `Bed` |
+| `POST` | `/beds/hold/:holdId/release`| `/beds`| `ResidentManagementController.releaseBedHold`| `ResidentManagementService.releaseBedHold`| `validateCsrf`, `authenticate` | `OWNER`, `STAFF` | `BedHold`, `Bed` |
+| `POST` | `/residents/onboard` | `/residents` | `ResidentController.onboard` | `ResidentService.onboardResident` | `validateCsrf`, `authenticate` | `OWNER`, `STAFF` | `Resident`, `Bed` |
+| `GET` | `/residents/directory` | `/residents` | `ResidentController.getDirectory` | `ResidentService.getDirectory` | `authenticate` | `OWNER`, `STAFF` | `Resident`, `Room` |
+| `GET` | `/residents/me` | `/portal` | `ResidentController.getMe` | `ResidentService.getResidentProfile` | `authenticate` | `RESIDENT` | `Resident`, `Bed` |
+| `GET` | `/billing/invoices` | `/billing` | `BillingController.listInvoices` | `BillingService.listInvoices` | `authenticate` | Authenticated | `BillingInvoice` |
+| `POST` | `/payments/razorpay/create-order`| `/billing`| `PaymentController.createOrder`| `PaymentService.createOrder`| `validateCsrf`, `authenticate` | `RESIDENT` | `PaymentTransaction`|
+| `POST` | `/payments/razorpay/verify`| `/billing`| `PaymentController.verifyPayment`| `PaymentService.verifyPayment`| `validateCsrf`, `authenticate` | `RESIDENT` | `PaymentTransaction`|
+| `POST` | `/complaints` | `/complaints`| `ComplaintController.create` | `ComplaintService.createComplaint` | `validateCsrf`, `authenticate` | `RESIDENT` | `Complaint` |
+| `PATCH`| `/complaints/:id/status` | `/complaints`| `ComplaintController.updateStatus` | `ComplaintService.updateStatus` | `validateCsrf`, `authenticate` | `OWNER`, `STAFF` | `Complaint` |
+| `POST` | `/agreements/:id/sign` | `/agreements`| `AgreementController.sign` | `AgreementService.signAgreement` | `validateCsrf`, `authenticate` | `RESIDENT`, `OWNER`| `RentalAgreement` |
+| `GET` | `/documents/agreement/:id` | `/agreements`| `DocumentController.downloadAgreement`| `DocumentService.getAgreementPdf`| `authenticate` | Authenticated | `RentalAgreement` |
+| `POST` | `/tours` | `/tours` | `ToursController.createTour` | `ToursService.requestTour` | `validateCsrf`, `authenticate` | `RESIDENT` | `TourBooking` |
+| `POST` | `/shortlist/:id` | `/explore` | `ToursController.toggleShortlist` | `ToursService.toggleShortlist` | `validateCsrf`, `authenticate` | `RESIDENT` | `Shortlist` |
+| `POST` | `/applications` | `/apps` | `ApplicationsController.create` | `ApplicationsService.createApplication`| `validateCsrf`, `authenticate` | `RESIDENT` | `RentalApplication`|
+| `POST` | `/messages` | `/messages` | `MessagesController.sendMessage` | `MessagesService.sendMessage` | `validateCsrf`, `authenticate` | Authenticated | `ChatMessage` |
+| `GET` | `/move-in/:propertyId` | `/move-in` | `MoveInController.getInfo` | `MoveInService.getMoveInInfo` | `authenticate` | `RESIDENT` | `Resident`, `Room` |
+| `POST` | `/media/upload/single` | Global | `MediaController.uploadSingle` | `CloudinaryService.upload` | `validateCsrf`, `authenticate`, `uploadLimiter` | Authenticated | `Cloudinary Asset` |
+| `GET` | `/dashboard/overview` | `/dashboard` | `DashboardController.getOverview` | `PropertyService.getOverview` | `authenticate` | `OWNER`, `ADMIN` | `PGProperty`, `Bed` |
+| `GET` | `/settings/audit-logs` | `/admin` | `ResidentManagementController.getAuditLogs`| `ResidentManagementService.getAuditLogs`| `authenticate` | `OWNER`, `ADMIN` | `AuditLog` |

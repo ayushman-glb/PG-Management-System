@@ -7,6 +7,7 @@ const router = Router();
 
 // ── Public Marketplace Endpoints ──────────────────────────────────────────────
 router.get('/', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
+router.get('/search', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
 router.get('/public', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
 router.get('/:id', (req, res, next) => Container.propertyController.getById(req, res, next));
 

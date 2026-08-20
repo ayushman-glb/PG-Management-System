@@ -3,6 +3,7 @@ import {
   validateCsrf,
   createSignedCsrfToken,
   verifyCsrfTokenSignature,
+  safeCompareCsrf,
 } from '../../middleware/csrfMiddleware';
 
 describe('CSRF Double Submit Cookie Middleware', () => {
@@ -130,5 +131,16 @@ describe('CSRF Double Submit Cookie Middleware', () => {
     expect(verifyCsrfTokenSignature('foo.bar.baz')).toBe(false);
     expect(verifyCsrfTokenSignature('valid_token_123456789012345678901234')).toBe(false);
   });
+
+  test('safeCompareCsrf handles null, undefined, mismatched lengths, and exact matches crash-proof', () => {
+    expect(safeCompareCsrf(null, 'token')).toBe(false);
+    expect(safeCompareCsrf('token', null)).toBe(false);
+    expect(safeCompareCsrf(undefined, undefined)).toBe(false);
+    expect(safeCompareCsrf('', '')).toBe(false);
+    expect(safeCompareCsrf('short', 'longer_token')).toBe(false);
+    expect(safeCompareCsrf('same_length_1', 'same_length_2')).toBe(false);
+    expect(safeCompareCsrf('exact_match_token_12345', 'exact_match_token_12345')).toBe(true);
+  });
 });
+
 

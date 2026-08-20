@@ -14,7 +14,9 @@ import {
   loginLimiter,
   registerLimiter,
   sendOtpLimiter,
+  verifyOtpLimiter,
   phoneVerifyLimiter,
+  refreshTokenLimiter,
   csrfBootstrapLimiter,
 } from "../../middleware/rateLimiter";
 import { generateCsrfToken } from '../../middleware/csrfMiddleware';
@@ -67,8 +69,10 @@ router.post(
   (req, res, next) => Container.authController.sendOtp(req, res, next),
 );
 
-router.post("/verify-otp", (req, res, next) =>
-  Container.authController.verifyOtp(req, res, next),
+router.post(
+  "/verify-otp",
+  verifyOtpLimiter,
+  (req, res, next) => Container.authController.verifyOtp(req, res, next)
 );
 
 router.post("/logout", (req, res, next) =>
@@ -79,8 +83,10 @@ router.post("/logout-all", authenticate, (req, res, next) =>
   Container.authController.logoutAll(req, res, next),
 );
 
-router.post("/refresh-token", (req, res, next) =>
-  Container.authController.refreshToken(req, res, next),
+router.post(
+  "/refresh-token",
+  refreshTokenLimiter,
+  (req, res, next) => Container.authController.refreshToken(req, res, next)
 );
 
 router.post("/test-email", (req, res, next) =>

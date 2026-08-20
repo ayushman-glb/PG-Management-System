@@ -2,36 +2,32 @@ import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 
 const SUPER_ADMIN = {
-  name: "Super Admin",
-  email: "superadmin@roombae.com",
-  pass: "SuperAdmin_RB_2026!",
+  name: "GOD",
+  email: "ayushman@globussoft.in",
+  pass: "987456",
   phone: "+919900000001",
   role: "SUPER_ADMIN",
 };
 
-const ADMIN = {
-  name: "Platform Admin",
-  email: "admin@roombae.com",
-  pass: "Admin_RoomBae_7890!",
-  phone: "+919900000002",
-  role: "ADMIN",
+const OWNER = {
+  name: "Ayushman Saha",
+  email: "ayushmansaha917@gmail.com",
+  pass: "123456",
+  phone: "+916297750585",
+  role: "OWNER",
 };
 
-const OWNERS = [
-  { name: "Rajesh Sharma", email: "rajesh.owner@roombae.com", pass: "Owner_Rajesh_1001!", phone: "+919876543210" },
-  { name: "Priya Venkatesh", email: "priya.owner@roombae.com", pass: "Owner_Priya_1002!", phone: "+919876543211" },
-  { name: "Amitabh Malhotra", email: "amitabh.owner@roombae.com", pass: "Owner_Amitabh_1003!", phone: "+919876543212" },
-  { name: "Sunita Aggarwal", email: "sunita.owner@roombae.com", pass: "Owner_Sunita_1004!", phone: "+919876543213" },
-  { name: "Vikram Joshi", email: "vikram.owner@roombae.com", pass: "Owner_Vikram_1005!", phone: "+919876543214" },
-  { name: "Ananya Deshmukh", email: "ananya.owner@roombae.com", pass: "Owner_Ananya_1006!", phone: "+919876543215" },
-  { name: "Suresh Reddy", email: "suresh.owner@roombae.com", pass: "Owner_Suresh_1007!", phone: "+919876543216" },
-  { name: "Kavitha Rao", email: "kavitha.owner@roombae.com", pass: "Owner_Kavitha_1008!", phone: "+919876543217" },
-  { name: "Rohan Gupta", email: "rohan.owner@roombae.com", pass: "Owner_Rohan_1009!", phone: "+919876543218" },
-  { name: "Meenakshi Sundaram", email: "meenakshi.owner@roombae.com", pass: "Owner_Meenakshi_1010!", phone: "+919876543219" },
-];
+const RESIDENT = {
+  name: "Ankur Saha",
+  email: "ankursaha985@gmail.com",
+  pass: "654123",
+  phone: "+918653826643",
+  residentCode: "RES1001",
+  role: "RESIDENT",
+};
 
 async function seedDatabase(targetDbName: string) {
-  const uri = "mongodb+srv://ayushman_db_user:Ayushman223344@pgm.7dp53y4.mongodb.net/?appName=pgM";
+  const uri = process.env.DATABASE_URL || "mongodb+srv://ayushman_db_user:Ayushman223344@pgm.7dp53y4.mongodb.net/?appName=pgM";
   const client = new MongoClient(uri);
   await client.connect();
 
@@ -41,9 +37,9 @@ async function seedDatabase(targetDbName: string) {
   const ownersCol = db.collection("Owner");
   const residentsCol = db.collection("Resident");
 
-  // 1. Seed Super Admin
+  // 1. Seed Super Admin ("GOD")
   const saHash = await bcrypt.hash(SUPER_ADMIN.pass, 12);
-  const saRes = await usersCol.findOneAndUpdate(
+  await usersCol.findOneAndUpdate(
     { email: SUPER_ADMIN.email },
     {
       $set: {
@@ -71,19 +67,19 @@ async function seedDatabase(targetDbName: string) {
     },
     { upsert: true, returnDocument: "after" }
   );
-  console.log(`✓ Super Admin synced in ${targetDbName}: ${SUPER_ADMIN.email}`);
+  console.log(`✓ Super Admin ("GOD") synced in ${targetDbName}: ${SUPER_ADMIN.email}`);
 
-  // 2. Seed Platform Admin
-  const adminHash = await bcrypt.hash(ADMIN.pass, 12);
-  await usersCol.findOneAndUpdate(
-    { email: ADMIN.email },
+  // 2. Seed Owner (Ayushman Saha)
+  const ownerHash = await bcrypt.hash(OWNER.pass, 12);
+  const ownerUserRes = await usersCol.findOneAndUpdate(
+    { email: OWNER.email },
     {
       $set: {
-        name: ADMIN.name,
-        email: ADMIN.email,
-        phone: ADMIN.phone,
-        role: ADMIN.role,
-        passwordHash: adminHash,
+        name: OWNER.name,
+        email: OWNER.email,
+        phone: OWNER.phone,
+        role: OWNER.role,
+        passwordHash: ownerHash,
         phoneVerified: true,
         isPhoneVerified: true,
         emailVerified: true,
@@ -103,113 +99,48 @@ async function seedDatabase(targetDbName: string) {
     },
     { upsert: true, returnDocument: "after" }
   );
-  console.log(`✓ Platform Admin synced in ${targetDbName}: ${ADMIN.email}`);
 
-  // 3. Seed / Update 10 Owners
-  for (const o of OWNERS) {
-    const ownerHash = await bcrypt.hash(o.pass, 12);
-    const existingUser = await usersCol.findOne({ email: o.email });
-    let userId: ObjectId;
-    if (existingUser) {
-      userId = existingUser._id;
-      await usersCol.updateOne(
-        { _id: userId },
-        {
-          $set: {
-            name: o.name,
-            phone: o.phone,
-            role: "OWNER",
-            passwordHash: ownerHash,
-            phoneVerified: true,
-            isPhoneVerified: true,
-            emailVerified: true,
-            accountStatus: "ACTIVE",
-            verificationStatus: "VERIFIED",
-            updatedAt: new Date(),
-          },
-        }
-      );
-    } else {
-      userId = new ObjectId();
-      await usersCol.insertOne({
-        _id: userId,
-        email: o.email,
-        name: o.name,
-        phone: o.phone,
-        role: "OWNER",
-        passwordHash: ownerHash,
-        phoneVerified: true,
-        isPhoneVerified: true,
-        emailVerified: true,
-        accountStatus: "ACTIVE",
-        verificationStatus: "VERIFIED",
-        termsAccepted: true,
-        authProvider: "LOCAL",
-        twoFactorEnabled: false,
-        is2FAEnabled: false,
-        tokenVersion: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-
-    // Ensure Owner profile exists
-    const existingOwner = await ownersCol.findOne({ userId });
-    if (!existingOwner) {
-      await ownersCol.insertOne({
-        _id: new ObjectId(),
-        userId,
-        name: o.name,
-        businessName: `${o.name}'s Properties`,
-        phone: o.phone,
-        email: o.email,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-    console.log(`✓ Owner synced in ${targetDbName}: ${o.email}`);
+  const ownerUserId = ownerUserRes?._id;
+  if (ownerUserId) {
+    await ownersCol.findOneAndUpdate(
+      { userId: ownerUserId },
+      {
+        $set: {
+          name: OWNER.name,
+          email: OWNER.email,
+          phone: OWNER.phone,
+          photo: "https://res.cloudinary.com/vmivgp12/image/upload/v1/RoomBae-development/avatars/ayushman_owner.webp",
+          address: "Suite 401, Commercial Hub, Koramangala 4th Block, Bengaluru, Karnataka 560034",
+          aadhaarNumber: "0000-0000-0000",
+          panNumber: "ABCDE1234F",
+          upiId: "ayushman@okaxis",
+          bankName: "HDFC Bank Enterprise",
+          accountNumber: "50100234567890",
+          ifscCode: "HDFC0001234",
+          emergencyContact: "+919900000001",
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          _id: new ObjectId(),
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
   }
+  console.log(`✓ Owner (Ayushman Saha) synced in ${targetDbName}: ${OWNER.email}`);
 
-  // 4. Seed / Update Residents (resident1 to resident10)
-  for (let i = 1; i <= 10; i++) {
-    const resCode = `RES${1000 + i}`;
-    const email = `resident${i}@roombae.com`;
-    const pass = `Resident_${resCode}_Pass!`;
-    const phone = `+9190000${20000 + i}`;
-    const name = `Resident ${i}`;
-
-    const resHash = await bcrypt.hash(pass, 12);
-    const existingUser = await usersCol.findOne({ email });
-    let userId: ObjectId;
-    if (existingUser) {
-      userId = existingUser._id;
-      await usersCol.updateOne(
-        { _id: userId },
-        {
-          $set: {
-            name,
-            phone,
-            role: "RESIDENT",
-            residentCode: resCode,
-            passwordHash: resHash,
-            phoneVerified: true,
-            isPhoneVerified: true,
-            emailVerified: true,
-            accountStatus: "ACTIVE",
-            verificationStatus: "VERIFIED",
-            updatedAt: new Date(),
-          },
-        }
-      );
-    } else {
-      userId = new ObjectId();
-      await usersCol.insertOne({
-        _id: userId,
-        email,
-        name,
-        phone,
-        role: "RESIDENT",
-        residentCode: resCode,
+  // 3. Seed Resident (Ankur Saha)
+  const resHash = await bcrypt.hash(RESIDENT.pass, 12);
+  const residentUserRes = await usersCol.findOneAndUpdate(
+    { email: RESIDENT.email },
+    {
+      $set: {
+        name: RESIDENT.name,
+        email: RESIDENT.email,
+        phone: RESIDENT.phone,
+        residentCode: RESIDENT.residentCode,
+        role: RESIDENT.role,
         passwordHash: resHash,
         phoneVerified: true,
         isPhoneVerified: true,
@@ -221,36 +152,50 @@ async function seedDatabase(targetDbName: string) {
         twoFactorEnabled: false,
         is2FAEnabled: false,
         tokenVersion: 0,
-        createdAt: new Date(),
         updatedAt: new Date(),
-      });
-    }
-
-    const existingRes = await residentsCol.findOne({ userId });
-    if (!existingRes) {
-      await residentsCol.insertOne({
+      },
+      $setOnInsert: {
         _id: new ObjectId(),
-        userId,
-        name,
-        phone,
-        email,
-        residentCode: resCode,
-        status: "ACTIVE",
         createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    } else if (!existingRes.residentCode) {
-      await residentsCol.updateOne({ _id: existingRes._id }, { $set: { residentCode: resCode } });
-    }
-    console.log(`✓ Resident synced in ${targetDbName}: ${email} (${resCode})`);
+      },
+    },
+    { upsert: true, returnDocument: "after" }
+  );
+
+  const residentUserId = residentUserRes?._id;
+  if (residentUserId) {
+    await residentsCol.findOneAndUpdate(
+      { userId: residentUserId },
+      {
+        $set: {
+          name: RESIDENT.name,
+          email: RESIDENT.email,
+          phone: RESIDENT.phone,
+          gender: "Male",
+          age: 24,
+          bloodGroup: "O+",
+          foodPreference: "NON_VEG",
+          status: "ACTIVE",
+          permanentAddress: "Flat 402, Green Valley Residency, Koramangala, Bengaluru, Karnataka",
+          occupation: "Software Engineer",
+          company: "Globussoft",
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          _id: new ObjectId(),
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true }
+    );
   }
+  console.log(`✓ Resident (Ankur Saha) synced in ${targetDbName}: ${RESIDENT.email}`);
 
   await client.close();
   console.log(`\n🎉 Seeding & sync completed for ${targetDbName}!`);
 }
 
 async function main() {
-  // Sync both databases to ensure 100% credential consistency regardless of which database is targeted!
   await seedDatabase("roombae_db");
   await seedDatabase("roombae-db");
 }

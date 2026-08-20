@@ -20,6 +20,7 @@ import { APP_INFO, PathResolver } from "./utils/pathResolver";
 import passport from "./config/passport";
 import { JwksService } from "./services/security/JwksService";
 import { idempotencyMiddleware } from "./middleware/idempotencyMiddleware";
+import { validateCsrf } from "./middleware/csrfMiddleware";
 
 export const app = express();
 
@@ -27,61 +28,8 @@ export const app = express();
 app.set("trust proxy", 1);
 
 // ── 1. CORS Middleware (MUST BE REGISTERED FIRST BEFORE HELMET / AUTH / OTHER MIDDLEWARES) ──
-const rawOrigins = [
-  ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
-  env.CLIENT_URL,
-  env.FRONTEND_URL,
-  "https://ayushman-glb.github.io",
-  "https://pg-management-system-boxb.onrender.com",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3000",
-];
-
-const allowedOrigins = Array.from(
-  new Set(
-    rawOrigins
-      .filter(Boolean)
-      .map((item) => {
-        const trimmed = item.trim();
-        if (!trimmed) return "";
-        try {
-          if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-            return new URL(trimmed).origin.toLowerCase();
-          }
-          return trimmed.replace(/\/$/, "").toLowerCase();
-        } catch {
-          return trimmed.replace(/\/$/, "").toLowerCase();
-        }
-      })
-      .filter(Boolean)
-  )
-);
-
-const corsMiddleware = cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    const cleanOrigin = origin.replace(/\/$/, "").toLowerCase();
-
-    // In development or local testing, allow any localhost/127.0.0.1 port
-    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(cleanOrigin);
-    if ((env.NODE_ENV || "development") === "development" && isLocalhost) {
-      return callback(null, true);
-    }
-
-    const isAllowed = allowedOrigins.includes(cleanOrigin) || isLocalhost;
-    if (isAllowed) {
-      return callback(null, true);
-    }
-    // Return callback(null, false) instead of passing an Error to avoid triggering Express 500 error handler
-    return callback(null, false);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Visitor-Id", "X-Correlation-ID", "X-Request-ID", "X-CSRF-Token", "Accept"],
-  exposedHeaders: ["X-Correlation-ID", "X-Request-ID", "X-CSRF-Token", "Set-Cookie"],
-  optionsSuccessStatus: 204,
-});
+import { corsOptions } from "./config/corsOrigins";
+const corsMiddleware = cors(corsOptions);
 
 app.use(corsMiddleware);
 app.options("*", corsMiddleware);
@@ -130,6 +78,9 @@ app.use(hpp());
 // ── Idempotency Protection ───────────────────────────────────────────────────
 app.use(idempotencyMiddleware);
 
+// ── CSRF Double-Submit Cookie Protection ─────────────────────────────────────
+app.use(validateCsrf);
+
 // Global Rate Limiting
 app.use(env.API_PREFIX, generalLimiter);
 // SOAP billing endpoint: text body parser for XML inspection + dedicated rate limiter + API-key auth + XXE pre-filter
@@ -140,6 +91,7 @@ app.use(
   soapBillingAuthMiddleware,
   soapXxePreFilter
 );
+setupSoapServer(app);
 
 
 // Swagger Documentation Endpoints — only accessible in non-production environments
@@ -317,5 +269,19 @@ app.use(env.API_PREFIX, apiRouter);
 // Initialize SOAP ERP Service
 setupSoapServer(app);
 
-// Global Error Handler
+// Catch-all 404 handler for unmatched routes (returns standard JSON error envelope)
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Cannot ${req.method} ${req.originalUrl} - Route not found`,
+    error: {
+      code: "ROUTE_NOT_FOUND",
+      message: `The endpoint ${req.method} ${req.originalUrl} does not exist on this server.`,
+      action: "verify_endpoint_url",
+    },
+  });
+});
+
+// Global Error Handler (MUST BE REGISTERED LAST AFTER ALL ROUTES & 404 HANDLER)
 app.use(globalErrorHandler);
+

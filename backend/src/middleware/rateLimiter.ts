@@ -1,4 +1,6 @@
+import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
+import { logger } from '../utils/logger';
 
 /**
  * Enterprise In-Memory Rate Limiting Configuration (Redis-Free Architecture)
@@ -6,27 +8,65 @@ import rateLimit from 'express-rate-limit';
  * Enforces sliding-window request throttling across sensitive authentication,
  * OTP dispatch, verification, SOAP billing, and CSRF bootstrap endpoints.
  */
+export const resolveClientIp = (req: Request): string => {
+  try {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    if (Array.isArray(forwarded) && forwarded.length > 0) {
+      return forwarded[0].trim();
+    }
+    return req.ip || req.socket?.remoteAddress || '127.0.0.1';
+  } catch {
+    return '127.0.0.1';
+  }
+};
+
 const createLimiter = (
   windowMs: number,
   max: number,
   message: string,
   code: string = 'TOO_MANY_REQUESTS'
-) =>
-  rateLimit({
+) => {
+  const limiter = rateLimit({
     windowMs,
     max,
     skip: () => process.env.NODE_ENV === 'test',
     standardHeaders: true,
     legacyHeaders: true,
     statusCode: 429,
-    message: {
-      success: false,
-      error: {
-        code,
+    validate: {
+      trustProxy: false,
+      xForwardedForHeader: false,
+      default: false,
+    },
+    keyGenerator: (req) => resolveClientIp(req),
+    handler: (req: Request, res: Response) => {
+      res.status(429).json({
+        success: false,
         message,
-      },
+        error: {
+          code,
+          message,
+        },
+      });
     },
   });
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      return limiter(req, res, next);
+    } catch (err: any) {
+      logger.error('RATE_LIMITER_CONFIG_ERROR: Rate limiter caught exception', {
+        code,
+        error: err?.message,
+        ip: resolveClientIp(req),
+      });
+      return next(); // Fail open gracefully rather than surface unhandled 500
+    }
+  };
+};
 
 export const generalLimiter = createLimiter(
   15 * 60 * 1000,

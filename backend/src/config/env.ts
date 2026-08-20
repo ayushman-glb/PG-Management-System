@@ -174,6 +174,7 @@ const envSchema = z.object({
   TWILIO_PHONE_NUMBER: z.string().default(""),
   SMS_OTP_LENGTH: z.string().default("6"),
   SMS_OTP_EXPIRY_MINUTES: z.string().default("10"),
+  OTP_DEV_OVERRIDE: z.string().default("false"),
 });
 
 const parseResult = envSchema.safeParse(process.env);
@@ -187,4 +188,12 @@ if (!parseResult.success) {
 }
 
 export const env = parseResult.data;
+
+// ── Mandatory Fail-Closed Startup Guard: Refuse to boot if OTP_DEV_OVERRIDE is active in production ──
+if (env.NODE_ENV === "production" && (env.OTP_DEV_OVERRIDE === "true" || process.env.OTP_DEV_OVERRIDE === "true")) {
+  const fatalMsg = "FATAL SECURITY ERROR: OTP_DEV_OVERRIDE is strictly forbidden in production mode!";
+  console.error(`🚨 ${fatalMsg}`);
+  throw new Error(fatalMsg);
+}
+
 export const resolvedPort = parseInt(env.PORT || "5000", 10);

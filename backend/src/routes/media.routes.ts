@@ -19,7 +19,7 @@ router.post(
   uploadLimiter,
   multerUpload.single('file'),
   processSecurityPipeline,
-  (req, res) => mediaController.uploadSingle(req as any, res)
+  (req, res, next) => mediaController.uploadSingle(req as any, res, next)
 );
 
 /**
@@ -30,7 +30,7 @@ router.post(
   '/upload/multiple',
   uploadLimiter,
   multerUpload.array('files', 10),
-  (req, res) => mediaController.uploadMultiple(req as any, res)
+  (req, res, next) => mediaController.uploadMultiple(req as any, res, next)
 );
 
 /**
@@ -42,31 +42,31 @@ router.put(
   uploadLimiter,
   multerUpload.single('file'),
   processSecurityPipeline,
-  (req, res) => mediaController.replaceImage(req as any, res)
+  (req, res, next) => mediaController.replaceImage(req as any, res, next)
 );
 
 /**
  * @route DELETE /api/v1/media/:publicId
  * @desc Delete a single media asset from Cloudinary and MongoDB
  */
-router.delete('/:publicId', (req, res) => mediaController.deleteImage(req as any, res));
+router.delete('/:publicId', (req, res, next) => mediaController.deleteImage(req as any, res, next));
 
 /**
  * @route POST /api/v1/media/bulk-delete
  * @desc Delete multiple media assets by publicIds
  */
-router.post('/bulk-delete', (req, res) => mediaController.bulkDeleteImages(req as any, res));
+router.post('/bulk-delete', (req, res, next) => mediaController.bulkDeleteImages(req as any, res, next));
 
 /**
  * @route GET /api/v1/media/metadata/:publicId
  * @desc Fetch Cloudinary and MongoDB metadata for an asset
  */
-router.get('/metadata/:publicId', (req, res) => mediaController.getMetadata(req as any, res));
+router.get('/metadata/:publicId', (req, res, next) => mediaController.getMetadata(req as any, res, next));
 
 /**
  * @route PATCH /api/v1/media/reorder
  * @desc Reorder multiple media asset references
  */
-router.patch('/reorder', (req, res) => mediaController.reorderImages(req as any, res));
+router.patch('/reorder', (req, res, next) => mediaController.reorderImages(req as any, res, next));
 
 export default router;

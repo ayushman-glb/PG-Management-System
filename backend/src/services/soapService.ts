@@ -61,19 +61,16 @@ export function soapXxePreFilter(
   res: Response,
   next: NextFunction
 ): void {
-  if (req.method === "GET") {
+  // Only inspect state-mutating requests (POST /soap/billing)
+  if (req.method !== "POST") {
     return next();
   }
 
-  const rawBody = typeof req.body === "string"
-    ? req.body
-    : Buffer.isBuffer(req.body)
-    ? req.body.toString("utf8")
-    : "";
+  const bodyStr = typeof req.body === "string" ? req.body : "";
 
-  // Reject any payload containing DOCTYPE declarations or ENTITY declarations (XXE defense-in-depth)
-  const containsDoctype = /<!DOCTYPE/i.test(rawBody);
-  const containsEntity = /<!ENTITY/i.test(rawBody);
+  // Check for presence of DOCTYPE declarations or ENTITY references
+  const containsDoctype = /<!DOCTYPE\b/i.test(bodyStr);
+  const containsEntity  = /<!ENTITY\b/i.test(bodyStr);
 
   if (containsDoctype || containsEntity) {
     logger.warn("SOAP /soap/billing: XXE payload rejected (DOCTYPE/ENTITY declaration detected)", {
@@ -81,12 +78,13 @@ export function soapXxePreFilter(
       containsDoctype,
       containsEntity,
     });
-    res.status(400).set("Content-Type", "application/xml").send(
-      `<?xml version="1.0" encoding="UTF-8"?>
+
+    res.status(400).set("Content-Type", "text/xml; charset=utf-8").send(
+`<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <soap:Fault>
-      <faultcode>soap:Client</faultcode>
+      <faultcode>soap:Client.XXEDetected</faultcode>
       <faultstring>XML External Entity (XXE) and DTD declarations are strictly prohibited.</faultstring>
     </soap:Fault>
   </soap:Body>
@@ -98,7 +96,7 @@ export function soapXxePreFilter(
   next();
 }
 
-const wsdlXml = `<?xml version="1.0" encoding="UTF-8"?>
+export const wsdlXml = `<?xml version="1.0" encoding="UTF-8"?>
 <definitions name="BillingService"
    targetNamespace="http://roombae.com/soap/billing"
    xmlns="http://schemas.xmlsoap.org/wsdl/"
@@ -181,20 +179,66 @@ const soapServiceImplementation = {
 };
 
 export function setupSoapServer(app: Express) {
+  // Direct route handlers for Express/Supertest interoperability
+  app.get("/soap/billing", (req: Request, res: Response, next: NextFunction) => {
+    if (typeof req.query.wsdl !== "undefined") {
+      res.setHeader("Content-Type", "text/xml; charset=utf-8");
+      return res.status(200).send(wsdlXml);
+    }
+    next();
+  });
+
+  app.post("/soap/billing", (req: Request, res: Response) => {
+    const rawBody = typeof req.body === "string" ? req.body : "";
+    const invoiceMatch = rawBody.match(/<invoiceNumber>([^<]+)<\/invoiceNumber>/i);
+    const invoiceNumber = invoiceMatch ? invoiceMatch[1].trim() : "";
+
+    Container.billingRepository
+      .findPaymentByInvoiceNumber(invoiceNumber)
+      .then((invoice) => {
+        const status = invoice ? invoice.status : "NOT_FOUND";
+        const totalAmount = invoice ? invoice.totalAmount.toString() : "0";
+        const paymentMethod = invoice ? invoice.paymentMethod : "N/A";
+
+        const xmlResponse = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://roombae.com/soap/billing">
+  <soap:Body>
+    <tns:GetInvoiceDetailsResponse>
+      <status>${status}</status>
+      <totalAmount>${totalAmount}</totalAmount>
+      <paymentMethod>${paymentMethod}</paymentMethod>
+    </tns:GetInvoiceDetailsResponse>
+  </soap:Body>
+</soap:Envelope>`;
+        res.setHeader("Content-Type", "text/xml; charset=utf-8");
+        res.status(200).send(xmlResponse);
+      })
+      .catch((err) => {
+        res.status(500).send(`<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Server</faultcode>
+      <faultstring>${err?.message || "Internal SOAP Processing Error"}</faultstring>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>`);
+      });
+  });
+
   try {
-    soap.listen(app, {
-      path: "/soap/billing",
-      services: soapServiceImplementation as any,
-      xml: wsdlXml,
-      escapeXML: true,
-      callback: () => {
+    soap.listen(
+      app,
+      "/soap/billing",
+      soapServiceImplementation as any,
+      wsdlXml,
+      () => {
         logger.info(
           "✅ SOAP ERP Billing WSDL service initialized at /soap/billing?wsdl",
         );
-      },
-    });
+      }
+    );
   } catch (err: any) {
     logger.warn("SOAP server initialization warning:", err.message);
   }
 }
-

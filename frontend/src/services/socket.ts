@@ -15,8 +15,12 @@ export const getSocket = (): Socket => {
       autoConnect: false,
       auth: { token },
       withCredentials: true,
-      reconnectionAttempts: 3,
-      timeout: 5000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      randomizationFactor: 0.5,
+      timeout: 10000,
       transports: ["websocket", "polling"],
     });
 

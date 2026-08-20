@@ -39,28 +39,15 @@ describe("CORS & Preflight OPTIONS Middleware Unit Tests", () => {
     expect(res.headers["access-control-allow-origin"]).toBeUndefined();
   });
 
-  test("Socket.IO allowedOrigins should include GitHub Pages origin https://ayushman-glb.github.io", () => {
-    const rawOrigins = [
-      "https://ayushman-glb.github.io",
-      "https://ayushman-glb.github.io/PG-Management-System",
-      "https://pg-management-system-boxb.onrender.com",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:3000",
-    ];
-    const allowed = Array.from(
-      new Set(
-        rawOrigins.map((item) => {
-          try {
-            return new URL(item).origin.toLowerCase();
-          } catch {
-            return item.replace(/\/$/, "").toLowerCase();
-          }
-        })
-      )
-    );
+  test("getAllowedOrigins should include exact normalized GitHub Pages origin https://ayushman-glb.github.io", () => {
+    const { getAllowedOrigins, isOriginAllowed } = require("../config/corsOrigins");
+    const allowed = getAllowedOrigins();
     expect(allowed).toContain("https://ayushman-glb.github.io");
     expect(allowed).toContain("https://pg-management-system-boxb.onrender.com");
+    expect(isOriginAllowed("https://ayushman-glb.github.io")).toBe(true);
+    expect(isOriginAllowed("https://ayushman-glb.github.io/")).toBe(true);
+    expect(isOriginAllowed("https://ayushman-glb.github.io/PG-Management-System")).toBe(true);
+    expect(isOriginAllowed("https://evil-unauthorized-site.com")).toBe(false);
   });
 });
 
