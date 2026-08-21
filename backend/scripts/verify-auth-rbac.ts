@@ -26,7 +26,7 @@ async function runVerification() {
     // 1. Verify all 3 Roles exist and match passwords
     console.log("--- 1. Testing Credential Hashes ---");
     const testAccounts = [
-      { email: "superadmin@roombae.com", pass: "SuperAdmin_RB_2026!", expectedRole: "SUPER_ADMIN" },
+      { email: "superadmin@roombae.com", pass: "SuperAdmin_RB_2026!", expectedRole: "GOD" },
       { email: "admin@roombae.com", pass: "Admin_RoomBae_7890!", expectedRole: "ADMIN" },
       { email: "rajesh.owner@roombae.com", pass: "Owner_Rajesh_1001!", expectedRole: "OWNER" },
       { email: "priya.owner@roombae.com", pass: "Owner_Priya_1002!", expectedRole: "OWNER" },

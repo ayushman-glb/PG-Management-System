@@ -1,12 +1,12 @@
 import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 
-const SUPER_ADMIN = {
+const GOD_ADMIN = {
   name: "GOD",
   email: "ayushman@globussoft.in",
   pass: "987456",
   phone: "+919900000001",
-  role: "SUPER_ADMIN",
+  role: "GOD",
 };
 
 const OWNER = {
@@ -37,16 +37,16 @@ async function seedDatabase(targetDbName: string) {
   const ownersCol = db.collection("Owner");
   const residentsCol = db.collection("Resident");
 
-  // 1. Seed Super Admin ("GOD")
-  const saHash = await bcrypt.hash(SUPER_ADMIN.pass, 12);
+  // 1. Seed Platform Owner ("GOD")
+  const saHash = await bcrypt.hash(GOD_ADMIN.pass, 12);
   await usersCol.findOneAndUpdate(
-    { email: SUPER_ADMIN.email },
+    { email: GOD_ADMIN.email },
     {
       $set: {
-        name: SUPER_ADMIN.name,
-        email: SUPER_ADMIN.email,
-        phone: SUPER_ADMIN.phone,
-        role: SUPER_ADMIN.role,
+        name: GOD_ADMIN.name,
+        email: GOD_ADMIN.email,
+        phone: GOD_ADMIN.phone,
+        role: GOD_ADMIN.role,
         passwordHash: saHash,
         phoneVerified: true,
         isPhoneVerified: true,

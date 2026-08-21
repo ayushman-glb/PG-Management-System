@@ -33,21 +33,21 @@ export class ResidentManagementService {
   }
 
   async updateBedStatus(bedId: string, status: BedStatus, updatedBy: string, userRole: string, notes?: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to modify bed status');
     }
     return this.repo.updateBedStatus(bedId, status, updatedBy, notes);
   }
 
   async createBedHold(payload: ICreateBedHoldPayload, userRole: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to place bed on hold');
     }
     return this.repo.createBedHold(payload);
   }
 
   async releaseBedHold(holdId: string, updatedBy: string, userRole: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to release bed hold');
     }
     return this.repo.releaseBedHold(holdId, updatedBy);
@@ -70,35 +70,35 @@ export class ResidentManagementService {
   }
 
   async approveRoomTransferRequest(payload: IApproveRoomTransferPayload, userRole: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to approve room transfer request');
     }
     return this.repo.approveRoomTransferRequest(payload);
   }
 
   async rejectRoomTransferRequest(requestId: string, rejectionReason: string, performedBy: string, userRole: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to reject room transfer request');
     }
     return this.repo.rejectRoomTransferRequest(requestId, rejectionReason, performedBy);
   }
 
   async completeRoomTransfer(requestId: string, performedBy: string, userRole: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to complete room transfer');
     }
     return this.repo.completeRoomTransfer(requestId, performedBy);
   }
 
   async convertRoomType(roomId: string, newType: 'SINGLE' | 'DOUBLE' | 'TRIPLE', performedBy: string, userRole: string): Promise<any> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to convert room type');
     }
     return this.repo.convertRoomType(roomId, newType, performedBy);
   }
 
   async getAuditLogs(userRole: string, limit?: number): Promise<any[]> {
-    if (userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
+    if (userRole !== 'GOD' && userRole !== 'SUPER_ADMIN' && userRole !== 'OWNER' && userRole !== 'MANAGER') {
       throw new Error('Unauthorized to view audit logs');
     }
     return this.repo.getAuditLogs(limit);

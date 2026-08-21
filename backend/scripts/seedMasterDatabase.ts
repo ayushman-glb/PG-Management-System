@@ -10,7 +10,7 @@ async function main() {
 
   // 1. RBAC Roles & Permissions
   console.log('📦 1. Seeding RBAC Roles & Permissions...');
-  const roleNames: Role[] = ['SUPER_ADMIN', 'ADMIN', 'OWNER', 'MANAGER', 'STAFF', 'RESIDENT', 'PUBLIC'];
+  const roleNames: Role[] = ['GOD', 'ADMIN', 'OWNER', 'MANAGER', 'STAFF', 'RESIDENT', 'PUBLIC'];
   const roles: Record<string, any> = {};
 
   for (const rName of roleNames) {
@@ -55,7 +55,7 @@ async function main() {
   // 2. Admins & Platform Leadership
   console.log('📦 2. Seeding Platform Admins...');
   const adminAccounts = [
-    { name: 'Super Admin', email: 'superadmin@roombae.com', password: 'SuperAdmin_RB_2026!', phone: '+919900000001', role: Role.SUPER_ADMIN },
+    { name: 'Platform Owner (GOD)', email: 'superadmin@roombae.com', password: 'SuperAdmin_RB_2026!', phone: '+919900000001', role: Role.GOD },
     { name: 'Platform Admin', email: 'admin@roombae.com', password: 'Admin_RoomBae_7890!', phone: '+919900000002', role: Role.ADMIN },
     { name: 'Lead Engineer', email: 'tech@roombae.com', password: 'Admin_RoomBae_7890!', phone: '+919900000003', role: Role.ADMIN },
   ];
@@ -93,7 +93,7 @@ async function main() {
           name: adm.name,
           email: adm.email,
           passwordHash,
-          roleId: roles['SUPER_ADMIN'].id,
+          roleId: roles[adm.role]?.id || roles['GOD']?.id || roles['ADMIN']?.id,
         },
       });
     }

@@ -9,7 +9,7 @@ import { api } from "@services/api";
 import { LayoutGrid, Kanban, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
-import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { useAdaptiveLoading } from "@hooks/useAdaptiveLoading";
 import { DashboardSkeleton } from "@components/Skeletons";
 
 interface Props {

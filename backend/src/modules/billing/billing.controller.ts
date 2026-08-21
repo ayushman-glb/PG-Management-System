@@ -206,7 +206,7 @@ export class BillingController {
     const role = req.user?.role;
     let ownerId: string | undefined;
 
-    if (role === Role.SUPER_ADMIN || role === Role.ADMIN) {
+    if (role === Role.GOD || role === Role.ADMIN) {
       // Admins can optionally scope to a specific owner via query param
       ownerId = req.query.ownerId as string | undefined;
     } else if (role === Role.OWNER || role === Role.MANAGER) {
@@ -224,7 +224,7 @@ export class BillingController {
     const role = req.user?.role;
     const where: any = {};
 
-    if (role === Role.SUPER_ADMIN || role === Role.ADMIN) {
+    if (role === Role.GOD || role === Role.ADMIN) {
       // Admins can filter by any pgId or see all
       if (pgId) where.pgId = pgId as string;
     } else if (role === Role.OWNER || role === Role.MANAGER) {

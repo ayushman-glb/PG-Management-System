@@ -69,7 +69,7 @@ export class ApplicationsService {
     if (!app) throw new Error("Application not found");
 
     // Scoping authorization check
-    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN" && app.userId !== user.id) {
+    if (user.role !== "ADMIN" && user.role !== "GOD" && user.role !== "SUPER_ADMIN" && app.userId !== user.id) {
       const owner = await this.db.owner.findFirst({ where: { userId: user.id } });
       if (!owner || owner.id !== app.ownerId) {
         throw new Error("Unauthorized to view this application");

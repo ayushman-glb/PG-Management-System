@@ -95,12 +95,12 @@ export class PropertyRepository implements IPropertyRepository {
         address: data.address,
         city: data.city,
         pincode: data.pincode,
-        latitude: data.latitude,
-        longitude: data.longitude,
+        latitude: data.latitude ?? 12.9716,
+        longitude: data.longitude ?? 77.5946,
         rentStartingFrom: data.rentStartingFrom || 8500,
         securityDeposit: data.securityDeposit || 15000,
-        capacity: data.totalBeds,
-        availableBeds: data.totalBeds,
+        capacity: data.totalBeds ?? data.capacity ?? 0,
+        availableBeds: data.availableBeds ?? data.totalBeds ?? data.capacity ?? 0,
         amenities: data.amenities || ['WiFi', 'Laundry', 'CCTV', 'Security']
       }
     });

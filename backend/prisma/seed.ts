@@ -86,10 +86,10 @@ async function main() {
   const saltRounds = 12;
 
   // ── 2. RBAC Roles & Permissions ──────────────────────────────────────────
-  const superAdminRole = await prisma.rbacRole.create({
+  const godRole = await prisma.rbacRole.create({
     data: {
-      name: Role.SUPER_ADMIN,
-      description: 'Super Administrator with unrestricted access to all platform systems.',
+      name: Role.GOD,
+      description: 'Platform Owner (GOD) with unrestricted access to all platform systems and global analytics.',
     },
   });
 
@@ -107,7 +107,7 @@ async function main() {
     },
   });
 
-  // ── 3. SUPER ADMIN ("GOD") ────────────────────────────────────────────────
+  // ── 3. PLATFORM OWNER ("GOD") ────────────────────────────────────────────────
   const godPassHash = await bcrypt.hash('987456', saltRounds);
   const godUser = await prisma.user.create({
     data: {
@@ -115,7 +115,7 @@ async function main() {
       email: 'ayushman@globussoft.in',
       phone: '+919900000001',
       passwordHash: godPassHash,
-      role: Role.SUPER_ADMIN,
+      role: Role.GOD,
       is2FAEnabled: false,
       emailVerified: true,
       phoneVerified: true,
@@ -130,10 +130,10 @@ async function main() {
       name: 'GOD',
       email: 'ayushman@globussoft.in',
       passwordHash: godPassHash,
-      roleId: superAdminRole.id,
+      roleId: godRole.id,
     },
   });
-  console.log('   ✅ Super Admin (GOD) initialized.');
+  console.log('   ✅ Platform Owner (GOD) initialized.');
 
   // ── 4. PG OWNER (Ayushman Saha) ───────────────────────────────────────────
   const ownerPassHash = await bcrypt.hash('123456', saltRounds);

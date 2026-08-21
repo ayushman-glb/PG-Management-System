@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: "SUPER_ADMIN" | "OWNER" | "MANAGER" | "STAFF" | "RESIDENT" | "VISITOR";
+  role: "GOD" | "SUPER_ADMIN" | "ADMIN" | "OWNER" | "MANAGER" | "STAFF" | "RESIDENT" | "VISITOR" | "PUBLIC";
   avatar?: string;
   createdAt?: string;
   updatedAt?: string;

@@ -9,17 +9,18 @@ const router = Router();
 router.get('/', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
 router.get('/search', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
 router.get('/public', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
-router.get('/:id', (req, res, next) => Container.propertyController.getById(req, res, next));
 
 // ── Owner-Scoped Endpoints (Protected) ───────────────────────────────────────
 router.get('/owner-summary',
   authenticate,
-  authorize(Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  authorize(Role.OWNER, Role.ADMIN, Role.GOD),
   (req, res, next) => Container.propertyController.getOwnerSummary(req, res, next));
+
+router.get('/:id', (req, res, next) => Container.propertyController.getById(req, res, next));
 
 router.get('/:pgId/meal-schedules',
   authenticate,
-  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.SUPER_ADMIN),
+  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.GOD),
   (req, res, next) => Container.propertyController.getMealSchedules(req, res, next));
 
 router.post('/',

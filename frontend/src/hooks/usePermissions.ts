@@ -5,7 +5,9 @@ export function usePermissions(userRole?: Role) {
   const permissions = useMemo(() => {
     if (!userRole) return [];
     switch (userRole) {
+      case ROLES.GOD:
       case ROLES.SUPER_ADMIN:
+      case ROLES.ADMIN:
       case ROLES.OWNER:
         return Object.values(PERMISSIONS);
       case ROLES.MANAGER:

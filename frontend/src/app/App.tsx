@@ -12,6 +12,7 @@ export type Page =
   | "landing"
   | "dashboard"
   | "admin-console"
+  | "god-console"
   | "properties"
   | "residents"
   | "billing"
@@ -97,7 +98,9 @@ export default function App() {
         const targetPage: Page =
           role === "RESIDENT"
             ? "resident-portal"
-            : role === "ADMIN" || role === "SUPER_ADMIN"
+            : role === "GOD" || role === "SUPER_ADMIN"
+            ? "god-console"
+            : role === "ADMIN"
             ? "admin-console"
             : "dashboard";
         setPage(targetPage);

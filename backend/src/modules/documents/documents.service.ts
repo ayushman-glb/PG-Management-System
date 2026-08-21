@@ -547,7 +547,7 @@ export class DocumentService {
   private async authorizeAccess(opts: GetDocumentOptions, sourceData: { ownerId?: string; residentId?: string }) {
     const { requestingUserRole, requestingUserResidentId, requestingUserOwnerId } = opts;
 
-    if (requestingUserRole === 'SUPER_ADMIN' || requestingUserRole === 'ADMIN') {
+    if (requestingUserRole === 'GOD' || requestingUserRole === 'SUPER_ADMIN' || requestingUserRole === 'ADMIN') {
       return; // Full access
     }
 

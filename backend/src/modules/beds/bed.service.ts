@@ -1,13 +1,16 @@
 import { PrismaClient, BedStatus, BedHoldReason } from '@prisma/client';
-import { Container } from '../../container';
+import { DatabaseLockService } from '../../infrastructure/cache/DatabaseLockService';
 import { AppError } from '../../utils/appError';
 
 export class BedService {
-  constructor(private readonly db: PrismaClient) {}
+  private readonly defaultLockService = new DatabaseLockService();
+
+  constructor(private readonly db: PrismaClient, private readonly lockService?: any) {}
 
   async updateBedStatus(bedId: string, status: string, notes?: string): Promise<boolean> {
     // Acquire process-safe concurrency lock on bed ID to prevent double booking or conflicting status mutations
-    const lock = await Container.lockService.acquireLock(`bed:lock:${bedId}`, 10000);
+    const lockService = this.lockService || this.defaultLockService;
+    const lock = lockService ? await lockService.acquireLock(`bed:lock:${bedId}`, 10000) : { lockAcquired: true, lockKey: `bed:lock:${bedId}` };
     if (!lock.lockAcquired) {
       throw new AppError('Bed status edit locked by concurrent operation. Please try again.', 409);
     }
@@ -54,7 +57,8 @@ export class BedService {
   }
 
   async createBedHold(data: { bedId: string; reason: string; holdStartDate?: string; holdEndDate?: string; notes?: string }): Promise<any> {
-    const lock = await Container.lockService.acquireLock(`bed:lock:${data.bedId}`, 10000);
+    const lockService = this.lockService || this.defaultLockService;
+    const lock = lockService ? await lockService.acquireLock(`bed:lock:${data.bedId}`, 10000) : { lockAcquired: true, lockKey: `bed:lock:${data.bedId}`, release: async () => {} };
     if (!lock.lockAcquired) {
       throw new AppError('Bed hold locked by concurrent operation.', 409);
     }
@@ -81,7 +85,9 @@ export class BedService {
         }
       });
     } finally {
-      await lock.release();
+      if (lock && typeof lock.release === 'function') {
+        await lock.release();
+      }
     }
   }
 
@@ -89,7 +95,8 @@ export class BedService {
     const hold = await this.db.bedHold.findUnique({ where: { id: holdId } });
     if (!hold) throw new AppError('Bed hold record not found', 404);
 
-    const lock = await Container.lockService.acquireLock(`bed:lock:${hold.bedId}`, 10000);
+    const lockService = this.lockService || this.defaultLockService;
+    const lock = lockService ? await lockService.acquireLock(`bed:lock:${hold.bedId}`, 10000) : { lockAcquired: true, lockKey: `bed:lock:${hold.bedId}`, release: async () => {} };
     if (!lock.lockAcquired) {
       throw new AppError('Bed release locked by concurrent operation.', 409);
     }
@@ -107,7 +114,9 @@ export class BedService {
 
       return true;
     } finally {
-      await lock.release();
+      if (lock && typeof lock.release === 'function') {
+        await lock.release();
+      }
     }
   }
 

@@ -30,7 +30,7 @@ import { PayRentModal } from "@features/billing/components/PayRentModal";
 
 import { Logo } from "@components/ui/Logo";
 import { useAuth } from "@hooks/useAuth";
-import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
+import { useAdaptiveLoading } from "@hooks/useAdaptiveLoading";
 import { ResidentPortalSkeleton } from "@components/Skeletons";
 
 interface Props {
@@ -103,8 +103,13 @@ export default function ResidentPortal({ navigate }: Props) {
   const [paymentsList, setPaymentsList] = useState<any[]>([]);
   const [mockAgreement, setMockAgreement] = useState<any>(null);
 
+  const [portalError, setPortalError] = useState<string | null>(null);
+  const [isProfileIncomplete, setIsProfileIncomplete] = useState<boolean>(false);
+
   const loadPortalData = useCallback(async () => {
     try {
+      setPortalError(null);
+      setIsProfileIncomplete(false);
       const portalRes = await api.getPortalMe();
       if (portalRes?.profile?.status) {
         setResidentStatus(portalRes.profile.status);
@@ -130,8 +135,15 @@ export default function ResidentPortal({ navigate }: Props) {
       }
       setPortalData(portalRes);
       return portalRes;
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Portal data load fallback:", e);
+      const msg = e?.message || "";
+      const is404 = e?.status === 404 || e?.code === "RESIDENT_PROFILE_INCOMPLETE" || msg.includes("not found") || msg.includes("incomplete");
+      if (is404) {
+        setIsProfileIncomplete(true);
+      } else {
+        setPortalError(msg || "Unable to retrieve your resident portal details. Please check your internet connection.");
+      }
       return null;
     }
   }, []);
@@ -150,6 +162,100 @@ export default function ResidentPortal({ navigate }: Props) {
 
   if (showSkeleton) {
     return <ResidentPortalSkeleton />;
+  }
+
+  // Guided Onboarding State for new residents without bed allocation
+  if (isProfileIncomplete) {
+    return (
+      <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
+        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+          <Logo onClick={() => navigate("landing")} badge="RESIDENT" />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={async () => {
+                await logout();
+                navigate("auth");
+              }}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 max-w-3xl w-full mx-auto p-6 flex items-center justify-center">
+          <div className={`p-8 md:p-10 rounded-3xl border text-center space-y-6 shadow-xl ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}>
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto text-3xl">
+              🏠
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-extrabold tracking-tight">Welcome to RoomBae!</h2>
+              <p className="text-sm text-neutral-400 max-w-md mx-auto">
+                Your resident account is active, but your profile onboarding is pending. Complete your resident registration to access your room details, lease agreement, digital rent payments, visitor passes, and meal schedules.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+              <button
+                onClick={() => navigate("resident-register")}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 text-black font-bold text-sm hover:bg-amber-400 transition-all shadow-md shadow-amber-500/20"
+              >
+                Complete Resident KYC Onboarding
+              </button>
+              <button
+                onClick={() => loadPortalData()}
+                className={`w-full sm:w-auto px-5 py-3 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-[#4A433F] hover:bg-[#332D2B]" : "border-[#E6D7CA] hover:bg-[#F8EEE5]"}`}
+              >
+                Refresh Status
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // General Portal Network / Server Error View
+  if (portalError && !portalData) {
+    return (
+      <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
+        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+          <Logo onClick={() => navigate("landing")} badge="RESIDENT" />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={async () => {
+                await logout();
+                navigate("auth");
+              }}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 max-w-lg w-full mx-auto p-6 flex items-center justify-center">
+          <div className={`p-8 rounded-3xl border text-center space-y-4 shadow-xl ${darkMode ? "bg-[#2B2725] border-rose-500/30" : "bg-white border-rose-200"}`}>
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto text-2xl font-bold">
+              ⚠️
+            </div>
+            <h3 className="text-lg font-bold">Unable to Load Resident Portal</h3>
+            <p className="text-xs text-neutral-400">{portalError}</p>
+            <button
+              onClick={() => loadPortalData()}
+              className="px-6 py-2.5 rounded-xl bg-amber-500 text-black font-bold text-xs hover:bg-amber-400 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   const handleCreateComplaint = async (e: React.FormEvent) => {

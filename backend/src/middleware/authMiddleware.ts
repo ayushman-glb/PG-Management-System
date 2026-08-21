@@ -161,8 +161,8 @@ export const requireKycApproved = async (req: AuthRequest, res: Response, next: 
     return next(new AppError('Authentication required.', 401, 'TOKEN_REQUIRED'));
   }
 
-  // Admins and Super Admins bypass KYC gate
-  if (req.user.role === Role.ADMIN || req.user.role === Role.SUPER_ADMIN) {
+  // Admins and GOD bypass KYC gate
+  if (req.user.role === Role.ADMIN || req.user.role === Role.GOD) {
     return next();
   }
 

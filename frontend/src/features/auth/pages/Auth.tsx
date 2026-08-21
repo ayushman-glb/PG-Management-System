@@ -423,7 +423,9 @@ export default function Auth({ navigate }: Props) {
       const rawRole = (loginRes?.user?.role || "").toUpperCase();
       if (rawRole === "RESIDENT") {
         navigate("resident-portal");
-      } else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") {
+      } else if (rawRole === "GOD" || rawRole === "SUPER_ADMIN") {
+        navigate("god-console");
+      } else if (rawRole === "ADMIN") {
         navigate("admin-console");
       } else if (rawRole === "OWNER" || rawRole === "MANAGER" || rawRole === "STAFF") {
         navigate("dashboard");
@@ -461,7 +463,9 @@ export default function Auth({ navigate }: Props) {
       setTimeout(() => {
         if (rawRole === "RESIDENT") {
           navigate("resident-portal");
-        } else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") {
+        } else if (rawRole === "GOD" || rawRole === "SUPER_ADMIN") {
+          navigate("god-console");
+        } else if (rawRole === "ADMIN") {
           navigate("admin-console");
         } else {
           navigate("dashboard");

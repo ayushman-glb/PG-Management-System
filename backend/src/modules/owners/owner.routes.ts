@@ -10,22 +10,22 @@ const router = Router();
 router.use(authenticate);
 
 // ── Admin-only reads ──────────────────────────────────────────────────────────
-router.get("/", authorize(Role.SUPER_ADMIN, Role.ADMIN), OwnerController.getOwners);
+router.get("/", authorize(Role.GOD, Role.ADMIN), OwnerController.getOwners);
 
 // ── Self-profile (any authenticated owner) ───────────────────────────────────
-router.get("/profile", authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN), OwnerController.getProfile);
+router.get("/profile", authorize(Role.OWNER, Role.GOD, Role.ADMIN), OwnerController.getProfile);
 
 // ── Owner-scoped mutations: must own the record ───────────────────────────────
 router.get(
   "/:ownerId/metrics",
-  authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN),
+  authorize(Role.OWNER, Role.GOD, Role.ADMIN),
   assertOwnershipOf("ownerId"),
   OwnerController.getMetrics,
 );
 
 router.get(
   "/:ownerId/progress",
-  authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN),
+  authorize(Role.OWNER, Role.GOD, Role.ADMIN),
   assertOwnershipOf("ownerId"),
   OwnerController.getProgress,
 );
@@ -33,7 +33,7 @@ router.get(
 // Alias for frontend compatibility
 router.get(
   "/:ownerId/status",
-  authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN),
+  authorize(Role.OWNER, Role.GOD, Role.ADMIN),
   assertOwnershipOf("ownerId"),
   OwnerController.getProgress,
 );
@@ -113,6 +113,6 @@ router.post(
 router.post("/onboard", authorize(Role.OWNER), OwnerController.runFullOnboarding);
 
 // ── Admin read-by-id ─────────────────────────────────────────────────────────
-router.get("/:id", authorize(Role.OWNER, Role.SUPER_ADMIN, Role.ADMIN), OwnerController.getOwnerById);
+router.get("/:id", authorize(Role.OWNER, Role.GOD, Role.ADMIN), OwnerController.getOwnerById);
 
 export default router;

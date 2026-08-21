@@ -31,7 +31,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
       return { allowed: true };
     }
 
@@ -63,7 +63,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
       return { allowed: true };
     }
 
@@ -90,7 +90,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN") {
       return { allowed: true };
     }
 
@@ -113,7 +113,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role !== "OWNER" && user.role !== "SUPER_ADMIN") {
+    if (user.role !== "OWNER" && user.role !== "GOD" && user.role !== "SUPER_ADMIN") {
       return { allowed: false, code: "FORBIDDEN_ROLE", message: "Only property owners can withdraw revenue" };
     }
 
@@ -139,7 +139,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
       return { allowed: true };
     }
 
@@ -158,7 +158,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER") {
       return { allowed: true };
     }
 
@@ -181,7 +181,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER") {
       return { allowed: true };
     }
 
@@ -208,7 +208,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN") {
       return { allowed: true };
     }
 
@@ -235,7 +235,7 @@ export class PolicyEngine {
       return { allowed: false, code: "UNAUTHORIZED", message: "Authentication required" };
     }
 
-    if (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER") {
+    if (user.role === "GOD" || user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER") {
       return { allowed: true };
     }
 

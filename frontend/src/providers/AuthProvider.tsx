@@ -37,23 +37,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshInFlight = useRef<Promise<User | null> | null>(null);
 
   const setUser = useCallback((u: User | null) => {
-    setUserState(u);
-    setStatus(u ? "authenticated" : "unauthenticated");
+    const normalizedUser = u ? {
+      ...u,
+      role: (String(u.role || "").toUpperCase() === "SUPER_ADMIN" ? "GOD" : u.role) as any
+    } : null;
+
+    setUserState(normalizedUser);
+    setStatus(normalizedUser ? "authenticated" : "unauthenticated");
     try {
-      if (u) {
-        localStorage.setItem("user", JSON.stringify(u));
-        const r = String(u.role || "").toUpperCase();
-        if (r === "OWNER" || r === "SUPER_ADMIN" || r === "ADMIN") {
-          localStorage.setItem("roombaeOwnerId", u.id);
+      if (normalizedUser) {
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
+        const r = String(normalizedUser.role || "").toUpperCase();
+        if (r === "OWNER" || r === "GOD" || r === "SUPER_ADMIN" || r === "ADMIN") {
+          localStorage.setItem("roombaeOwnerId", normalizedUser.id);
         }
-        if ((u as any).residentCode) {
-          localStorage.setItem("residentCode", (u as any).residentCode);
+        if ((normalizedUser as any).residentCode) {
+          localStorage.setItem("residentCode", (normalizedUser as any).residentCode);
         }
       } else {
         localStorage.removeItem("user");
         localStorage.removeItem("roombaeOwnerId");
         localStorage.removeItem("residentCode");
       }
+      window.dispatchEvent(new CustomEvent("roombae-auth-changed", { detail: normalizedUser }));
     } catch {}
   }, []);
 
@@ -200,8 +206,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserState(null);
     setStatus("unauthenticated");
     try {
+      localStorage.removeItem("user");
       localStorage.removeItem("roombaeOwnerId");
       localStorage.removeItem("residentCode");
+      sessionStorage.removeItem("lazy_chunk_reload_once");
+      window.dispatchEvent(new CustomEvent("roombae-auth-changed", { detail: null }));
     } catch {}
     try {
       await authService.logout();

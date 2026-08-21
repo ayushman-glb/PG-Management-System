@@ -24,6 +24,7 @@ import { moveInRoutes } from '../modules/moveIn';
 import { deviceRoutes } from '../modules/devices';
 import { marketingRoutes } from '../modules/marketing';
 import { paymentRoutes } from '../modules/payments';
+import { godRoutes } from '../modules/god';
 import { env } from '../config/env';
 
 const apiRouter = Router();
@@ -123,5 +124,6 @@ apiRouter.use('/shortlist', toursRoutes);
 apiRouter.use('/applications', applicationsRoutes);
 apiRouter.use('/messages', messagesRoutes);
 apiRouter.use('/move-in', moveInRoutes);
+apiRouter.use('/god', godRoutes);
 
 export default apiRouter;

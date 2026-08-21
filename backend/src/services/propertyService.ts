@@ -92,7 +92,8 @@ export class PropertyService implements IPropertyService {
     });
 
     // Auto-create room grid structure (101, 102...)
-    for (let r = 1; r <= data.totalRooms; r++) {
+    const roomsCount = data.totalRooms || 0;
+    for (let r = 1; r <= roomsCount; r++) {
       const roomNum = (100 + r).toString();
       await this.propertyRepository.createRoomWithBeds(property.id, roomNum, 2);
     }

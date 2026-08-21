@@ -64,7 +64,7 @@ describe('Auth DTO Schemas Unit Tests', () => {
       expect(result.success).toBe(true);
     });
 
-    test('rejects client attempt to signup as ADMIN or SUPER_ADMIN', () => {
+    test('rejects client attempt to signup as ADMIN, GOD, or SUPER_ADMIN', () => {
       const adminResult = RegisterSchema.safeParse({
         body: {
           name: 'Hacker Admin',
@@ -74,6 +74,16 @@ describe('Auth DTO Schemas Unit Tests', () => {
         },
       });
       expect(adminResult.success).toBe(false);
+
+      const godResult = RegisterSchema.safeParse({
+        body: {
+          name: 'Hacker God',
+          email: 'god@example.com',
+          password: 'SecurePassword123!',
+          role: 'GOD',
+        },
+      });
+      expect(godResult.success).toBe(false);
 
       const superAdminResult = RegisterSchema.safeParse({
         body: {

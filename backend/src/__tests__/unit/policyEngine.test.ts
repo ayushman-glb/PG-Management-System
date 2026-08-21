@@ -9,12 +9,12 @@ describe('PolicyEngine Centralized Authorization Unit Tests', () => {
   });
 
   describe('canCreateProperty', () => {
-    test('should allow SUPER_ADMIN or ADMIN directly without KYC check', async () => {
+    test('should allow GOD or ADMIN directly without KYC check', async () => {
       const adminResult = await PolicyEngine.canCreateProperty({ id: 'usr_admin', role: 'ADMIN' });
       expect(adminResult.allowed).toBe(true);
 
-      const superAdminResult = await PolicyEngine.canCreateProperty({ id: 'usr_super', role: 'SUPER_ADMIN' });
-      expect(superAdminResult.allowed).toBe(true);
+      const godResult = await PolicyEngine.canCreateProperty({ id: 'usr_god', role: 'GOD' });
+      expect(godResult.allowed).toBe(true);
     });
 
     test('should deny non-owner roles (e.g. RESIDENT) from creating properties', async () => {
@@ -60,9 +60,9 @@ describe('PolicyEngine Centralized Authorization Unit Tests', () => {
   });
 
   describe('canApproveKyc', () => {
-    test('should allow ADMIN and SUPER_ADMIN', () => {
+    test('should allow ADMIN and GOD', () => {
       expect(PolicyEngine.canApproveKyc({ id: 'usr_admin', role: 'ADMIN' }).allowed).toBe(true);
-      expect(PolicyEngine.canApproveKyc({ id: 'usr_super', role: 'SUPER_ADMIN' }).allowed).toBe(true);
+      expect(PolicyEngine.canApproveKyc({ id: 'usr_god', role: 'GOD' }).allowed).toBe(true);
     });
 
     test('should deny OWNER and RESIDENT', () => {
