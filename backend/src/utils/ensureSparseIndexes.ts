@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma";
-import { logger } from "../utils/logger";
+import { logger } from "./logger";
 
 export async function ensureSparseIndexes() {
   try {

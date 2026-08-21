@@ -6,7 +6,11 @@
   "exclude": [
     "node_modules",
     "dist",
+    "scripts",
+    "prisma",
     "src/tests",
-    "src/__tests__"
+    "src/__tests__",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ]
 }

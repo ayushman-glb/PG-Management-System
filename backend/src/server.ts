@@ -22,7 +22,7 @@ import { logger } from "./utils/logger";
 import { SocketServer } from "./socket/socketServer";
 import { CronWorkerService } from "./jobs/cronWorkers";
 import { runInCluster } from "./cluster";
-import { ensureSparseIndexes } from "./scripts/ensureSparseIndexes";
+import { ensureSparseIndexes } from "./utils/ensureSparseIndexes";
 
 async function bootstrap() {
   try {
