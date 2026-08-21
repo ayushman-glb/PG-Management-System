@@ -58,11 +58,11 @@ async function verifyDatabasePhaseCD() {
   if (sampleOwner) {
     const detailedOwner = await godService.getOwnerById(sampleOwner.id);
     console.log({
-      id: detailedOwner.id,
-      name: detailedOwner.name,
-      plan: detailedOwner.plan,
-      pgCount: detailedOwner.pgCount,
-      totalResidents: detailedOwner.totalResidents,
+      id: detailedOwner.owner.id,
+      name: detailedOwner.owner.name,
+      plan: detailedOwner.subscription?.planType || 'STARTER',
+      pgCount: detailedOwner.properties.length,
+      totalResidents: detailedOwner.residents.length,
     });
   }
 

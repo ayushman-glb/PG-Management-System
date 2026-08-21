@@ -23,6 +23,35 @@ import { generateCsrfToken } from '../../middleware/csrfMiddleware';
 
 const router = Router();
 
+// ── Auth Service Directory & Catalog ──────────────────────────────────────────────
+// Returns the endpoint directory for the auth module when accessed via GET /api/v1/auth
+router.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    service: 'RoomBae Authentication & Identity Provider API',
+    version: '1.0.0',
+    endpoints: {
+      csrfToken: 'GET /api/v1/auth/csrf-token',
+      login: 'POST /api/v1/auth/login',
+      register: 'POST /api/v1/auth/register',
+      sendOtp: 'POST /api/v1/auth/send-otp',
+      verifyOtp: 'POST /api/v1/auth/verify-otp',
+      phoneOtp: 'POST /api/v1/auth/send-phone-otp',
+      phoneVerify: 'POST /api/v1/auth/verify-phone-otp',
+      emailSendOtp: 'POST /api/v1/auth/email/send-otp',
+      emailVerifyOtp: 'POST /api/v1/auth/email/verify-otp',
+      refreshToken: 'POST /api/v1/auth/refresh-token',
+      logout: 'POST /api/v1/auth/logout',
+      profile: 'GET /api/v1/auth/me (Bearer Token required)',
+      twoFactorEnable: 'POST /api/v1/auth/2fa/enable (Bearer Token required)',
+      twoFactorVerify: 'POST /api/v1/auth/2fa/verify',
+      twoFactorDisable: 'POST /api/v1/auth/2fa/disable (Bearer Token required)',
+      googleOAuth: 'GET /api/v1/auth/google',
+    },
+    documentation: '/api/docs',
+  });
+});
+
 // ── CSRF Bootstrap Endpoint ────────────────────────────────────────────────────────
 // Issues or refreshes the csrf-token cookie for anonymous visitors before
 // they call /register, /login, or /refresh-token. Must NOT itself require CSRF.
