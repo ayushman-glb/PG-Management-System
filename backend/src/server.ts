@@ -136,35 +136,30 @@ async function bootstrap() {
 
     const shutdown = async (signal: string) => {
       logger.info(
-        `Received ${signal}. Shutting down worker process PID ${process.pid} gracefully...`,
+        `Received ${signal}. Shutting down worker process PID ${process.pid} forcefully...`,
       );
-
-      const forceExitTimer = setTimeout(() => {
-        logger.warn(`Graceful shutdown timed out. Force exiting PID ${process.pid}.`);
-        process.exit(0);
-      }, 2000);
-      forceExitTimer.unref();
 
       try {
         if (httpServer) {
-          httpServer.close(async () => {
-            try {
-              await prisma.$disconnect().catch(() => {});
-            } finally {
-              logger.info(`Worker PID ${process.pid} disconnected cleanly.`);
-              process.exit(0);
-            }
-          });
-        } else {
-          process.exit(0);
+          httpServer.close();
         }
-      } catch {
-        process.exit(0);
-      }
+      } catch {}
+
+      try {
+        await Promise.race([
+          prisma.$disconnect(),
+          new Promise((resolve) => setTimeout(resolve, 500)),
+        ]);
+      } catch {}
+
+      logger.info(`Worker PID ${process.pid} stopped.`);
+      process.exit(0);
     };
 
     process.on("SIGTERM", () => shutdown("SIGTERM"));
     process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("SIGBREAK", () => shutdown("SIGBREAK"));
+    process.on("SIGHUP", () => shutdown("SIGHUP"));
   } catch (error: any) {
     logger.error(
       `❌ Critical Error starting server instance (PID ${process.pid}):`,

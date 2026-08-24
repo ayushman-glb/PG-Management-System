@@ -6,7 +6,10 @@
   "scripts": {
     "predev": "node scripts/cleanup-ports.js",
     "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/server.ts",
+    "prebuild": "node scripts/cleanup-ports.js",
     "build": "node scripts/generate-with-retry.js && tsc -p tsconfig.build.json",
+    "kill:all": "node scripts/cleanup-ports.js",
+    "clean:ports": "node scripts/cleanup-ports.js",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "start": "node dist/src/server.js",
