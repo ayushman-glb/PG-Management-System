@@ -58,6 +58,11 @@ export const isOriginAllowed = (origin?: string): boolean => {
     return true;
   }
 
+  // 2. Allow Vercel preview & production deployment domains (*.vercel.app)
+  if (/^https:\/\/[a-zA-Z0-9_.-]+\.vercel\.app$/.test(cleanOrigin)) {
+    return true;
+  }
+
   const allowed = getAllowedOrigins();
   return allowed.includes(cleanOrigin);
 };

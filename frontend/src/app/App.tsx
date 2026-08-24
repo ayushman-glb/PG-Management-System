@@ -60,8 +60,58 @@ export const SESSION_KEY = "loadingShown";
 import { NewDeviceNotificationModal } from "../components/security/NewDeviceNotificationModal";
 import { deviceService } from "../services/device.service";
 
+const VALID_PAGES: Set<string> = new Set([
+  "landing",
+  "dashboard",
+  "admin-console",
+  "god-console",
+  "properties",
+  "residents",
+  "billing",
+  "complaints",
+  "analytics",
+  "pg-listing",
+  "pg-details",
+  "auth",
+  "complete-profile",
+  "resident-portal",
+  "resident-register",
+  "shortlist",
+  "tours",
+  "application",
+  "move-in-dashboard",
+  "rooms",
+  "beds",
+  "visitors",
+  "notifications",
+  "settings",
+  "about",
+  "blog",
+  "careers",
+  "press",
+  "changelog",
+  "roadmap",
+  "documentation",
+  "help-center",
+  "api-reference",
+  "status",
+  "privacy-policy",
+  "terms-of-service",
+  "cookie-policy",
+]);
+
+function getInitialPageFromPath(): Page {
+  if (typeof window === "undefined") return "landing";
+  const raw = window.location.pathname.replace(/^\/+/, "").replace(/\/+$/, "");
+  if (!raw || raw === "PG-Management-System") return "landing";
+  const clean = raw.replace(/^PG-Management-System\/?/, "");
+  if (clean === "login" || clean === "signup" || clean === "register") return "auth";
+  if (VALID_PAGES.has(clean)) return clean as Page;
+  return "landing";
+}
+
 export default function App() {
-  const [page, setPage] = useState<Page>("landing");
+  const [page, setPage] = useState<Page>(getInitialPageFromPath);
   const [pageHistory, setPageHistory] = useState<Page[]>([]);
   const directionRef = useRef<1 | -1>(1);
   const { newDeviceModal, closeNewDeviceModal } = useUIStore();
@@ -162,12 +212,26 @@ export default function App() {
     };
   }, [showOneTimeLoading]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const p = getInitialPageFromPath();
+      setPage(p);
+      setSkeletonLoading(false);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const navigate = (p: Page) => {
     if (p === page) return;
     directionRef.current = 1;
     setPageHistory((previous) => [...previous, page]);
     setPage(p);
     setSkeletonLoading(false);
+    const targetUrl = p === "landing" ? "/" : `/${p}`;
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({}, "", targetUrl);
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
@@ -177,6 +241,10 @@ export default function App() {
     setPageHistory((history) => history.slice(0, -1));
     setPage(previous);
     setSkeletonLoading(false);
+    const targetUrl = previous === "landing" ? "/" : `/${previous}`;
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({}, "", targetUrl);
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
