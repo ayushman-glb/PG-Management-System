@@ -1,18 +1,15 @@
 import { Router } from 'express';
 import { RoomController } from './room.controller';
-import { authenticate } from '../../middleware/authMiddleware';
+import { RoomService } from './room.service';
+import { authenticate, requireOwner } from '../../middleware/authMiddleware';
+
+const roomService = new RoomService();
+const roomController = new RoomController(roomService);
 
 const router = Router();
-const controller = new RoomController();
 
-router.use(authenticate);
+router.post('/', authenticate, requireOwner, roomController.createRoom);
+router.get('/floor/:floorId', authenticate, roomController.getRoomsByFloor);
+router.patch('/:id/status', authenticate, requireOwner, roomController.updateStatus);
 
-router.put('/:roomId/convert', controller.convertType);
-router.get('/pg/:pgId', controller.listByPg);
-router.post('/transfer-requests', controller.createTransferRequest);
-router.get('/transfer-requests', controller.listTransferRequests);
-router.put('/transfer-requests/:id/approve', controller.approveTransfer);
-router.put('/transfer-requests/:id/reject', controller.rejectTransfer);
-router.post('/transfer-requests/:id/complete', controller.completeTransfer);
-
-export default router;
+export { router as roomRoutes };

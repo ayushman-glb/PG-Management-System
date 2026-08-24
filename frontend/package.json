@@ -1,6 +1,5 @@
 {
-  "name": "pg management",
-  "homepage": "https://ayushman-glb.github.io/PG-Management-System/",
+  "name": "roombae-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -10,8 +9,6 @@
     "lint": "tsc -b",
     "preview": "vite preview",
     "format": "oxfmt",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

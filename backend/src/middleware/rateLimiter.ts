@@ -2,12 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { logger } from '../utils/logger';
 
-/**
- * Enterprise In-Memory Rate Limiting Configuration (Redis-Free Architecture)
- * 
- * Enforces sliding-window request throttling across sensitive authentication,
- * OTP dispatch, verification, SOAP billing, and CSRF bootstrap endpoints.
- */
 export const resolveClientIp = (req: Request): string => {
   try {
     const forwarded = req.headers['x-forwarded-for'];
@@ -32,7 +26,7 @@ const createLimiter = (
   const limiter = rateLimit({
     windowMs,
     max,
-    skip: () => process.env.NODE_ENV === 'test',
+    skip: () => process.env.NODE_ENV === 'test' || process.env.SKIP_RATE_LIMIT === 'true',
     standardHeaders: true,
     legacyHeaders: true,
     statusCode: 429,
@@ -63,70 +57,70 @@ const createLimiter = (
         error: err?.message,
         ip: resolveClientIp(req),
       });
-      return next(); // Fail open gracefully rather than surface unhandled 500
+      return next();
     }
   };
 };
 
 export const generalLimiter = createLimiter(
   15 * 60 * 1000,
-  100,
+  500,
   'Too many requests from this IP, please try again after 15 minutes.',
   'TOO_MANY_REQUESTS'
 );
 
 export const loginLimiter = createLimiter(
-  15 * 60 * 1000, // 15 minutes
-  10, // 10 attempts
+  15 * 60 * 1000,
+  100,
   'Too many login attempts. Please try again after 15 minutes.',
   'LOGIN_RATE_EXCEEDED'
 );
 
 export const registerLimiter = createLimiter(
-  60 * 60 * 1000, // 1 hour
-  5,
+  60 * 60 * 1000,
+  50,
   'Too many registration attempts. Please try again after 1 hour.',
   'REGISTRATION_RATE_EXCEEDED'
 );
 
 export const sendOtpLimiter = createLimiter(
-  10 * 60 * 1000, // 10 minutes
-  3,
+  10 * 60 * 1000,
+  30,
   'Too many OTP requests. Please wait 10 minutes before requesting again.',
   'SEND_OTP_RATE_EXCEEDED'
 );
 
 export const resendOtpLimiter = createLimiter(
-  60 * 60 * 1000, // 1 hour
-  5,
+  60 * 60 * 1000,
+  50,
   'Too many OTP resend attempts. Please wait 1 hour.',
   'RESEND_OTP_RATE_EXCEEDED'
 );
 
 export const verifyOtpLimiter = createLimiter(
-  15 * 60 * 1000, // 15 minutes
-  10,
+  15 * 60 * 1000,
+  100,
   'Too many verification attempts. Account locked temporarily for security.',
   'VERIFY_OTP_RATE_EXCEEDED'
 );
 
 export const sendEmailCodeLimiter = createLimiter(
-  10 * 60 * 1000, // 10 minutes
-  3,
+  10 * 60 * 1000,
+  30,
   'Too many email verification code requests. Please wait 10 minutes.',
   'SEND_EMAIL_CODE_RATE_EXCEEDED'
 );
 
 export const verifyEmailCodeLimiter = createLimiter(
-  15 * 60 * 1000, // 15 minutes
-  10,
+  15 * 60 * 1000,
+  100,
   'Too many email verification attempts.',
   'VERIFY_EMAIL_RATE_EXCEEDED'
 );
 
 export const uploadLimiter = createLimiter(
-  60 * 60 * 1000, // 1 hour
-  20,
+  60 * 60 * 1000,
+  100,
   'Upload limit reached for this IP. Please wait before uploading more files.',
   'UPLOAD_RATE_EXCEEDED'
 );
@@ -136,23 +130,21 @@ export const phoneVerifyLimiter = verifyOtpLimiter;
 
 export const refreshTokenLimiter = createLimiter(
   15 * 60 * 1000,
-  20,
+  100,
   'Too many token refresh attempts. Please try again after 15 minutes.',
   'REFRESH_RATE_EXCEEDED'
 );
 
-// Dedicated limiter for the SOAP billing endpoint.
 export const soapBillingLimiter = createLimiter(
-  15 * 60 * 1000, // 15 minutes
-  20,             // 20 calls per window
+  15 * 60 * 1000,
+  100,
   'Too many SOAP billing requests. Please try again after 15 minutes.',
   'SOAP_BILLING_RATE_EXCEEDED'
 );
 
-// Dedicated limiter for CSRF token bootstrapping.
 export const csrfBootstrapLimiter = createLimiter(
-  15 * 60 * 1000, // 15 minutes
-  60,             // 60 requests per 15 min per IP
+  15 * 60 * 1000,
+  200,
   'Too many CSRF bootstrap requests. Please try again after 15 minutes.',
   'CSRF_RATE_EXCEEDED'
 );

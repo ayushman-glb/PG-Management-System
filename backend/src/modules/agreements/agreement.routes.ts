@@ -1,18 +1,16 @@
 import { Router } from 'express';
-import { Container } from '../../container';
-
+import { AgreementController } from './agreement.controller';
+import { AgreementService } from './agreement.service';
 import { authenticate } from '../../middleware/authMiddleware';
+
+const agreementService = new AgreementService();
+const agreementController = new AgreementController(agreementService);
 
 const router = Router();
 
-router.use(authenticate);
+router.get('/', authenticate, agreementController.listAgreements);
+router.get('/:id', authenticate, agreementController.getAgreement);
+router.post('/:id/sign', authenticate, agreementController.signAgreement);
+router.get('/:id/pdf', authenticate, agreementController.downloadPDF);
 
-router.post('/generate', (req, res, next) => Container.agreementController.generate(req, res, next));
-router.get('/:id', (req, res, next) => Container.agreementController.getById(req, res, next));
-router.post('/:id/sign', (req, res, next) => Container.agreementController.sign(req, res, next));
-router.get('/:id/pdf', (req, res, next) => Container.agreementController.downloadPdf(req, res, next));
-router.get('/:id/download', (req, res, next) => Container.agreementController.downloadPdf(req, res, next));
-router.get('/verify/:agreementNumber', (req, res, next) => Container.agreementController.verify(req, res, next));
-router.get('/resident/:residentId', (req, res, next) => Container.agreementController.getResidentAgreements(req, res, next));
-
-export default router;
+export { router as agreementRoutes };

@@ -13,6 +13,7 @@ import {
 import DashboardLayout from "@components/layouts/DashboardLayout";
 import { AvatarThemeSelector } from "@components/ui/Avatar";
 import { DeviceManagementSection } from "../../settings/components/DeviceManagementSection";
+import { AuthMethodsSection } from "../../settings/components/AuthMethodsSection";
 import type { Page } from "@app/App";
 import { useTheme } from "@theme/index";
 import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
@@ -225,6 +226,7 @@ export default function Operations({ navigate, page }: Props) {
               </div>
             </div>
 
+            <AuthMethodsSection />
             <DeviceManagementSection />
           </div>
         )}

@@ -1,15 +1,54 @@
-import { Request, Response } from 'express';
-import { prisma } from '../../config/prisma';
+import { Request, Response, NextFunction } from 'express';
 import { SearchService } from './search.service';
-import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
 
-const searchService = new SearchService(prisma);
-
 export class SearchController {
-  search = catchAsync(async (req: Request, res: Response) => {
-    const { q, pgId } = req.query;
-    const results = await searchService.globalSearch((q as string) || '', pgId as string);
-    return ApiResponse.success(res, 'Global search results', results);
-  });
+  constructor(private readonly searchService: SearchService) {}
+
+  searchPGs = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        query,
+        city,
+        locality,
+        genderType,
+        roomType,
+        minPrice,
+        maxPrice,
+        isAc,
+        hasFood,
+        latitude,
+        longitude,
+        radiusKm,
+        page,
+        limit,
+      } = req.query;
+
+      const result = await this.searchService.searchPGs({
+        query: query as string,
+        city: city as string,
+        locality: locality as string,
+        genderType: genderType as any,
+        roomType: roomType as any,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        isAc: isAc === 'true' ? true : undefined,
+        hasFood: hasFood === 'true' ? true : undefined,
+        latitude: latitude ? Number(latitude) : undefined,
+        longitude: longitude ? Number(longitude) : undefined,
+        radiusKm: radiusKm ? Number(radiusKm) : undefined,
+        page: page ? Number(page) : 1,
+        limit: limit ? Number(limit) : 12,
+      });
+
+      return ApiResponse.success(res, 'PG properties retrieved.', result.pgs, {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

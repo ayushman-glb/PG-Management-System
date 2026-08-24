@@ -1,341 +1,215 @@
-import { IBillingService, IVerifyPaymentData } from '../../interfaces/services/IBillingService';
-import { IBillingRepository } from '../../interfaces/repositories/IBillingRepository';
-import { IResidentRepository } from '../../interfaces/repositories/IResidentRepository';
-import { IDistributedLockService } from '../../interfaces/infrastructure/IDistributedLockService';
-import { IPdfGeneratorService } from '../../interfaces/infrastructure/IPdfGeneratorService';
-import { AppError } from '../../utils/appError';
-import { PaymentStatus } from '@prisma/client';
-import crypto from 'crypto';
-import PDFDocument from 'pdfkit';
-import { env } from '../../config/env';
-import { logger } from '../../utils/logger';
+import { PrismaClient, Invoice, InvoiceStatus, Fine, FineStatus, FineType, Role } from '@prisma/client';
 import { prisma } from '../../config/prisma';
-import { emailService } from '../email';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
 
-let razorpayInstance: any = null;
-function getRazorpay() {
-  if (!razorpayInstance && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET && env.RAZORPAY_KEY_SECRET !== 'mock_razorpay_secret') {
-    try {
-      const Razorpay = require('razorpay');
-      razorpayInstance = new Razorpay({
-        key_id: env.RAZORPAY_KEY_ID,
-        key_secret: env.RAZORPAY_KEY_SECRET,
-      });
-    } catch (err: any) {
-      logger.warn('Razorpay SDK not available, operating in mock mode', { error: err.message });
-    }
+export class BillingService {
+  private get db(): PrismaClient {
+    return (global as any).prismaSingleton || prisma;
   }
-  return razorpayInstance;
-}
 
-export class BillingService implements IBillingService {
-  private readonly db = prisma;
+  /**
+   * Generates monthly rent invoice for an active resident stay.
+   * Calculates subtotal, server-side GST @ 18%, checks for applicable late fines.
+   */
+  async generateMonthlyInvoice(residentId: string, pgId: string, month?: number, year?: number): Promise<Invoice> {
+    const currentMonth = month || new Date().getMonth() + 1;
+    const currentYear = year || new Date().getFullYear();
 
-  constructor(
-    private readonly billingRepository: IBillingRepository,
-    private readonly residentRepository: IResidentRepository,
-    private readonly lockService: IDistributedLockService,
-    private readonly pdfService: IPdfGeneratorService
-  ) {}
-
-  async createPaymentOrder(residentId: string, baseAmount: number, isInterstate: boolean = false) {
-    const resident = await this.residentRepository.findById(residentId);
-
-    if (!resident) {
-      throw new AppError('Resident not found', 404);
-    }
-
-    const lock = await this.lockService.acquireLock(`bed:lock:${resident.bedId}`, 30000);
-    if (!lock.lockAcquired) {
-      throw new AppError('A booking or payment transaction is currently processing for this bed. Please try again shortly.', 429);
-    }
-
-    try {
-      const cgstAmount = isInterstate ? 0 : parseFloat((baseAmount * 0.09).toFixed(2));
-      const sgstAmount = isInterstate ? 0 : parseFloat((baseAmount * 0.09).toFixed(2));
-      const igstAmount = isInterstate ? parseFloat((baseAmount * 0.18).toFixed(2)) : 0;
-      const totalAmount = parseFloat((baseAmount + cgstAmount + sgstAmount + igstAmount).toFixed(2));
-
-      const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-      const razorpayOrderId = `order_${crypto.randomBytes(10).toString('hex')}`;
-
-      const rp = getRazorpay();
-      let rpOrderId = razorpayOrderId;
-      if (rp) {
-        try {
-          const order = await rp.orders.create({
-            amount: Math.round(totalAmount * 100),
-            currency: 'INR',
-            receipt: invoiceNumber,
-          });
-          rpOrderId = order.id;
-        } catch (err: any) {
-          logger.warn('Razorpay order creation failed, using local order ID', { error: err.message });
-        }
-      }
-
-      const payment = await this.billingRepository.createPayment({
+    // Check if invoice already exists
+    const existing = await this.db.invoice.findFirst({
+      where: {
         residentId,
-        propertyId: resident.propertyId || resident.pgId,
-        invoiceNumber,
-        baseAmount,
-        cgstAmount,
-        sgstAmount,
-        igstAmount,
-        totalAmount,
-        dueDate: new Date(new Date().setDate(10)),
-        paymentMethod: 'RAZORPAY',
-        status: PaymentStatus.PENDING,
-        razorpayOrderId: rpOrderId
-      });
-
-      return {
-        paymentId: payment.id,
-        invoiceNumber,
-        razorpayOrderId: rpOrderId,
-        baseAmount,
-        cgstAmount,
-        sgstAmount,
-        igstAmount,
-        totalAmount,
-        currency: 'INR',
-        keyId: env.RAZORPAY_KEY_ID
-      };
-    } finally {
-      await lock.release();
-    }
-  }
-
-  async verifyPayment(data: IVerifyPaymentData) {
-    const payment = await this.billingRepository.findPaymentById(data.paymentId);
-
-    if (!payment) {
-      throw new AppError('Payment record not found', 404);
-    }
-
-    let isValid = true;
-    if (env.RAZORPAY_KEY_SECRET !== 'your_razorpay_key_secret' && env.RAZORPAY_KEY_SECRET !== 'mock_razorpay_secret') {
-      const generatedSignature = crypto
-        .createHmac('sha256', env.RAZORPAY_KEY_SECRET || '')
-        .update(`${data.razorpayOrderId}|${data.razorpayPaymentId}`)
-        .digest('hex');
-      isValid = generatedSignature === data.razorpaySignature;
-    }
-
-    if (!isValid) {
-      await this.billingRepository.updatePaymentStatus(payment.id, PaymentStatus.FAILED);
-      try {
-        const residentWithUser = await this.db.resident.findUnique({
-          where: { id: payment.residentId },
-          include: { user: true },
-        });
-        const failEmail = residentWithUser?.email || residentWithUser?.user?.email;
-        if (failEmail) {
-          await emailService.sendPaymentFailedEmail({
-            email: failEmail,
-            name: residentWithUser.name || residentWithUser.user?.name || 'Resident',
-            amount: payment.totalAmount,
-            attemptDate: new Date(),
-            invoiceNumber: (payment as any).invoiceNumber || payment.id,
-            failureReason: 'Razorpay signature verification failed.',
-          });
-        }
-      } catch (err: any) {
-        logger.warn('Failed to send payment failed email alert', { error: err.message });
-      }
-      throw new AppError('Invalid Razorpay signature verification failed.', 400);
-    }
-
-    const updated = await this.billingRepository.updatePaymentStatus(payment.id, PaymentStatus.PAID, {
-      razorpayPaymentId: data.razorpayPaymentId,
-      razorpaySignature: data.razorpaySignature,
-      clientIp: data.clientIp
+        pgId,
+        billingMonth: currentMonth,
+        billingYear: currentYear,
+      },
+      include: { items: true },
     });
 
-    const resident = await this.residentRepository.findById(payment.residentId);
-    if (resident?.bedId) {
-      await this.residentRepository.updateBedOccupancy(resident.bedId, true);
+    if (existing) return existing;
+
+    const allocation = await this.db.roomAllocation.findFirst({
+      where: { residentId, pgId, isActive: true },
+      include: { room: true, bed: true, pg: true },
+    });
+
+    if (!allocation) {
+      throw new NotFoundError('No active room allocation found for this resident in the specified PG.');
     }
 
-    // Trigger automated payment receipt & invoice dispatch
-    try {
-      const residentWithDetails = await this.db.resident.findUnique({
-        where: { id: payment.residentId },
-        include: {
-          user: true,
-          pg: true,
-          bed: { include: { room: true } },
+    const rentSchedule = await this.db.rentSchedule.findFirst({
+      where: { residentId, pgId, isActive: true },
+    });
+
+    const subtotal = allocation.rent || rentSchedule?.monthlyRent || 10000;
+    const gstPercentage = 18.0;
+    const gstAmount = Number(((subtotal * gstPercentage) / 100).toFixed(2));
+    const totalAmount = subtotal + gstAmount;
+
+    const dueDate = new Date(currentYear, currentMonth - 1, rentSchedule?.dueDayOfMonth || 5);
+    const invoiceNumber = `INV-${currentYear}-${currentMonth.toString().padStart(2, '0')}-${Date.now().toString().slice(-4)}`;
+
+    return await this.db.invoice.create({
+      data: {
+        residentId,
+        pgId,
+        bookingId: allocation.bookingId,
+        invoiceNumber,
+        billingMonth: currentMonth,
+        billingYear: currentYear,
+        issueDate: new Date(),
+        dueDate,
+        gracePeriodDays: rentSchedule?.graceDays || 5,
+        subtotal,
+        gstPercentage,
+        gstAmount,
+        fineAmount: 0,
+        totalAmount,
+        amountPaid: 0,
+        balanceDue: totalAmount,
+        status: InvoiceStatus.UNPAID,
+        items: {
+          create: [
+            {
+              description: `Monthly Rent (${allocation.room.roomNumber} - Bed ${allocation.bed.bedNumber})`,
+              itemType: 'RENT',
+              unitPrice: subtotal,
+              quantity: 1,
+              total: subtotal,
+            },
+            {
+              description: `GST @ 18% (SAC 9963 Accommodation Services)`,
+              itemType: 'OTHER',
+              unitPrice: gstAmount,
+              quantity: 1,
+              total: gstAmount,
+            },
+          ],
         },
-      });
+      },
+      include: { items: true },
+    });
+  }
 
-      const recipientEmail = residentWithDetails?.email || residentWithDetails?.user?.email;
-      if (recipientEmail) {
-        const invoiceNum = (payment as any).invoiceNumber || `INV-${Date.now().toString().slice(-6)}`;
-        await emailService.sendPaymentReceiptEmail({
-          email: recipientEmail,
-          name: residentWithDetails.name || residentWithDetails.user?.name || 'Resident',
-          invoiceNumber: invoiceNum,
-          amount: payment.totalAmount,
-          paymentDate: new Date(),
-          paymentMethod: (payment as any).paymentMethod || 'Razorpay Online',
-          transactionId: data.razorpayPaymentId || payment.id,
-          propertyName: residentWithDetails.pg?.name,
-          roomNumber: residentWithDetails.bed?.room?.roomNumber,
+  /**
+   * Recalculates fine on unpaid overdue invoices.
+   */
+  async calculateAndApplyFine(invoiceId: string): Promise<Invoice> {
+    const invoice = await this.db.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { items: true, pg: true },
+    });
+
+    if (!invoice || invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.VOID) {
+      return invoice!;
+    }
+
+    const schedule = await this.db.rentSchedule.findFirst({
+      where: { residentId: invoice.residentId, pgId: invoice.pgId, isActive: true },
+    });
+
+    const graceDays = invoice.gracePeriodDays || schedule?.graceDays || 5;
+    const graceExpiry = new Date(invoice.dueDate);
+    graceExpiry.setDate(graceExpiry.getDate() + graceDays);
+
+    const now = new Date();
+    if (now > graceExpiry) {
+      const diffTime = Math.abs(now.getTime() - graceExpiry.getTime());
+      const daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const dailyFine = schedule?.lateFinePerDay || 50;
+      const maxFine = schedule?.maxFineAmount || 1000;
+      const calculatedFine = Math.min(daysOverdue * dailyFine, maxFine);
+
+      if (calculatedFine > invoice.fineAmount) {
+        const fineDiff = calculatedFine - invoice.fineAmount;
+        const newTotal = invoice.totalAmount + fineDiff;
+        const newBalance = invoice.balanceDue + fineDiff;
+
+        return await this.db.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            fineAmount: calculatedFine,
+            totalAmount: newTotal,
+            balanceDue: newBalance,
+            status: InvoiceStatus.OVERDUE,
+          },
+          include: { items: true },
         });
       }
-    } catch (err: any) {
-      logger.warn('Failed to dispatch payment success email receipt', { error: err.message });
     }
 
-    return updated;
+    return invoice;
   }
 
-  async generateInvoicePdfStream(paymentId: string, outputStream?: NodeJS.WritableStream): Promise<InstanceType<typeof PDFDocument>> {
-    const payment = await this.billingRepository.findPaymentWithDetails(paymentId);
+  async getResidentInvoices(residentId: string): Promise<any> {
+    const invoices = await this.db.invoice.findMany({
+      where: { residentId },
+      include: {
+        pg: { select: { id: true, name: true, location: true } },
+        items: true,
+        payments: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    if (!payment) {
-      throw new AppError('Payment invoice not found', 404);
-    }
-
-    return this.pdfService.generateInvoicePdf(payment, outputStream);
-  }
-
-  async generateReceiptPdfStream(paymentId: string, outputStream?: NodeJS.WritableStream): Promise<InstanceType<typeof PDFDocument>> {
-    const payment = await this.billingRepository.findPaymentWithDetails(paymentId);
-
-    if (!payment) {
-      throw new AppError('Payment receipt record not found', 404);
-    }
-
-    return this.pdfService.generateInvoicePdf(payment, outputStream);
-  }
-
-  async processRefund(paymentId: string, amount?: number, reason?: string) {
-    const payment = await this.billingRepository.findPaymentById(paymentId);
-    if (!payment) {
-      throw new AppError('Payment not found', 404);
-    }
-
-    const refundAmount = amount || payment.totalAmount;
-    let refundId = `rfnd_${crypto.randomBytes(10).toString('hex')}`;
-    let status = 'SUCCESS';
-
-    const rp = getRazorpay();
-    if (rp && payment.razorpayPaymentId) {
-      try {
-        const refund = await rp.refunds.create({
-          payment_id: payment.razorpayPaymentId,
-          amount: Math.round(refundAmount * 100),
-          reason: reason || 'Deposit/Rent Refund',
-        });
-        refundId = refund.id;
-      } catch (err: any) {
-        logger.error('Razorpay refund failed', { paymentId, error: err.message });
-        status = 'FAILED';
-        throw new AppError(`Razorpay refund failed: ${err.message}`, 502);
+    // Auto calculate fines on pending invoices
+    for (const inv of invoices) {
+      if (inv.status === InvoiceStatus.UNPAID || inv.status === InvoiceStatus.OVERDUE) {
+        await this.calculateAndApplyFine(inv.id);
       }
-    } else {
-      logger.warn('Processing refund without Razorpay (mock mode)', { paymentId });
     }
 
-    if (status === 'SUCCESS') {
-      await this.billingRepository.updatePaymentStatus(payment.id, PaymentStatus.REFUNDED, {
-        razorpayPaymentId: refundId
-      });
-    }
+    const totalOutstanding = invoices
+      .filter((i) => i.status !== InvoiceStatus.PAID && i.status !== InvoiceStatus.VOID)
+      .reduce((sum, i) => sum + i.balanceDue, 0);
 
     return {
-      refundId,
-      paymentId: payment.id,
-      amount: refundAmount,
-      status,
-      reason: reason || 'Deposit/Rent Refund',
-      createdAt: new Date().toISOString()
+      invoices,
+      totalOutstanding,
     };
   }
 
-  async handleWebhook(payload: any, signature: string) {
-    const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET;
-    if (webhookSecret && webhookSecret !== 'mock_webhook_secret') {
-      const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(JSON.stringify(payload))
-        .digest('hex');
-      if (expectedSignature !== signature) {
-        throw new AppError('Invalid Razorpay Webhook signature', 400);
-      }
-    }
+  async getOwnerInvoices(ownerId: string, pgId?: string): Promise<any> {
+    const where: any = {
+      pg: { ownerId },
+    };
+    if (pgId) where.pgId = pgId;
 
-    const event = payload?.event;
-    if (event === 'payment.captured' || event === 'order.paid') {
-      const paymentEntity = payload?.payload?.payment?.entity;
-      if (paymentEntity?.order_id && paymentEntity?.id) {
-        await this.billingRepository.updatePaymentStatus(
-          paymentEntity.order_id,
-          PaymentStatus.PAID,
-          { razorpayPaymentId: paymentEntity.id }
-        );
-      }
-    }
-
-    return { status: 'ok', eventReceived: event };
-  }
-
-  async getPaymentAnalytics(ownerId?: string) {
-    const where: any = {};
-    if (ownerId) {
-      const ownerPgs = await this.db.pG.findMany({
-        where: { ownerId },
-        select: { id: true }
-      });
-      where.pgId = { in: ownerPgs.map((p: any) => p.id) };
-    }
-
-    const payments = await this.db.payment.findMany({
+    const invoices = await this.db.invoice.findMany({
       where,
-      select: {
-        totalAmount: true,
-        baseAmount: true,
-        status: true,
-        paymentMethod: true,
-        createdAt: true,
-      }
+      include: {
+        resident: {
+          select: { id: true, username: true, email: true, phone: true, profile: true },
+        },
+        pg: { select: { id: true, name: true } },
+        items: true,
+        payments: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const monthlyPayments = payments.filter(p => p.createdAt >= currentMonthStart);
-    const paidPayments = payments.filter(p => p.status === PaymentStatus.PAID);
-    const pendingPayments = payments.filter(p => p.status === PaymentStatus.PENDING || p.status === PaymentStatus.LATE);
-    const refundedPayments = payments.filter(p => p.status === PaymentStatus.REFUNDED);
-
-    const totalCollected = paidPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-    const monthlyRent = monthlyPayments
-      .filter(p => p.status === PaymentStatus.PAID)
-      .reduce((sum, p) => sum + p.baseAmount, 0);
-    const pendingDues = pendingPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-    const refundsProcessed = refundedPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-
-    const expectedTotal = paidPayments.reduce((sum, p) => sum + p.totalAmount, 0) + pendingDues;
-    const collectionRate = expectedTotal > 0 ? parseFloat(((paidPayments.length > 0 ? totalCollected : 0) / expectedTotal * 100).toFixed(1)) : 0;
-
-    const securityDepositAmount = 0;
-    const rentAmount = monthlyRent;
+    let totalCollected = 0;
+    let totalDue = 0;
+    for (const inv of invoices) {
+      totalCollected += inv.amountPaid;
+      if (inv.status !== InvoiceStatus.PAID && inv.status !== InvoiceStatus.VOID) {
+        totalDue += inv.balanceDue;
+      }
+    }
 
     return {
-      totalCollected: parseFloat(totalCollected.toFixed(2)),
-      monthlyRent: parseFloat(monthlyRent.toFixed(2)),
-      securityDeposits: parseFloat(securityDepositAmount.toFixed(2)),
-      pendingDues: parseFloat(pendingDues.toFixed(2)),
-      refundsProcessed: parseFloat(refundsProcessed.toFixed(2)),
-      collectionRatePercent: collectionRate,
-      distribution: [
-        { category: "Rent Dues", percentage: rentAmount > 0 ? 45 : 0, amount: parseFloat(rentAmount.toFixed(2)) },
-        { category: "Security Deposit", percentage: 25, amount: parseFloat(securityDepositAmount.toFixed(2)) },
-        { category: "Mess & Food", percentage: 20, amount: parseFloat((totalCollected * 0.2).toFixed(2)) },
-        { category: "Utilities & Extra", percentage: 10, amount: parseFloat((totalCollected * 0.1).toFixed(2)) },
-      ]
+      invoices,
+      totalCollected,
+      totalDue,
+    };
+  }
+
+  async calculateOutstandingDues(residentId: string): Promise<any> {
+    const res = await this.getResidentInvoices(residentId);
+    return {
+      residentId,
+      totalOutstanding: res.totalOutstanding,
+      invoices: res.invoices,
     };
   }
 }

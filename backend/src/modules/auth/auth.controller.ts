@@ -1,475 +1,404 @@
-import { Request, Response, NextFunction } from "express";
-import { IAuthService } from "../../interfaces/services/IAuthService";
-import { ApiResponse } from "../../utils/apiResponse";
-import { catchAsync } from "../../utils/appError";
-import { env } from "../../config/env";
-import { Container } from "../../container";
-import { logger } from "../../utils/logger";
-import passport from "passport";
-import crypto from "crypto";
-
-const isProduction = env.NODE_ENV === "production";
-
-const getRefreshTokenCookieOptions = (maxAge: number) => ({
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? ("none" as const) : ("lax" as const),
-  path: "/",
-  maxAge,
-});
+import { Request, Response, NextFunction } from 'express';
+import { AuthService } from './auth.service';
+import { ApiResponse } from '../../utils/apiResponse';
+import { BadRequestError } from '../../core/errors/CustomErrors';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class AuthController {
-  constructor(private readonly authService: IAuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-  login = catchAsync(async (req: Request, res: Response) => {
-    const { email, phone, residentCode, identifier, password, rememberMe, isRememberMe: isRememberMeParam } = req.body;
-    const loginId = identifier || email || phone || residentCode;
-    const isRememberMe = typeof isRememberMeParam === "boolean" ? isRememberMeParam : Boolean(rememberMe);
-
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
-    const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
-
-    const result = await this.authService.login(loginId, password, {
-      rememberMe: isRememberMe,
-      ipAddress,
-      userAgent,
-      visitorId,
-    });
-
-    if (result && result.requiresTwoFactor) {
-      return ApiResponse.success(res, result.message || "Two-factor authentication code required", {
-        requiresTwoFactor: true,
-        preAuthToken: result.preAuthToken,
-      });
-    }
-
-    let deviceSecurity: any = null;
-    const effectiveVisitorId = visitorId || "anonymous_device";
-
-    if (result?.user?.id) {
-      try {
-        const requestId = (req as any).correlationId;
-
-        const evalResult = await Container.deviceService.identifyAndEvaluateDevice(
-          result.user.id,
-          {
-            visitorId: effectiveVisitorId,
-            deviceLabel: req.body.deviceLabel || "Browser Client",
-            screenResolution: req.body.screenResolution,
-          },
-          { ipAddress, userAgent, requestId },
-        );
-
-        if (evalResult?.device?.status === "BLOCKED") {
-          return res.status(403).json({
-            success: false,
-            message: "Authentication denied: This browser/device has been blocked by security policy.",
-          });
-        }
-
-        let stepUpRequired = false;
-        if (evalResult?.device?.status === "REVOKED") {
-          stepUpRequired = true;
-        }
-
-        deviceSecurity = {
-          isNewDevice: evalResult.isNew,
-          requiresAlert: evalResult.requiresAlert,
-          deviceId: evalResult.device?.id,
-          visitorId: effectiveVisitorId,
-          deviceLabel: evalResult.device?.deviceLabel || evalResult.telemetry?.deviceLabel,
-          screenResolution: evalResult.telemetry?.screenResolution || evalResult.device?.screenResolution,
-          ipAddress: evalResult.telemetry?.ip,
-          region: evalResult.telemetry?.region,
-          status: evalResult.device?.status,
-          riskLevel: evalResult.risk?.level,
-          stepUpRequired,
-        };
-      } catch (deviceError) {
-        logger.warn("Device security evaluation notice:", deviceError);
-      }
-    }
-
-    const cookieMaxAge = isRememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(cookieMaxAge));
-
-    return ApiResponse.success(res, "Login successful", {
-      user: result.user,
-      accessToken: result.accessToken,
-      deviceSecurity,
-    });
-  });
-
-  register = catchAsync(async (req: Request, res: Response) => {
-    const { name, email, password, role, phone } = req.body;
-    const result = await this.authService.register({
-      name,
-      email,
-      password,
-      role,
-      phone,
-    });
-
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
-
-    const { refreshToken: _rt, ...safeResult } = result as any;
-    return ApiResponse.success(res, "User registered successfully", safeResult, 201);
-  });
-
-  sendOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email, phone } = req.body;
-    const target = email || phone;
-    const result = await this.authService.sendOtp(target);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  verifyOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email, phone, otp } = req.body;
-    const target = email || phone;
-    const result = await this.authService.verifyOtp(target, otp);
-
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
-
-    return ApiResponse.success(res, "OTP verified successfully", result);
-  });
-
-  sendPhoneOtp = catchAsync(async (req: Request, res: Response) => {
-    const { phone } = req.body;
-    const result = await this.authService.sendPhoneOtp(phone);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  verifyPhoneOtp = catchAsync(async (req: Request, res: Response) => {
-    const { phone, otp } = req.body;
-    const result = await this.authService.verifyOtp(phone, otp);
-
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
-
-    return ApiResponse.success(res, "Phone OTP verified successfully", result);
-  });
-
-  logout = catchAsync(async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
-    const authHeader = req.headers.authorization;
-    const accessToken = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
-
-    if (refreshToken || accessToken) {
-      await this.authService.logout(refreshToken || "", accessToken, ipAddress, userAgent);
-    }
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
-    res.clearCookie("accessToken", {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
-    return ApiResponse.success(res, "Logged out successfully", { success: true });
-  });
-
-  logoutAll = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: "Authentication required" });
-    }
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
-
-    if (this.authService.logoutAll) {
-      await this.authService.logoutAll(userId, ipAddress, userAgent);
-    }
-
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
-    res.clearCookie("accessToken", {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
-    return ApiResponse.success(res, "All active sessions revoked successfully", { success: true });
-  });
-
-  sendEmailOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email, name } = req.body;
-    const result = await this.authService.sendEmailVerification(email, name);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  verifyEmailOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email, otp, code } = req.body;
-    const verificationCode = otp || code;
-    const result = await this.authService.verifyEmail(email, verificationCode);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  resendEmailOtp = catchAsync(async (req: Request, res: Response) => {
-    const { email, name } = req.body;
-    const result = await this.authService.sendEmailVerification(email, name);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  sendPasswordReset = catchAsync(async (req: Request, res: Response) => {
-    const { email } = req.body;
-    if (this.authService.sendPasswordReset) {
-      const result = await this.authService.sendPasswordReset(email);
-      return ApiResponse.success(res, result.message, result);
-    }
-    return ApiResponse.success(res, "Password reset initiated", {});
-  });
-
-  verifyPasswordReset = catchAsync(async (req: Request, res: Response) => {
-    const { email, otp, code, newPassword } = req.body;
-    const verificationCode = otp || code;
-    if (this.authService.verifyPasswordReset) {
-      const result = await this.authService.verifyPasswordReset(email, verificationCode, newPassword);
-      return ApiResponse.success(res, result.message, result);
-    }
-    return ApiResponse.success(res, "Password reset verified", {});
-  });
-
-  sendEmailVerification = catchAsync(async (req: Request, res: Response) => {
-    const { email, name } = req.body;
-    const result = await this.authService.sendEmailVerification(email, name);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  verifyEmail = catchAsync(async (req: Request, res: Response) => {
-    const { email, code, otp } = req.body;
-    const verificationCode = code || otp;
-    const result = await this.authService.verifyEmail(email, verificationCode);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  enableTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: "Authentication required" });
-    }
-    const result = await this.authService.enableTwoFactor(userId);
-    return ApiResponse.success(
-      res,
-      "2FA QR code generated successfully",
-      result,
-    );
-  });
-
-  verifyTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const { preAuthToken, token, rememberMe } = req.body;
-    if (!preAuthToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Verification session token (preAuthToken) required",
-      });
-    }
-
-    const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string);
-    const userAgent = req.headers["user-agent"];
-    const visitorId = (req.headers["x-visitor-id"] as string) || req.body.visitorId;
-
-    const result = await this.authService.verifyTwoFactor(preAuthToken, token, rememberMe, ipAddress, userAgent, visitorId);
-
-    if (result && result.refreshToken) {
-      const cookieMaxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
-      res.cookie("refreshToken", result.refreshToken, {
+  private setCookies(res: Response, accessToken: string, refreshToken: string) {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (accessToken) {
+      res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        maxAge: cookieMaxAge,
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
+        maxAge: 15 * 60 * 1000, // 15 mins
       });
     }
-
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  disableTwoFactor = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: "Authentication required" });
-    }
-    const result = await this.authService.disableTwoFactor(userId);
-    return ApiResponse.success(res, result.message, result);
-  });
-
-  refreshToken = catchAsync(async (req: Request, res: Response) => {
-    const token = req.cookies.refreshToken || req.body.refreshToken || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined);
-    const result = await this.authService.refreshToken(token);
-
-    res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
-
-    return ApiResponse.success(res, "Access token refreshed and rotated", {
-      accessToken: result.accessToken,
-    });
-  });
-
-  me = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "TOKEN_REQUIRED",
-          message: "Authentication required. Please log in.",
-        },
+    if (refreshToken) {
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
     }
-    const result = await this.authService.me(userId);
-    return ApiResponse.success(res, "Current user details", {
-      user: result,
-    });
-  });
-
-  googleLogin = (req: Request, res: Response, next: NextFunction) => {
-    const rawRole = req.query.role ? String(req.query.role).toUpperCase() : "RESIDENT";
-    const roleParam = (rawRole === "OWNER" || rawRole === "RESIDENT") ? rawRole : "RESIDENT";
-    const targetFrontendUrl = resolveFrontendUrl(req);
-
-    logger.info("🔑 Initiating Google OAuth Flow", {
-      role: roleParam,
-      referer: req.headers.referer,
-      origin: req.headers.origin,
-      targetFrontendUrl,
-    });
-
-    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-      logger.error("❌ Google OAuth failed: Credentials missing in server configuration.");
-      return res.redirect(
-        `${targetFrontendUrl}?error=${encodeURIComponent("Google OAuth credentials are not configured on the server.")}`
-      );
-    }
-
-    const statePayload = JSON.stringify({
-      role: roleParam,
-      frontendUrl: targetFrontendUrl,
-      nonce: crypto.randomBytes(16).toString("hex"),
-      timestamp: Date.now(),
-    });
-    const oauthSecret = env.OAUTH_STATE_SECRET || env.JWT_SECRET;
-    const stateSig = crypto.createHmac("sha256", oauthSecret).update(statePayload).digest("hex");
-    const state = Buffer.from(JSON.stringify({ p: statePayload, s: stateSig })).toString("base64url");
-
-    passport.authenticate("google", {
-      scope: ["openid", "email", "profile"],
-      accessType: "offline",
-      prompt: "consent",
-      state,
-      session: false,
-    })(req, res, next);
-  };
-
-  googleCallback = (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate(
-      "google",
-      { session: false },
-      async (err: any, user: any, info: any) => {
-        let targetFrontendUrl = resolveFrontendUrl(req);
-
-        if (req.query?.state) {
-          try {
-            const rawState = req.query.state as string;
-            const decodedJson = JSON.parse(
-              Buffer.from(rawState, rawState.includes("-") || rawState.includes("_") ? "base64url" : "base64").toString("utf-8")
-            );
-            if (decodedJson?.p && decodedJson?.s) {
-              const oauthSecret = env.OAUTH_STATE_SECRET || env.JWT_SECRET;
-              const expectedSig = crypto.createHmac("sha256", oauthSecret).update(decodedJson.p).digest("hex");
-              if (expectedSig === decodedJson.s) {
-                const payload = JSON.parse(decodedJson.p);
-                if (payload?.frontendUrl) {
-                  targetFrontendUrl = normalizeFrontendUrl(payload.frontendUrl);
-                }
-              }
-            } else if (decodedJson?.frontendUrl) {
-              targetFrontendUrl = normalizeFrontendUrl(decodedJson.frontendUrl);
-            }
-          } catch {
-            // keep fallback
-          }
-        }
-
-        logger.info("📥 Google OAuth Callback Received", {
-          hasUser: !!user,
-          hasError: !!err,
-          targetFrontendUrl,
-        });
-
-        if (err || !user) {
-          logger.error("❌ Google OAuth Authentication Error", {
-            error: err?.message || info?.message || "google_auth_failed",
-            targetFrontendUrl,
-          });
-          const errorMsg = encodeURIComponent(
-            err?.message || info?.message || "google_auth_failed"
-          );
-          return res.redirect(`${targetFrontendUrl}?error=${errorMsg}`);
-        }
-
-        try {
-          const { accessToken, refreshToken } = await this.authService.generateOAuthTokens(
-            user,
-            req.ip,
-            req.headers["user-agent"] as string
-          );
-
-          res.cookie("refreshToken", refreshToken, getRefreshTokenCookieOptions(7 * 24 * 60 * 60 * 1000));
-
-          const targetParams = new URLSearchParams();
-          targetParams.set("oauth", "success");
-          targetParams.set("role", user.role);
-          if (user.residentCode) targetParams.set("code", user.residentCode);
-
-          const finalRedirectUrl = `${targetFrontendUrl}?${targetParams.toString()}`;
-
-          logger.info("Google OAuth success -> redirect (cookie-based)", {
-            userId: user.id,
-            email: user.email,
-          });
-
-          return res.redirect(finalRedirectUrl);
-        } catch (error: any) {
-          logger.error("❌ Error generating JWT tokens in googleCallback", {
-            error: error?.message,
-            targetFrontendUrl,
-          });
-          return res.redirect(
-            `${targetFrontendUrl}?error=${encodeURIComponent(error?.message || "token_generation_failed")}`
-          );
-        }
-      }
-    )(req, res, next);
-  };
-}
-
-function normalizeFrontendUrl(rawUrl: string): string {
-  let url = rawUrl.trim();
-  if (url.includes("ayushman-glb.github.io") && !url.includes("PG-Management-System")) {
-    url = `${url.replace(/\/$/, "")}/PG-Management-System`;
   }
-  return url;
-}
 
-function resolveFrontendUrl(req: Request): string {
-  let candidate = (req.headers.origin as string) || (req.headers.referer as string);
-  if (candidate) {
+  private clearCookies(res: Response) {
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+    });
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+    });
+  }
+
+  registerResident = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const parsed = new URL(candidate);
-      let origin = parsed.origin;
-      if (origin.includes("ayushman-glb.github.io")) {
-        return "https://ayushman-glb.github.io/PG-Management-System";
+      const { email, phone, username, password, firstName, lastName, currentAddress, gender, dateOfBirth, occupation, acceptedTermsVersion, acceptedPrivacyVersion, visitorId, deviceLabel } = req.body;
+      if (!email || !phone || !username || !password || !firstName || !lastName) {
+        throw new BadRequestError('Email, phone, username, password, first name, and last name are required.');
       }
-      return origin;
-    } catch {}
-  }
-  return env.FRONTEND_URL || env.CLIENT_URL || "http://localhost:5173";
+
+      const result = await this.authService.registerResident({
+        email,
+        phone,
+        username,
+        password,
+        firstName,
+        lastName,
+        currentAddress,
+        gender,
+        dateOfBirth,
+        occupation,
+        acceptedTermsVersion,
+        acceptedPrivacyVersion,
+        visitorId,
+        deviceLabel,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      return ApiResponse.success(res, result.message, result.user, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  registerOwner = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, phone, username, password, firstName, lastName, currentAddress, numPGsToRegister, acceptedTermsVersion, acceptedPrivacyVersion, visitorId, deviceLabel } = req.body;
+      if (!email || !phone || !username || !password || !firstName || !lastName) {
+        throw new BadRequestError('Email, phone, username, password, first name, and last name are required.');
+      }
+
+      const result = await this.authService.registerOwner({
+        email,
+        phone,
+        username,
+        password,
+        firstName,
+        lastName,
+        currentAddress,
+        numPGsToRegister,
+        acceptedTermsVersion,
+        acceptedPrivacyVersion,
+        visitorId,
+        deviceLabel,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      return ApiResponse.success(res, result.message, result.user, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyEmailOTP = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, otp } = req.body;
+      if (!email || !otp) throw new BadRequestError('Email and OTP code are required.');
+
+      await this.authService.verifyEmailOTP(email, otp);
+      return ApiResponse.success(res, 'Email verified successfully. You may now sign in.');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  login = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { identifier, password, visitorId, deviceLabel } = req.body;
+      if (!identifier || typeof identifier !== 'string' || !password || typeof password !== 'string') {
+        throw new BadRequestError('Identifier (email/username/phone) and password must be valid strings.');
+      }
+
+      const result = await this.authService.login(identifier, password, {
+        visitorId,
+        deviceLabel,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      if (!result.require2FA) {
+        this.setCookies(res, result.accessToken, result.refreshToken);
+      }
+
+      return ApiResponse.success(res, result.require2FA ? '2FA Code dispatched to registered email.' : 'Login successful.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verify2FA = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { twoFactorToken, otp, visitorId } = req.body;
+      if (!twoFactorToken || !otp) throw new BadRequestError('2FA token and OTP code are required.');
+
+      const result = await this.authService.verify2FA(twoFactorToken, otp, {
+        visitorId,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      this.setCookies(res, result.accessToken, result.refreshToken);
+      return ApiResponse.success(res, 'Two-Factor Authentication verified successfully.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+      if (!refreshToken) throw new BadRequestError('Refresh token required.');
+
+      const result = await this.authService.refreshToken(refreshToken, req.ip, req.headers['user-agent']);
+      this.setCookies(res, result.accessToken, result.refreshToken);
+      return ApiResponse.success(res, 'Tokens refreshed successfully.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+      await this.authService.logout(refreshToken);
+      this.clearCookies(res);
+      return ApiResponse.success(res, 'Logged out successfully.');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  logoutAll = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+      await this.authService.logoutAllDevices(user.id);
+      this.clearCookies(res);
+      return ApiResponse.success(res, 'Logged out from all devices successfully.');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getMe = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+      const userProfile = await this.authService.getMe(user.id);
+      return ApiResponse.success(res, 'User profile retrieved.', userProfile);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  transferPrimaryDevice = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+      const { currentPrimaryDeviceId, targetDeviceId } = req.body;
+      if (!currentPrimaryDeviceId || !targetDeviceId) {
+        throw new BadRequestError('currentPrimaryDeviceId and targetDeviceId are required.');
+      }
+
+      await this.authService.transferPrimaryDevice(user.id, currentPrimaryDeviceId, targetDeviceId);
+      return ApiResponse.success(res, 'Primary device ownership transferred successfully.');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  initiateGoogleAuth = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const role = (req.query.role as any) || 'RESIDENT';
+      const redirectUrl = req.query.redirectUrl as string;
+      const authUrl = this.authService.initiateGoogleAuth(role, redirectUrl);
+
+      // Support JSON response if requested via accept header or query param
+      if (req.headers.accept?.includes('application/json') || req.query.format === 'json') {
+        return ApiResponse.success(res, 'Google OAuth URL generated.', { authUrl });
+      }
+
+      return res.redirect(authUrl);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  handleGoogleCallback = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { code, state, error } = req.query;
+      const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+      if (error) {
+        return res.redirect(`${frontendBase}/?oauth=error&error=${encodeURIComponent(String(error))}`);
+      }
+
+      if (!code || typeof code !== 'string') {
+        return res.redirect(`${frontendBase}/?oauth=error&error=Missing+authorization+code`);
+      }
+
+      const result = await this.authService.handleGoogleAuth({
+        code,
+        state: typeof state === 'string' ? state : undefined,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      if (result.requireAccountLinking) {
+        return res.redirect(
+          `${frontendBase}/?oauth=account_exists&email=${encodeURIComponent(result.existingEmail || '')}`
+        );
+      }
+
+      if (result.require2FA) {
+        return res.redirect(
+          `${frontendBase}/?oauth=2fa_required&preAuthToken=${encodeURIComponent(result.preAuthToken || '')}`
+        );
+      }
+
+      if (result.accessToken && result.refreshToken) {
+        this.setCookies(res, result.accessToken, result.refreshToken);
+
+        const targetPage = !result.isProfileComplete
+          ? 'complete-profile'
+          : result.user.role === 'RESIDENT'
+          ? 'resident-portal'
+          : 'dashboard';
+
+        return res.redirect(
+          `${frontendBase}/?page=${targetPage}&oauth=success&role=${result.user.role}&token=${encodeURIComponent(result.accessToken)}`
+        );
+      }
+
+      return res.redirect(`${frontendBase}/?oauth=success`);
+    } catch (error: any) {
+      const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendBase}/?oauth=error&error=${encodeURIComponent(error.message || 'OAuth verification failed')}`);
+    }
+  };
+
+  verifyGoogleToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { idToken, role, visitorId, deviceLabel, screenResolution } = req.body;
+      if (!idToken) {
+        throw new BadRequestError('Google ID token is required.');
+      }
+
+      const result = await this.authService.handleGoogleAuth({
+        idToken,
+        role,
+        visitorId,
+        deviceLabel,
+        screenResolution,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      if (result.accessToken && result.refreshToken) {
+        this.setCookies(res, result.accessToken, result.refreshToken);
+      }
+
+      return ApiResponse.success(res, result.message || 'Google authentication processed.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  linkGoogle = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+      const { idToken, password, twoFactorCode } = req.body;
+      if (!idToken) throw new BadRequestError('Google ID token is required.');
+
+      const result = await this.authService.linkGoogleAccount(user.id, {
+        idToken,
+        password,
+        twoFactorCode,
+      });
+
+      return ApiResponse.success(res, result.message);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  unlinkGoogle = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+      const { password } = req.body;
+
+      const result = await this.authService.unlinkGoogleAccount(user.id, { password });
+      return ApiResponse.success(res, result.message);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+      const { password } = req.body;
+      if (!password) throw new BadRequestError('Password is required.');
+
+      const result = await this.authService.createPasswordForGoogleUser(
+        user.id,
+        { password },
+        {
+          visitorId: req.body?.visitorId,
+          userAgent: req.headers['user-agent'],
+          ipAddress: req.ip,
+        }
+      );
+
+      this.setCookies(res, result.accessToken, result.refreshToken);
+      return ApiResponse.success(res, result.message, { accessToken: result.accessToken });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  completeProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+
+      const result = await this.authService.completeProfile(user.id, {
+        ...req.body,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      return ApiResponse.success(res, result.message, result.user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAuthMethods = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = (req as AuthRequest).user;
+      if (!user?.id) throw new BadRequestError('User context missing.');
+
+      const methods = await this.authService.getAuthMethods(user.id);
+      return ApiResponse.success(res, 'Authentication methods retrieved.', methods);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

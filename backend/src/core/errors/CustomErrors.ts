@@ -13,6 +13,12 @@ export class AppError extends Error {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message = 'Bad Request') {
+    super(message, 400, 'BAD_REQUEST');
+  }
+}
+
 export class ValidationError extends AppError {
   public readonly errors: any[];
   constructor(message: string, errors: any[] = []) {

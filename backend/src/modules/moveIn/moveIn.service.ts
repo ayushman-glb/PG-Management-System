@@ -1,90 +1,113 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, RoomAllocation, AgreementStatus, BedStatus, RefundStatus, RefundReason, InvoiceStatus } from '@prisma/client';
+import { prisma } from '../../config/prisma';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
 
-export class MoveInService {
-  constructor(private readonly db: PrismaClient) {}
-
-  async getMoveInInfo(pgId: string) {
-    let info = await this.db.moveInInfo.findUnique({
-      where: { pgId },
-      include: { pg: true },
-    });
-
-    if (!info) {
-      const pg = await this.db.pG.findUnique({ where: { id: pgId } });
-      if (!pg) throw new Error("PG property not found");
-
-      info = await this.db.moveInInfo.create({
-        data: {
-          pgId,
-          keyHandoverDetails: "Key can be collected at the main gate reception counter on move-in day.",
-          houseRules: pg.rules.length > 0 ? pg.rules : [
-            "Curfew at 10:30 PM",
-            "No loud music after 10 PM",
-            "Visitors allowed in common areas only",
-          ],
-          contactPhone: pg.caretakerPhone || "9876543210",
-          contactEmail: "support@roombae.com",
-          wifiDetails: "SSID: RoomBae_Guest | Password: WelcomeRoomBae2026",
-          gateCode: "4321#",
-        },
-        include: { pg: true },
-      });
-    }
-
-    return info;
+export class MoveOutService {
+  private get db(): PrismaClient {
+    return (global as any).prismaSingleton || prisma;
   }
 
-  async upsertMoveInInfo(
-    pgId: string,
-    data: {
-      keyHandoverDetails: string;
-      houseRules: string[];
-      contactPhone: string;
-      contactEmail: string;
-      wifiDetails?: string;
-      gateCode?: string;
+  async requestMoveOut(residentId: string, allocationId: string, requestedDate: string, reason: string): Promise<any> {
+    const allocation = await this.db.roomAllocation.findUnique({
+      where: { id: allocationId },
+      include: { pg: true, bed: true, room: true },
+    });
+
+    if (!allocation || allocation.residentId !== residentId || !allocation.isActive) {
+      throw new BadRequestError('Active room allocation not found.');
     }
-  ) {
-    return this.db.moveInInfo.upsert({
-      where: { pgId },
-      create: {
-        pgId,
-        ...data,
-      },
-      update: {
-        ...data,
+
+    // Check unpaid invoices
+    const unpaidInvoices = await this.db.invoice.findMany({
+      where: {
+        residentId,
+        pgId: allocation.pgId,
+        status: { in: [InvoiceStatus.UNPAID, InvoiceStatus.OVERDUE, InvoiceStatus.PARTIALLY_PAID] },
       },
     });
-  }
 
-  async getTenantDashboardSummary(userId: string) {
-    const [resident, activeApp, recentPayments, recentComplaints] = await Promise.all([
-      this.db.resident.findUnique({
-        where: { userId },
-        include: { pg: true, bed: { include: { room: true } } },
-      }),
-      this.db.application.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        include: { pg: true },
-      }),
-      this.db.payment.findMany({
-        where: { resident: { userId } },
-        take: 5,
-        orderBy: { createdAt: "desc" },
-      }),
-      this.db.complaint.findMany({
-        where: { resident: { userId } },
-        take: 5,
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
+    const pendingDues = unpaidInvoices.reduce((sum, i) => sum + i.balanceDue, 0);
 
     return {
-      resident,
-      activeApplication: activeApp,
-      recentPayments,
-      recentComplaints,
+      allocationId: allocation.id,
+      residentId,
+      pgName: allocation.pg.name,
+      roomNumber: allocation.room.roomNumber,
+      bedNumber: allocation.bed.bedNumber,
+      depositAmount: allocation.deposit,
+      pendingDues,
+      requestedMoveOutDate: new Date(requestedDate),
+      reason,
+      status: 'MOVE_OUT_REQUESTED',
     };
+  }
+
+  async settleAndReleaseCheckout(ownerId: string, allocationId: string, deductions: number = 0, deductionReason?: string): Promise<any> {
+    const allocation = await this.db.roomAllocation.findUnique({
+      where: { id: allocationId },
+      include: { pg: true, bed: true, booking: true },
+    });
+
+    if (!allocation) throw new NotFoundError('Allocation record not found.');
+    if (allocation.pg.ownerId !== ownerId) throw new ForbiddenError('You do not own this PG.');
+
+    // Transaction-safe settlement
+    return await this.db.$transaction(async (tx) => {
+      // 1. Release Bed
+      await tx.bed.update({
+        where: { id: allocation.bedId },
+        data: {
+          status: BedStatus.AVAILABLE,
+          currentResidentId: null,
+        },
+      });
+
+      // 2. Mark Allocation inactive
+      await tx.roomAllocation.update({
+        where: { id: allocation.id },
+        data: {
+          isActive: false,
+          checkOutDate: new Date(),
+        },
+      });
+
+      // 3. Close Agreement
+      await tx.agreement.updateMany({
+        where: { allocationId: allocation.id },
+        data: { status: AgreementStatus.TERMINATED },
+      });
+
+      // 4. Calculate Deposit Refund
+      const netRefundAmount = Math.max(0, allocation.deposit - deductions);
+
+      if (netRefundAmount > 0) {
+        await tx.refund.create({
+          data: {
+            bookingId: allocation.bookingId,
+            residentId: allocation.residentId,
+            pgId: allocation.pgId,
+            amount: netRefundAmount,
+            reason: RefundReason.MOVE_OUT_DEPOSIT,
+            status: RefundStatus.APPROVED,
+            approvedById: ownerId,
+            notes: deductionReason ? `Deductions: ₹${deductions} (${deductionReason})` : 'Full deposit settled upon move-out.',
+          },
+        });
+      }
+
+      // 5. Deactivate rent schedule
+      await tx.rentSchedule.updateMany({
+        where: { residentId: allocation.residentId, pgId: allocation.pgId },
+        data: { isActive: false },
+      });
+
+      return {
+        success: true,
+        message: 'Move-out checkout settled successfully. Bed released and agreement closed.',
+        deposit: allocation.deposit,
+        deductions,
+        netRefundAmount,
+      };
+    });
   }
 }

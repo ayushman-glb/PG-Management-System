@@ -1,9 +1,10 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from "passport-google-oauth20";
 import { Request } from "express";
-import { Container } from "../container";
+import { prisma } from "./prisma";
 import { env } from "./env";
 import { Role } from "@prisma/client";
+import * as crypto from "crypto";
 
 if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -22,8 +23,6 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
         done: VerifyCallback
       ) => {
         try {
-          const googleSubId = profile.id;
-          // Prioritize verified email address per OpenID Connect best practices
           const verifiedEmailObj =
             profile.emails?.find(
               (e) => e.verified === true || (e as any).verified === "true"
@@ -40,41 +39,30 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
             );
           }
 
-          // Parse role from state parameter if provided
-          let role: Role | undefined;
-          if (req.query?.state) {
-            try {
-              const stateObj = JSON.parse(
-                Buffer.from(req.query.state as string, "base64").toString("utf-8")
-              );
-              if (
-                stateObj?.role &&
-                (stateObj.role === "RESIDENT" || stateObj.role === "OWNER")
-              ) {
-                role = stateObj.role as Role;
-              }
-            } catch {
-              try {
-                const stateObj = JSON.parse(req.query.state as string);
-                if (
-                  stateObj?.role &&
-                  (stateObj.role === "RESIDENT" || stateObj.role === "OWNER")
-                ) {
-                  role = stateObj.role as Role;
-                }
-              } catch {
-                // Ignore if unparseable
-              }
-            }
-          }
-
-          const user = await Container.userRepository.findOrCreateGoogleUser({
-            googleSubId,
-            email,
-            name,
-            avatarUrl,
-            role,
+          let user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
           });
+
+          if (!user) {
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            user = await prisma.user.create({
+              data: {
+                email: email.toLowerCase(),
+                phone: `+91${Date.now().toString().slice(-10)}`,
+                username: `user_${Date.now().toString().slice(-6)}`,
+                passwordHash: randomPassword,
+                avatarUrl,
+                emailVerified: true,
+                role: Role.RESIDENT,
+                profile: {
+                  create: {
+                    firstName: name.split(' ')[0] || 'User',
+                    lastName: name.split(' ').slice(1).join(' ') || '',
+                  },
+                },
+              },
+            });
+          }
 
           return done(null, user as Express.User);
         } catch (err) {
@@ -83,10 +71,6 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
       }
     )
   );
-} else {
-  // Graceful fallback for deployments without active Google OAuth client configuration
-  // Google OAuth 2.0 is not configured in server environment variables.
-  // Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable Google Sign-In.
 }
 
 passport.serializeUser((user: Express.User, done: (err: any, id?: unknown) => void) => {
@@ -95,12 +79,11 @@ passport.serializeUser((user: Express.User, done: (err: any, id?: unknown) => vo
 
 passport.deserializeUser(async (id: string, done: (err: any, user?: Express.User | null | false) => void) => {
   try {
-    const user = await Container.userRepository.findById(id);
+    const user = await prisma.user.findUnique({ where: { id } });
     done(null, user as Express.User | null);
   } catch (err) {
     done(err, null);
   }
 });
-
 
 export default passport;

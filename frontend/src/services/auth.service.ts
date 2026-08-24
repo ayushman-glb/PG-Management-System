@@ -528,6 +528,105 @@ export class AuthService {
     return res.data || res;
   }
 
+  /**
+   * Initiates Google OAuth 2.0 redirect flow.
+   */
+  initiateGoogleOAuth(role: "RESIDENT" | "PG_OWNER" = "RESIDENT", redirectUrl?: string) {
+    const targetUrl = `${env.API_URL}/auth/google?role=${encodeURIComponent(role)}${redirectUrl ? `&redirectUrl=${encodeURIComponent(redirectUrl)}` : ""}`;
+    window.location.href = targetUrl;
+  }
+
+  /**
+   * Direct Google token verification (e.g. from Google Identity Services button).
+   */
+  async verifyGoogleToken(idToken: string, role: "RESIDENT" | "PG_OWNER" = "RESIDENT") {
+    let visitorId: string | undefined;
+    let deviceLabel: string | undefined;
+    let screenResolution: string | undefined;
+
+    try {
+      const { deviceIdentityProvider } = await import("./deviceIdentity");
+      const identity = await deviceIdentityProvider.getDeviceIdentity();
+      visitorId = identity.visitorId;
+      deviceLabel = identity.deviceLabel;
+      screenResolution = identity.screenResolution;
+    } catch {}
+
+    const res = await this.request("/auth/google/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        idToken,
+        role,
+        visitorId,
+        deviceLabel,
+        screenResolution,
+      }),
+    });
+
+    if (res.data?.accessToken) {
+      this.setToken(res.data.accessToken, "LOGIN");
+    }
+    if (res.data?.refreshToken) {
+      this.setRefreshToken(res.data.refreshToken, false);
+    }
+
+    return res.data || res;
+  }
+
+  /**
+   * Links Google identity to the currently authenticated account.
+   */
+  async linkGoogleAccount(idToken: string, password?: string, twoFactorCode?: string) {
+    const res = await this.request("/auth/google/link", {
+      method: "POST",
+      body: JSON.stringify({ idToken, password, twoFactorCode }),
+    });
+    return res.data || res;
+  }
+
+  /**
+   * Unlinks Google identity from the currently authenticated account.
+   */
+  async unlinkGoogleAccount(password?: string) {
+    const res = await this.request("/auth/google/unlink", {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    });
+    return res.data || res;
+  }
+
+  /**
+   * Creates a RoomBae password for Google-first accounts.
+   */
+  async createPassword(password: string) {
+    const res = await this.request("/auth/create-password", {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    });
+    return res.data || res;
+  }
+
+  /**
+   * Completes preliminary profile onboarding (phone, address, role fields, legal acceptance).
+   */
+  async completeProfile(profileData: any) {
+    const res = await this.request("/auth/complete-profile", {
+      method: "POST",
+      body: JSON.stringify(profileData),
+    });
+    return res.data || res;
+  }
+
+  /**
+   * Retrieves linked authentication methods for user settings.
+   */
+  async getAuthMethods() {
+    const res = await this.request("/auth/auth-methods", {
+      method: "GET",
+    });
+    return res.data || res;
+  }
+
   async logout() {
     try {
       await this.request("/auth/logout", { method: "POST" });

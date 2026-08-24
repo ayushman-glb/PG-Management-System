@@ -76,16 +76,28 @@ export default function App() {
 
   const [skeletonLoading, setSkeletonLoading] = useState<boolean>(false);
 
-  // Handle OAuth callback: backend now sets tokens via cookies, not URL params
+  // Handle OAuth callback: backend sets tokens via cookies and/or query token
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauthSuccess = params.get("oauth");
     const role = params.get("role");
+    const pageParam = params.get("page");
+    const token = params.get("token");
     const residentCode = params.get("code");
     const error = params.get("error");
 
     if (error) {
       console.warn("Google OAuth error:", error);
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+
+    if (token) {
+      authService.setToken(token, "LOGIN");
+    }
+
+    if (pageParam === "complete-profile") {
+      setPage("complete-profile");
       window.history.replaceState({}, "", window.location.pathname);
       return;
     }
@@ -96,7 +108,9 @@ export default function App() {
           localStorage.setItem("residentCode", residentCode);
         }
         const targetPage: Page =
-          role === "RESIDENT"
+          pageParam === "complete-profile"
+            ? "complete-profile"
+            : role === "RESIDENT"
             ? "resident-portal"
             : role === "GOD" || role === "SUPER_ADMIN"
             ? "god-console"
@@ -110,25 +124,6 @@ export default function App() {
         window.history.replaceState({}, "", window.location.pathname);
       }
       return;
-    }
-
-    const legacyToken = params.get("token");
-    const legacyUserJson = params.get("user");
-    if (legacyToken) {
-      try {
-        // Route the legacy token through AuthService so it stays in-memory only
-        // (no localStorage write for the raw access token).
-        authService.setToken(legacyToken);
-        if (legacyUserJson) {
-          localStorage.setItem("user", decodeURIComponent(legacyUserJson));
-        }
-        const targetPage: Page =
-          role === "RESIDENT" ? "resident-portal" : "dashboard";
-        setPage(targetPage);
-        window.history.replaceState({}, "", window.location.pathname);
-      } catch (e) {
-        console.error("Failed to process OAuth callback:", e);
-      }
     }
   }, []);
 

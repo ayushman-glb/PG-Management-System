@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { BedController } from './bed.controller';
-import { authenticate } from '../../middleware/authMiddleware';
+import { BedService } from './bed.service';
+import { authenticate, requireOwner } from '../../middleware/authMiddleware';
+
+const bedService = new BedService();
+const bedController = new BedController(bedService);
 
 const router = Router();
-const controller = new BedController();
 
-router.use(authenticate);
+router.post('/', authenticate, requireOwner, bedController.createBed);
+router.get('/room/:roomId', authenticate, bedController.getBedsByRoom);
+router.patch('/:id/status', authenticate, requireOwner, bedController.updateStatus);
 
-router.put('/:bedId/status', controller.updateStatus);
-router.post('/holds', controller.createHold);
-router.delete('/holds/:holdId', controller.releaseHold);
-router.get('/holds', controller.listHolds);
-
-export default router;
+export { router as bedRoutes };

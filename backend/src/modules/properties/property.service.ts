@@ -1,126 +1,262 @@
-import { IPropertyService } from '../../interfaces/services/IPropertyService';
-import { IPropertyRepository, ISearchPropertiesQuery, ICreatePropertyData } from '../../interfaces/repositories/IPropertyRepository';
-import { AppError } from '../../utils/appError';
+import { PrismaClient, PG, PGStatus, PGGenderType, Role } from '@prisma/client';
+import { prisma } from '../../config/prisma';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
+import { SubscriptionService } from '../subscriptions/subscription.service';
 
-function getHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+export interface ICreatePGDTO {
+  ownerId: string;
+  name: string;
+  description: string;
+  genderType: PGGenderType;
+  rules?: string[];
+  noticePeriodDays?: number;
+  gateClosingTime?: string;
+  basePrice?: number;
+  depositMonths?: number;
+  gstNumber?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  location: {
+    address: string;
+    locality: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
+    googleMapsUrl?: string;
+    placeId?: string;
+  };
+  amenityIds?: string[];
+  images?: { publicId: string; secureUrl: string; caption?: string; isFeatured?: boolean }[];
 }
 
-export class PropertyService implements IPropertyService {
-  constructor(private readonly propertyRepository: IPropertyRepository) {}
+export class PropertyService {
+  private get db(): PrismaClient {
+    return (global as any).prismaSingleton || prisma;
+  }
 
-  async searchPublicProperties(query: ISearchPropertiesQuery) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+  private subService = new SubscriptionService();
 
-    const { properties, total } = await this.propertyRepository.search(query);
+  async createPG(data: ICreatePGDTO): Promise<PG> {
+    // 1. Verify owner SaaS subscription & PG limit
+    await this.subService.verifyPGLimit(data.ownerId);
 
-    const results = properties.map(prop => {
-      let distanceKm: number | null = null;
-      if (query.lat && query.lng && prop.latitude && prop.longitude) {
-        distanceKm = getHaversineDistance(query.lat, query.lng, prop.latitude, prop.longitude);
+    if (!data.name || !data.description || !data.genderType || !data.location) {
+      throw new BadRequestError('PG name, description, gender type, and location are required.');
+    }
+
+    const pg = await this.db.pG.create({
+      data: {
+        ownerId: data.ownerId,
+        name: data.name,
+        description: data.description,
+        genderType: data.genderType,
+        rules: data.rules || [],
+        noticePeriodDays: data.noticePeriodDays || 30,
+        gateClosingTime: data.gateClosingTime,
+        status: PGStatus.PENDING_ADMIN_VERIFICATION,
+        basePrice: data.basePrice || 0,
+        depositMonths: data.depositMonths || 1,
+        gstNumber: data.gstNumber,
+        contactPhone: data.contactPhone,
+        contactEmail: data.contactEmail,
+        location: {
+          create: {
+            address: data.location.address,
+            locality: data.location.locality,
+            city: data.location.city,
+            state: data.location.state,
+            pincode: data.location.pincode,
+            country: data.location.country || 'India',
+            latitude: data.location.latitude || 12.9716,
+            longitude: data.location.longitude || 77.5946,
+            googleMapsUrl: data.location.googleMapsUrl,
+            placeId: data.location.placeId,
+          },
+        },
+        images: data.images?.length
+          ? {
+              create: data.images.map((img, idx) => ({
+                publicId: img.publicId,
+                secureUrl: img.secureUrl,
+                caption: img.caption,
+                isFeatured: img.isFeatured || idx === 0,
+                order: idx,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        location: true,
+        images: true,
+      },
+    });
+
+    // Link Amenities if provided
+    if (data.amenityIds?.length) {
+      for (const amenityId of data.amenityIds) {
+        await this.db.pGAmenity.create({
+          data: {
+            pgId: pg.id,
+            amenityId,
+            isAvailable: true,
+          },
+        });
+      }
+    }
+
+    return pg;
+  }
+
+  async getOwnerPGs(ownerId: string): Promise<any[]> {
+    const pgs = await this.db.pG.findMany({
+      where: { ownerId },
+      include: {
+        location: true,
+        images: true,
+        amenities: { include: { amenity: true } },
+        floors: {
+          include: {
+            rooms: {
+              include: {
+                beds: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return pgs.map((pg) => {
+      let totalRooms = 0;
+      let totalBeds = 0;
+      let occupiedBeds = 0;
+      let availableBeds = 0;
+
+      for (const floor of pg.floors) {
+        totalRooms += floor.rooms.length;
+        for (const room of floor.rooms) {
+          totalBeds += room.beds.length;
+          for (const bed of room.beds) {
+            if (bed.status === 'OCCUPIED') occupiedBeds++;
+            else if (bed.status === 'AVAILABLE') availableBeds++;
+          }
+        }
       }
 
-      const totalAvailableBeds = (prop.rooms || []).reduce((acc: number, room: any) => {
-        return acc + (room.beds || []).filter((b: any) => !b.isOccupied).length;
-      }, 0);
-
-      const minPropertyRent = (prop.rooms || []).length > 0 ? Math.min(...prop.rooms.map((r: any) => r.rentAmount)) : 0;
+      const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
 
       return {
-        ...prop,
-        distanceKm: distanceKm ? parseFloat(distanceKm.toFixed(2)) : null,
-        availableBedsCount: totalAvailableBeds,
-        minRent: minPropertyRent
+        ...pg,
+        stats: {
+          totalFloors: pg.floors.length,
+          totalRooms,
+          totalBeds,
+          occupiedBeds,
+          availableBeds,
+          occupancyRate,
+        },
       };
     });
-
-    let filtered = results;
-    if (query.maxDistanceKm) {
-      filtered = filtered.filter(p => p.distanceKm !== null && p.distanceKm <= query.maxDistanceKm!);
-    }
-    if (query.minRent) {
-      filtered = filtered.filter(p => p.minRent >= query.minRent!);
-    }
-    if (query.maxRent) {
-      filtered = filtered.filter(p => p.minRent <= query.maxRent!);
-    }
-
-    return {
-      properties: filtered,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    };
   }
 
-  async getPropertyById(id: string) {
-    const property = await this.propertyRepository.findById(id);
-    if (!property) {
-      throw new AppError('Property not found', 404);
-    }
-    return property;
-  }
-
-  async createProperty(ownerId: string, data: Omit<ICreatePropertyData, 'ownerId'>) {
-    const property = await this.propertyRepository.create({
-      ownerId,
-      ...data
+  async getPGDetails(pgId: string, userId?: string, userRole?: Role): Promise<any> {
+    const pg = await this.db.pG.findUnique({
+      where: { id: pgId },
+      include: {
+        location: true,
+        images: { orderBy: { order: 'asc' } },
+        amenities: { include: { amenity: true } },
+        mealPlans: true,
+        reviews: {
+          where: { isApproved: true },
+          include: { resident: { select: { id: true, username: true, avatarUrl: true } } },
+        },
+        floors: {
+          include: {
+            rooms: {
+              include: {
+                beds: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    const roomsCount = data.totalRooms || 0;
-    for (let r = 1; r <= roomsCount; r++) {
-      const roomNum = (100 + r).toString();
-      await this.propertyRepository.createRoomWithBeds(property.id, roomNum, 2);
+    if (!pg) throw new NotFoundError('PG property not found.');
+
+    // Only approved PGs are visible publicly, unless requested by Owner or Admin
+    const isOwner = userId && pg.ownerId === userId;
+    const isAdmin = userRole === Role.ADMIN;
+
+    if (pg.status !== PGStatus.APPROVED && !isOwner && !isAdmin) {
+      throw new ForbiddenError('This PG listing is currently undergoing verification.');
     }
 
-    return this.getPropertyById(property.id);
-  }
+    let totalBeds = 0;
+    let availableBeds = 0;
+    const roomTypesAvailable: Record<string, { available: number; total: number; minRent: number }> = {};
 
-  async getOwnerSummary(ownerId: string) {
-    const properties = await this.propertyRepository.findByOwnerId(ownerId);
+    for (const floor of pg.floors) {
+      for (const room of floor.rooms) {
+        if (!roomTypesAvailable[room.roomType]) {
+          roomTypesAvailable[room.roomType] = { available: 0, total: 0, minRent: room.baseRent };
+        } else {
+          roomTypesAvailable[room.roomType].minRent = Math.min(roomTypesAvailable[room.roomType].minRent, room.baseRent);
+        }
 
-    let totalBedsCount = 0;
-    let occupiedBedsCount = 0;
-    let activeComplaintsCount = 0;
-    let pendingDuesSum = 0;
-    let mrrSum = 0;
-
-    properties.forEach(p => {
-      activeComplaintsCount += (p.complaints || []).length;
-      pendingDuesSum += (p.payments || []).reduce((acc: number, pay: any) => acc + pay.totalAmount, 0);
-
-      (p.rooms || []).forEach((r: any) => {
-        totalBedsCount += (r.beds || []).length;
-        (r.beds || []).forEach((b: any) => {
-          if (b.isOccupied) {
-            occupiedBedsCount++;
-            mrrSum += r.rentAmount;
+        for (const bed of room.beds) {
+          totalBeds++;
+          roomTypesAvailable[room.roomType].total++;
+          if (bed.status === 'AVAILABLE') {
+            availableBeds++;
+            roomTypesAvailable[room.roomType].available++;
           }
-        });
-      });
-    });
-
-    const occupancyRate = totalBedsCount > 0 ? parseFloat(((occupiedBedsCount / totalBedsCount) * 100).toFixed(1)) : 0;
+        }
+      }
+    }
 
     return {
-      totalProperties: properties.length,
-      mrr: mrrSum,
-      totalBeds: totalBedsCount,
-      occupiedBeds: occupiedBedsCount,
-      occupancyRatePercent: occupancyRate,
-      activeComplaints: activeComplaintsCount,
-      pendingDuesAmount: pendingDuesSum
+      ...pg,
+      availability: {
+        totalBeds,
+        availableBeds,
+        roomTypes: roomTypesAvailable,
+      },
     };
+  }
+
+  async updatePGStatus(pgId: string, status: PGStatus, rejectionReason?: string, adminNotes?: string): Promise<PG> {
+    const pg = await this.db.pG.findUnique({ where: { id: pgId } });
+    if (!pg) throw new NotFoundError('PG property not found.');
+
+    return await this.db.pG.update({
+      where: { id: pgId },
+      data: {
+        status,
+        rejectionReason,
+        adminNotes,
+      },
+    });
+  }
+
+  async addFloor(pgId: string, ownerId: string, floorNumber: number, floorName: string, wifiSsid?: string, wifiPassword?: string): Promise<any> {
+    const pg = await this.db.pG.findUnique({ where: { id: pgId } });
+    if (!pg) throw new NotFoundError('PG property not found.');
+    if (pg.ownerId !== ownerId) throw new ForbiddenError('You do not own this PG.');
+
+    return await this.db.floor.create({
+      data: {
+        pgId,
+        floorNumber,
+        floorName,
+        wifiSsid,
+        wifiPassword,
+      },
+    });
   }
 }

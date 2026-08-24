@@ -1,88 +1,71 @@
-import { Request, Response } from 'express';
-import { IPropertyService } from '../../interfaces/services/IPropertyService';
-import { catchAsync } from '../../utils/appError';
+import { Request, Response, NextFunction } from 'express';
+import { PropertyService } from './property.service';
 import { ApiResponse } from '../../utils/apiResponse';
-import { Container } from '../../container';
+import { BadRequestError } from '../../core/errors/CustomErrors';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class PropertyController {
-  constructor(private readonly propertyService: IPropertyService) {}
+  constructor(private readonly propertyService: PropertyService) {}
 
-  searchPublic = catchAsync(async (req: Request, res: Response) => {
-    const { city, lat, lng, maxDistanceKm, minRent, maxRent, page, limit } = req.query;
-
-    const result = await this.propertyService.searchPublicProperties({
-      city: city as string,
-      lat: lat ? parseFloat(lat as string) : undefined,
-      lng: lng ? parseFloat(lng as string) : undefined,
-      maxDistanceKm: maxDistanceKm ? parseFloat(maxDistanceKm as string) : undefined,
-      minRent: minRent ? parseFloat(minRent as string) : undefined,
-      maxRent: maxRent ? parseFloat(maxRent as string) : undefined,
-      page: page ? parseInt(page as string, 10) : 1,
-      limit: limit ? parseInt(limit as string, 10) : 10
-    });
-
-    return ApiResponse.success(res, 'Properties retrieved successfully', { properties: result.properties }, result.meta);
-  });
-
-  getById = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const property = await this.propertyService.getPropertyById(id);
-    return ApiResponse.success(res, 'Property details fetched', property);
-  });
-
-  create = catchAsync(async (req: Request, res: Response) => {
-    const user = (req as any).user;
-    if (!user || !user.id) {
-      return ApiResponse.error(res, 'Unauthorized', [], 401);
-    }
-    let owner = await Container.db.owner.findFirst({ where: { userId: user.id } });
-    if (!owner) {
-      owner = await Container.db.owner.create({
-        data: {
-          userId: user.id,
-          name: user.name || "Owner",
-          email: user.email,
-          phone: user.phone || "",
-          photo: user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-          address: "",
-          aadhaarNumber: "",
-          panNumber: "",
-          upiId: "",
-          bankName: "",
-          accountNumber: "",
-          ifscCode: "",
-          emergencyContact: "",
-        },
+  createPG = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const pg = await this.propertyService.createPG({
+        ...req.body,
+        ownerId: req.user.id,
       });
+      return ApiResponse.success(res, 'PG listing submitted for admin verification.', pg, 201);
+    } catch (error) {
+      next(error);
     }
-    const property = await this.propertyService.createProperty(owner.id, req.body);
-    return ApiResponse.success(res, 'Property created successfully with room grid', property, undefined, 201);
-  });
+  };
 
-  getOwnerSummary = catchAsync(async (req: Request, res: Response) => {
-    const user = (req as any).user;
-    if (!user || !user.id) {
-      return ApiResponse.error(res, 'Unauthorized', [], 401);
+  getOwnerPGs = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const pgs = await this.propertyService.getOwnerPGs(req.user.id);
+      return ApiResponse.success(res, 'Owner PGs retrieved.', pgs);
+    } catch (error) {
+      next(error);
     }
-    const owner = await Container.db.owner.findFirst({ where: { userId: user.id } });
-    if (!owner) {
-      return ApiResponse.success(res, 'Owner summary fetched', {
-        totalProperties: 0,
-        mrr: 0,
-        totalBeds: 0,
-        occupiedBeds: 0,
-        occupancyRatePercent: 0,
-        activeComplaints: 0,
-        pendingDuesAmount: 0,
-      });
-    }
-    const summary = await this.propertyService.getOwnerSummary(owner.id);
-    return ApiResponse.success(res, 'Owner summary fetched', summary);
-  });
+  };
 
-  getMealSchedules = catchAsync(async (req: Request, res: Response) => {
-    const pgId = req.params.pgId || (req.query.pgId as string);
-    const schedules = await (this.propertyService as any).db?.mealSchedule.findMany({ where: { pgId } }) || [];
-    return ApiResponse.success(res, 'Meal schedules retrieved', schedules);
-  });
+  getPGDetails = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const pg = await this.propertyService.getPGDetails(id, req.user?.id, req.user?.role);
+      return ApiResponse.success(res, 'PG details retrieved.', pg);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  addFloor = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const { floorNumber, floorName, wifiSsid, wifiPassword } = req.body;
+      if (floorNumber === undefined || !floorName) {
+        throw new BadRequestError('floorNumber and floorName are required.');
+      }
+
+      const floor = await this.propertyService.addFloor(id, req.user.id, Number(floorNumber), floorName, wifiSsid, wifiPassword);
+      return ApiResponse.success(res, 'Floor created successfully.', floor, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { status, rejectionReason, adminNotes } = req.body;
+      if (!status) throw new BadRequestError('Status is required.');
+
+      const pg = await this.propertyService.updatePGStatus(id, status, rejectionReason, adminNotes);
+      return ApiResponse.success(res, `PG status updated to ${status}`, pg);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

@@ -1,33 +1,46 @@
-import { Request, Response } from 'express';
-import { prisma } from '../../config/prisma';
+import { Request, Response, NextFunction } from 'express';
 import { BedService } from './bed.service';
-import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
-
-const bedService = new BedService(prisma);
+import { BadRequestError } from '../../core/errors/CustomErrors';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class BedController {
-  updateStatus = catchAsync(async (req: Request, res: Response) => {
-    const { bedId } = req.params;
-    const { status, notes } = req.body;
-    const result = await bedService.updateBedStatus(bedId, status, notes);
-    return ApiResponse.success(res, 'Bed status updated', { success: result });
-  });
+  constructor(private readonly bedService: BedService) {}
 
-  createHold = catchAsync(async (req: Request, res: Response) => {
-    const hold = await bedService.createBedHold(req.body);
-    return ApiResponse.success(res, 'Bed hold created successfully', hold, undefined, 201);
-  });
+  createBed = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { roomId, bedNumber, baseRent, depositAmount } = req.body;
+      if (!roomId || !bedNumber) throw new BadRequestError('roomId and bedNumber are required.');
 
-  releaseHold = catchAsync(async (req: Request, res: Response) => {
-    const { holdId } = req.params;
-    const result = await bedService.releaseBedHold(holdId);
-    return ApiResponse.success(res, 'Bed hold released', { success: result });
-  });
+      const bed = await this.bedService.createBed(req.user.id, roomId, bedNumber, baseRent, depositAmount);
+      return ApiResponse.success(res, 'Bed created successfully.', bed, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  listHolds = catchAsync(async (req: Request, res: Response) => {
-    const { pgId } = req.query;
-    const holds = await bedService.getBedHolds(pgId as string);
-    return ApiResponse.success(res, 'Bed holds retrieved', holds);
-  });
+  getBedsByRoom = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { roomId } = req.params;
+      const beds = await this.bedService.getBedsByRoom(roomId);
+      return ApiResponse.success(res, 'Beds retrieved.', beds);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const { status } = req.body;
+      if (!status) throw new BadRequestError('status is required.');
+
+      const bed = await this.bedService.updateBedStatus(id, req.user.id, status);
+      return ApiResponse.success(res, `Bed status updated to ${status}`, bed);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

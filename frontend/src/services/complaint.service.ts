@@ -31,32 +31,61 @@ export class ComplaintService {
     return data;
   }
 
-  async listComplaints(params?: { propertyId?: string; priority?: string; status?: string }) {
+  async listComplaints(params?: { pgId?: string; propertyId?: string; priority?: string; status?: string; page?: number; limit?: number }) {
     const query = new URLSearchParams();
-    if (params?.propertyId) query.append("propertyId", params.propertyId);
-    if (params?.priority) query.append("priority", params.priority);
-    if (params?.status) query.append("status", params.status);
+    const pgId = params?.pgId || params?.propertyId;
+    if (pgId) query.append("pgId", pgId);
+    if (params?.priority && params.priority !== "all") query.append("priority", params.priority);
+    if (params?.status && params.status !== "all") query.append("status", params.status);
+    if (params?.page) query.append("page", String(params.page));
+    if (params?.limit) query.append("limit", String(params.limit));
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
     const res = await this.request(`/complaints${queryString}`);
     return res.data;
   }
 
-  async createComplaint(data: { category: string; title: string; description: string; priority?: string }) {
+  async getComplaintById(id: string) {
+    const res = await this.request(`/complaints/${id}`);
+    return res.data;
+  }
+
+  async createComplaint(data: { pgId?: string; propertyId?: string; category: string; title: string; description: string; priority?: string; roomId?: string; bedId?: string; images?: string[] }) {
+    const payload = {
+      ...data,
+      pgId: data.pgId || data.propertyId,
+    };
     const res = await this.request("/complaints", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res.data;
   }
 
-  async updateComplaintStatus(id: string, status: string) {
+  async updateComplaintStatus(id: string, status: string, notes?: string) {
     const res = await this.request(`/complaints/${id}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, notes }),
+    });
+    return res.data;
+  }
+
+  async acknowledgeComplaint(id: string, satisfied: boolean, rejectionReason?: string) {
+    const res = await this.request(`/complaints/${id}/acknowledge`, {
+      method: "POST",
+      body: JSON.stringify({ satisfied, rejectionReason }),
+    });
+    return res.data;
+  }
+
+  async addMessage(id: string, message: string, isStaff: boolean = false) {
+    const res = await this.request(`/complaints/${id}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ message, isStaff }),
     });
     return res.data;
   }
 }
 
 export const complaintService = new ComplaintService();
+export default complaintService;

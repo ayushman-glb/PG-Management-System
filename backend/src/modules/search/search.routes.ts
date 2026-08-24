@@ -1,9 +1,14 @@
 import { Router } from 'express';
 import { SearchController } from './search.controller';
+import { SearchService } from './search.service';
+
+const searchService = new SearchService();
+const searchController = new SearchController(searchService);
 
 const router = Router();
-const controller = new SearchController();
 
-router.get('/', controller.search);
+// Public Unauthenticated Search
+router.get('/', searchController.searchPGs);
+router.get('/pgs', searchController.searchPGs);
 
-export default router;
+export { router as searchRoutes };

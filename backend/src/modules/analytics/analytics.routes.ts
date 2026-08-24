@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { AnalyticsController } from './analytics.controller';
-import { authenticate } from '../../middleware/authMiddleware';
+import { AnalyticsService } from './analytics.service';
+import { authenticate, requireOwner, requireAdmin } from '../../middleware/authMiddleware';
+
+const analyticsService = new AnalyticsService();
+const analyticsController = new AnalyticsController(analyticsService);
 
 const router = Router();
-const controller = new AnalyticsController();
 
-router.use(authenticate);
+router.get('/owner', authenticate, requireOwner, analyticsController.getOwnerAnalytics);
+router.get('/admin', authenticate, requireAdmin, analyticsController.getAdminAnalytics);
 
-router.get('/revenue', controller.getRevenue);
-router.get('/pg/:pgId', controller.getByPg);
-
-export default router;
+export { router as analyticsRoutes };

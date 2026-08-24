@@ -1,93 +1,141 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, PaymentStatus, SubscriptionStatus, BedStatus, Role } from '@prisma/client';
+import { prisma } from '../../config/prisma';
 
 export class AnalyticsService {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async getAnalyticsByPg(pgId: string): Promise<any[]> {
-    return this.prisma.analytics.findMany({
-      where: { pgId },
-      orderBy: { createdAt: "desc" },
-    });
+  private get db(): PrismaClient {
+    return (global as any).prismaSingleton || prisma;
   }
 
-  async getRevenueData(ownerId: string): Promise<any> {
-    const pgs = await this.prisma.pG.findMany({
-      where: { ownerId },
+  async getOwnerAnalytics(ownerId: string, pgId?: string): Promise<any> {
+    const pgWhere: any = { ownerId };
+    if (pgId) pgWhere.id = pgId;
+
+    const pgs = await this.db.pG.findMany({
+      where: pgWhere,
       include: {
-        residents: true,
-        payments: true,
-        complaints: true,
-        buildings: {
+        floors: {
           include: {
-            floors: { include: { rooms: { include: { beds: true } } } },
+            rooms: {
+              include: {
+                beds: true,
+              },
+            },
           },
         },
       },
     });
 
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+    const pgIds = pgs.map((p) => p.id);
 
+    // Calculate Occupancy
     let totalBeds = 0;
     let occupiedBeds = 0;
-    let totalRevenue = 0;
-    let pendingDues = 0;
-    let activeComplaints = 0;
+    let availableBeds = 0;
 
-    pgs.forEach((pg) => {
-      // Beds & occupancy
-      (pg.buildings || []).forEach((b) =>
-        (b.floors || []).forEach((f) =>
-          (f.rooms || []).forEach((r) => {
-            totalBeds += (r.beds || []).length;
-            (r.beds || []).forEach((bed) => {
-              if (bed.isOccupied) occupiedBeds++;
-            });
-          }),
-        ),
-      );
+    for (const pg of pgs) {
+      for (const floor of pg.floors) {
+        for (const room of floor.rooms) {
+          for (const bed of room.beds) {
+            totalBeds++;
+            if (bed.status === BedStatus.OCCUPIED) occupiedBeds++;
+            else if (bed.status === BedStatus.AVAILABLE) availableBeds++;
+          }
+        }
+      }
+    }
 
-      // Payments
-      (pg.payments || []).forEach((pay) => {
-        totalRevenue += pay.totalAmount || 0;
-        if (pay.status === "PENDING" || pay.status === "LATE")
-          pendingDues += pay.totalAmount || 0;
-      });
+    const occupancyRate = totalBeds > 0 ? Number(((occupiedBeds / totalBeds) * 100).toFixed(1)) : 0;
 
-      // Complaints
-      activeComplaints += (pg.complaints || []).filter(
-        (c) => c.status === "OPEN" || c.status === "IN_PROGRESS",
-      ).length;
+    // Calculate Revenue from Payments
+    const payments = await this.db.payment.findMany({
+      where: {
+        pgId: { in: pgIds },
+        status: PaymentStatus.VERIFIED,
+      },
     });
 
-    const occupancyRate =
-      totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
-    const monthlyRevenue = totalRevenue > 0 ? totalRevenue / months.length : 0;
+    const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+    const rentRevenue = payments
+      .filter((p) => p.purpose === 'MONTHLY_RENT')
+      .reduce((sum, p) => sum + p.amount, 0);
+    const otherRevenue = totalRevenue - rentRevenue;
 
-    const revenueData = months.map((month, idx) => {
-      const growth = 1 + idx * 0.04;
-      const revenue = Math.round((monthlyRevenue || 1850000) * growth);
-      return {
-        month,
-        revenue,
-        target: Math.round(revenue * 1.1),
-      };
+    // Calculate Expenses
+    const expenses = await this.db.expense.findMany({
+      where: {
+        pgId: { in: pgIds },
+      },
     });
+
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = totalRevenue - totalExpenses;
+
+    // Calculate Dues
+    const pendingInvoices = await this.db.invoice.findMany({
+      where: {
+        pgId: { in: pgIds },
+        status: { in: ['UNPAID', 'OVERDUE', 'PARTIALLY_PAID'] },
+      },
+    });
+
+    const totalPendingDues = pendingInvoices.reduce((sum, i) => sum + i.balanceDue, 0);
 
     return {
-      revenueData,
-      summary: {
+      financials: {
         totalRevenue,
+        rentRevenue,
+        otherRevenue,
+        totalExpenses,
+        netProfit,
+        totalPendingDues,
+      },
+      occupancy: {
+        totalPGs: pgs.length,
         totalBeds,
         occupiedBeds,
-        occupancyRatePercent: occupancyRate,
-        pendingDues,
-        activeComplaints,
-        totalProperties: pgs.length,
-        residentCount: pgs.reduce(
-          (acc, pg) => acc + (pg.residents?.length || 0),
-          0,
-        ),
+        availableBeds,
+        occupancyRate,
       },
+      recentTransactions: payments.slice(0, 10),
+      recentExpenses: expenses.slice(0, 10),
+    };
+  }
+
+  async getAdminPlatformAnalytics(): Promise<any> {
+    const [
+      totalOwners,
+      totalResidents,
+      totalPGs,
+      totalBookings,
+      subscriptionPayments,
+      activeSubscriptions,
+      planDistribution,
+    ] = await Promise.all([
+      this.db.user.count({ where: { role: Role.PG_OWNER } }),
+      this.db.user.count({ where: { role: Role.RESIDENT } }),
+      this.db.pG.count(),
+      this.db.booking.count(),
+      this.db.subscriptionPayment.findMany({ where: { status: PaymentStatus.VERIFIED } }),
+      this.db.subscription.count({ where: { status: SubscriptionStatus.ACTIVE } }),
+      this.db.subscription.groupBy({
+        by: ['planId'],
+        _count: { id: true },
+      }),
+    ]);
+
+    const totalPlatformRevenue = subscriptionPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    return {
+      platformStats: {
+        totalOwners,
+        totalResidents,
+        totalPGs,
+        totalBookings,
+        activeSubscriptions,
+        totalPlatformRevenue,
+      },
+      subscriptionRevenue: totalPlatformRevenue,
+      planDistribution,
     };
   }
 }

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { handleSingleFileUpload } from '../middleware/upload.middleware';
 import { processSecurityPipeline } from '../middleware/securityPipeline.middleware';
-import { uploadController } from '../controllers/upload.controller';
+import { uploadController } from '../utils/upload.controller';
 import { uploadLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
@@ -22,4 +22,4 @@ router.post(
   uploadController.handleUpload
 );
 
-export default router;
+export { router as uploadRoutes };

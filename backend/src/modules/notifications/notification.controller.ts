@@ -1,21 +1,64 @@
-import { Request, Response } from 'express';
-import { prisma } from '../../config/prisma';
+import { Request, Response, NextFunction } from 'express';
 import { NotificationService } from './notification.service';
-import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
-
-const notificationService = new NotificationService(prisma);
+import { BadRequestError } from '../../core/errors/CustomErrors';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class NotificationController {
-  list = catchAsync(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id || (req.query.userId as string) || '650000000000000000000001';
-    const notifications = await notificationService.getUserNotifications(userId);
-    return ApiResponse.success(res, 'Notifications retrieved', notifications);
-  });
+  constructor(private readonly notifService: NotificationService) {}
 
-  markRead = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    await notificationService.markAsRead(id);
-    return ApiResponse.success(res, 'Notification marked as read');
-  });
+  getMyNotifications = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const data = await this.notifService.getUserNotifications(req.user.id);
+      return ApiResponse.success(res, 'Notifications retrieved.', data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  markAsRead = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const notif = await this.notifService.markAsRead(id, req.user.id);
+      return ApiResponse.success(res, 'Notification marked as read.', notif);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  markAllAsRead = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      await this.notifService.markAllAsRead(req.user.id);
+      return ApiResponse.success(res, 'All notifications marked as read.');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  broadcastAnnouncement = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { pgId, floorId, roomId, residentId, title, message } = req.body;
+      if (!pgId || !title || !message) {
+        throw new BadRequestError('pgId, title, and message are required.');
+      }
+
+      const result = await this.notifService.broadcastAnnouncement({
+        ownerId: req.user.id,
+        pgId,
+        floorId,
+        roomId,
+        residentId,
+        title,
+        message,
+      });
+
+      return ApiResponse.success(res, `Announcement broadcast to ${result.targetCount} residents.`, result, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

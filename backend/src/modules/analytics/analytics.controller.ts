@@ -1,21 +1,29 @@
-import { Request, Response } from 'express';
-import { prisma } from '../../config/prisma';
+import { Request, Response, NextFunction } from 'express';
 import { AnalyticsService } from './analytics.service';
-import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
-
-const analyticsService = new AnalyticsService(prisma);
+import { BadRequestError } from '../../core/errors/CustomErrors';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class AnalyticsController {
-  getByPg = catchAsync(async (req: Request, res: Response) => {
-    const { pgId } = req.params;
-    const data = await analyticsService.getAnalyticsByPg(pgId);
-    return ApiResponse.success(res, 'Analytics fetched', data);
-  });
+  constructor(private readonly analyticsService: AnalyticsService) {}
 
-  getRevenue = catchAsync(async (req: Request, res: Response) => {
-    const ownerId = (req as any).user?.id || (req.query.ownerId as string) || '650000000000000000000001';
-    const data = await analyticsService.getRevenueData(ownerId);
-    return ApiResponse.success(res, 'Revenue analytics fetched', data);
-  });
+  getOwnerAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { pgId } = req.query;
+      const data = await this.analyticsService.getOwnerAnalytics(req.user.id, pgId as string);
+      return ApiResponse.success(res, 'Owner analytics retrieved.', data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAdminAnalytics = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.analyticsService.getAdminPlatformAnalytics();
+      return ApiResponse.success(res, 'Admin platform analytics retrieved.', data);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

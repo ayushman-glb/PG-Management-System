@@ -1,727 +1,396 @@
-import crypto from 'crypto';
-import { PaymentStatus, PrismaClient } from '@prisma/client';
+import { PrismaClient, Payment, PaymentStatus, PaymentMethod, PaymentPurpose, InvoiceStatus, BookingStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 import { env } from '../../config/env';
-import { logger } from '../../utils/logger';
-import { AppError } from '../../utils/appError';
-import { emailService } from '../email';
-import { Container } from '../../container';
-import {
-  ICreatePaymentOrderInput,
-  ICreatePaymentOrderOutput,
-  IVerifyPaymentInput,
-  IVerifyPaymentOutput,
-  IPaymentHistoryFilters,
-  IPaymentAnalyticsData,
-  IRefundInput,
-} from './payment.types';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Razorpay = require('razorpay');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const PDFDocument = require('pdfkit');
 
-let razorpayInstance: any = null;
+export class PaymentService {
+  private get db(): PrismaClient {
+    return (global as any).prismaSingleton || prisma;
+  }
 
-export function getRazorpayClient(): any {
-  if (
-    !razorpayInstance &&
-    env.RAZORPAY_KEY_ID &&
-    env.RAZORPAY_KEY_SECRET &&
-    env.RAZORPAY_KEY_SECRET !== 'mock_razorpay_secret' &&
-    env.RAZORPAY_KEY_SECRET !== 'your_razorpay_key_secret'
-  ) {
-    try {
-      const Razorpay = require('razorpay');
-      razorpayInstance = new Razorpay({
+  private get razorpay(): any | null {
+    if (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET && !env.RAZORPAY_KEY_ID.startsWith('rzp_live_your_key')) {
+      return new Razorpay({
         key_id: env.RAZORPAY_KEY_ID,
         key_secret: env.RAZORPAY_KEY_SECRET,
       });
-      logger.info('Razorpay client initialized successfully', { keyId: env.RAZORPAY_KEY_ID });
-    } catch (err: any) {
-      logger.warn('Razorpay SDK failed to initialize, operating in fallback mode', { error: err.message });
     }
+    return null;
   }
-  return razorpayInstance;
-}
 
-export class PaymentService {
-  private readonly db: PrismaClient = prisma;
+  async createRazorpayOrder(payerId: string, invoiceId?: string, bookingId?: string, customAmount?: number): Promise<any> {
+    let amount = customAmount || 0;
+    let pgId: string | undefined;
+    let payeeId: string | undefined;
+    let purpose: PaymentPurpose = PaymentPurpose.OTHER;
 
-  /**
-   * 1. CREATE PAYMENT ORDER (Razorpay Order Creation)
-   */
-  async createOrder(input: ICreatePaymentOrderInput): Promise<ICreatePaymentOrderOutput> {
-    const { residentId, baseAmount, isInterstate = false, itemCategory = 'Monthly Rent', description, dueDate, roomId, bookingId } = input;
+    if (invoiceId) {
+      const invoice = await this.db.invoice.findUnique({
+        where: { id: invoiceId },
+        include: { pg: true },
+      });
+      if (!invoice) throw new NotFoundError('Invoice not found.');
+      if (invoice.residentId !== payerId) throw new ForbiddenError('You are not authorized to pay this invoice.');
+      if (invoice.status === InvoiceStatus.PAID) throw new BadRequestError('Invoice has already been paid.');
 
-    if (!baseAmount || baseAmount <= 0) {
-      throw new AppError('Valid payment base amount is required', 400);
+      amount = invoice.balanceDue;
+      pgId = invoice.pgId;
+      payeeId = invoice.pg.ownerId;
+      purpose = PaymentPurpose.MONTHLY_RENT;
+    } else if (bookingId) {
+      const booking = await this.db.booking.findUnique({
+        where: { id: bookingId },
+        include: { pg: true },
+      });
+      if (!booking) throw new NotFoundError('Booking not found.');
+      if (booking.residentId !== payerId) throw new ForbiddenError('You are not authorized to pay for this booking.');
+
+      amount = booking.advanceAmountPaid > 0 ? booking.rentAmount - booking.advanceAmountPaid : booking.depositAmount;
+      pgId = booking.pgId;
+      payeeId = booking.pg.ownerId;
+      purpose = PaymentPurpose.BOOKING_ADVANCE;
     }
 
-    const resident = await this.db.resident.findUnique({
-      where: { id: residentId },
-      include: { pg: true, bed: { include: { room: true } } },
-    });
+    if (amount <= 0) throw new BadRequestError('Payment amount must be greater than zero.');
 
-    if (!resident) {
-      throw new AppError('Resident account not found', 404);
-    }
+    let razorpayOrderId = `order_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-    const cgstAmount = isInterstate ? 0 : parseFloat((baseAmount * 0.09).toFixed(2));
-    const sgstAmount = isInterstate ? 0 : parseFloat((baseAmount * 0.09).toFixed(2));
-    const igstAmount = isInterstate ? parseFloat((baseAmount * 0.18).toFixed(2)) : 0;
-    const totalAmount = parseFloat((baseAmount + cgstAmount + sgstAmount + igstAmount).toFixed(2));
-
-    const timestamp = Date.now().toString().slice(-6);
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${timestamp}`;
-    const receiptNumber = `REC-${new Date().getFullYear()}-${timestamp}`;
-
-    let razorpayOrderId = `order_${crypto.randomBytes(10).toString('hex')}`;
-    const rp = getRazorpayClient();
-
-    if (rp) {
+    if (this.razorpay) {
       try {
-        const order = await rp.orders.create({
-          amount: Math.round(totalAmount * 100),
+        const order = await this.razorpay.orders.create({
+          amount: Math.round(amount * 100),
           currency: 'INR',
-          receipt: invoiceNumber,
+          receipt: `rcpt_${Date.now().toString().slice(-8)}`,
           notes: {
-            residentId,
-            residentName: resident.name,
-            pgId: resident.pgId,
-            category: itemCategory,
+            payerId,
+            invoiceId: invoiceId || '',
+            bookingId: bookingId || '',
           },
         });
         razorpayOrderId = order.id;
       } catch (err: any) {
-        logger.warn('Razorpay live order creation failed, falling back to secure local order ID', { error: err.message });
+        console.warn('Razorpay order creation fallback:', err?.message || err);
       }
     }
-
-    if (!resident.pgId && !resident.pg?.id) {
-      throw new AppError('Resident is not assigned to a valid PG property', 400);
-    }
-    const targetPgId = resident.pgId || resident.pg!.id;
 
     const payment = await this.db.payment.create({
       data: {
-        residentId,
-        ownerId: resident.pg?.ownerId ? resident.pg.ownerId : undefined,
-        pgId: targetPgId,
-        roomId: roomId || (resident.bed?.roomId ? resident.bed.roomId : undefined),
-        bookingId: bookingId || undefined,
-        orderId: razorpayOrderId,
-        razorpayOrderId,
-        invoiceNumber,
-        receiptNumber,
-        baseAmount,
-        cgstAmount,
-        sgstAmount,
-        igstAmount,
-        totalAmount,
+        invoiceId,
+        bookingId,
+        payerId,
+        payeeId,
+        pgId,
+        amount,
         currency: 'INR',
-        dueDate: dueDate || new Date(new Date().setDate(10)),
-        paymentMethod: 'RAZORPAY',
-        status: PaymentStatus.PENDING,
-        description: description || `${itemCategory} - ${resident.pg?.name || 'RoomBae Stay'}`,
+        paymentMethod: PaymentMethod.RAZORPAY,
+        purpose,
+        status: PaymentStatus.INITIATED,
+        razorpayOrderId,
       },
     });
 
     return {
       paymentId: payment.id,
-      invoiceNumber,
-      receiptNumber,
-      razorpayOrderId,
       orderId: razorpayOrderId,
-      baseAmount,
-      cgstAmount,
-      sgstAmount,
-      igstAmount,
-      totalAmount,
+      amount,
       currency: 'INR',
-      keyId: env.RAZORPAY_KEY_ID || 'rzp_test_mock_key',
-      status: payment.status,
+      razorpayKeyId: env.RAZORPAY_KEY_ID,
     };
   }
 
-  /**
-   * 2. VERIFY PAYMENT (HMAC SHA256 Signature Verification & Idempotent Recording)
-   */
-  async verifyPayment(input: IVerifyPaymentInput): Promise<IVerifyPaymentOutput> {
-    const { paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = input;
-
-    const payment = await this.db.payment.findFirst({
-      where: {
-        OR: [
-          { id: paymentId },
-          { razorpayOrderId: razorpayOrderId },
-          { orderId: razorpayOrderId },
-        ],
-      },
-      include: {
-        resident: {
-          include: {
-            user: true,
-            pg: true,
-            bed: { include: { room: true } },
-          },
-        },
-      },
+  async verifyRazorpayPayment(paymentId: string, razorpayPaymentId: string, razorpaySignature?: string): Promise<Payment> {
+    const payment = await this.db.payment.findUnique({
+      where: { id: paymentId },
+      include: { invoice: true, booking: true },
     });
 
-    if (!payment) {
-      throw new AppError('Payment transaction record not found', 404);
-    }
+    if (!payment) throw new NotFoundError('Payment record not found.');
 
-    // Idempotency: If already paid, return existing success record
-    if (payment.status === PaymentStatus.PAID) {
-      return {
-        success: true,
-        paymentId: payment.id,
-        invoiceNumber: payment.invoiceNumber,
-        receiptNumber: payment.receiptNumber || `REC-${payment.invoiceNumber}`,
-        transactionId: payment.razorpayPaymentId || payment.id,
-        amount: payment.totalAmount,
-        status: PaymentStatus.PAID,
-        paidAt: payment.paidAt || payment.paymentDate,
-        residentName: payment.resident?.name || 'Resident',
-        propertyName: payment.resident?.pg?.name,
-        roomNumber: payment.resident?.bed?.room?.roomNumber,
-        message: 'Payment has already been verified and recorded.',
-      };
-    }
-
-    // HMAC SHA256 Signature Verification
-    let isValid = true;
-    const secret = env.RAZORPAY_KEY_SECRET;
-
-    if (secret && secret !== 'mock_razorpay_secret' && secret !== 'your_razorpay_key_secret') {
+    if (env.RAZORPAY_KEY_SECRET && razorpaySignature && payment.razorpayOrderId && !env.RAZORPAY_KEY_SECRET.includes('your_')) {
       const generatedSignature = crypto
-        .createHmac('sha256', secret)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
+        .update(`${payment.razorpayOrderId}|${razorpayPaymentId}`)
         .digest('hex');
 
-      isValid = generatedSignature === razorpaySignature;
+      if (generatedSignature !== razorpaySignature) {
+        await this.db.payment.update({
+          where: { id: paymentId },
+          data: { status: PaymentStatus.FAILED, rejectionReason: 'Signature mismatch' },
+        });
+        throw new BadRequestError('Razorpay signature verification failed.');
+      }
     }
 
-    if (!isValid) {
-      await this.db.payment.update({
-        where: { id: payment.id },
-        data: { status: PaymentStatus.FAILED },
+    const receiptNumber = `REC-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+
+    // Transaction-safe payment confirmation
+    return await this.db.$transaction(async (tx) => {
+      const updatedPayment = await tx.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: PaymentStatus.VERIFIED,
+          razorpayPaymentId,
+          razorpaySignature,
+          receiptNumber,
+          verifiedAt: new Date(),
+        },
       });
 
-      const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
-      if (recipientEmail) {
-        try {
-          await emailService.sendPaymentFailedEmail({
-            email: recipientEmail,
-            name: payment.resident?.name || 'Resident',
-            amount: payment.totalAmount,
-            attemptDate: new Date(),
-            invoiceNumber: payment.invoiceNumber,
-            failureReason: 'Razorpay cryptographic signature mismatch',
-          });
-        } catch (err: any) {
-          logger.warn('Failed to send failure email', { error: err?.message });
-        }
-      }
-
-      throw new AppError('Invalid Razorpay signature verification failed.', 400);
-    }
-
-    const paidAt = new Date();
-    const updatedPayment = await this.db.payment.update({
-      where: { id: payment.id },
-      data: {
-        status: PaymentStatus.PAID,
-        paymentId: razorpayPaymentId,
-        razorpayPaymentId,
-        signature: razorpaySignature,
-        razorpaySignature,
-        paidAt,
-        paymentDate: paidAt,
-      },
-    });
-
-    // Update Bed Occupancy if linked
-    if (payment.resident?.bedId) {
-      await this.db.bed.update({
-        where: { id: payment.resident.bedId },
-        data: { isOccupied: true },
-      }).catch((e) => logger.warn('Bed occupancy update error', { error: e.message }));
-    }
-
-    // Upsert Invoice record
-    await this.db.invoice.upsert({
-      where: { paymentId: payment.id },
-      create: {
-        paymentId: payment.id,
-        residentId: payment.residentId,
-        pgId: payment.pgId,
-        invoiceNumber: payment.invoiceNumber,
-        pdfUrl: `/api/v1/billing/invoices/${payment.id}/download`,
-        subtotal: payment.baseAmount,
-        gst: payment.cgstAmount + payment.sgstAmount + payment.igstAmount,
-        total: payment.totalAmount,
-        generatedAt: paidAt,
-      },
-      update: {
-        total: payment.totalAmount,
-        generatedAt: paidAt,
-      },
-    }).catch((e) => logger.warn('Invoice upsert notice', { error: e.message }));
-
-    // Generate PDF & Send Automated Gmail Receipt
-    const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
-    if (recipientEmail) {
-      try {
-        let pdfBuffer: Buffer | undefined;
-        try {
-          const docResult = await Container.documentService.getOrGenerateDocument({
-            entityId: payment.id,
-            documentType: 'INVOICE',
-            requestingUserId: payment.resident?.userId || 'SYSTEM',
-            requestingUserRole: 'RESIDENT',
-            ipAddress: input.clientIp || '127.0.0.1',
-          });
-          pdfBuffer = docResult.buffer;
-        } catch (pdfErr: any) {
-          logger.warn('PDF generation for email attachment skipped', { error: pdfErr.message });
-        }
-
-        await emailService.sendPaymentReceiptEmail({
-          email: recipientEmail,
-          name: payment.resident?.name || 'Resident',
-          invoiceNumber: payment.invoiceNumber,
-          amount: payment.totalAmount,
-          paymentDate: paidAt,
-          paymentMethod: 'Razorpay Online',
-          transactionId: razorpayPaymentId,
-          propertyName: payment.resident?.pg?.name,
-          roomNumber: payment.resident?.bed?.room?.roomNumber,
+      // Update Invoice if linked
+      if (payment.invoiceId) {
+        await tx.invoice.update({
+          where: { id: payment.invoiceId },
+          data: {
+            amountPaid: { increment: payment.amount },
+            balanceDue: 0,
+            status: InvoiceStatus.PAID,
+          },
         });
-
-        if (pdfBuffer) {
-          await emailService.sendInvoiceEmail({
-            email: recipientEmail,
-            name: payment.resident?.name || 'Resident',
-            invoiceNumber: payment.invoiceNumber,
-            dueDate: payment.dueDate || paidAt,
-            totalAmount: payment.totalAmount,
-            breakdown: {
-              baseRent: payment.baseAmount,
-              cgst: payment.cgstAmount,
-              sgst: payment.sgstAmount,
-            },
-            pdfBuffer,
-            propertyName: payment.resident?.pg?.name,
-            roomNumber: payment.resident?.bed?.room?.roomNumber,
-          });
-        }
-      } catch (emailErr: any) {
-        logger.warn('Email dispatch on verified payment encountered an error', { error: emailErr.message });
       }
-    }
 
-    return {
-      success: true,
-      paymentId: updatedPayment.id,
-      invoiceNumber: updatedPayment.invoiceNumber,
-      receiptNumber: updatedPayment.receiptNumber || `REC-${updatedPayment.invoiceNumber}`,
-      transactionId: razorpayPaymentId,
-      amount: updatedPayment.totalAmount,
-      status: PaymentStatus.PAID,
-      paidAt,
-      residentName: payment.resident?.name || 'Resident',
-      propertyName: payment.resident?.pg?.name,
-      roomNumber: payment.resident?.bed?.room?.roomNumber,
-      message: 'Payment verified and rent recorded successfully.',
-    };
+      // Update Booking if linked
+      if (payment.bookingId) {
+        await tx.booking.update({
+          where: { id: payment.bookingId },
+          data: {
+            advanceAmountPaid: { increment: payment.amount },
+            status: BookingStatus.PAYMENT_VERIFIED,
+          },
+        });
+      }
+
+      return updatedPayment;
+    });
   }
 
-  /**
-   * 3. WEBHOOK AUTOMATION (Razorpay Webhook Event Processing)
-   */
-  async handleWebhook(payload: any, signature: string): Promise<{ status: string; event: string }> {
-    const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET;
+  async submitManualPayment(payerId: string, data: { invoiceId?: string; bookingId?: string; amount: number; paymentMethod: PaymentMethod; manualUtr: string; manualProofUrl?: string }): Promise<Payment> {
+    if (!data.manualUtr) throw new BadRequestError('Transaction reference / UTR is required.');
+    if (data.amount <= 0) throw new BadRequestError('Amount must be greater than zero.');
 
-    if (webhookSecret && webhookSecret !== 'mock_webhook_secret' && webhookSecret !== 'your_razorpay_webhook_secret') {
+    let pgId: string | undefined;
+    let payeeId: string | undefined;
+    let purpose: PaymentPurpose = PaymentPurpose.OTHER;
+
+    if (data.invoiceId) {
+      const invoice = await this.db.invoice.findUnique({
+        where: { id: data.invoiceId },
+        include: { pg: true },
+      });
+      if (invoice) {
+        pgId = invoice.pgId;
+        payeeId = invoice.pg.ownerId;
+        purpose = PaymentPurpose.MONTHLY_RENT;
+      }
+    } else if (data.bookingId) {
+      const booking = await this.db.booking.findUnique({
+        where: { id: data.bookingId },
+        include: { pg: true },
+      });
+      if (booking) {
+        pgId = booking.pgId;
+        payeeId = booking.pg.ownerId;
+        purpose = PaymentPurpose.BOOKING_ADVANCE;
+      }
+    }
+
+    return await this.db.payment.create({
+      data: {
+        invoiceId: data.invoiceId,
+        bookingId: data.bookingId,
+        payerId,
+        payeeId,
+        pgId,
+        amount: data.amount,
+        currency: 'INR',
+        paymentMethod: data.paymentMethod,
+        purpose,
+        status: PaymentStatus.PENDING_VERIFICATION,
+        manualUtr: data.manualUtr,
+        manualProofUrl: data.manualProofUrl,
+        manualSubmittedAt: new Date(),
+      },
+    });
+  }
+
+  async verifyManualPayment(paymentId: string, ownerId: string, approve: boolean, rejectionReason?: string): Promise<Payment> {
+    const payment = await this.db.payment.findUnique({
+      where: { id: paymentId },
+      include: { pg: true, invoice: true, booking: true },
+    });
+
+    if (!payment) throw new NotFoundError('Payment record not found.');
+    if (payment.pg && payment.pg.ownerId !== ownerId) {
+      throw new ForbiddenError('You do not have permission to verify payments for this property.');
+    }
+
+    if (!approve) {
+      return await this.db.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: PaymentStatus.FAILED,
+          rejectionReason: rejectionReason || 'Rejected by property owner.',
+          verifiedById: ownerId,
+          verifiedAt: new Date(),
+        },
+      });
+    }
+
+    const receiptNumber = `REC-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+
+    return await this.db.$transaction(async (tx) => {
+      const verified = await tx.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: PaymentStatus.VERIFIED,
+          receiptNumber,
+          verifiedById: ownerId,
+          verifiedAt: new Date(),
+        },
+      });
+
+      if (payment.invoiceId) {
+        await tx.invoice.update({
+          where: { id: payment.invoiceId },
+          data: {
+            amountPaid: { increment: payment.amount },
+            balanceDue: 0,
+            status: InvoiceStatus.PAID,
+          },
+        });
+      }
+
+      if (payment.bookingId) {
+        await tx.booking.update({
+          where: { id: payment.bookingId },
+          data: {
+            advanceAmountPaid: { increment: payment.amount },
+            status: BookingStatus.PAYMENT_VERIFIED,
+          },
+        });
+      }
+
+      return verified;
+    });
+  }
+
+  async handleRazorpayWebhook(rawPayload: string, signature: string): Promise<any> {
+    if (env.RAZORPAY_WEBHOOK_SECRET && !env.RAZORPAY_WEBHOOK_SECRET.includes('your_')) {
       const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
+        .createHmac('sha256', env.RAZORPAY_WEBHOOK_SECRET)
+        .update(rawPayload)
         .digest('hex');
 
       if (expectedSignature !== signature) {
-        logger.error('Razorpay webhook signature verification failed');
-        throw new AppError('Invalid Razorpay Webhook signature', 400);
+        throw new BadRequestError('Invalid webhook signature.');
       }
     }
 
-    const event = payload?.event || 'unknown';
-    const paymentEntity = payload?.payload?.payment?.entity;
-    const orderId = paymentEntity?.order_id;
-    const paymentId = paymentEntity?.id;
+    const body = JSON.parse(rawPayload);
+    const eventId = body.event_id || body.id || `evt_${Date.now()}`;
 
-    // Log webhook payload
-    await this.db.paymentWebhookLog.create({
-      data: {
-        eventId: payload?.event_id || `evt_${Date.now()}`,
-        event,
-        orderId,
-        paymentId,
-        payload,
-        status: 'PROCESSED',
+    // Idempotency check
+    const existingWebhook = await this.db.paymentWebhook.findUnique({ where: { eventId } });
+    if (existingWebhook && existingWebhook.isProcessed) {
+      return { status: 'already_processed' };
+    }
+
+    await this.db.paymentWebhook.upsert({
+      where: { eventId },
+      create: {
+        eventId,
+        eventType: body.event,
+        payload: rawPayload,
+        isProcessed: true,
+        processedAt: new Date(),
       },
-    }).catch((e) => logger.warn('Webhook logging notice', { error: e.message }));
+      update: {
+        isProcessed: true,
+        processedAt: new Date(),
+      },
+    });
 
-    if (event === 'payment.captured' || event === 'order.paid') {
-      if (orderId && paymentId) {
-        const payment = await this.db.payment.findFirst({
-          where: { OR: [{ razorpayOrderId: orderId }, { orderId }] },
-          include: { resident: { include: { user: true, pg: true } } },
+    if (body.event === 'payment.captured' || body.event === 'order.paid') {
+      const paymentEntity = body.payload?.payment?.entity;
+      if (paymentEntity?.order_id) {
+        const localPayment = await this.db.payment.findFirst({
+          where: { razorpayOrderId: paymentEntity.order_id },
         });
-
-        if (payment && payment.status !== PaymentStatus.PAID) {
-          await this.db.payment.update({
-            where: { id: payment.id },
-            data: {
-              status: PaymentStatus.PAID,
-              paymentId,
-              razorpayPaymentId: paymentId,
-              paidAt: new Date(),
-            },
-          });
-
-          const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
-          if (recipientEmail) {
-            try {
-              await emailService.sendPaymentReceiptEmail({
-                email: recipientEmail,
-                name: payment.resident?.name || 'Resident',
-                invoiceNumber: payment.invoiceNumber,
-                amount: payment.totalAmount,
-                paymentDate: new Date(),
-                paymentMethod: 'Razorpay Webhook',
-                transactionId: paymentId,
-                propertyName: payment.resident?.pg?.name,
-              });
-            } catch (err: any) {
-              logger.warn('Failed to send webhook payment receipt email', { error: err?.message });
-            }
-          }
+        if (localPayment && localPayment.status !== PaymentStatus.VERIFIED) {
+          await this.verifyRazorpayPayment(localPayment.id, paymentEntity.id);
         }
       }
-    } else if (event === 'payment.failed') {
-      if (orderId) {
-        await this.db.payment.updateMany({
-          where: { OR: [{ razorpayOrderId: orderId }, { orderId }] },
-          data: { status: PaymentStatus.FAILED },
-        });
-      }
-    } else if (event === 'refund.processed') {
-      if (paymentId) {
-        await this.db.payment.updateMany({
-          where: { OR: [{ razorpayPaymentId: paymentId }, { paymentId }] },
-          data: { status: PaymentStatus.REFUNDED },
-        });
-      }
     }
 
-    return { status: 'ok', event };
+    return { status: 'success' };
   }
 
-  /**
-   * 4. REFUND SERVICE
-   */
-  async processRefund(input: IRefundInput): Promise<{
-    refundId: string;
-    paymentId: string;
-    amount: number;
-    status: string;
-    reason: string;
-  }> {
-    const { paymentId, amount, reason = 'Customer Requested Refund' } = input;
-
+  async generateReceiptPDF(paymentId: string): Promise<Buffer> {
     const payment = await this.db.payment.findUnique({
       where: { id: paymentId },
-      include: { resident: { include: { user: true } } },
-    });
-
-    if (!payment) {
-      throw new AppError('Payment record not found', 404);
-    }
-
-    const refundAmount = amount || payment.totalAmount;
-    let refundId = `rfnd_${crypto.randomBytes(10).toString('hex')}`;
-    let status = 'SUCCESS';
-
-    const rp = getRazorpayClient();
-    if (rp && payment.razorpayPaymentId) {
-      try {
-        let refund: any;
-        if (typeof rp.payments?.refund === 'function') {
-          refund = await rp.payments.refund(payment.razorpayPaymentId, {
-            amount: Math.round(refundAmount * 100),
-            notes: { reason },
-          });
-        } else if (typeof rp.refunds?.create === 'function') {
-          refund = await rp.refunds.create({
-            payment_id: payment.razorpayPaymentId,
-            amount: Math.round(refundAmount * 100),
-            notes: { reason },
-          });
-        }
-        if (refund?.id) {
-          refundId = refund.id;
-        }
-      } catch (err: any) {
-        logger.warn('Razorpay refund API call notice', { paymentId, error: err?.message || String(err) });
-        if (env.NODE_ENV === 'production' && !env.RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
-          throw new AppError(`Razorpay refund failed: ${err?.message || 'Gateway error'}`, 502);
-        }
-      }
-    }
-
-    await this.db.payment.update({
-      where: { id: payment.id },
-      data: {
-        status: PaymentStatus.REFUNDED,
-        description: `Refunded: ${reason}`,
-      },
-    });
-
-    const recipientEmail = payment.resident?.email || payment.resident?.user?.email;
-    if (recipientEmail) {
-      try {
-        await emailService.sendRefundEmail({
-          email: recipientEmail,
-          name: payment.resident?.name || 'Resident',
-          refundAmount,
-          refundId,
-          originalTransactionId: payment.razorpayPaymentId || payment.id,
-          processedDate: new Date(),
-        });
-      } catch (err: any) {
-        logger.warn('Failed to send refund email', { error: err?.message });
-      }
-    }
-
-    return {
-      refundId,
-      paymentId: payment.id,
-      amount: refundAmount,
-      status,
-      reason,
-    };
-  }
-
-  /**
-   * 5. PAYMENT HISTORY & FILTERS
-   */
-  async getPaymentHistory(filters: IPaymentHistoryFilters): Promise<{
-    payments: any[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
-    const { residentId, ownerId, pgId, status, search, startDate, endDate, page = 1, limit = 20 } = filters;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-
-    if (residentId) where.residentId = residentId;
-    if (pgId) where.pgId = pgId;
-    if (status) where.status = status;
-
-    if (ownerId) {
-      const pgs = await this.db.pG.findMany({ where: { ownerId }, select: { id: true } });
-      where.pgId = { in: pgs.map((p) => p.id) };
-    }
-
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
-    }
-
-    if (search) {
-      const cleanSearch = search.trim();
-      where.OR = [
-        { invoiceNumber: { contains: cleanSearch, mode: 'insensitive' } },
-        { receiptNumber: { contains: cleanSearch, mode: 'insensitive' } },
-        { razorpayPaymentId: { contains: cleanSearch, mode: 'insensitive' } },
-        { razorpayOrderId: { contains: cleanSearch, mode: 'insensitive' } },
-        { resident: { name: { contains: cleanSearch, mode: 'insensitive' } } },
-        { resident: { email: { contains: cleanSearch, mode: 'insensitive' } } },
-      ];
-    }
-
-    const [payments, total] = await Promise.all([
-      this.db.payment.findMany({
-        where,
-        include: {
-          resident: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              bed: { select: { room: { select: { roomNumber: true } } } },
-            },
-          },
-          pg: { select: { id: true, name: true, city: true } },
-          invoice: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.db.payment.count({ where }),
-    ]);
-
-    return {
-      payments,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit) || 1,
-    };
-  }
-
-  /**
-   * 6. GET SINGLE PAYMENT DETAILS
-   */
-  async getPaymentById(id: string): Promise<any> {
-    const payment = await this.db.payment.findUnique({
-      where: { id },
       include: {
-        resident: {
-          include: {
-            user: { select: { name: true, email: true, phone: true } },
-            bed: { include: { room: true } },
-          },
-        },
-        pg: true,
-        invoice: true,
+        payer: { include: { profile: true } },
+        payee: true,
+        pg: { include: { location: true } },
+        invoice: { include: { items: true } },
       },
     });
 
-    if (!payment) {
-      throw new AppError('Payment not found', 404);
-    }
+    if (!payment) throw new NotFoundError('Payment record not found.');
 
-    return payment;
-  }
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers: Buffer[] = [];
 
-  /**
-   * 7. PAYMENT ANALYTICS (Realtime Database-driven Metrics)
-   */
-  async getPaymentAnalytics(ownerId?: string, pgId?: string): Promise<IPaymentAnalyticsData> {
-    const where: any = {};
-    if (pgId) where.pgId = pgId;
-    if (ownerId) {
-      const pgs = await this.db.pG.findMany({ where: { ownerId }, select: { id: true } });
-      where.pgId = { in: pgs.map((p) => p.id) };
-    }
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
 
-    const allPayments = await this.db.payment.findMany({
-      where,
-      select: {
-        totalAmount: true,
-        baseAmount: true,
-        status: true,
-        createdAt: true,
-        paidAt: true,
-      },
+      // Header
+      doc.fontSize(22).fillColor('#C89A4B').text('ROOMBAE', { align: 'center' });
+      doc.fontSize(10).fillColor('#555555').text('Official Payment & Tax Invoice Receipt', { align: 'center' });
+      doc.moveDown(1.5);
+
+      // Receipt Metadata
+      doc.fontSize(12).fillColor('#1D1B1A');
+      doc.text(`Receipt Number: ${payment.receiptNumber || payment.id}`);
+      doc.text(`Date: ${new Date(payment.createdAt).toLocaleDateString('en-IN')}`);
+      doc.text(`Payment Method: ${payment.paymentMethod}`);
+      doc.text(`Status: ${payment.status}`);
+      doc.moveDown();
+
+      // Payer & Property Info
+      doc.text(`Received From: ${payment.payer.username} (${payment.payer.email})`);
+      if (payment.pg) {
+        doc.text(`Property: ${payment.pg.name}`);
+        if (payment.pg.location) {
+          doc.text(`Location: ${payment.pg.location.address}, ${payment.pg.location.city}`);
+        }
+      }
+      doc.moveDown();
+
+      // Financials
+      doc.rect(50, doc.y, 500, 25).fill('#F5F0EB');
+      doc.fillColor('#1D1B1A').text('Description', 60, doc.y - 18);
+      doc.text('Amount (INR)', 450, doc.y - 14, { align: 'right' });
+      doc.moveDown();
+
+      doc.text(`Payment for ${payment.purpose.replace(/_/g, ' ')}`, 60);
+      doc.text(`₹${payment.amount.toLocaleString('en-IN')}`, 450, doc.y - 14, { align: 'right' });
+      doc.moveDown();
+
+      doc.fontSize(14).font('Helvetica-Bold').text(`Total Paid: ₹${payment.amount.toLocaleString('en-IN')}`, { align: 'right' });
+      doc.moveDown(2);
+
+      doc.fontSize(9).font('Helvetica').fillColor('#888888').text('This is a computer-generated receipt issued by the RoomBae PG Management System.', { align: 'center' });
+
+      doc.end();
     });
-
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    const paidPayments = allPayments.filter((p) => p.status === PaymentStatus.PAID);
-    const pendingPayments = allPayments.filter((p) => p.status === PaymentStatus.PENDING || p.status === PaymentStatus.LATE);
-    const refundedPayments = allPayments.filter((p) => p.status === PaymentStatus.REFUNDED);
-    const failedPayments = allPayments.filter((p) => p.status === PaymentStatus.FAILED);
-
-    const totalRevenue = paidPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-    const monthlyRevenue = paidPayments
-      .filter((p) => (p.paidAt || p.createdAt) >= currentMonthStart)
-      .reduce((sum, p) => sum + p.totalAmount, 0);
-    const dailyRevenue = paidPayments
-      .filter((p) => (p.paidAt || p.createdAt) >= todayStart)
-      .reduce((sum, p) => sum + p.totalAmount, 0);
-
-    const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-    const refundedAmount = refundedPayments.reduce((sum, p) => sum + p.totalAmount, 0);
-
-    const expectedTotal = totalRevenue + pendingAmount;
-    const collectionRatePercent = expectedTotal > 0 ? parseFloat(((totalRevenue / expectedTotal) * 100).toFixed(1)) : 0;
-
-    // Recent 7-day revenue trend
-    const recentTrends: Array<{ date: string; revenue: number; paymentsCount: number }> = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dStr = d.toISOString().slice(0, 10);
-      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
-
-      const dayPaid = paidPayments.filter((p) => {
-        const pDate = p.paidAt || p.createdAt;
-        return pDate >= dayStart && pDate <= dayEnd;
-      });
-
-      recentTrends.push({
-        date: dStr,
-        revenue: dayPaid.reduce((sum, p) => sum + p.totalAmount, 0),
-        paymentsCount: dayPaid.length,
-      });
-    }
-
-    return {
-      totalRevenue: parseFloat(totalRevenue.toFixed(2)),
-      monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
-      dailyRevenue: parseFloat(dailyRevenue.toFixed(2)),
-      pendingAmount: parseFloat(pendingAmount.toFixed(2)),
-      refundedAmount: parseFloat(refundedAmount.toFixed(2)),
-      successfulPaymentsCount: paidPayments.length,
-      failedPaymentsCount: failedPayments.length,
-      collectionRatePercent,
-      distribution: [
-        { category: 'Monthly Rent', percentage: 70, amount: parseFloat((totalRevenue * 0.7).toFixed(2)) },
-        { category: 'Security Deposit', percentage: 20, amount: parseFloat((totalRevenue * 0.2).toFixed(2)) },
-        { category: 'Amenities & Fines', percentage: 10, amount: parseFloat((totalRevenue * 0.1).toFixed(2)) },
-      ],
-      recentTrends,
-    };
-  }
-
-  /**
-   * 8. CSV EXPORT FOR PAYMENTS
-   */
-  async exportPaymentsCsv(filters: IPaymentHistoryFilters): Promise<string> {
-    const { payments } = await this.getPaymentHistory({ ...filters, limit: 10000 });
-    const headers = ['Invoice Number', 'Receipt Number', 'Resident Name', 'Property', 'Room', 'Amount', 'Status', 'Method', 'Transaction ID', 'Date'];
-
-    const rows = payments.map((p) => [
-      `"${p.invoiceNumber || ''}"`,
-      `"${p.receiptNumber || ''}"`,
-      `"${p.resident?.name || 'Resident'}"`,
-      `"${p.pg?.name || ''}"`,
-      `"${p.resident?.bed?.room?.roomNumber || ''}"`,
-      p.totalAmount,
-      p.status,
-      `"${p.paymentMethod || 'RAZORPAY'}"`,
-      `"${p.razorpayPaymentId || p.id}"`,
-      `"${new Date(p.createdAt).toISOString()}"`,
-    ]);
-
-    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-  }
-
-  /**
-   * 9. DELETE / CANCEL PAYMENT
-   */
-  async deletePayment(id: string): Promise<boolean> {
-    await this.db.payment.delete({ where: { id } });
-    return true;
   }
 }
-
-export const paymentService = new PaymentService();
-export default paymentService;

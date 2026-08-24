@@ -16,7 +16,7 @@ export function useSearch(initialQuery: string = "", delay: number = 300) {
     setLoading(true);
     searchService
       .globalSearch(debouncedQuery)
-      .then((data) => setResults(data))
+      .then((data: any) => setResults(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [debouncedQuery]);

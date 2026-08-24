@@ -1,57 +1,60 @@
-import { Request, Response } from 'express';
-import { prisma } from '../../config/prisma';
+import { Request, Response, NextFunction } from 'express';
 import { RoomService } from './room.service';
-import { catchAsync } from '../../utils/appError';
 import { ApiResponse } from '../../utils/apiResponse';
-
-const roomService = new RoomService(prisma);
+import { BadRequestError } from '../../core/errors/CustomErrors';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class RoomController {
-  convertType = catchAsync(async (req: Request, res: Response) => {
-    const { roomId } = req.params;
-    const { newType } = req.body;
-    const validTypes = ['SINGLE', 'DOUBLE', 'TRIPLE', 'FOUR_SHARING', 'FIVE_SHARING', 'CUSTOM'];
-    if (!roomId || !newType || !validTypes.includes(newType)) {
-      return ApiResponse.error(res, 'Valid roomId and RoomType are required', undefined, 400);
+  constructor(private readonly roomService: RoomService) {}
+
+  createRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { floorId, roomNumber, roomType, allowedGender, baseRent, depositAmount, isAc, hasAttachedBathroom, bedsCount } = req.body;
+      if (!floorId || !roomNumber || !roomType || baseRent === undefined) {
+        throw new BadRequestError('floorId, roomNumber, roomType, and baseRent are required.');
+      }
+
+      const room = await this.roomService.createRoom({
+        ownerId: req.user.id,
+        floorId,
+        roomNumber,
+        roomType,
+        allowedGender,
+        baseRent: Number(baseRent),
+        depositAmount: depositAmount ? Number(depositAmount) : undefined,
+        isAc: Boolean(isAc),
+        hasAttachedBathroom: Boolean(hasAttachedBathroom),
+        bedsCount: bedsCount ? Number(bedsCount) : undefined,
+      });
+
+      return ApiResponse.success(res, 'Room and bed inventory created successfully.', room, 201);
+    } catch (error) {
+      next(error);
     }
-    const result = await roomService.convertRoomType(roomId, newType);
-    return ApiResponse.success(res, 'Room type converted successfully', { success: result });
-  });
+  };
 
-  listByPg = catchAsync(async (req: Request, res: Response) => {
-    const { pgId } = req.params;
-    const rooms = await roomService.getRoomsByPg(pgId);
-    return ApiResponse.success(res, 'Rooms retrieved', rooms);
-  });
+  getRoomsByFloor = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { floorId } = req.params;
+      const rooms = await this.roomService.getRoomsByFloor(floorId);
+      return ApiResponse.success(res, 'Rooms retrieved.', rooms);
+    } catch (error) {
+      next(error);
+    }
+  };
 
-  createTransferRequest = catchAsync(async (req: Request, res: Response) => {
-    const request = await roomService.createRoomTransferRequest(req.body);
-    return ApiResponse.success(res, 'Room transfer request submitted', request, undefined, 201);
-  });
+  updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const { status } = req.body;
+      if (!status) throw new BadRequestError('Status is required.');
 
-  listTransferRequests = catchAsync(async (req: Request, res: Response) => {
-    const { pgId, residentId } = req.query;
-    const requests = await roomService.getRoomTransferRequests(pgId as string, residentId as string);
-    return ApiResponse.success(res, 'Transfer requests retrieved', requests);
-  });
-
-  approveTransfer = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { targetBedId, scheduledDate } = req.body;
-    const result = await roomService.approveRoomTransfer(id, targetBedId, scheduledDate);
-    return ApiResponse.success(res, 'Transfer request approved', result);
-  });
-
-  rejectTransfer = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { rejectionReason } = req.body;
-    const result = await roomService.rejectRoomTransfer(id, rejectionReason);
-    return ApiResponse.success(res, 'Transfer request rejected', result);
-  });
-
-  completeTransfer = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const result = await roomService.completeRoomTransfer(id);
-    return ApiResponse.success(res, 'Transfer completed successfully', result);
-  });
+      const room = await this.roomService.updateRoomStatus(id, req.user.id, status);
+      return ApiResponse.success(res, `Room status updated to ${status}`, room);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

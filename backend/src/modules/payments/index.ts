@@ -1,4 +1,3 @@
-export * from './payment.types';
 export * from './payment.service';
 export * from './payment.controller';
-export { default as paymentRoutes } from './payment.routes';
+export * from './payment.routes';

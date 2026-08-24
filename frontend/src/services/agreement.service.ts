@@ -31,9 +31,20 @@ export class AgreementService {
     return data;
   }
 
-  async getResidentAgreements(residentId: string) {
-    const res = await this.request(`/agreements/resident/${residentId}`);
+  async getAgreements(params?: { pgId?: string; status?: string; page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.pgId) query.append("pgId", params.pgId);
+    if (params?.status && params.status !== "all") query.append("status", params.status);
+    if (params?.page) query.append("page", String(params.page));
+    if (params?.limit) query.append("limit", String(params.limit));
+
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    const res = await this.request(`/agreements${queryString}`);
     return res.data;
+  }
+
+  async getResidentAgreements(_residentId?: string) {
+    return this.getAgreements();
   }
 
   async getAgreementById(id: string) {
@@ -41,7 +52,7 @@ export class AgreementService {
     return res.data;
   }
 
-  async signAgreement(id: string, signatureData: { signerType: string; signerName: string; signatureDataSvg: string }) {
+  async signAgreement(id: string, signatureData: { signerType: string; signerName: string; signatureDataSvg: string; signatureImageUrl?: string; ipAddress?: string; userAgent?: string }) {
     const res = await this.request(`/agreements/${id}/sign`, {
       method: "POST",
       body: JSON.stringify(signatureData),
@@ -53,6 +64,11 @@ export class AgreementService {
     const res = await this.request(`/agreements/verify/${agreementNumber}`);
     return res.data;
   }
+
+  getAgreementPdfUrl(id: string) {
+    return `${env.API_URL}/agreements/${id}/pdf`;
+  }
 }
 
 export const agreementService = new AgreementService();
+export default agreementService;

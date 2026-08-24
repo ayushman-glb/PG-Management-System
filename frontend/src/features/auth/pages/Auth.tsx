@@ -21,7 +21,6 @@ import { BackButton } from "../../../navigation";
 import { AnimatedTabs } from "../../../components/MotionPrimitives";
 import { authService } from "../../../services/auth.service";
 import { UploadCard } from "../../../components/UploadCard";
-import { env } from "../../../config/env";
 import { EmailOtpVerificationModal } from "../../../components/auth/EmailOtpVerificationModal";
 import { PhoneOtpModal } from "../components/PhoneOtpModal";
 import { useAuth } from "../../../hooks/useAuth";
@@ -136,17 +135,30 @@ export default function Auth({ navigate }: Props) {
     setAuthError("");
     setAuthSuccessMsg("");
     try {
-      const backendOAuthUrl = `${env.API_URL}/auth/google?role=${encodeURIComponent(selectedRole)}`;
-      window.location.href = backendOAuthUrl;
+      const roleParam = selectedRole === "OWNER" ? "PG_OWNER" : "RESIDENT";
+      authService.initiateGoogleOAuth(roleParam as any);
     } catch (err: any) {
       console.error("❌ Google Sign-In Error:", err);
       setAuthError(err.message || "Failed to initiate Google OAuth.");
     }
   };
 
-  // Check for saved incomplete signup on mount
+  // Check for OAuth URL feedback and saved incomplete signup on mount
   useEffect(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      const oauthStatus = params.get("oauth");
+      const emailParam = params.get("email");
+      const errorParam = params.get("error");
+
+      if (oauthStatus === "account_exists" && emailParam) {
+        setAuthError(`An account with email ${decodeURIComponent(emailParam)} already exists. Please enter your RoomBae password to sign in and link your Google account.`);
+        setEmail(decodeURIComponent(emailParam));
+        setMode("login");
+      } else if (oauthStatus === "error" && errorParam) {
+        setAuthError(decodeURIComponent(errorParam));
+      }
+
       const saved = localStorage.getItem("roombae_incomplete_signup");
       if (saved) {
         const parsed = JSON.parse(saved);

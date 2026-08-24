@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { env } from '../config/env';
 
 const CSRF_COOKIE_NAME = 'csrf-token';
@@ -10,8 +10,16 @@ const CSRF_HEADER_NAME = 'x-csrf-token';
 // and state-changing (token rotation), making it exactly the kind of endpoint
 // CSRF protection is designed to defend.
 const CSRF_EXEMPT_PATHS = [
+  '/api/v1/auth/login',
+  '/api/v1/auth/sign-in',
+  '/api/v1/auth/register',
+  '/api/v1/auth/verify-otp',
+  '/api/v1/auth/verify-2fa',
+  '/api/v1/auth/csrf-token',
   '/api/v1/auth/google',
   '/api/v1/auth/google/callback',
+  '/api/v1/auth/google/verify',
+  '/api/v1/auth/google/token',
   '/api/v1/payments/webhook',
   '/api/v1/payments/razorpay/webhook',
   '/soap',
@@ -113,13 +121,8 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
 
   // Pure Bearer Token authenticated API requests do not require CSRF
   const authHeader = req.headers.authorization;
-  const isBearerAuth = typeof authHeader === 'string' && authHeader.startsWith('Bearer ');
-  const isAuthEntrypoint = req.path.includes('/auth/register') ||
-    req.path.includes('/auth/login') ||
-    req.path.includes('/auth/logout') ||
-    req.path.includes('/auth/logout-all');
-
-  if (isBearerAuth && !isAuthEntrypoint) {
+  const isBearerAuth = typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ');
+  if (isBearerAuth) {
     return next();
   }
 

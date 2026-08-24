@@ -1,7 +1,7 @@
-import dns from "dns";
-import http from "http";
+import * as dns from "dns";
+import * as http from "http";
 import { AddressInfo } from "net";
-import fs from "fs";
+import * as fs from "fs";
 
 // Force IPv4-first resolution for Node DNS lookups across all environments (Render, Linux, Docker, Windows)
 if (typeof dns.setDefaultResultOrder === "function") {

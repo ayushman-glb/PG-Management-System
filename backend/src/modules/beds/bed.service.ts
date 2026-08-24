@@ -1,142 +1,60 @@
-import { PrismaClient, BedStatus, BedHoldReason } from '@prisma/client';
-import { DatabaseLockService } from '../../infrastructure/cache/DatabaseLockService';
-import { AppError } from '../../utils/appError';
+import { PrismaClient, Bed, BedStatus } from '@prisma/client';
+import { prisma } from '../../config/prisma';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
 
 export class BedService {
-  private readonly defaultLockService = new DatabaseLockService();
+  private get db(): PrismaClient {
+    return (global as any).prismaSingleton || prisma;
+  }
 
-  constructor(private readonly db: PrismaClient, private readonly lockService?: any) {}
+  async createBed(ownerId: string, roomId: string, bedNumber: string, baseRent?: number, depositAmount?: number): Promise<Bed> {
+    const room = await this.db.room.findUnique({
+      where: { id: roomId },
+      include: { pg: true },
+    });
 
-  async updateBedStatus(bedId: string, status: string, notes?: string): Promise<boolean> {
-    // Acquire process-safe concurrency lock on bed ID to prevent double booking or conflicting status mutations
-    const lockService = this.lockService || this.defaultLockService;
-    const lock = lockService ? await lockService.acquireLock(`bed:lock:${bedId}`, 10000) : { lockAcquired: true, lockKey: `bed:lock:${bedId}` };
-    if (!lock.lockAcquired) {
-      throw new AppError('Bed status edit locked by concurrent operation. Please try again.', 409);
-    }
+    if (!room) throw new NotFoundError('Room not found.');
+    if (room.pg.ownerId !== ownerId) throw new ForbiddenError('You do not own this property.');
 
-    try {
-      const existingBed = await this.db.bed.findUnique({ where: { id: bedId } });
-      if (!existingBed) {
-        throw new AppError('Bed not found', 404);
-      }
+    return await this.db.bed.create({
+      data: {
+        pgId: room.pgId,
+        roomId: room.id,
+        bedNumber,
+        status: BedStatus.AVAILABLE,
+        baseRent: baseRent || room.baseRent,
+        depositAmount: depositAmount || room.depositAmount,
+      },
+    });
+  }
 
-      if (status === 'OCCUPIED' && existingBed.isOccupied) {
-        throw new AppError('Bed is already occupied by a resident.', 400);
-      }
+  async getBedsByRoom(roomId: string): Promise<Bed[]> {
+    return await this.db.bed.findMany({
+      where: { roomId },
+      orderBy: { bedNumber: 'asc' },
+    });
+  }
 
-      const isOccupied = status === 'OCCUPIED';
-      await this.db.bed.update({
+  async updateBedStatus(bedId: string, ownerId: string, status: BedStatus): Promise<Bed> {
+    const bed = await this.db.bed.findUnique({
+      where: { id: bedId },
+      include: { pg: true },
+    });
+
+    if (!bed) throw new NotFoundError('Bed not found.');
+    if (bed.pg.ownerId !== ownerId) throw new ForbiddenError('You do not own this property.');
+
+    if (bed.status === BedStatus.OCCUPIED && status === BedStatus.AVAILABLE) {
+      // Clear resident assignment when releasing bed
+      return await this.db.bed.update({
         where: { id: bedId },
-        data: {
-          status: status as BedStatus,
-          isOccupied
-        }
+        data: { status, currentResidentId: null },
       });
-
-      await this.db.bedHistory.create({
-        data: {
-          bedId,
-          status: status as BedStatus,
-          action: `Status updated to ${status}`,
-          notes
-        }
-      });
-
-      try {
-        const io = (await import('../../socket/socketServer')).getSocketServer();
-        if (io) {
-          io.emit('bed:status_change', { bedId, status, isOccupied });
-        }
-      } catch {}
-
-      return true;
-    } finally {
-      await lock.release();
-    }
-  }
-
-  async createBedHold(data: { bedId: string; reason: string; holdStartDate?: string; holdEndDate?: string; notes?: string }): Promise<any> {
-    const lockService = this.lockService || this.defaultLockService;
-    const lock = lockService ? await lockService.acquireLock(`bed:lock:${data.bedId}`, 10000) : { lockAcquired: true, lockKey: `bed:lock:${data.bedId}`, release: async () => {} };
-    if (!lock.lockAcquired) {
-      throw new AppError('Bed hold locked by concurrent operation.', 409);
     }
 
-    try {
-      const existingBed = await this.db.bed.findUnique({ where: { id: data.bedId } });
-      if (!existingBed || existingBed.isOccupied) {
-        throw new AppError('Cannot place hold on an occupied or missing bed.', 400);
-      }
-
-      await this.db.bed.update({
-        where: { id: data.bedId },
-        data: { status: BedStatus.HOLD }
-      });
-
-      return await this.db.bedHold.create({
-        data: {
-          bedId: data.bedId,
-          reason: (data.reason as BedHoldReason) || BedHoldReason.MAINTENANCE,
-          holdStartDate: data.holdStartDate ? new Date(data.holdStartDate) : new Date(),
-          holdEndDate: data.holdEndDate ? new Date(data.holdEndDate) : undefined,
-          notes: data.notes,
-          isActive: true
-        }
-      });
-    } finally {
-      if (lock && typeof lock.release === 'function') {
-        await lock.release();
-      }
-    }
-  }
-
-  async releaseBedHold(holdId: string): Promise<boolean> {
-    const hold = await this.db.bedHold.findUnique({ where: { id: holdId } });
-    if (!hold) throw new AppError('Bed hold record not found', 404);
-
-    const lockService = this.lockService || this.defaultLockService;
-    const lock = lockService ? await lockService.acquireLock(`bed:lock:${hold.bedId}`, 10000) : { lockAcquired: true, lockKey: `bed:lock:${hold.bedId}`, release: async () => {} };
-    if (!lock.lockAcquired) {
-      throw new AppError('Bed release locked by concurrent operation.', 409);
-    }
-
-    try {
-      await this.db.bedHold.update({
-        where: { id: holdId },
-        data: { isActive: false }
-      });
-
-      await this.db.bed.update({
-        where: { id: hold.bedId },
-        data: { status: BedStatus.AVAILABLE }
-      });
-
-      return true;
-    } finally {
-      if (lock && typeof lock.release === 'function') {
-        await lock.release();
-      }
-    }
-  }
-
-  async getBedHolds(pgId?: string): Promise<any[]> {
-    const where: any = { isActive: true };
-    if (pgId) {
-      where.bed = {
-        room: {
-          floor: {
-            building: {
-              pgId
-            }
-          }
-        }
-      };
-    }
-    return this.db.bedHold.findMany({
-      where,
-      include: { bed: true },
-      orderBy: { createdAt: 'desc' }
+    return await this.db.bed.update({
+      where: { id: bedId },
+      data: { status },
     });
   }
 }

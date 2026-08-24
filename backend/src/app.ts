@@ -4,40 +4,32 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import mongoSanitize from "express-mongo-sanitize";
-import hpp from "hpp";
-import swaggerUi from "swagger-ui-express";
+// @ts-ignore
+const hpp = require("hpp");
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
-import { getRouteCacheStats } from "./middleware/cacheMiddleware";
-import { getSmtpHealth } from "./modules/email";
-import { swaggerSpec } from "./config/swagger";
 import apiRouter from "./routes/apiRouter";
 import { globalErrorHandler } from "./middleware/errorMiddleware";
-import { generalLimiter, soapBillingLimiter } from "./middleware/rateLimiter";
+import { generalLimiter } from "./middleware/rateLimiter";
 import { correlationIdMiddleware } from "./middleware/correlationMiddleware";
-import { setupSoapServer, soapBillingAuthMiddleware, soapXxePreFilter } from "./services/soapService";
-import { APP_INFO, PathResolver } from "./utils/pathResolver";
-import passport from "./config/passport";
-import { JwksService } from "./services/security/JwksService";
 import { idempotencyMiddleware } from "./middleware/idempotencyMiddleware";
 import { validateCsrf } from "./middleware/csrfMiddleware";
+import { corsOptions } from "./config/corsOrigins";
 
 export const app = express();
 
-// Trust proxy setting when deployed behind Render / Cloudflare reverse proxies
+// Trust proxy setting when deployed behind reverse proxies
 app.set("trust proxy", 1);
 
-// ── 1. CORS Middleware (MUST BE REGISTERED FIRST BEFORE HELMET / AUTH / OTHER MIDDLEWARES) ──
-import { corsOptions } from "./config/corsOrigins";
+// ── 1. CORS Middleware ──
 const corsMiddleware = cors(corsOptions);
-
 app.use(corsMiddleware);
 app.options("*", corsMiddleware);
 
-// Correlation ID & Distributed Tracing
+// ── 2. Correlation ID & Distributed Tracing ──
 app.use(correlationIdMiddleware);
 
-// Security & Optimization Middlewares
+// ── 3. Security & Optimization Middlewares ──
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -65,78 +57,19 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(passport.initialize());
 
-// ── NoSQL Injection Prevention ────────────────────────────────────────────────
-// Strips keys that begin with '$' or contain '.' from req.body, req.query, req.params.
-// Provides defense-in-depth even though Prisma parameterises most queries.
+// ── 4. NoSQL & Parameter Pollution Defenses ──
 app.use(mongoSanitize({ allowDots: false, replaceWith: '_' }));
-
-// ── HTTP Parameter Pollution Prevention ───────────────────────────────────────
 app.use(hpp());
 
-// ── Idempotency Protection ───────────────────────────────────────────────────
+// ── 5. Idempotency & CSRF Protection ──
 app.use(idempotencyMiddleware);
-
-// ── CSRF Double-Submit Cookie Protection ─────────────────────────────────────
 app.use(validateCsrf);
 
-// Global Rate Limiting
+// ── 6. Global Rate Limiting ──
 app.use(env.API_PREFIX, generalLimiter);
-// SOAP billing endpoint: text body parser for XML inspection + dedicated rate limiter + API-key auth + XXE pre-filter
-app.use(
-  "/soap/billing",
-  express.text({ type: ["text/xml", "application/xml", "application/soap+xml", "text/plain", "*/*"], limit: "1mb" }),
-  soapBillingLimiter,
-  soapBillingAuthMiddleware,
-  soapXxePreFilter
-);
-setupSoapServer(app);
 
-
-// Interactive Swagger Documentation Endpoints
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/api/docs.json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
-});
-app.get("/api/v1/docs.json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
-});
-
-// Public JWKS Endpoint for Asymmetric RS256 Verification
-app.get("/.well-known/jwks.json", (req, res) => {
-  res.setHeader("Cache-Control", "public, max-age=3600");
-  res.status(200).json(JwksService.getJwks());
-});
-
-// Phase 15 - System Health, Readiness, Liveness, & Prometheus Metrics Probes
-app.get("/metrics", (req, res) => {
-  if (env.NODE_ENV === "production") {
-    return res.status(403).json({ success: false, message: "Forbidden" });
-  }
-  const mem = process.memoryUsage();
-  const metrics = [
-    "# HELP node_memory_rss_bytes Resident Set Size in bytes",
-    "# TYPE node_memory_rss_bytes gauge",
-    `node_memory_rss_bytes ${mem.rss}`,
-    "# HELP node_memory_heap_used_bytes Heap used in bytes",
-    "# TYPE node_memory_heap_used_bytes gauge",
-    `node_memory_heap_used_bytes ${mem.heapUsed}`,
-    "# HELP node_uptime_seconds Process uptime in seconds",
-    "# TYPE node_uptime_seconds counter",
-    `node_uptime_seconds ${Math.floor(process.uptime())}`,
-    "# HELP roombae_active_workers Number of active worker process instances",
-    "# TYPE roombae_active_workers gauge",
-    `roombae_active_workers 1`,
-  ].join("\n");
-
-  res.setHeader("Content-Type", "text/plain; version=0.0.4");
-  res.send(metrics);
-});
-
+// ── 7. Health, Readiness & Root Probes ──
 app.get("/health", async (req, res) => {
   const startTime = Date.now();
   let dbStatus = "CONNECTED";
@@ -156,62 +89,18 @@ app.get("/health", async (req, res) => {
     isDbHealthy = false;
   }
 
-  const routeCacheStats = getRouteCacheStats();
-
-  const memoryUsage = process.memoryUsage();
-  const isHealthy = isDbHealthy;
-  const statusCode = isHealthy ? 200 : (env.NODE_ENV === "production" ? 503 : 200);
-
-  const smtpHealth = getSmtpHealth();
-  const smtpResponse = smtpHealth.status === "healthy"
-    ? {
-        status: "healthy",
-        host: smtpHealth.host || env.MAIL_HOST || "smtp.gmail.com",
-        port: smtpHealth.port || parseInt(String(env.MAIL_PORT || "587"), 10),
-        latency: smtpHealth.latency ?? 0,
-        lastVerifiedAt: smtpHealth.lastVerifiedAt || new Date().toISOString(),
-      }
-    : {
-        status: "degraded",
-        reason: smtpHealth.reason || "UNVERIFIED",
-      };
-
-  res.status(statusCode).json({
-    success: isHealthy,
-    status: isHealthy ? "UP" : "DEGRADED",
+  res.status(isDbHealthy ? 200 : 503).json({
+    success: isDbHealthy,
+    status: isDbHealthy ? "UP" : "DEGRADED",
     version: "1.0.0",
     environment: env.NODE_ENV,
     correlationId: req.correlationId,
     timestamp: new Date().toISOString(),
-    uptimeSeconds: Math.floor(process.uptime()),
     latencyMs: Date.now() - startTime,
-    cache: {
-      routeCache: routeCacheStats,
-    },
     database: {
       provider: "mongodb",
       status: dbStatus,
       latencyMs: dbLatency,
-    },
-    mongodb: {
-      provider: "mongodb",
-      status: dbStatus,
-      latencyMs: env.NODE_ENV === "production" ? "N/A" : dbLatency,
-    },
-    smtp: smtpResponse,
-    memory: env.NODE_ENV === "production"
-      ? { rssMB: "N/A", heapTotalMB: "N/A", heapUsedMB: "N/A" }
-      : {
-          rssMB: (memoryUsage.rss / 1024 / 1024).toFixed(2),
-          heapTotalMB: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
-          heapUsedMB: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
-        },
-    services: {
-      restApi: isHealthy ? "READY" : "DEGRADED",
-      soapERP: "READY",
-      webSocket: "READY",
-      swaggerDocs: env.NODE_ENV !== "production" ? "READY" : "DISABLED_IN_PROD",
-      prometheusMetrics: env.NODE_ENV !== "production" ? "READY" : "DISABLED_IN_PROD",
     },
   });
 });
@@ -239,7 +128,7 @@ app.get("/ready", async (req, res) => {
   } else {
     return res.status(503).json({
       status: "NOT_READY",
-      message: "Database connection unreachable. Backend cannot process transactional requests.",
+      message: "Database connection unreachable.",
       database: "DISCONNECTED",
       timestamp: new Date().toISOString(),
     });
@@ -247,29 +136,27 @@ app.get("/ready", async (req, res) => {
 });
 
 app.get("/live", (req, res) => {
-  res
-    .status(200)
-    .json({ status: "ALIVE", timestamp: new Date().toISOString() });
+  res.status(200).json({ status: "ALIVE", timestamp: new Date().toISOString() });
 });
 
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    name: APP_INFO.name,
-    description: APP_INFO.description,
+    name: "RoomBae PG Management System API",
+    description: "Enterprise REST backend for RoomBae PG discovery & management platform",
     status: "Running",
     environment: env.NODE_ENV,
-    version: APP_INFO.version,
+    version: "1.0.0",
     timestamp: new Date().toISOString(),
     documentation: "/api/v1",
     health: "/health",
   });
 });
 
-// REST API v1 Routes
+// ── 8. REST API v1 Routes ──
 app.use(env.API_PREFIX, apiRouter);
 
-// Catch-all 404 handler for unmatched routes (returns standard JSON error envelope)
+// ── 9. Catch-all 404 handler ──
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -282,6 +169,5 @@ app.use((req, res) => {
   });
 });
 
-// Global Error Handler (MUST BE REGISTERED LAST AFTER ALL ROUTES & 404 HANDLER)
+// ── 10. Global Error Handler ──
 app.use(globalErrorHandler);
-

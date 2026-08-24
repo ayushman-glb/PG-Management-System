@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import sharp from 'sharp';
-import { cloudinaryService } from '../services/cloudinary.service';
+import { cloudinaryService } from '../utils/cloudinary.service';
 import { getCloudinaryFolder } from '../config/cloudinary';
 import { computeSHA256Checksum } from '../utils/crypto';
 

@@ -1,32 +1,20 @@
 import { Router } from 'express';
-import { Container } from '../../container';
-import { authenticate, authorize, requireKycApproved } from '../../middleware/authMiddleware';
-import { Role } from '@prisma/client';
+import { PropertyController } from './property.controller';
+import { PropertyService } from './property.service';
+import { authenticate, requireOwner, requireAdmin } from '../../middleware/authMiddleware';
+
+const propertyService = new PropertyService();
+const propertyController = new PropertyController(propertyService);
 
 const router = Router();
 
-// ── Public Marketplace Endpoints ──────────────────────────────────────────────
-router.get('/', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
-router.get('/search', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
-router.get('/public', (req, res, next) => Container.propertyController.searchPublic(req, res, next));
+router.get('/', authenticate, requireOwner, propertyController.getOwnerPGs);
+router.get('/my', authenticate, requireOwner, propertyController.getOwnerPGs);
+router.get('/owner', authenticate, requireOwner, propertyController.getOwnerPGs);
+router.get('/owner-summary', authenticate, requireOwner, propertyController.getOwnerPGs);
+router.post('/', authenticate, requireOwner, propertyController.createPG);
+router.get('/:id', authenticate, propertyController.getPGDetails);
+router.post('/:id/floors', authenticate, requireOwner, propertyController.addFloor);
+router.patch('/:id/verify', authenticate, requireAdmin, propertyController.updateStatus);
 
-// ── Owner-Scoped Endpoints (Protected) ───────────────────────────────────────
-router.get('/owner-summary',
-  authenticate,
-  authorize(Role.OWNER, Role.ADMIN, Role.GOD),
-  (req, res, next) => Container.propertyController.getOwnerSummary(req, res, next));
-
-router.get('/:id', (req, res, next) => Container.propertyController.getById(req, res, next));
-
-router.get('/:pgId/meal-schedules',
-  authenticate,
-  authorize(Role.RESIDENT, Role.OWNER, Role.ADMIN, Role.GOD),
-  (req, res, next) => Container.propertyController.getMealSchedules(req, res, next));
-
-router.post('/',
-  authenticate,
-  authorize(Role.OWNER),
-  requireKycApproved,
-  (req, res, next) => Container.propertyController.create(req, res, next));
-
-export default router;
+export { router as propertyRoutes };

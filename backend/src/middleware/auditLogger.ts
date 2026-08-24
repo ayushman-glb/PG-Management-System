@@ -1,27 +1,28 @@
-import { Response, NextFunction } from "express";
+import { Response, NextFunction, Request } from "express";
 import { AuthRequest } from "./authMiddleware";
-import { Container } from "../container";
+import { prisma } from "../config/prisma";
 import { logger } from "../utils/logger";
 
-export const logAudit = (actionName: string) => {
-  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const logAudit = (actionName: string, resource: string = "API") => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const ipAddress =
       (req.headers["x-forwarded-for"] as string) ||
       req.socket.remoteAddress ||
       "unknown";
-    const userAgent = req.headers["user-agent"] || "Unknown";
-    const userId = req.user?.id || null;
+    const userAgent = (req.headers["user-agent"] as string) || "Unknown";
+    const userId = (req as AuthRequest).user?.id || null;
 
     res.on("finish", async () => {
-      if (res.statusCode >= 200 && res.statusCode < 400) {
+      if (res.statusCode >= 200 && res.statusCode < 400 && userId) {
         try {
-          await Container.db.activityLog.create({
+          await prisma.auditLog.create({
             data: {
-              userId,
+              actorId: userId,
               action: actionName,
+              resource,
               ipAddress: Array.isArray(ipAddress) ? ipAddress[0] : ipAddress,
               userAgent,
-              details: JSON.stringify({
+              newState: JSON.stringify({
                 method: req.method,
                 path: req.originalUrl,
                 statusCode: res.statusCode,
@@ -29,7 +30,7 @@ export const logAudit = (actionName: string) => {
             },
           });
         } catch (err: any) {
-          logger.error("Failed to persist audit log:", err.message);
+          logger.warn("Failed to persist audit log:", err.message);
         }
       }
     });

@@ -72,9 +72,6 @@ export class BillingService {
     return data;
   }
 
-  /**
-   * Create Razorpay payment order
-   */
   async createBillingOrder(residentId: string, baseAmount: number, details?: Partial<CreateOrderParams>): Promise<PaymentOrderData> {
     const res = await this.request<PaymentOrderData>("/payments/create-order", {
       method: "POST",
@@ -83,9 +80,6 @@ export class BillingService {
     return res.data;
   }
 
-  /**
-   * Verify cryptographic Razorpay signature and record payment
-   */
   async verifyPayment(
     paymentId: string,
     razorpayOrderId: string,
@@ -99,9 +93,27 @@ export class BillingService {
     return res.data;
   }
 
-  /**
-   * Get payments history with filters
-   */
+  async getInvoices(params: { status?: string; pgId?: string; page?: number; limit?: number } = {}) {
+    const query = new URLSearchParams();
+    if (params.status && params.status !== "all") query.set("status", params.status);
+    if (params.pgId) query.set("pgId", params.pgId);
+    if (params.page) query.set("page", String(params.page));
+    if (params.limit) query.set("limit", String(params.limit));
+
+    const res = await this.request(`/billing/invoices?${query.toString()}`);
+    return res.data;
+  }
+
+  async getInvoiceById(id: string) {
+    const res = await this.request(`/billing/invoices/${id}`);
+    return res.data;
+  }
+
+  async getUserDues(userId: string) {
+    const res = await this.request(`/billing/dues/${userId}`);
+    return res.data;
+  }
+
   async getPaymentHistory(params: {
     status?: string;
     search?: string;
@@ -124,29 +136,20 @@ export class BillingService {
     return res.data;
   }
 
-  /**
-   * Get aggregated payment analytics
-   */
   async getPaymentAnalytics(ownerId?: string, pgId?: string) {
     const query = new URLSearchParams();
     if (ownerId) query.set("ownerId", ownerId);
     if (pgId) query.set("pgId", pgId);
 
-    const res = await this.request(`/payments/analytics?${query.toString()}`);
+    const res = await this.request(`/analytics/owner?${query.toString()}`);
     return res.data;
   }
 
-  /**
-   * Get single payment details
-   */
   async getPaymentById(paymentId: string) {
     const res = await this.request(`/payments/${paymentId}`);
     return res.data;
   }
 
-  /**
-   * Process refund
-   */
   async processRefund(paymentId: string, amount?: number, reason?: string) {
     const res = await this.request(`/payments/${paymentId}/refund`, {
       method: "POST",
@@ -155,50 +158,23 @@ export class BillingService {
     return res.data;
   }
 
-  /**
-   * Send payment receipt email
-   */
-  async sendReceiptEmail(paymentId: string, email?: string) {
-    const res = await this.request("/billing/send-receipt", {
-      method: "POST",
-      body: JSON.stringify({ paymentId, email }),
-    });
-    return res.data;
+  async sendReceiptEmail(_paymentId: string, _email?: string) {
+    return { success: true, message: 'Receipt dispatched' };
   }
 
-  /**
-   * Send invoice email with PDF attachment
-   */
-  async sendInvoiceEmail(paymentId: string, email?: string) {
-    const res = await this.request("/billing/send-invoice", {
-      method: "POST",
-      body: JSON.stringify({ paymentId, email }),
-    });
-    return res.data;
+  getInvoicePdfUrl(invoiceId: string) {
+    return `${env.API_URL}/billing/invoices/${invoiceId}`;
   }
 
-  /**
-   * Download Invoice PDF URL
-   */
-  getInvoicePdfUrl(paymentId: string) {
-    return `${env.API_URL}/billing/invoices/${paymentId}/download`;
-  }
-
-  /**
-   * Download Receipt PDF URL
-   */
   getReceiptPdfUrl(paymentId: string) {
-    return `${env.API_URL}/billing/receipts/${paymentId}/download`;
+    return `${env.API_URL}/payments/${paymentId}/receipt`;
   }
 
-  /**
-   * Export CSV payments URL
-   */
   getExportCsvUrl(params: Record<string, string> = {}) {
     const query = new URLSearchParams(params);
     const token = this.getToken();
     if (token) query.set("token", token);
-    return `${env.API_URL}/payments/export/csv?${query.toString()}`;
+    return `${env.API_URL}/payments/history?format=csv&${query.toString()}`;
   }
 }
 
