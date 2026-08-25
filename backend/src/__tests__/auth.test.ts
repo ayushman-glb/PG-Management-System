@@ -1,4 +1,4 @@
-import { AuthService } from '../services/authService';
+import { AuthService } from '../modules/auth/auth.service';
 
 jest.mock('../config/prisma', () => ({
   prisma: {

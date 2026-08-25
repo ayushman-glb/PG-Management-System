@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Page } from "../../../App";
+import type { Page } from "@/app/App";
 import { ThemeToggle, useTheme } from "../../../theme";
 import { BackButton } from "../../../navigation";
 import { AnimatedTabs } from "../../../components/MotionPrimitives";

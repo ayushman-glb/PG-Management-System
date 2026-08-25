@@ -58,6 +58,21 @@ export class RoomController {
     }
   };
 
+  convertRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const { newType, roomType } = req.body;
+      const targetType = newType || roomType;
+      if (!targetType) throw new BadRequestError('newType or roomType is required.');
+
+      const room = await this.roomService.convertRoom(id, req.user.id, targetType);
+      return ApiResponse.success(res, `Room converted to ${targetType}`, room);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   createTransferRequest = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const residentId = req.user?.id || req.body.residentId;

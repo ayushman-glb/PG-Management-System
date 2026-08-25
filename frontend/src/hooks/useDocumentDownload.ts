@@ -31,7 +31,8 @@ export function getDocumentUrl(documentType: DocumentType, entityId: string): st
     case 'RENT_RECEIPT':
     case 'TRANSACTION_RECEIPT':
     case 'SECURITY_DEPOSIT_RECEIPT':
-      return `${env.API_URL}/payments/${entityId}/pdf`;
+    case 'REFUND_RECEIPT':
+      return `${env.API_URL}/payments/${entityId}/receipt`;
     case 'KYC_DOCUMENT':
     case 'KYC_VERIFICATION':
       return `${env.API_URL}/documents/${entityId}/download`;

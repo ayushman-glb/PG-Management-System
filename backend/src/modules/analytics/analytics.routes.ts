@@ -9,6 +9,9 @@ const analyticsController = new AnalyticsController(analyticsService);
 const router = Router();
 
 router.get('/owner', authenticate, requireOwner, analyticsController.getOwnerAnalytics);
+router.get('/revenue', authenticate, requireOwner, analyticsController.getRevenueAnalytics);
+router.get('/occupancy', authenticate, requireOwner, analyticsController.getOccupancyAnalytics);
+router.get('/pl', authenticate, requireOwner, analyticsController.getProfitLossAnalytics);
 router.get('/admin', authenticate, requireAdmin, analyticsController.getAdminAnalytics);
 
 export { router as analyticsRoutes };

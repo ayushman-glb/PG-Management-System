@@ -31,111 +31,9 @@ interface Complaint {
 }
 
 const initialComplaints: Record<string, Complaint[]> = {
-  pending: [
-    {
-      id: "C-047",
-      title: "Water heater not working",
-      resident: "Suresh Babu",
-      room: "301C",
-      priority: "High",
-      category: "Plumbing",
-      date: "22 Jul 2025",
-      avatar: "SB",
-      desc: "Water heater has been malfunctioning for 3 days. No hot water.",
-    },
-    {
-      id: "C-048",
-      title: "WiFi drops frequently",
-      resident: "Kavya Nair",
-      room: "205D",
-      priority: "Medium",
-      category: "Electrical",
-      date: "23 Jul 2025",
-      avatar: "KN",
-      desc: "Internet connectivity keeps dropping every few hours.",
-    },
-    {
-      id: "C-049",
-      title: "Window latch broken",
-      resident: "Rohit Sinha",
-      room: "110A",
-      priority: "Low",
-      category: "Maintenance",
-      date: "23 Jul 2025",
-      avatar: "RS",
-      desc: "Window latch is broken and cannot be secured from inside.",
-    },
-    {
-      id: "C-050",
-      title: "Common area AC not working",
-      resident: "Ankit Joshi",
-      room: "202A",
-      priority: "High",
-      category: "Electrical",
-      date: "23 Jul 2025",
-      avatar: "AJ",
-      desc: "The AC in the common lounge area stopped working.",
-    },
-  ],
-  inProgress: [
-    {
-      id: "C-044",
-      title: "Leaking tap in bathroom",
-      resident: "Meera Pillai",
-      room: "104B",
-      priority: "Medium",
-      category: "Plumbing",
-      date: "18 Jul 2025",
-      avatar: "MP",
-      desc: "Bathroom tap has been leaking for a week.",
-    },
-    {
-      id: "C-045",
-      title: "Noisy neighbors complaint",
-      resident: "Divya Reddy",
-      room: "308B",
-      priority: "Low",
-      category: "Miscellaneous",
-      date: "19 Jul 2025",
-      avatar: "DR",
-      desc: "Residents on 3rd floor making loud noise late at night.",
-    },
-  ],
-  resolved: [
-    {
-      id: "C-041",
-      title: "Broken door lock",
-      resident: "Ankit Joshi",
-      room: "202A",
-      priority: "High",
-      category: "Maintenance",
-      date: "12 Jul 2025",
-      avatar: "AJ",
-      desc: "Room door lock was broken and posed a security risk.",
-    },
-    {
-      id: "C-042",
-      title: "Cockroach infestation",
-      resident: "Priya Sharma",
-      room: "106C",
-      priority: "High",
-      category: "Sanitation",
-      date: "14 Jul 2025",
-      avatar: "PS",
-      desc: "Cockroaches spotted in the kitchen area.",
-    },
-    {
-      id: "C-043",
-      title: "Power socket not working",
-      resident: "Kiran Rao",
-      room: "412A",
-      priority: "Medium",
-      category: "Electrical",
-      date: "16 Jul 2025",
-      avatar: "KR",
-      desc: "One of the power sockets in the room is dead.",
-    },
-  ],
+  pending: [],
+  inProgress: [],
+  resolved: [],
 };
 
 const columns = [
@@ -190,8 +88,9 @@ export default function Complaints({ navigate }: Props) {
   );
 
   useEffect(() => {
-    api.listComplaints().then(data => {
-      if (Array.isArray(data) && data.length > 0) {
+    api.listComplaints().then(res => {
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data)) {
         const pending: Complaint[] = [];
         const inProgress: Complaint[] = [];
         const resolved: Complaint[] = [];
@@ -200,12 +99,12 @@ export default function Complaints({ navigate }: Props) {
           const item: Complaint = {
             id: c.id || c.ticketCode,
             title: c.title,
-            resident: c.resident?.user?.name || "Resident",
-            room: c.resident?.bed?.room?.roomNumber || "101",
+            resident: c.resident?.profile?.name || c.resident?.username || "Resident",
+            room: c.room?.roomNumber || "101",
             priority: c.priority === "HIGH" || c.priority === "URGENT" ? "High" : c.priority === "MEDIUM" ? "Medium" : "Low",
             category: c.category,
             date: new Date(c.createdAt).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' }),
-            avatar: (c.resident?.user?.name || "RS").substring(0, 2).toUpperCase(),
+            avatar: (c.resident?.profile?.name || c.resident?.username || "RS").substring(0, 2).toUpperCase(),
             desc: c.description
           };
           if (c.status === "OPEN") pending.push(item);
@@ -214,8 +113,12 @@ export default function Complaints({ navigate }: Props) {
         });
 
         setComplaints({ pending, inProgress, resolved });
+      } else {
+        setComplaints({ pending: [], inProgress: [], resolved: [] });
       }
-    }).catch(() => {});
+    }).catch(() => {
+      setComplaints({ pending: [], inProgress: [], resolved: [] });
+    });
   }, []);
 
   if (showSkeleton) {

@@ -371,4 +371,40 @@ export class BookingService {
       },
     });
   }
+
+  async getBookingById(bookingId: string, userId: string, role: Role): Promise<any> {
+    const booking = await this.db.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        pg: {
+          include: {
+            location: true,
+            images: true,
+            owner: { select: { id: true, username: true, phone: true, email: true } },
+          },
+        },
+        resident: { include: { profile: true } },
+        room: true,
+        bed: true,
+        agreements: true,
+        roomAllocations: { where: { isActive: true } },
+        payments: true,
+      },
+    });
+
+    if (!booking) throw new NotFoundError('Booking not found.');
+    if (role === Role.RESIDENT && booking.residentId !== userId) {
+      throw new ForbiddenError('You are not authorized to view this booking.');
+    }
+    if (role === Role.PG_OWNER && booking.pg.ownerId !== userId) {
+      throw new ForbiddenError('You do not own the property for this booking.');
+    }
+
+    return booking;
+  }
+
+  async cancelBooking(bookingId: string, userId: string, role: Role, reason: string): Promise<any> {
+    await this.getBookingById(bookingId, userId, role);
+    return await this.updateBookingStatus(bookingId, userId, role, BookingStatus.CANCELLED, reason);
+  }
 }

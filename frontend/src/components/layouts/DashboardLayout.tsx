@@ -22,7 +22,7 @@ import {
   Trash2,
   LogOut,
 } from "lucide-react";
-import type { Page } from "../../App";
+import type { Page } from "@/app/App";
 import { ThemeToggle, useTheme } from "../../theme";
 import { BackButton } from "../../navigation";
 import { Avatar } from "../ui/Avatar";

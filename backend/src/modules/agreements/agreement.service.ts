@@ -5,7 +5,7 @@ import { CreateAgreementDTO, UpdateAgreementDTO, SignAgreementDTO, AgreementVeri
 import { computeSHA256Checksum } from '../../utils/crypto';
 import { QrCodeService } from '../../utils/pdf/QrCodeService';
 import { env } from '../../config/env';
-import PDFDocument from 'pdfkit';
+import { PdfBrowserManager, renderAgreementHtml } from '../../utils/pdf';
 
 export class AgreementService {
   private get db(): PrismaClient {
@@ -346,155 +346,78 @@ export class AgreementService {
     if (!agreement) throw new NotFoundError('Agreement not found.');
 
     const residentName = agreement.resident.profile
-      ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`
+      ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`.trim()
       : agreement.resident.username;
 
     const ownerName = agreement.owner.profile
-      ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`
+      ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`.trim()
       : agreement.owner.username;
 
     const frontendVerifyUrl = `${env.CLIENT_URL || env.FRONTEND_URL}/verify-agreement?num=${agreement.agreementNumber}`;
-    let qrBuffer: Buffer | null = null;
+    let qrCodeDataUrl: string | null = null;
     try {
-      qrBuffer = await QrCodeService.generateQrCodeBuffer(frontendVerifyUrl, 100);
+      qrCodeDataUrl = await QrCodeService.generateQrCodeDataUrl(frontendVerifyUrl);
     } catch {
-      qrBuffer = null;
+      qrCodeDataUrl = null;
     }
 
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ margin: 40, size: 'A4' });
-      const buffers: Buffer[] = [];
+    const pgAddress = agreement.pg?.location
+      ? `${agreement.pg.location.address}, ${agreement.pg.location.city}${agreement.pg.location.state ? ', ' + agreement.pg.location.state : ''}${agreement.pg.location.pincode ? ' - ' + agreement.pg.location.pincode : ''}`
+      : undefined;
 
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', async () => {
-        const fullBuffer = Buffer.concat(buffers);
-
-        // Record in PDFDocument collection
-        try {
-          await this.db.pDFDocument.create({
-            data: {
-              documentType: 'AGREEMENT',
-              title: `Agreement-${agreement.agreementNumber}`,
-              fileUrl: `/api/v1/agreements/${agreement.id}/pdf`,
-              storageProvider: 'LOCAL_STREAM',
-              hash: agreement.documentHash || computeSHA256Checksum(fullBuffer),
-              residentId: agreement.residentId,
-              ownerId: agreement.ownerId,
-              pgId: agreement.pgId,
-            },
-          });
-        } catch (e) {
-          // Non-blocking log
-        }
-
-        resolve(fullBuffer);
-      });
-      doc.on('error', reject);
-
-      // Header Banner
-      doc.rect(40, 40, 515, 50).fill('#1E293B');
-      doc.fillColor('#F59E0B').fontSize(16).font('Helvetica-Bold').text('ROOMBAE RESIDENTIAL LEASE AGREEMENT', 40, 52, { align: 'center' });
-      doc.fillColor('#94A3B8').fontSize(9).font('Helvetica').text('Indian Tenancy & Model Co-Living Contract Framework', 40, 72, { align: 'center' });
-
-      doc.moveDown(2);
-      let y = 105;
-
-      // Agreement Meta Box
-      doc.rect(40, y, 515, 45).fill('#F8FAFC');
-      doc.strokeColor('#E2E8F0').stroke();
-      doc.fillColor('#0F172A').fontSize(9).font('Helvetica-Bold');
-      doc.text(`Agreement Code: ${agreement.agreementNumber}`, 50, y + 8);
-      doc.text(`Status: ${agreement.status}`, 350, y + 8);
-      doc.font('Helvetica').fontSize(8).fillColor('#64748B');
-      doc.text(`Effective: ${new Date(agreement.startDate).toLocaleDateString('en-IN')}`, 50, y + 25);
-      doc.text(`Valid Till: ${new Date(agreement.endDate).toLocaleDateString('en-IN')}`, 200, y + 25);
-      doc.text(`Version: v${agreement.version}.0`, 350, y + 25);
-
-      y += 55;
-
-      // Section 1: Parties
-      doc.fillColor('#0F172A').fontSize(11).font('Helvetica-Bold').text('1. PARTIES TO THIS LEASE AGREEMENT', 40, y);
-      y += 18;
-      doc.fontSize(9).font('Helvetica').fillColor('#334155');
-      doc.text(`LESSOR / PROPERTY OWNER: ${ownerName} (Email: ${agreement.owner.email}, Phone: ${agreement.owner.phone || 'N/A'})`, 40, y);
-      y += 14;
-      doc.text(`LESSEE / RESIDENT: ${residentName} (Email: ${agreement.resident.email}, Phone: ${agreement.resident.phone || 'N/A'})`, 40, y);
-      y += 20;
-
-      // Section 2: Property & Unit
-      doc.fillColor('#0F172A').fontSize(11).font('Helvetica-Bold').text('2. PREMISES & ACCOMMODATION DETAILS', 40, y);
-      y += 18;
-      doc.fontSize(9).font('Helvetica').fillColor('#334155');
-      doc.text(`Property Name: ${agreement.pg.name}`, 40, y);
-      y += 14;
-      if (agreement.pg.location) {
-        doc.text(`Location: ${agreement.pg.location.address}, ${agreement.pg.location.city}, ${agreement.pg.location.state} - ${agreement.pg.location.pincode}`, 40, y);
-        y += 14;
-      }
-      if (agreement.allocation) {
-        doc.text(`Allocated Unit: Floor ${agreement.allocation.floor?.floorNumber || 'N/A'} · Room ${agreement.allocation.room.roomNumber} · Bed ${agreement.allocation.bed.bedNumber} (${agreement.allocation.room.roomType})`, 40, y);
-        y += 14;
-      }
-      y += 8;
-
-      // Section 3: Financial Obligations
-      doc.fillColor('#0F172A').fontSize(11).font('Helvetica-Bold').text('3. FINANCIAL TERMS & RENT OBLIGATIONS', 40, y);
-      y += 18;
-      doc.fontSize(9).font('Helvetica').fillColor('#334155');
-      doc.text(`• Monthly License Fee (Rent): ₹${agreement.rentAmount.toLocaleString('en-IN')} / month (Payable on or before 5th of each month)`, 40, y);
-      y += 14;
-      doc.text(`• Security Deposit: ₹${agreement.depositAmount.toLocaleString('en-IN')} (Refundable upon checkout inspection minus damages)`, 40, y);
-      y += 14;
-      doc.text(`• Lock-in Period: ${agreement.lockInPeriodMonths} Months | Notice Period: ${agreement.noticePeriodDays} Days`, 40, y);
-      y += 20;
-
-      // Section 4: Standard Rules & Covenants
-      doc.fillColor('#0F172A').fontSize(11).font('Helvetica-Bold').text('4. CODE OF CONDUCT & HOUSE RULES', 40, y);
-      y += 18;
-      doc.fontSize(8.5).font('Helvetica').fillColor('#475569');
-      const rules = [
-        'A. Visitors & Guests: Visitors permitted in common areas between 09:00 - 20:00 with digital guest pass.',
-        'B. Quiet Hours: Mandatory quiet hours observed from 22:30 to 06:30 for community peaceful enjoyment.',
-        'C. Property Damage: Tenant is liable for any intentional or negligent damages to allocated room assets.',
-        'D. Termination & Move-out: Tenant must submit notice via portal 30 days prior to checkout date.',
-      ];
-      for (const rule of rules) {
-        doc.text(rule, 40, y);
-        y += 13;
-      }
-      y += 10;
-
-      // Section 5: Digital Signatures & Execution
-      doc.fillColor('#0F172A').fontSize(11).font('Helvetica-Bold').text('5. DIGITAL EXECUTION & SIGNATURES', 40, y);
-      y += 18;
-
-      for (const sig of agreement.signatures) {
-        doc.fontSize(8.5).font('Helvetica').fillColor('#1E293B');
-        doc.text(`✔ Signed by ${sig.signerRole}: ${sig.signerRole === Role.RESIDENT ? residentName : ownerName} | Method: ${sig.signatureType} | Date: ${new Date(sig.signedAt).toISOString()} | IP: ${sig.ipAddress || '127.0.0.1'}`, 40, y);
-        y += 14;
-      }
-
-      if (agreement.signatures.length === 0) {
-        doc.fontSize(8.5).font('Helvetica-Oblique').fillColor('#EF4444');
-        doc.text('⚠ Awaiting digital signatures from parties.', 40, y);
-        y += 14;
-      }
-
-      y += 15;
-
-      // Verification Footer Box with QR Code
-      if (qrBuffer) {
-        doc.image(qrBuffer, 445, y, { width: 75, height: 75 });
-      }
-
-      doc.rect(40, y, 395, 75).fill('#F1F5F9');
-      doc.fillColor('#0F172A').fontSize(9).font('Helvetica-Bold').text('Document Integrity & Verification', 50, y + 10);
-      doc.fillColor('#64748B').fontSize(7.5).font('Helvetica');
-      doc.text(`Document Hash: ${agreement.documentHash || 'Generated on signature completion'}`, 50, y + 25);
-      doc.text(`Verify online: ${frontendVerifyUrl}`, 50, y + 38);
-      doc.text(`Timestamp: ${new Date().toISOString()}`, 50, y + 51);
-
-      doc.end();
+    const html = renderAgreementHtml({
+      agreementNumber: agreement.agreementNumber,
+      status: agreement.status,
+      startDate: agreement.startDate,
+      endDate: agreement.endDate,
+      version: agreement.version,
+      ownerName,
+      ownerEmail: agreement.owner.email,
+      ownerPhone: agreement.owner.phone || undefined,
+      residentName,
+      residentEmail: agreement.resident.email,
+      residentPhone: agreement.resident.phone || undefined,
+      pgName: agreement.pg.name,
+      pgAddress,
+      floorNumber: agreement.allocation?.floor?.floorNumber,
+      roomNumber: agreement.allocation?.room?.roomNumber,
+      bedNumber: agreement.allocation?.bed?.bedNumber,
+      roomType: agreement.allocation?.room?.roomType,
+      rentAmount: agreement.rentAmount,
+      depositAmount: agreement.depositAmount,
+      lockInPeriodMonths: agreement.lockInPeriodMonths,
+      noticePeriodDays: agreement.noticePeriodDays,
+      signatures: agreement.signatures.map((sig) => ({
+        signerRole: sig.signerRole,
+        signatureType: sig.signatureType,
+        signedAt: sig.signedAt,
+        ipAddress: sig.ipAddress || undefined,
+      })),
+      documentHash: agreement.documentHash || undefined,
+      verificationUrl: frontendVerifyUrl,
+      qrCodeDataUrl,
     });
+
+    const pdfBuffer = await PdfBrowserManager.generatePdfFromHtml(html);
+
+    // Record in PDFDocument collection
+    try {
+      await this.db.pDFDocument.create({
+        data: {
+          documentType: 'AGREEMENT',
+          title: `Agreement-${agreement.agreementNumber}`,
+          fileUrl: `/api/v1/agreements/${agreement.id}/pdf`,
+          storageProvider: 'LOCAL_STREAM',
+          hash: agreement.documentHash || computeSHA256Checksum(pdfBuffer),
+          residentId: agreement.residentId,
+          ownerId: agreement.ownerId,
+          pgId: agreement.pgId,
+        },
+      });
+    } catch {
+      // Non-blocking log
+    }
+
+    return pdfBuffer;
   }
 }

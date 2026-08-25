@@ -16,7 +16,7 @@ import { useTheme } from "@theme/index";
 import { FintechCardCarousel } from "../components/FintechCardCarousel";
 import { PayRentModal } from "../components/PayRentModal";
 import { SpendBreakdownChart } from "../components/SpendBreakdownChart";
-import { TransactionTimeline } from "../components/TransactionTimeline";
+import { TransactionTimeline, TransactionItem } from "../components/TransactionTimeline";
 import { useAdaptiveLoading } from "../../../hooks/useAdaptiveLoading";
 import { BillingSkeleton } from "@components/Skeletons";
 import { billingService } from "../../../services/billing.service";
@@ -48,8 +48,9 @@ export default function Billing({ navigate }: Props) {
         billingService.getPaymentAnalytics(),
       ]);
 
-      if (historyRes.status === "fulfilled" && historyRes.value?.payments) {
-        setPaymentsList(historyRes.value.payments);
+      if (historyRes.status === "fulfilled") {
+        const list = historyRes.value?.payments || (Array.isArray(historyRes.value) ? historyRes.value : []);
+        setPaymentsList(list);
       }
       if (analyticsRes.status === "fulfilled") {
         setAnalytics(analyticsRes.value);
@@ -85,16 +86,52 @@ export default function Billing({ navigate }: Props) {
     return <BillingSkeleton />;
   }
 
+  const mappedTransactions: TransactionItem[] = paymentsList.map((p) => {
+    const id = p.id;
+    const invoiceId = p.invoiceId || p.invoice?.id || p.id;
+    const invoiceNumber = p.invoice?.invoiceNumber || p.invoiceNumber || p.receiptNumber || `REC-${p.id.slice(-6).toUpperCase()}`;
+    const category = p.purpose
+      ? `Payment - ${p.purpose.replace(/_/g, " ")}`
+      : p.items?.[0]?.description || (p.resident?.name ? `Rent - ${p.resident.name}` : (p.payer?.username ? `Payment - ${p.payer.username}` : "Rent Payment"));
+    const amount = p.amount ?? p.totalAmount ?? 0;
+    const date = p.createdAt
+      ? new Date(p.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })
+      : "Recent";
+    const rawStatus = String(p.status || "").toUpperCase();
+    const status: "PAID" | "PENDING" | "FAILED" | "REFUNDED" =
+      rawStatus === "VERIFIED" || rawStatus === "PAID"
+        ? "PAID"
+        : rawStatus === "FAILED"
+        ? "FAILED"
+        : rawStatus === "REFUNDED"
+        ? "REFUNDED"
+        : "PENDING";
+    const paymentMethod = p.paymentMethod || "RAZORPAY";
+    const razorpayPaymentId = p.razorpayPaymentId;
+
+    return {
+      id,
+      invoiceId,
+      invoiceNumber,
+      category,
+      amount,
+      date,
+      status,
+      paymentMethod,
+      razorpayPaymentId,
+    };
+  });
+
   const totalRevenue = analytics?.totalRevenue || paymentsList
-    .filter((i) => i.status === "PAID")
-    .reduce((sum, i) => sum + (i.totalAmount || 0), 0);
+    .filter((i) => i.status === "PAID" || i.status === "VERIFIED")
+    .reduce((sum, i) => sum + (i.totalAmount || i.amount || 0), 0);
 
   const pending = analytics?.pendingAmount || paymentsList
-    .filter((i) => i.status === "PENDING")
-    .reduce((sum, i) => sum + (i.totalAmount || 0), 0);
+    .filter((i) => i.status === "PENDING" || i.status === "PENDING_VERIFICATION" || i.status === "INITIATED")
+    .reduce((sum, i) => sum + (i.totalAmount || i.amount || 0), 0);
 
   const collectionRate = analytics?.collectionRatePercent ?? 95.4;
-  const successfulCount = analytics?.successfulPaymentsCount ?? paymentsList.filter(p => p.status === 'PAID').length;
+  const successfulCount = analytics?.successfulPaymentsCount ?? paymentsList.filter(p => p.status === 'PAID' || p.status === 'VERIFIED').length;
 
   const handleExportCsv = () => {
     const url = billingService.getExportCsvUrl({
@@ -235,7 +272,7 @@ export default function Billing({ navigate }: Props) {
             <FintechCardCarousel onSelectCardAmount={(amt) => setSelectedPayAmount(amt)} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <SpendBreakdownChart />
-              <TransactionTimeline />
+              <TransactionTimeline transactions={mappedTransactions} isLoading={isLoading} />
             </div>
           </div>
         )}
@@ -306,46 +343,55 @@ export default function Billing({ navigate }: Props) {
                       </td>
                     </tr>
                   ) : (
-                    paymentsList.map((inv) => (
-                      <tr
-                        key={inv.id}
-                        className={`hover:bg-amber-500/5 transition-colors ${
-                          darkMode ? "text-slate-300" : "text-slate-700"
-                        }`}
-                      >
-                        <td className="p-3.5 font-mono font-bold text-amber-500">{inv.invoiceNumber || inv.id?.slice(0, 10)}</td>
-                        <td className="p-3.5 font-semibold">{inv.resident?.name || "Resident"}</td>
-                        <td className="p-3.5">{inv.resident?.bed?.room?.roomNumber || "—"}</td>
-                        <td className="p-3.5">{inv.pg?.name || "RoomBae PG"}</td>
-                        <td className="p-3.5 font-bold">₹{(inv.totalAmount || 0).toLocaleString("en-IN")}</td>
-                        <td className="p-3.5 text-slate-400">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</td>
-                        <td className="p-3.5">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
-                              inv.status === "PAID"
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                : inv.status === "PENDING"
-                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                            }`}
-                          >
-                            {inv.status}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <a
-                            href={billingService.getInvoicePdfUrl(inv.id)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
-                            title="Download PDF"
-                          >
-                            <Download className="w-3 h-3" />
-                            <span>PDF</span>
-                          </a>
-                        </td>
-                      </tr>
-                    ))
+                    paymentsList.map((inv) => {
+                      const resName = inv.resident?.name || (inv.payer?.profile ? `${inv.payer.profile.firstName} ${inv.payer.profile.lastName}`.trim() : inv.payer?.username) || "Resident";
+                      const roomNo = inv.resident?.bed?.room?.roomNumber || inv.booking?.room?.roomNumber || "—";
+                      const pgName = inv.pg?.name || "RoomBae PG";
+                      const invNo = inv.invoice?.invoiceNumber || inv.invoiceNumber || inv.receiptNumber || inv.id?.slice(0, 10);
+                      const invAmt = inv.totalAmount ?? inv.amount ?? 0;
+                      const invTargetId = inv.invoiceId || inv.invoice?.id || inv.id;
+
+                      return (
+                        <tr
+                          key={inv.id}
+                          className={`hover:bg-amber-500/5 transition-colors ${
+                            darkMode ? "text-slate-300" : "text-slate-700"
+                          }`}
+                        >
+                          <td className="p-3.5 font-mono font-bold text-amber-500">{invNo}</td>
+                          <td className="p-3.5 font-semibold">{resName}</td>
+                          <td className="p-3.5">{roomNo}</td>
+                          <td className="p-3.5">{pgName}</td>
+                          <td className="p-3.5 font-bold">₹{invAmt.toLocaleString("en-IN")}</td>
+                          <td className="p-3.5 text-slate-400">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</td>
+                          <td className="p-3.5">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                                inv.status === "PAID" || inv.status === "VERIFIED"
+                                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                  : inv.status === "PENDING" || inv.status === "PENDING_VERIFICATION" || inv.status === "INITIATED"
+                                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                  : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                              }`}
+                            >
+                              {inv.status}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <a
+                              href={billingService.getInvoicePdfUrl(invTargetId)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                              title="Download PDF"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>PDF</span>
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -354,7 +400,7 @@ export default function Billing({ navigate }: Props) {
         )}
 
         {/* Transactions Tab */}
-        {activeTab === "transactions" && <TransactionTimeline />}
+        {activeTab === "transactions" && <TransactionTimeline transactions={mappedTransactions} isLoading={isLoading} />}
       </div>
 
       <PayRentModal

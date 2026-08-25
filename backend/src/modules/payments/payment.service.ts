@@ -1,14 +1,13 @@
-import { PrismaClient, Payment, PaymentStatus, PaymentMethod, PaymentPurpose, InvoiceStatus, BookingStatus } from '@prisma/client';
+import { PrismaClient, Payment, PaymentStatus, PaymentMethod, PaymentPurpose, InvoiceStatus, BookingStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { env } from '../../config/env';
+import { PdfBrowserManager, renderReceiptHtml } from '../../utils/pdf';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Razorpay = require('razorpay');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const PDFDocument = require('pdfkit');
 
 export class PaymentService {
   private get db(): PrismaClient {
@@ -344,53 +343,196 @@ export class PaymentService {
 
     if (!payment) throw new NotFoundError('Payment record not found.');
 
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ margin: 50 });
-      const buffers: Buffer[] = [];
+    const payerName = payment.payer.profile
+      ? `${payment.payer.profile.firstName} ${payment.payer.profile.lastName}`.trim()
+      : payment.payer.username;
 
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => resolve(Buffer.concat(buffers)));
-      doc.on('error', reject);
+    const pgAddress = payment.pg?.location
+      ? `${payment.pg.location.address}, ${payment.pg.location.city}${payment.pg.location.state ? ', ' + payment.pg.location.state : ''}${payment.pg.location.pincode ? ' - ' + payment.pg.location.pincode : ''}`
+      : undefined;
 
-      // Header
-      doc.fontSize(22).fillColor('#C89A4B').text('ROOMBAE', { align: 'center' });
-      doc.fontSize(10).fillColor('#555555').text('Official Payment & Tax Invoice Receipt', { align: 'center' });
-      doc.moveDown(1.5);
+    const html = renderReceiptHtml({
+      receiptNumber: payment.receiptNumber || payment.id,
+      paymentId: payment.id,
+      paymentDate: payment.createdAt,
+      paymentMethod: payment.paymentMethod,
+      status: payment.status,
+      purpose: payment.purpose,
+      amount: payment.amount,
+      payerName,
+      payerEmail: payment.payer.email,
+      payerPhone: payment.payer.phone || undefined,
+      pgName: payment.pg?.name,
+      pgAddress,
+      transactionId: payment.razorpayPaymentId || payment.manualUtr || payment.id,
+    });
 
-      // Receipt Metadata
-      doc.fontSize(12).fillColor('#1D1B1A');
-      doc.text(`Receipt Number: ${payment.receiptNumber || payment.id}`);
-      doc.text(`Date: ${new Date(payment.createdAt).toLocaleDateString('en-IN')}`);
-      doc.text(`Payment Method: ${payment.paymentMethod}`);
-      doc.text(`Status: ${payment.status}`);
-      doc.moveDown();
+    const pdfBuffer = await PdfBrowserManager.generatePdfFromHtml(html);
 
-      // Payer & Property Info
-      doc.text(`Received From: ${payment.payer.username} (${payment.payer.email})`);
-      if (payment.pg) {
-        doc.text(`Property: ${payment.pg.name}`);
-        if (payment.pg.location) {
-          doc.text(`Location: ${payment.pg.location.address}, ${payment.pg.location.city}`);
-        }
-      }
-      doc.moveDown();
+    // Record in PDFDocument collection
+    try {
+      const hash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+      await this.db.pDFDocument.create({
+        data: {
+          documentType: 'RECEIPT',
+          title: `Receipt-${payment.receiptNumber || payment.id}`,
+          fileUrl: `/api/v1/payments/${payment.id}/receipt`,
+          storageProvider: 'LOCAL_STREAM',
+          hash,
+          residentId: payment.payerId,
+          ownerId: payment.payeeId,
+          pgId: payment.pgId,
+        },
+      });
+    } catch {
+      // Non-blocking metadata log
+    }
 
-      // Financials
-      doc.rect(50, doc.y, 500, 25).fill('#F5F0EB');
-      doc.fillColor('#1D1B1A').text('Description', 60, doc.y - 18);
-      doc.text('Amount (INR)', 450, doc.y - 14, { align: 'right' });
-      doc.moveDown();
+    return pdfBuffer;
+  }
 
-      doc.text(`Payment for ${payment.purpose.replace(/_/g, ' ')}`, 60);
-      doc.text(`₹${payment.amount.toLocaleString('en-IN')}`, 450, doc.y - 14, { align: 'right' });
-      doc.moveDown();
+  async getPaymentHistory(userId: string, role: Role, limit: number = 50): Promise<any[]> {
+    const where: any = {};
+    if (role === Role.RESIDENT) {
+      where.payerId = userId;
+    } else if (role === Role.PG_OWNER) {
+      where.OR = [
+        { payeeId: userId },
+        { pg: { ownerId: userId } },
+      ];
+    }
+    // ADMIN has no role filter
 
-      doc.fontSize(14).font('Helvetica-Bold').text(`Total Paid: ₹${payment.amount.toLocaleString('en-IN')}`, { align: 'right' });
-      doc.moveDown(2);
-
-      doc.fontSize(9).font('Helvetica').fillColor('#888888').text('This is a computer-generated receipt issued by the RoomBae PG Management System.', { align: 'center' });
-
-      doc.end();
+    return await this.db.payment.findMany({
+      where,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        invoice: {
+          include: {
+            items: true,
+            resident: {
+              include: {
+                profile: true,
+              },
+            },
+          },
+        },
+        pg: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+          },
+        },
+        payer: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            phone: true,
+            profile: true,
+          },
+        },
+        booking: {
+          include: {
+            room: true,
+            bed: true,
+          },
+        },
+      },
     });
   }
+
+  async exportPaymentsCsv(filters?: any): Promise<string> {
+    const payments = await this.db.payment.findMany({
+      where: filters?.pgId ? { pgId: filters.pgId } : {},
+      include: {
+        payer: true,
+        pg: true,
+      },
+    });
+
+    const headers = 'Invoice Number,Receipt Number,Resident Name,Amount,Status,Date';
+    const rows = payments.map((p: any) => {
+      const inv = p.invoiceNumber || p.invoiceId || '';
+      const rec = p.receiptNumber || p.id || '';
+      const name = p.resident?.name || p.resident?.profile?.name || p.payer?.username || '';
+      const amt = p.totalAmount || p.amount || 0;
+      const st = p.status || '';
+      const dt = p.createdAt ? new Date(p.createdAt).toISOString() : '';
+      return `"${inv}","${rec}","${name}",${amt},"${st}","${dt}"`;
+    });
+
+    return [headers, ...rows].join('\n');
+  }
+
+  async processRefund(
+    paymentIdOrOptions: string | { paymentId: string; amount?: number; refundAmount?: number; reason?: string; userId?: string; role?: Role },
+    userId?: string,
+    role?: Role,
+    refundAmount?: number,
+    reason?: string
+  ): Promise<any> {
+    let paymentId: string;
+    let uId: string | undefined = userId;
+    let userRole: Role | undefined = role;
+    let amt: number | undefined = refundAmount;
+    let rsn: string | undefined = reason;
+
+    if (typeof paymentIdOrOptions === 'object') {
+      paymentId = paymentIdOrOptions.paymentId;
+      amt = paymentIdOrOptions.amount || paymentIdOrOptions.refundAmount;
+      rsn = paymentIdOrOptions.reason;
+      uId = paymentIdOrOptions.userId;
+      userRole = paymentIdOrOptions.role;
+    } else {
+      paymentId = paymentIdOrOptions;
+    }
+
+    const payment = await this.db.payment.findUnique({
+      where: { id: paymentId },
+      include: { pg: true, invoice: true },
+    });
+
+    if (!payment) throw new NotFoundError('Payment not found.');
+
+    if (userRole === Role.PG_OWNER && uId && (payment as any).payeeId !== uId && (payment as any).pg?.ownerId !== uId) {
+      throw new ForbiddenError('You are not authorized to refund this payment.');
+    }
+
+    const originalAmount = (payment as any).totalAmount || payment.amount || 0;
+    const targetAmount = amt || originalAmount;
+    if (targetAmount > originalAmount) {
+      throw new BadRequestError('Refund amount cannot exceed original payment amount.');
+    }
+
+    const updatedPayment = await this.db.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: PaymentStatus.REFUNDED,
+      },
+    });
+
+    if (payment.invoiceId) {
+      await this.db.invoice.update({
+        where: { id: payment.invoiceId },
+        data: {
+          status: InvoiceStatus.UNPAID,
+          balanceDue: { increment: targetAmount },
+        },
+      });
+    }
+
+    return {
+      success: true,
+      paymentId: updatedPayment.id,
+      amount: targetAmount,
+      refundedAmount: targetAmount,
+      status: 'REFUNDED',
+      reason: rsn || 'Owner initiated refund',
+      refundedAt: new Date().toISOString(),
+    };
+  }
 }
+

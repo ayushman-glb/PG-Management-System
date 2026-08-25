@@ -30,6 +30,19 @@ export class PropertyController {
     }
   };
 
+  getPublicProperties = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = req.query.limit !== undefined ? parseInt(req.query.limit as string, 10) : 10;
+      if (isNaN(limit) || limit <= 0) {
+        throw new BadRequestError('Limit must be a positive integer.');
+      }
+      const properties = await this.propertyService.getPublicProperties(limit);
+      return ApiResponse.success(res, 'Public properties retrieved.', { properties, total: properties.length });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getPGDetails = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;

@@ -131,4 +131,81 @@ export class OwnerService {
       submittedAt: pg.createdAt,
     }));
   }
+
+  async addBuilding(pgId: string, ownerId: string, input: any) {
+    const pg = await this.db.pG.findUnique({ where: { id: pgId } });
+    if (!pg) throw new NotFoundError('PG property not found.');
+
+    const floorsCount = Number(input.floorsCount) || 3;
+    const existingFloors = await this.db.floor.findMany({ where: { pgId } });
+
+    if (existingFloors.length === 0) {
+      for (let i = 1; i <= floorsCount; i++) {
+        await this.db.floor.create({
+          data: {
+            pgId,
+            floorNumber: i,
+            floorName: `Floor ${i}`,
+          },
+        });
+      }
+    }
+
+    return {
+      success: true,
+      pgId,
+      buildingName: input.buildingName || 'Main Block',
+      floorsCount,
+    };
+  }
+
+  async batchCreateRooms(pgId: string, ownerId: string, input: any) {
+    const pg = await this.db.pG.findUnique({
+      where: { id: pgId },
+      include: { floors: true },
+    });
+    if (!pg) throw new NotFoundError('PG property not found.');
+
+    const floors = pg.floors?.length ? pg.floors : await this.db.floor.findMany({ where: { pgId } });
+    const roomsPerFloor = Number(input.roomsPerFloor) || 4;
+    const roomType = input.roomType || 'DOUBLE';
+    const capacity = Number(input.customCapacity) || (roomType === 'SINGLE' ? 1 : roomType === 'TRIPLE' ? 3 : roomType === 'FOUR_SHARING' ? 4 : 2);
+    const rentAmount = Number(input.rentAmount) || 8500;
+
+    for (const floor of floors) {
+      for (let r = 1; r <= roomsPerFloor; r++) {
+        const roomNumber = `${floor.floorNumber}0${r}`;
+        const room = await this.db.room.create({
+          data: {
+            pgId,
+            floorId: floor.id,
+            roomNumber,
+            roomType: roomType as any,
+            baseRent: rentAmount,
+            depositAmount: rentAmount * 2,
+          },
+        });
+
+        for (let b = 1; b <= capacity; b++) {
+          const bedLetter = String.fromCharCode(64 + b);
+          await this.db.bed.create({
+            data: {
+              pgId,
+              roomId: room.id,
+              bedNumber: `${roomNumber}-${bedLetter}`,
+              baseRent: rentAmount,
+              depositAmount: rentAmount * 2,
+              status: 'AVAILABLE',
+            },
+          });
+        }
+      }
+    }
+
+    return {
+      success: true,
+      pgId,
+      created: true,
+    };
+  }
 }

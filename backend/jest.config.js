@@ -7,7 +7,7 @@ module.exports = {
     '^.+\\.(ts|js)$': ['ts-jest', { tsconfig: { allowJs: true } }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(jose|jwks-rsa)/)',
+    'node_modules/(?!(jose|jwks-rsa|puppeteer|puppeteer-core|@puppeteer|chromium-bidi)/)',
   ],
   forceExit: true,
   clearMocks: true,

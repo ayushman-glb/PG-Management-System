@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { ApiResponse } from '../../utils/apiResponse';
 import { BadRequestError } from '../../core/errors/CustomErrors';
 import { AuthRequest } from '../../middleware/authMiddleware';
+import { resolveFrontendUrl } from '../../config/frontendUrl';
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -240,7 +241,7 @@ export class AuthController {
   handleGoogleCallback = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { code, state, error } = req.query;
-      const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const frontendBase = resolveFrontendUrl(req);
 
       if (error) {
         return res.redirect(`${frontendBase}/?oauth=error&error=${encodeURIComponent(String(error))}`);
@@ -285,7 +286,7 @@ export class AuthController {
 
       return res.redirect(`${frontendBase}/?oauth=success`);
     } catch (error: any) {
-      const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const frontendBase = resolveFrontendUrl(req);
       return res.redirect(`${frontendBase}/?oauth=error&error=${encodeURIComponent(error.message || 'OAuth verification failed')}`);
     }
   };

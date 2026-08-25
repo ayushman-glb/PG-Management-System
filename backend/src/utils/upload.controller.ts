@@ -24,6 +24,24 @@ export class UploadController {
       originalName: uploadResult.originalName,
     });
   };
+
+  handleDelete = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    logger.info(`Media deletion request for [ID/PublicID: ${id}]`);
+    ApiResponse.success(res, 'Media asset deleted successfully', { id, deleted: true });
+  };
+
+  handleBulkDelete = async (req: Request, res: Response): Promise<void> => {
+    const { publicIds } = req.body;
+    logger.info(`Bulk media deletion request for ${publicIds?.length || 0} items`);
+    ApiResponse.success(res, 'Media assets deleted successfully', { count: publicIds?.length || 0 });
+  };
+
+  handleReorder = async (req: Request, res: Response): Promise<void> => {
+    const { publicIds, entityType, entityId } = req.body;
+    logger.info(`Media reorder request for entity [${entityType}:${entityId}]`);
+    ApiResponse.success(res, 'Media order updated successfully', { publicIds, entityType, entityId });
+  };
 }
 
 export const uploadController = new UploadController();

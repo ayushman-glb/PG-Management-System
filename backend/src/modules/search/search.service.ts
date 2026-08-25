@@ -137,4 +137,35 @@ export class SearchService {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async getAutocomplete(query: string): Promise<string[]> {
+    if (!query || query.trim().length === 0) return [];
+    const q = query.trim();
+
+    const pgs = await this.db.pG.findMany({
+      where: {
+        status: PGStatus.APPROVED,
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      select: { name: true, location: true },
+      take: 10,
+    });
+
+    const suggestions = new Set<string>();
+    for (const pg of pgs) {
+      suggestions.add(pg.name);
+      if (pg.location?.locality) suggestions.add(pg.location.locality);
+      if (pg.location?.city) suggestions.add(pg.location.city);
+    }
+
+    return Array.from(suggestions).slice(0, 8);
+  }
+
+  async getFeatured(): Promise<any[]> {
+    const result = await this.searchPGs({ limit: 6 });
+    return result.pgs;
+  }
 }

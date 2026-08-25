@@ -11,6 +11,7 @@ const router = Router();
 router.get('/invoices', authenticate, billingController.getInvoices);
 router.get('/invoices/:id/pdf', authenticate, billingController.downloadInvoicePdf);
 router.get('/invoices/:id/download', authenticate, billingController.downloadInvoicePdf);
+router.get('/invoices/:id', authenticate, billingController.getInvoiceById);
 router.get('/resident', authenticate, requireResident, billingController.getResidentInvoices);
 router.get('/owner', authenticate, requireOwner, billingController.getOwnerInvoices);
 router.get('/dues/:userId', authenticate, billingController.getUserDues);

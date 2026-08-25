@@ -131,7 +131,7 @@ export class BillingService {
   }
 
   getInvoicePdfUrl(invoiceId: string) {
-    return `${env.API_URL}/billing/invoices/${invoiceId}`;
+    return `${env.API_URL}/billing/invoices/${invoiceId}/pdf`;
   }
 
   getReceiptPdfUrl(paymentId: string) {

@@ -10,8 +10,10 @@ const router = Router();
 
 router.post('/', authenticate, complaintController.create);
 router.get('/', authenticate, complaintController.list);
+router.get('/:id', authenticate, complaintController.getById);
 router.patch('/:id/status', authenticate, complaintController.updateStatus);
 router.patch('/:id/acknowledge-resolution', authenticate, complaintController.acknowledgeResolution);
+router.post('/:id/acknowledge', authenticate, complaintController.acknowledgeResolution);
 router.post('/:id/messages', authenticate, complaintController.addMessage);
 
 export { router as complaintRoutes };

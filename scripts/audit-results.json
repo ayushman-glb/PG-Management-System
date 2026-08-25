@@ -1,0 +1,2327 @@
+[
+  {
+    "frontendCall": "/admin/audit-logs",
+    "method": "GET",
+    "file": "frontend/src/components/AuditLogDrawer.tsx",
+    "line": 21,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/audit-logs",
+      "subPath": "/audit-logs",
+      "order": 11,
+      "handler": "adminController.getAuditLogs",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "audit-logs"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/analytics/revenue",
+    "method": "GET",
+    "file": "frontend/src/features/analytics/pages/Analytics.tsx",
+    "line": 141,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/analytics/revenue",
+      "subPath": "/revenue",
+      "order": 2,
+      "handler": "analyticsController.getRevenueAnalytics",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/analytics/analytics.routes.ts",
+      "normalizedSegments": [
+        "analytics",
+        "revenue"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints",
+    "method": "POST",
+    "file": "frontend/src/features/complaints/pages/Complaints.tsx",
+    "line": 130,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/complaints",
+      "subPath": "/",
+      "order": 1,
+      "handler": "complaintController.create",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/dashboard/overview",
+    "method": "GET",
+    "file": "frontend/src/features/dashboard/pages/AdminConsole.tsx",
+    "line": 43,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/dashboard/overview",
+      "subPath": "/overview",
+      "order": 1,
+      "handler": "dashboardController.getOverview",
+      "middlewares": [],
+      "file": "modules/dashboard/dashboard.routes.ts",
+      "normalizedSegments": [
+        "dashboard",
+        "overview"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/pgs/pending",
+    "method": "GET",
+    "file": "frontend/src/features/dashboard/pages/AdminConsole.tsx",
+    "line": 44,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/pgs/pending",
+      "subPath": "/pgs/pending",
+      "order": 6,
+      "handler": "adminController.getPGQueue",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "pgs",
+        "pending"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/pgs/:param/verify",
+    "method": "PATCH",
+    "file": "frontend/src/features/dashboard/pages/AdminConsole.tsx",
+    "line": 83,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/admin/pgs/:id/verify",
+      "subPath": "/pgs/:id/verify",
+      "order": 7,
+      "handler": "adminController.verifyPG",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "pgs",
+        ":id",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/pgs/:param/verify",
+    "method": "PATCH",
+    "file": "frontend/src/features/dashboard/pages/AdminConsole.tsx",
+    "line": 94,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/admin/pgs/:id/verify",
+      "subPath": "/pgs/:id/verify",
+      "order": 7,
+      "handler": "adminController.verifyPG",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "pgs",
+        ":id",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/owners/property/:param/building",
+    "method": "POST",
+    "file": "frontend/src/features/properties/pages/Properties.tsx",
+    "line": 672,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/owners/property/:id/building",
+      "subPath": "/property/:id/building",
+      "order": 3,
+      "handler": "ownerController.addBuilding",
+      "middlewares": [
+        "requireRole(Role.PG_OWNER)"
+      ],
+      "file": "modules/owners/owner.routes.ts",
+      "normalizedSegments": [
+        "owners",
+        "property",
+        ":id",
+        "building"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/owners/property/:param/rooms/batch",
+    "method": "POST",
+    "file": "frontend/src/features/properties/pages/Properties.tsx",
+    "line": 679,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/owners/property/:id/rooms/batch",
+      "subPath": "/property/:id/rooms/batch",
+      "order": 4,
+      "handler": "ownerController.batchCreateRooms",
+      "middlewares": [
+        "requireRole(Role.PG_OWNER)"
+      ],
+      "file": "modules/owners/owner.routes.ts",
+      "normalizedSegments": [
+        "owners",
+        "property",
+        ":id",
+        "rooms",
+        "batch"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/:param",
+    "method": "GET",
+    "file": "frontend/src/features/residents/components/ResidentProfileModal.tsx",
+    "line": 34,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents/directory",
+      "subPath": "/directory",
+      "order": 2,
+      "handler": "residentController.getDirectory",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "directory"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents",
+    "method": "GET",
+    "file": "frontend/src/features/residents/pages/Residents.tsx",
+    "line": 43,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents",
+      "subPath": "/",
+      "order": 9,
+      "handler": "residentController.getResidents",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/rooms/:param/convert",
+    "method": "PUT",
+    "file": "frontend/src/features/rooms/components/RoomConversionModal.tsx",
+    "line": 38,
+    "matchedBackendRoute": {
+      "method": "PUT",
+      "fullPath": "/rooms/:id/convert",
+      "subPath": "/:id/convert",
+      "order": 8,
+      "handler": "roomController.convertRoom",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        ":id",
+        "convert"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/stats",
+    "method": "GET",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/stats",
+      "subPath": "/stats",
+      "order": 1,
+      "handler": "adminController.getStats",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "stats"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/users",
+    "method": "GET",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 16,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/users",
+      "subPath": "/users",
+      "order": 2,
+      "handler": "adminController.listUsers",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "users"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/users/:param/suspend",
+    "method": "PATCH",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 20,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/admin/users/:id/suspend",
+      "subPath": "/users/:id/suspend",
+      "order": 4,
+      "handler": "adminController.suspendUser",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "users",
+        ":id",
+        "suspend"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/pgs/pending",
+    "method": "GET",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 24,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/pgs/pending",
+      "subPath": "/pgs/pending",
+      "order": 6,
+      "handler": "adminController.getPGQueue",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "pgs",
+        "pending"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/pgs/:param/verify",
+    "method": "PATCH",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 28,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/admin/pgs/:id/verify",
+      "subPath": "/pgs/:id/verify",
+      "order": 7,
+      "handler": "adminController.verifyPG",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "pgs",
+        ":id",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/kyc/pending",
+    "method": "GET",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 32,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/kyc/pending",
+      "subPath": "/kyc/pending",
+      "order": 9,
+      "handler": "adminController.getKYCQueue",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "kyc",
+        "pending"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/kyc/:param/verify",
+    "method": "PATCH",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 36,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/admin/kyc/:id/verify",
+      "subPath": "/kyc/:id/verify",
+      "order": 10,
+      "handler": "adminController.verifyKYC",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "kyc",
+        ":id",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/admin/audit-logs",
+    "method": "GET",
+    "file": "frontend/src/services/admin.service.ts",
+    "line": 44,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/admin/audit-logs",
+      "subPath": "/audit-logs",
+      "order": 11,
+      "handler": "adminController.getAuditLogs",
+      "middlewares": [],
+      "file": "modules/admin/admin.routes.ts",
+      "normalizedSegments": [
+        "admin",
+        "audit-logs"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements",
+    "method": "GET",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 14,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/agreements",
+      "subPath": "/",
+      "order": 2,
+      "handler": "agreementController.listAgreements",
+      "middlewares": [],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements/:param",
+    "method": "GET",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 22,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/agreements/:id",
+      "subPath": "/:id",
+      "order": 4,
+      "handler": "agreementController.getAgreement",
+      "middlewares": [],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements",
+    "method": "POST",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 37,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/agreements",
+      "subPath": "/",
+      "order": 3,
+      "handler": "agreementController.createAgreement",
+      "middlewares": [
+        "requireRole(Role.PG_OWNER",
+        "Role.ADMIN)"
+      ],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements/:param",
+    "method": "PATCH",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 41,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/agreements/:id",
+      "subPath": "/:id",
+      "order": 5,
+      "handler": "agreementController.updateAgreement",
+      "middlewares": [
+        "requireRole(Role.PG_OWNER",
+        "Role.ADMIN)"
+      ],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements/:param/send",
+    "method": "POST",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 45,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/agreements/:id/send",
+      "subPath": "/:id/send",
+      "order": 6,
+      "handler": "agreementController.sendAgreement",
+      "middlewares": [
+        "requireRole(Role.PG_OWNER",
+        "Role.ADMIN)"
+      ],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements",
+        ":id",
+        "send"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements/:param/sign",
+    "method": "POST",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 56,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/agreements/:id/sign",
+      "subPath": "/:id/sign",
+      "order": 7,
+      "handler": "agreementController.signAgreement",
+      "middlewares": [],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements",
+        ":id",
+        "sign"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/agreements/verify/:param",
+    "method": "GET",
+    "file": "frontend/src/services/agreement.service.ts",
+    "line": 60,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/agreements/verify/:agreementNumber",
+      "subPath": "/verify/:agreementNumber",
+      "order": 1,
+      "handler": "agreementController.verifyAgreement",
+      "middlewares": [],
+      "file": "modules/agreements/agreement.routes.ts",
+      "normalizedSegments": [
+        "agreements",
+        "verify",
+        ":agreementNumber"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/analytics/owner",
+    "method": "GET",
+    "file": "frontend/src/services/analytics.service.ts",
+    "line": 6,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/analytics/owner",
+      "subPath": "/owner",
+      "order": 1,
+      "handler": "analyticsController.getOwnerAnalytics",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/analytics/analytics.routes.ts",
+      "normalizedSegments": [
+        "analytics",
+        "owner"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/analytics/occupancy",
+    "method": "GET",
+    "file": "frontend/src/services/analytics.service.ts",
+    "line": 11,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/analytics/occupancy",
+      "subPath": "/occupancy",
+      "order": 3,
+      "handler": "analyticsController.getOccupancyAnalytics",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/analytics/analytics.routes.ts",
+      "normalizedSegments": [
+        "analytics",
+        "occupancy"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/analytics/admin",
+    "method": "GET",
+    "file": "frontend/src/services/analytics.service.ts",
+    "line": 15,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/analytics/admin",
+      "subPath": "/admin",
+      "order": 5,
+      "handler": "analyticsController.getAdminAnalytics",
+      "middlewares": [
+        "authenticate",
+        "requireAdmin"
+      ],
+      "file": "modules/analytics/analytics.routes.ts",
+      "normalizedSegments": [
+        "analytics",
+        "admin"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/analytics/pl",
+    "method": "GET",
+    "file": "frontend/src/services/analytics.service.ts",
+    "line": 24,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/analytics/pl",
+      "subPath": "/pl",
+      "order": 4,
+      "handler": "analyticsController.getProfitLossAnalytics",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/analytics/analytics.routes.ts",
+      "normalizedSegments": [
+        "analytics",
+        "pl"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/beds/:param/status",
+    "method": "PUT",
+    "file": "frontend/src/services/bed.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "PUT",
+      "fullPath": "/beds/:id/status",
+      "subPath": "/:id/status",
+      "order": 7,
+      "handler": "bedController.updateStatus",
+      "middlewares": [],
+      "file": "modules/beds/bed.routes.ts",
+      "normalizedSegments": [
+        "beds",
+        ":id",
+        "status"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/beds/holds",
+    "method": "POST",
+    "file": "frontend/src/services/bed.service.ts",
+    "line": 10,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/beds/holds",
+      "subPath": "/holds",
+      "order": 1,
+      "handler": "bedController.createHold",
+      "middlewares": [],
+      "file": "modules/beds/bed.routes.ts",
+      "normalizedSegments": [
+        "beds",
+        "holds"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/beds/holds/:param",
+    "method": "DELETE",
+    "file": "frontend/src/services/bed.service.ts",
+    "line": 15,
+    "matchedBackendRoute": {
+      "method": "DELETE",
+      "fullPath": "/beds/holds/:id",
+      "subPath": "/holds/:id",
+      "order": 2,
+      "handler": "bedController.releaseHold",
+      "middlewares": [],
+      "file": "modules/beds/bed.routes.ts",
+      "normalizedSegments": [
+        "beds",
+        "holds",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/beds/holds",
+    "method": "GET",
+    "file": "frontend/src/services/bed.service.ts",
+    "line": 21,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/beds/holds",
+      "subPath": "/holds",
+      "order": 3,
+      "handler": "bedController.getHolds",
+      "middlewares": [],
+      "file": "modules/beds/bed.routes.ts",
+      "normalizedSegments": [
+        "beds",
+        "holds"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/payments/create-order",
+    "method": "POST",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 48,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/payments/create-order",
+      "subPath": "/create-order",
+      "order": 2,
+      "handler": "paymentController.createOrder",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/payments/payment.routes.ts",
+      "normalizedSegments": [
+        "payments",
+        "create-order"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/payments/verify",
+    "method": "POST",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 58,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/payments/verify",
+      "subPath": "/verify",
+      "order": 4,
+      "handler": "paymentController.verifyRazorpay",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/payments/payment.routes.ts",
+      "normalizedSegments": [
+        "payments",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/billing/invoices",
+    "method": "GET",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 74,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/billing/invoices",
+      "subPath": "/invoices",
+      "order": 1,
+      "handler": "billingController.getInvoices",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/billing/billing.routes.ts",
+      "normalizedSegments": [
+        "billing",
+        "invoices"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/billing/invoices/:param",
+    "method": "GET",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 79,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/billing/invoices/:id",
+      "subPath": "/invoices/:id",
+      "order": 4,
+      "handler": "billingController.getInvoiceById",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/billing/billing.routes.ts",
+      "normalizedSegments": [
+        "billing",
+        "invoices",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/billing/dues/:param",
+    "method": "GET",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 84,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/billing/dues/:userId",
+      "subPath": "/dues/:userId",
+      "order": 7,
+      "handler": "billingController.getUserDues",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/billing/billing.routes.ts",
+      "normalizedSegments": [
+        "billing",
+        "dues",
+        ":userId"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/payments/history",
+    "method": "GET",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 106,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/payments/history",
+      "subPath": "/history",
+      "order": 8,
+      "handler": "paymentController.getHistory",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/payments/payment.routes.ts",
+      "normalizedSegments": [
+        "payments",
+        "history"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/analytics/owner",
+    "method": "GET",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 115,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/analytics/owner",
+      "subPath": "/owner",
+      "order": 1,
+      "handler": "analyticsController.getOwnerAnalytics",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/analytics/analytics.routes.ts",
+      "normalizedSegments": [
+        "analytics",
+        "owner"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/payments/:param",
+    "method": "GET",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 120,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/payments/history",
+      "subPath": "/history",
+      "order": 8,
+      "handler": "paymentController.getHistory",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/payments/payment.routes.ts",
+      "normalizedSegments": [
+        "payments",
+        "history"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/payments/:param/refund",
+    "method": "POST",
+    "file": "frontend/src/services/billing.service.ts",
+    "line": 125,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/payments/:id/refund",
+      "subPath": "/:id/refund",
+      "order": 9,
+      "handler": "paymentController.refundPayment",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/payments/payment.routes.ts",
+      "normalizedSegments": [
+        "payments",
+        ":id",
+        "refund"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/bookings",
+    "method": "GET",
+    "file": "frontend/src/services/booking.service.ts",
+    "line": 21,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/bookings",
+      "subPath": "/",
+      "order": 1,
+      "handler": "next",
+      "middlewares": [
+        "authenticate",
+        "(req",
+        "res",
+        "next) => {\r   if (req.user?.role === 'RESIDENT') {\r     return bookingController.getResidentBookings(req",
+        "res"
+      ],
+      "file": "modules/bookings/booking.routes.ts",
+      "normalizedSegments": [
+        "bookings"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/bookings/:param",
+    "method": "GET",
+    "file": "frontend/src/services/booking.service.ts",
+    "line": 25,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/bookings/resident",
+      "subPath": "/resident",
+      "order": 4,
+      "handler": "bookingController.getResidentBookings",
+      "middlewares": [
+        "authenticate",
+        "requireResident"
+      ],
+      "file": "modules/bookings/booking.routes.ts",
+      "normalizedSegments": [
+        "bookings",
+        "resident"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/bookings",
+    "method": "POST",
+    "file": "frontend/src/services/booking.service.ts",
+    "line": 29,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/bookings",
+      "subPath": "/",
+      "order": 2,
+      "handler": "bookingController.apply",
+      "middlewares": [
+        "authenticate",
+        "requireResident"
+      ],
+      "file": "modules/bookings/booking.routes.ts",
+      "normalizedSegments": [
+        "bookings"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/bookings/:param/status",
+    "method": "PATCH",
+    "file": "frontend/src/services/booking.service.ts",
+    "line": 33,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/bookings/:id/status",
+      "subPath": "/:id/status",
+      "order": 9,
+      "handler": "bookingController.updateStatus",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/bookings/booking.routes.ts",
+      "normalizedSegments": [
+        "bookings",
+        ":id",
+        "status"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/bookings/:param/allocate",
+    "method": "POST",
+    "file": "frontend/src/services/booking.service.ts",
+    "line": 37,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/bookings/:id/allocate",
+      "subPath": "/:id/allocate",
+      "order": 10,
+      "handler": "bookingController.allocateRoom",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/bookings/booking.routes.ts",
+      "normalizedSegments": [
+        "bookings",
+        ":id",
+        "allocate"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/bookings/:param/cancel",
+    "method": "POST",
+    "file": "frontend/src/services/booking.service.ts",
+    "line": 41,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/bookings/:id/cancel",
+      "subPath": "/:id/cancel",
+      "order": 8,
+      "handler": "bookingController.cancel",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/bookings/booking.routes.ts",
+      "normalizedSegments": [
+        "bookings",
+        ":id",
+        "cancel"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints",
+    "method": "GET",
+    "file": "frontend/src/services/complaint.service.ts",
+    "line": 14,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/complaints",
+      "subPath": "/",
+      "order": 2,
+      "handler": "complaintController.list",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints/:param",
+    "method": "GET",
+    "file": "frontend/src/services/complaint.service.ts",
+    "line": 19,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/complaints/:id",
+      "subPath": "/:id",
+      "order": 3,
+      "handler": "complaintController.getById",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints",
+    "method": "POST",
+    "file": "frontend/src/services/complaint.service.ts",
+    "line": 28,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/complaints",
+      "subPath": "/",
+      "order": 1,
+      "handler": "complaintController.create",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints/:param/status",
+    "method": "PATCH",
+    "file": "frontend/src/services/complaint.service.ts",
+    "line": 33,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/complaints/:id/status",
+      "subPath": "/:id/status",
+      "order": 4,
+      "handler": "complaintController.updateStatus",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints",
+        ":id",
+        "status"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints/:param/acknowledge",
+    "method": "POST",
+    "file": "frontend/src/services/complaint.service.ts",
+    "line": 38,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/complaints/:id/acknowledge",
+      "subPath": "/:id/acknowledge",
+      "order": 6,
+      "handler": "complaintController.acknowledgeResolution",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints",
+        ":id",
+        "acknowledge"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/complaints/:param/messages",
+    "method": "POST",
+    "file": "frontend/src/services/complaint.service.ts",
+    "line": 43,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/complaints/:id/messages",
+      "subPath": "/:id/messages",
+      "order": 7,
+      "handler": "complaintController.addMessage",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/complaints/complaint.routes.ts",
+      "normalizedSegments": [
+        "complaints",
+        ":id",
+        "messages"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/dashboard/overview",
+    "method": "GET",
+    "file": "frontend/src/services/dashboard.service.ts",
+    "line": 30,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/dashboard/overview",
+      "subPath": "/overview",
+      "order": 1,
+      "handler": "dashboardController.getOverview",
+      "middlewares": [],
+      "file": "modules/dashboard/dashboard.routes.ts",
+      "normalizedSegments": [
+        "dashboard",
+        "overview"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/dashboard/revenue",
+    "method": "GET",
+    "file": "frontend/src/services/dashboard.service.ts",
+    "line": 35,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/dashboard/revenue",
+      "subPath": "/revenue",
+      "order": 2,
+      "handler": "dashboardController.getRevenue",
+      "middlewares": [],
+      "file": "modules/dashboard/dashboard.routes.ts",
+      "normalizedSegments": [
+        "dashboard",
+        "revenue"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/dashboard/occupancy",
+    "method": "GET",
+    "file": "frontend/src/services/dashboard.service.ts",
+    "line": 40,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/dashboard/occupancy",
+      "subPath": "/occupancy",
+      "order": 3,
+      "handler": "dashboardController.getOccupancy",
+      "middlewares": [],
+      "file": "modules/dashboard/dashboard.routes.ts",
+      "normalizedSegments": [
+        "dashboard",
+        "occupancy"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/documents/upload",
+    "method": "POST",
+    "file": "frontend/src/services/document.service.ts",
+    "line": 11,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/documents/upload",
+      "subPath": "/upload",
+      "order": 2,
+      "handler": "documentController.uploadDocument",
+      "middlewares": [
+        "uploadLimiter",
+        "handleSingleFileUpload",
+        "processSecurityPipeline"
+      ],
+      "file": "modules/documents/document.routes.ts",
+      "normalizedSegments": [
+        "documents",
+        "upload"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/documents/:param/reupload",
+    "method": "POST",
+    "file": "frontend/src/services/document.service.ts",
+    "line": 15,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/documents/:id/reupload",
+      "subPath": "/:id/reupload",
+      "order": 3,
+      "handler": "documentController.reuploadDocument",
+      "middlewares": [
+        "uploadLimiter",
+        "handleSingleFileUpload",
+        "processSecurityPipeline"
+      ],
+      "file": "modules/documents/document.routes.ts",
+      "normalizedSegments": [
+        "documents",
+        ":id",
+        "reupload"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/documents/:param",
+    "method": "GET",
+    "file": "frontend/src/services/document.service.ts",
+    "line": 19,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/documents/:id",
+      "subPath": "/:id",
+      "order": 4,
+      "handler": "documentController.getDocument",
+      "middlewares": [],
+      "file": "modules/documents/document.routes.ts",
+      "normalizedSegments": [
+        "documents",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/documents/:param/history",
+    "method": "GET",
+    "file": "frontend/src/services/document.service.ts",
+    "line": 23,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/documents/:id/history",
+      "subPath": "/:id/history",
+      "order": 5,
+      "handler": "documentController.getVersionHistory",
+      "middlewares": [],
+      "file": "modules/documents/document.routes.ts",
+      "normalizedSegments": [
+        "documents",
+        ":id",
+        "history"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/documents/:param/verify",
+    "method": "PATCH",
+    "file": "frontend/src/services/document.service.ts",
+    "line": 27,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/documents/:id/verify",
+      "subPath": "/:id/verify",
+      "order": 6,
+      "handler": "documentController.verifyDocument",
+      "middlewares": [
+        "requireRole(Role.PG_OWNER",
+        "Role.ADMIN)"
+      ],
+      "file": "modules/documents/document.routes.ts",
+      "normalizedSegments": [
+        "documents",
+        ":id",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/media/upload/single",
+    "method": "POST",
+    "file": "frontend/src/services/media.service.ts",
+    "line": 39,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/media/upload/single",
+      "subPath": "/upload/single",
+      "order": 3,
+      "handler": "uploadController.handleUpload",
+      "middlewares": [
+        "uploadLimiter",
+        "handleSingleFileUpload",
+        "processSecurityPipeline"
+      ],
+      "file": "routes/upload.routes.ts",
+      "normalizedSegments": [
+        "media",
+        "upload",
+        "single"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/media/replace/:param",
+    "method": "PUT",
+    "file": "frontend/src/services/media.service.ts",
+    "line": 94,
+    "matchedBackendRoute": {
+      "method": "PUT",
+      "fullPath": "/media/replace/:id",
+      "subPath": "/replace/:id",
+      "order": 4,
+      "handler": "uploadController.handleUpload",
+      "middlewares": [
+        "uploadLimiter",
+        "handleSingleFileUpload",
+        "processSecurityPipeline"
+      ],
+      "file": "routes/upload.routes.ts",
+      "normalizedSegments": [
+        "media",
+        "replace",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/media/:param",
+    "method": "DELETE",
+    "file": "frontend/src/services/media.service.ts",
+    "line": 104,
+    "matchedBackendRoute": {
+      "method": "DELETE",
+      "fullPath": "/media/:id",
+      "subPath": "/:id",
+      "order": 5,
+      "handler": "uploadController.handleDelete",
+      "middlewares": [],
+      "file": "routes/upload.routes.ts",
+      "normalizedSegments": [
+        "media",
+        ":id"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/media/bulk-delete",
+    "method": "POST",
+    "file": "frontend/src/services/media.service.ts",
+    "line": 112,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/media/bulk-delete",
+      "subPath": "/bulk-delete",
+      "order": 6,
+      "handler": "uploadController.handleBulkDelete",
+      "middlewares": [],
+      "file": "routes/upload.routes.ts",
+      "normalizedSegments": [
+        "media",
+        "bulk-delete"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/media/reorder",
+    "method": "PATCH",
+    "file": "frontend/src/services/media.service.ts",
+    "line": 119,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/media/reorder",
+      "subPath": "/reorder",
+      "order": 7,
+      "handler": "uploadController.handleReorder",
+      "middlewares": [],
+      "file": "routes/upload.routes.ts",
+      "normalizedSegments": [
+        "media",
+        "reorder"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/move-in/request-move-out",
+    "method": "POST",
+    "file": "frontend/src/services/moveIn.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/move-in/request-move-out",
+      "subPath": "/request-move-out",
+      "order": 2,
+      "handler": "moveInController.requestMoveOut",
+      "middlewares": [
+        "requireResident"
+      ],
+      "file": "modules/moveIn/moveIn.routes.ts",
+      "normalizedSegments": [
+        "move-in",
+        "request-move-out"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/move-in/move-out-requests",
+    "method": "GET",
+    "file": "frontend/src/services/moveIn.service.ts",
+    "line": 10,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/move-in/move-out-requests",
+      "subPath": "/move-out-requests",
+      "order": 5,
+      "handler": "moveInController.getMoveOutRequests",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/moveIn/moveIn.routes.ts",
+      "normalizedSegments": [
+        "move-in",
+        "move-out-requests"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/move-in/process-settlement",
+    "method": "POST",
+    "file": "frontend/src/services/moveIn.service.ts",
+    "line": 14,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/move-in/process-settlement",
+      "subPath": "/process-settlement",
+      "order": 4,
+      "handler": "moveInController.settleCheckout",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/moveIn/moveIn.routes.ts",
+      "normalizedSegments": [
+        "move-in",
+        "process-settlement"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/notifications",
+    "method": "GET",
+    "file": "frontend/src/services/notification.service.ts",
+    "line": 10,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/notifications",
+      "subPath": "/",
+      "order": 1,
+      "handler": "notifController.getMyNotifications",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/notifications/notification.routes.ts",
+      "normalizedSegments": [
+        "notifications"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/notifications/:param/read",
+    "method": "PATCH",
+    "file": "frontend/src/services/notification.service.ts",
+    "line": 14,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/notifications/:id/read",
+      "subPath": "/:id/read",
+      "order": 2,
+      "handler": "notifController.markAsRead",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/notifications/notification.routes.ts",
+      "normalizedSegments": [
+        "notifications",
+        ":id",
+        "read"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/notifications/read-all",
+    "method": "PATCH",
+    "file": "frontend/src/services/notification.service.ts",
+    "line": 18,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/notifications/read-all",
+      "subPath": "/read-all",
+      "order": 3,
+      "handler": "notifController.markAllAsRead",
+      "middlewares": [
+        "authenticate"
+      ],
+      "file": "modules/notifications/notification.routes.ts",
+      "normalizedSegments": [
+        "notifications",
+        "read-all"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/notifications/announcement",
+    "method": "POST",
+    "file": "frontend/src/services/notification.service.ts",
+    "line": 26,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/notifications/announcement",
+      "subPath": "/announcement",
+      "order": 7,
+      "handler": "notifController.broadcastAnnouncement",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/notifications/notification.routes.ts",
+      "normalizedSegments": [
+        "notifications",
+        "announcement"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/owners/onboard",
+    "method": "POST",
+    "file": "frontend/src/services/owner.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/owners/onboard",
+      "subPath": "/onboard",
+      "order": 1,
+      "handler": "ownerController.submitOnboarding",
+      "middlewares": [],
+      "file": "modules/owners/owner.routes.ts",
+      "normalizedSegments": [
+        "owners",
+        "onboard"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/owners/:param/status",
+    "method": "GET",
+    "file": "frontend/src/services/owner.service.ts",
+    "line": 9,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/owners/:id/status",
+      "subPath": "/:id/status",
+      "order": 5,
+      "handler": "ownerController.getOnboardingStatus",
+      "middlewares": [],
+      "file": "modules/owners/owner.routes.ts",
+      "normalizedSegments": [
+        "owners",
+        ":id",
+        "status"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/owners/verifications",
+    "method": "GET",
+    "file": "frontend/src/services/owner.service.ts",
+    "line": 13,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/owners/verifications",
+      "subPath": "/verifications",
+      "order": 2,
+      "handler": "ownerController.getPendingVerifications",
+      "middlewares": [
+        "requireRole(Role.ADMIN)"
+      ],
+      "file": "modules/owners/owner.routes.ts",
+      "normalizedSegments": [
+        "owners",
+        "verifications"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/owners/onboard",
+    "method": "POST",
+    "file": "frontend/src/services/owner.service.ts",
+    "line": 32,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/owners/onboard",
+      "subPath": "/onboard",
+      "order": 1,
+      "handler": "ownerController.submitOnboarding",
+      "middlewares": [],
+      "file": "modules/owners/owner.routes.ts",
+      "normalizedSegments": [
+        "owners",
+        "onboard"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/properties/public",
+    "method": "GET",
+    "file": "frontend/src/services/property.service.ts",
+    "line": 21,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/properties/public",
+      "subPath": "/public",
+      "order": 6,
+      "handler": "propertyController.getPublicProperties",
+      "middlewares": [],
+      "file": "modules/properties/property.routes.ts",
+      "normalizedSegments": [
+        "properties",
+        "public"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/properties/:param",
+    "method": "GET",
+    "file": "frontend/src/services/property.service.ts",
+    "line": 26,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/properties/my",
+      "subPath": "/my",
+      "order": 2,
+      "handler": "propertyController.getOwnerPGs",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/properties/property.routes.ts",
+      "normalizedSegments": [
+        "properties",
+        "my"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/properties",
+    "method": "POST",
+    "file": "frontend/src/services/property.service.ts",
+    "line": 31,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/properties",
+      "subPath": "/",
+      "order": 5,
+      "handler": "propertyController.createPG",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/properties/property.routes.ts",
+      "normalizedSegments": [
+        "properties"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/dashboard/overview",
+    "method": "GET",
+    "file": "frontend/src/services/property.service.ts",
+    "line": 37,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/dashboard/overview",
+      "subPath": "/overview",
+      "order": 1,
+      "handler": "dashboardController.getOverview",
+      "middlewares": [],
+      "file": "modules/dashboard/dashboard.routes.ts",
+      "normalizedSegments": [
+        "dashboard",
+        "overview"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/properties/owner-summary",
+    "method": "GET",
+    "file": "frontend/src/services/property.service.ts",
+    "line": 40,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/properties/owner-summary",
+      "subPath": "/owner-summary",
+      "order": 4,
+      "handler": "propertyController.getOwnerPGs",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/properties/property.routes.ts",
+      "normalizedSegments": [
+        "properties",
+        "owner-summary"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/onboard",
+    "method": "POST",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/residents/onboard",
+      "subPath": "/onboard",
+      "order": 1,
+      "handler": "residentController.onboard",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "onboard"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/directory",
+    "method": "GET",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 16,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents/directory",
+      "subPath": "/directory",
+      "order": 2,
+      "handler": "residentController.getDirectory",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "directory"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/portal/me",
+    "method": "GET",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 21,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents/portal/me",
+      "subPath": "/portal/me",
+      "order": 3,
+      "handler": "residentController.getPortalMe",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "portal",
+        "me"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/:param/status",
+    "method": "PATCH",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 26,
+    "matchedBackendRoute": {
+      "method": "PATCH",
+      "fullPath": "/residents/:id/status",
+      "subPath": "/:id/status",
+      "order": 6,
+      "handler": "residentController.updateStatus",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        ":id",
+        "status"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents",
+    "method": "GET",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 31,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents",
+      "subPath": "/",
+      "order": 9,
+      "handler": "residentController.getResidents",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/:param",
+    "method": "GET",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 36,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents/directory",
+      "subPath": "/directory",
+      "order": 2,
+      "handler": "residentController.getDirectory",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "directory"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/:param/status-history",
+    "method": "GET",
+    "file": "frontend/src/services/resident.service.ts",
+    "line": 41,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/residents/:id/status-history",
+      "subPath": "/:id/status-history",
+      "order": 7,
+      "handler": "residentController.getStatusHistory",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        ":id",
+        "status-history"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/rooms/transfer-requests",
+    "method": "POST",
+    "file": "frontend/src/services/room.service.ts",
+    "line": 16,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/rooms/transfer-requests",
+      "subPath": "/transfer-requests",
+      "order": 1,
+      "handler": "roomController.createTransferRequest",
+      "middlewares": [],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        "transfer-requests"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/rooms/transfer-requests",
+    "method": "GET",
+    "file": "frontend/src/services/room.service.ts",
+    "line": 25,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/rooms/transfer-requests",
+      "subPath": "/transfer-requests",
+      "order": 2,
+      "handler": "roomController.getTransferRequests",
+      "middlewares": [],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        "transfer-requests"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/rooms/transfer-requests/:param/approve",
+    "method": "PUT",
+    "file": "frontend/src/services/room.service.ts",
+    "line": 30,
+    "matchedBackendRoute": {
+      "method": "PUT",
+      "fullPath": "/rooms/transfer-requests/:id/approve",
+      "subPath": "/transfer-requests/:id/approve",
+      "order": 3,
+      "handler": "roomController.approveTransferRequest",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        "transfer-requests",
+        ":id",
+        "approve"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/rooms/transfer-requests/:param/reject",
+    "method": "PUT",
+    "file": "frontend/src/services/room.service.ts",
+    "line": 39,
+    "matchedBackendRoute": {
+      "method": "PUT",
+      "fullPath": "/rooms/transfer-requests/:id/reject",
+      "subPath": "/transfer-requests/:id/reject",
+      "order": 4,
+      "handler": "roomController.rejectTransferRequest",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        "transfer-requests",
+        ":id",
+        "reject"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/rooms/transfer-requests/:param/complete",
+    "method": "POST",
+    "file": "frontend/src/services/room.service.ts",
+    "line": 46,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/rooms/transfer-requests/:id/complete",
+      "subPath": "/transfer-requests/:id/complete",
+      "order": 5,
+      "handler": "roomController.completeTransferRequest",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        "transfer-requests",
+        ":id",
+        "complete"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/search",
+    "method": "GET",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 45,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/search",
+      "subPath": "/",
+      "order": 3,
+      "handler": "searchController.searchPGs",
+      "middlewares": [],
+      "file": "modules/search/search.routes.ts",
+      "normalizedSegments": [
+        "search"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/search/autocomplete",
+    "method": "GET",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 53,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/search/autocomplete",
+      "subPath": "/autocomplete",
+      "order": 1,
+      "handler": "searchController.getAutocomplete",
+      "middlewares": [],
+      "file": "modules/search/search.routes.ts",
+      "normalizedSegments": [
+        "search",
+        "autocomplete"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/search/featured",
+    "method": "GET",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 57,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/search/featured",
+      "subPath": "/featured",
+      "order": 2,
+      "handler": "searchController.getFeatured",
+      "middlewares": [],
+      "file": "modules/search/search.routes.ts",
+      "normalizedSegments": [
+        "search",
+        "featured"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/subscriptions/plans",
+    "method": "GET",
+    "file": "frontend/src/services/subscription.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/subscriptions/plans",
+      "subPath": "/plans",
+      "order": 1,
+      "handler": "subController.listPlans",
+      "middlewares": [],
+      "file": "modules/subscriptions/subscription.routes.ts",
+      "normalizedSegments": [
+        "subscriptions",
+        "plans"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/subscriptions/my-subscription",
+    "method": "GET",
+    "file": "frontend/src/services/subscription.service.ts",
+    "line": 9,
+    "matchedBackendRoute": {
+      "method": "GET",
+      "fullPath": "/subscriptions/my-subscription",
+      "subPath": "/my-subscription",
+      "order": 2,
+      "handler": "subController.getMySubscription",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/subscriptions/subscription.routes.ts",
+      "normalizedSegments": [
+        "subscriptions",
+        "my-subscription"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/subscriptions/initiate",
+    "method": "POST",
+    "file": "frontend/src/services/subscription.service.ts",
+    "line": 13,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/subscriptions/initiate",
+      "subPath": "/initiate",
+      "order": 5,
+      "handler": "subController.createOrder",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/subscriptions/subscription.routes.ts",
+      "normalizedSegments": [
+        "subscriptions",
+        "initiate"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/subscriptions/verify",
+    "method": "POST",
+    "file": "frontend/src/services/subscription.service.ts",
+    "line": 17,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/subscriptions/verify",
+      "subPath": "/verify",
+      "order": 6,
+      "handler": "subController.verifyAndActivate",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/subscriptions/subscription.routes.ts",
+      "normalizedSegments": [
+        "subscriptions",
+        "verify"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/subscriptions/cancel",
+    "method": "POST",
+    "file": "frontend/src/services/subscription.service.ts",
+    "line": 25,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/subscriptions/cancel",
+      "subPath": "/cancel",
+      "order": 7,
+      "handler": "subController.cancelSubscription",
+      "middlewares": [
+        "authenticate",
+        "requireOwner"
+      ],
+      "file": "modules/subscriptions/subscription.routes.ts",
+      "normalizedSegments": [
+        "subscriptions",
+        "cancel"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/portal/visitor-pass",
+    "method": "POST",
+    "file": "frontend/src/services/visitor.service.ts",
+    "line": 5,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/residents/portal/visitor-pass",
+      "subPath": "/portal/visitor-pass",
+      "order": 4,
+      "handler": "residentController.createVisitorPass",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "portal",
+        "visitor-pass"
+      ]
+    },
+    "status": "OK"
+  },
+  {
+    "frontendCall": "/residents/portal/gate-pass",
+    "method": "POST",
+    "file": "frontend/src/services/visitor.service.ts",
+    "line": 10,
+    "matchedBackendRoute": {
+      "method": "POST",
+      "fullPath": "/residents/portal/gate-pass",
+      "subPath": "/portal/gate-pass",
+      "order": 5,
+      "handler": "residentController.createGatePass",
+      "middlewares": [],
+      "file": "modules/residents/resident.routes.ts",
+      "normalizedSegments": [
+        "residents",
+        "portal",
+        "gate-pass"
+      ]
+    },
+    "status": "OK"
+  }
+]

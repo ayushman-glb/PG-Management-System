@@ -1,6 +1,8 @@
 import { PrismaClient, Invoice, InvoiceStatus, Fine, FineStatus, FineType, Role } from '@prisma/client';
+import crypto from 'crypto';
 import { prisma } from '../../config/prisma';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
+import { PdfBrowserManager, renderInvoiceHtml } from '../../utils/pdf';
 
 export class BillingService {
   private get db(): PrismaClient {
@@ -236,88 +238,81 @@ export class BillingService {
       ? `${invoice.resident.profile.firstName} ${invoice.resident.profile.lastName}`.trim()
       : invoice.resident.username;
 
-    return new Promise((resolve, reject) => {
-      const PDFKit = require('pdfkit');
-      const doc = new PDFKit({ margin: 40, size: 'A4' });
-      const buffers: Buffer[] = [];
+    const pgAddress = invoice.pg.location
+      ? `${invoice.pg.location.address}, ${invoice.pg.location.city}${invoice.pg.location.state ? ', ' + invoice.pg.location.state : ''}${invoice.pg.location.pincode ? ' - ' + invoice.pg.location.pincode : ''}`
+      : undefined;
 
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => resolve(Buffer.concat(buffers)));
-      doc.on('error', reject);
-
-      // Header
-      doc.rect(40, 40, 515, 50).fill('#0F172A');
-      doc.fillColor('#F59E0B').fontSize(16).font('Helvetica-Bold').text('ROOMBAE TAX INVOICE', 40, 52, { align: 'center' });
-      doc.fillColor('#94A3B8').fontSize(9).font('Helvetica').text('Original for Recipient · GSTIN: 29AABCR8901M1ZX', 40, 72, { align: 'center' });
-
-      let y = 105;
-      doc.rect(40, y, 515, 45).fill('#F8FAFC');
-      doc.strokeColor('#E2E8F0').stroke();
-      doc.fillColor('#0F172A').fontSize(9).font('Helvetica-Bold');
-      doc.text(`Invoice No: ${invoice.invoiceNumber}`, 50, y + 8);
-      doc.text(`Status: ${invoice.status}`, 350, y + 8);
-      doc.font('Helvetica').fontSize(8).fillColor('#64748B');
-      doc.text(`Billing Period: Month ${invoice.billingMonth}/${invoice.billingYear}`, 50, y + 25);
-      doc.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}`, 200, y + 25);
-      doc.text(`Generated: ${new Date(invoice.issueDate).toLocaleDateString('en-IN')}`, 350, y + 25);
-
-      y += 60;
-      doc.fillColor('#0F172A').fontSize(10).font('Helvetica-Bold').text('Billed To:', 40, y);
-      doc.text('Property / Provider:', 300, y);
-      y += 15;
-      doc.font('Helvetica').fontSize(8.5).fillColor('#334155');
-      doc.text(`Resident: ${residentName}`, 40, y);
-      doc.text(`PG: ${invoice.pg.name}`, 300, y);
-      y += 12;
-      doc.text(`Email: ${invoice.resident.email}`, 40, y);
-      if (invoice.pg.location) {
-        doc.text(`Address: ${invoice.pg.location.address}, ${invoice.pg.location.city}`, 300, y);
-      }
-      y += 25;
-
-      // Table Header
-      doc.rect(40, y, 515, 20).fill('#E2E8F0');
-      doc.fillColor('#0F172A').fontSize(8.5).font('Helvetica-Bold');
-      doc.text('Item Description', 50, y + 5);
-      doc.text('Qty', 320, y + 5);
-      doc.text('Unit Price (₹)', 370, y + 5);
-      doc.text('Total (₹)', 470, y + 5);
-      y += 25;
-
-      // Items
-      doc.font('Helvetica').fontSize(8.5).fillColor('#334155');
-      for (const item of invoice.items) {
-        doc.text(item.description, 50, y);
-        doc.text(String(item.quantity), 320, y);
-        doc.text(item.unitPrice.toLocaleString('en-IN'), 370, y);
-        doc.text(item.total.toLocaleString('en-IN'), 470, y);
-        y += 18;
-      }
-
-      y += 10;
-      doc.moveTo(40, y).lineTo(555, y).strokeColor('#E2E8F0').stroke();
-      y += 15;
-
-      // Summary
-      doc.font('Helvetica-Bold').fontSize(9).fillColor('#0F172A');
-      doc.text(`Subtotal: ₹${invoice.subtotal.toLocaleString('en-IN')}`, 370, y);
-      y += 14;
-      doc.text(`GST (${invoice.gstPercentage}%): ₹${invoice.gstAmount.toLocaleString('en-IN')}`, 370, y);
-      y += 14;
-      if (invoice.fineAmount > 0) {
-        doc.text(`Late Fine: ₹${invoice.fineAmount.toLocaleString('en-IN')}`, 370, y);
-        y += 14;
-      }
-      doc.fontSize(11).fillColor('#D97706');
-      doc.text(`Total Due: ₹${invoice.totalAmount.toLocaleString('en-IN')}`, 370, y);
-      y += 16;
-      doc.fontSize(9).fillColor('#10B981');
-      doc.text(`Amount Paid: ₹${invoice.amountPaid.toLocaleString('en-IN')}`, 370, y);
-      y += 14;
-      doc.fontSize(10).fillColor('#DC2626');
-      doc.text(`Balance Due: ₹${invoice.balanceDue.toLocaleString('en-IN')}`, 370, y);
-
-      doc.end();
+    const html = renderInvoiceHtml({
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      billingMonth: invoice.billingMonth,
+      billingYear: invoice.billingYear,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      residentName,
+      residentEmail: invoice.resident.email,
+      residentPhone: invoice.resident.phone || undefined,
+      pgName: invoice.pg.name,
+      pgAddress,
+      items: invoice.items.map((it) => ({
+        description: it.description,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        total: it.total,
+      })),
+      subtotal: invoice.subtotal,
+      gstPercentage: invoice.gstPercentage,
+      gstAmount: invoice.gstAmount,
+      fineAmount: invoice.fineAmount,
+      totalAmount: invoice.totalAmount,
+      amountPaid: invoice.amountPaid,
+      balanceDue: invoice.balanceDue,
     });
+
+    const pdfBuffer = await PdfBrowserManager.generatePdfFromHtml(html);
+
+    // Record in PDFDocument collection
+    try {
+      const hash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+      await this.db.pDFDocument.create({
+        data: {
+          documentType: 'INVOICE',
+          title: `Invoice-${invoice.invoiceNumber}`,
+          fileUrl: `/api/v1/billing/invoices/${invoice.id}/pdf`,
+          storageProvider: 'LOCAL_STREAM',
+          hash,
+          residentId: invoice.residentId,
+          ownerId: invoice.pg.ownerId,
+          pgId: invoice.pgId,
+        },
+      });
+    } catch {
+      // Non-blocking metadata log
+    }
+
+    return pdfBuffer;
+  }
+
+  async getInvoiceById(invoiceId: string, userId: string, role: Role): Promise<Invoice> {
+    const invoice = await this.db.invoice.findUnique({
+      where: { id: invoiceId },
+      include: {
+        items: true,
+        resident: { include: { profile: true } },
+        pg: { select: { id: true, name: true, ownerId: true, location: true } },
+        payments: true,
+      },
+    });
+
+    if (!invoice) throw new NotFoundError('Invoice not found.');
+
+    if (role === Role.RESIDENT && invoice.residentId !== userId) {
+      throw new ForbiddenError('You are not authorized to view this invoice.');
+    }
+    if (role === Role.PG_OWNER && invoice.pg.ownerId !== userId) {
+      throw new ForbiddenError('You do not own the property for this invoice.');
+    }
+
+    return invoice;
   }
 }

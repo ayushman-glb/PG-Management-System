@@ -12,6 +12,8 @@ router.get('/plans', subController.listPlans);
 router.get('/my-subscription', authenticate, requireOwner, subController.getMySubscription);
 router.get('/current', authenticate, requireOwner, subController.getMySubscription);
 router.post('/create-order', authenticate, requireOwner, subController.createOrder);
+router.post('/initiate', authenticate, requireOwner, subController.createOrder);
 router.post('/verify', authenticate, requireOwner, subController.verifyAndActivate);
+router.post('/cancel', authenticate, requireOwner, subController.cancelSubscription);
 
 export { router as subscriptionRoutes };

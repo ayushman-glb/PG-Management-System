@@ -10,9 +10,15 @@ export class PaymentController {
   createOrder = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       if (!req.user?.id) throw new BadRequestError('User context missing.');
-      const { invoiceId, bookingId, customAmount } = req.body;
-      const order = await this.paymentService.createRazorpayOrder(req.user.id, invoiceId, bookingId, customAmount);
-      return ApiResponse.success(res, 'Payment order created.', order);
+      const { invoiceId, bookingId, customAmount, baseAmount } = req.body;
+      const targetAmount = customAmount || baseAmount;
+      const order = await this.paymentService.createRazorpayOrder(req.user.id, invoiceId, bookingId, targetAmount);
+      return ApiResponse.success(res, 'Payment order created.', {
+        ...order,
+        razorpayOrderId: order.orderId,
+        totalAmount: order.amount,
+        invoiceNumber: invoiceId ? `INV-${invoiceId.slice(-6).toUpperCase()}` : `BOOK-${(bookingId || '').slice(-6).toUpperCase()}`,
+      });
     } catch (error) {
       next(error);
     }
@@ -80,6 +86,20 @@ export class PaymentController {
     }
   };
 
+  getHistory = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const rawLimit = req.query.limit !== undefined ? parseInt(req.query.limit as string, 10) : 50;
+      if (isNaN(rawLimit) || rawLimit <= 0) {
+        throw new BadRequestError('Limit must be a positive integer.');
+      }
+      const payments = await this.paymentService.getPaymentHistory(req.user.id, req.user.role, rawLimit);
+      return ApiResponse.success(res, 'Payment history retrieved.', { payments, total: payments.length });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   downloadReceipt = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
@@ -88,6 +108,18 @@ export class PaymentController {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=receipt_${id}.pdf`);
       return res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  refundPayment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const { amount, reason } = req.body;
+      const result = await this.paymentService.processRefund(id, req.user.id, req.user.role, amount ? Number(amount) : undefined, reason);
+      return ApiResponse.success(res, 'Payment refunded successfully.', result);
     } catch (error) {
       next(error);
     }

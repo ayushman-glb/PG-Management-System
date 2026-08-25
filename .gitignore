@@ -62,6 +62,8 @@ credentials*.md
 # Uploads and temp files
 uploads/
 temp_uploads/
+sample_pdfs/
+*.zip
 *.local
 
 # ── TypeScript ─────────────────────────────────────────────────

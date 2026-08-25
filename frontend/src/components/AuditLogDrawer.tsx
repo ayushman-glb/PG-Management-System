@@ -18,39 +18,11 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      const data = await (api as any).request('/settings/audit-logs');
-      setLogs(data.data || []);
+      const res = await api.get('/admin/audit-logs').catch(() => null);
+      const data = (res as any)?.data ?? res;
+      setLogs(Array.isArray(data) ? data : []);
     } catch {
-      // Fallback mock audit logs if backend DB connection is not initialized
-      setLogs([
-        {
-          id: 'log-1',
-          action: 'RESIDENT_STATUS_HOME',
-          details: 'Status updated to HOME. Reason: Weekend visit to family',
-          ipAddress: '192.168.1.104',
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0)',
-          timestamp: new Date().toISOString(),
-          user: { name: 'Priya Patel', role: 'RESIDENT' }
-        },
-        {
-          id: 'log-2',
-          action: 'BED_HOLD_MAINTENANCE',
-          details: 'Bed 204-B placed on HOLD for deep sanitization and painting',
-          ipAddress: '192.168.1.1',
-          userAgent: 'RoomBae-Desktop',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          user: { name: 'Rajesh Kumar', role: 'OWNER' }
-        },
-        {
-          id: 'log-3',
-          action: 'ROOM_CONVERTED_DOUBLE',
-          details: 'Room 102 converted from SINGLE to DOUBLE sharing',
-          ipAddress: '192.168.1.1',
-          userAgent: 'RoomBae-Desktop',
-          timestamp: new Date(Date.now() - 7200000).toISOString(),
-          user: { name: 'Rajesh Kumar', role: 'OWNER' }
-        }
-      ]);
+      setLogs([]);
     } finally {
       setIsLoading(false);
     }

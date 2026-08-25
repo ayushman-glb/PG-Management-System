@@ -3,7 +3,7 @@ import DashboardLayout from "@components/layouts/DashboardLayout";
 import { BentoDashboard } from "@features/dashboard/components/BentoDashboard";
 import { KanbanBoards } from "@features/complaints/components/KanbanBoards";
 import { ResidentProfileModal } from "@features/residents/components/ResidentProfileModal";
-import type { Page } from "../../../App";
+import type { Page } from "@/app/App";
 import { useTheme } from "../../../theme";
 import { api } from "@services/api";
 import { LayoutGrid, Kanban, Sparkles } from "lucide-react";

@@ -13,6 +13,7 @@ router.get('/my', authenticate, requireOwner, propertyController.getOwnerPGs);
 router.get('/owner', authenticate, requireOwner, propertyController.getOwnerPGs);
 router.get('/owner-summary', authenticate, requireOwner, propertyController.getOwnerPGs);
 router.post('/', authenticate, requireOwner, propertyController.createPG);
+router.get('/public', propertyController.getPublicProperties);
 router.get('/:id', authenticate, propertyController.getPGDetails);
 router.post('/:id/floors', authenticate, requireOwner, propertyController.addFloor);
 router.patch('/:id/verify', authenticate, requireAdmin, propertyController.updateStatus);

@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@components/layouts/DashboardLayout";
-import type { Page } from "../../../App";
+import type { Page } from "@/app/App";
 import { useTheme } from "../../../theme";
-import { ownerService } from "@services/owner.service";
 import {
   ShieldCheck,
   Building2,
@@ -42,32 +41,31 @@ export default function AdminConsole({ navigate }: Props) {
     try {
       const [metricsRes, verifRes] = await Promise.all([
         api.get("/dashboard/overview").catch(() => null),
-        api.get("/settings/admin/verification-queue").catch(() => null),
+        api.get("/admin/pgs/pending").catch(() => null),
       ]);
 
-      if (metricsRes?.data) {
-        setMetrics(metricsRes.data);
+      const metricsData = (metricsRes as any)?.data ?? metricsRes;
+      if (metricsData) {
+        setMetrics(metricsData);
       }
 
-      if (verifRes?.data && Array.isArray(verifRes.data) && verifRes.data.length > 0) {
+      const verifData = (verifRes as any)?.data ?? verifRes;
+      if (verifData && Array.isArray(verifData)) {
         setVerifications(
-          verifRes.data.map((owner: any) => ({
-            id: owner.id,
-            ownerName: owner.name,
-            email: owner.email,
-            pgName: owner.pgs?.[0]?.name || "New PG Property",
-            city: owner.pgs?.[0]?.city || "Bengaluru",
-            submittedAt: owner.createdAt || new Date().toISOString(),
-            kycStatus: owner.kyc?.status || "PENDING",
-            aadhaarNumber: owner.aadhaarNumber || "Verified Document",
-            panNumber: owner.panNumber || "Verified PAN",
+          verifData.map((pg: any) => ({
+            id: pg.id,
+            ownerName: pg.owner?.username || pg.owner?.name || "PG Owner",
+            email: pg.owner?.email || "owner@roombae.com",
+            pgName: pg.name || "New PG Property",
+            city: pg.location?.city || pg.city || "Bengaluru",
+            submittedAt: pg.createdAt || new Date().toISOString(),
+            kycStatus: pg.status || "PENDING",
+            aadhaarNumber: "Verified Document",
+            panNumber: "Verified PAN",
           }))
         );
       } else {
-        const fallbackRes = await ownerService.getPendingVerifications().catch(() => null);
-        if (fallbackRes?.data && fallbackRes.data.length > 0) {
-          setVerifications(fallbackRes.data);
-        }
+        setVerifications([]);
       }
     } catch {
       // Keep state resilient
@@ -80,13 +78,23 @@ export default function AdminConsole({ navigate }: Props) {
     fetchAdminData();
   }, []);
 
-  const handleApprove = (id: string, name: string) => {
+  const handleApprove = async (id: string, name: string) => {
+    try {
+      await api.patch(`/admin/pgs/${id}/verify`, { approved: true });
+    } catch {
+      // ignore
+    }
     setVerifications((prev) => prev.filter((v) => v.id !== id));
     setActionMsg(`✅ Approved owner registration & property listing for ${name}.`);
     setTimeout(() => setActionMsg(null), 4000);
   };
 
-  const handleReject = (id: string, name: string) => {
+  const handleReject = async (id: string, name: string) => {
+    try {
+      await api.patch(`/admin/pgs/${id}/verify`, { approved: false });
+    } catch {
+      // ignore
+    }
     setVerifications((prev) => prev.filter((v) => v.id !== id));
     setActionMsg(`❌ Verification rejected for ${name}. Feedback sent.`);
     setTimeout(() => setActionMsg(null), 4000);

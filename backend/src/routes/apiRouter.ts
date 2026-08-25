@@ -115,5 +115,6 @@ apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
 apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/uploads', uploadRoutes);
+apiRouter.use('/media', uploadRoutes);
 
 export default apiRouter;

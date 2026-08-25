@@ -93,6 +93,22 @@ export class RoomService {
     });
   }
 
+  async convertRoom(roomId: string, ownerId: string, newType: RoomType): Promise<Room> {
+    const room = await this.db.room.findUnique({
+      where: { id: roomId },
+      include: { pg: true, beds: true },
+    });
+
+    if (!room) throw new NotFoundError('Room not found.');
+    if (room.pg.ownerId !== ownerId) throw new ForbiddenError('You do not own this property.');
+
+    return await this.db.room.update({
+      where: { id: roomId },
+      data: { roomType: newType },
+      include: { beds: true },
+    });
+  }
+
   async createRoomTransferRequest(data: {
     residentId: string;
     pgId: string;

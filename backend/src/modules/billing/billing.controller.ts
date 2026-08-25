@@ -80,4 +80,15 @@ export class BillingController {
       next(error);
     }
   };
+
+  getInvoiceById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const invoice = await this.billingService.getInvoiceById(id, req.user.id, req.user.role);
+      return ApiResponse.success(res, 'Invoice details retrieved.', invoice);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

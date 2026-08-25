@@ -69,4 +69,14 @@ export class SubscriptionController {
       next(error);
     }
   };
+
+  cancelSubscription = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const result = await this.subService.cancelSubscription(req.user.id);
+      return ApiResponse.success(res, 'Subscription cancelled successfully.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

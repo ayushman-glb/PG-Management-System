@@ -96,4 +96,27 @@ export class BookingController {
       next(error);
     }
   };
+
+  getBookingById = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const booking = await this.bookingService.getBookingById(id, req.user.id, req.user.role);
+      return ApiResponse.success(res, 'Booking details retrieved.', booking);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  cancel = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const { cancellationReason } = req.body;
+      const result = await this.bookingService.cancelBooking(id, req.user.id, req.user.role, cancellationReason || 'Resident cancelled booking');
+      return ApiResponse.success(res, 'Booking cancelled successfully.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

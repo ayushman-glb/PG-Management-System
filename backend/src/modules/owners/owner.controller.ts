@@ -32,4 +32,26 @@ export class OwnerController {
       next(err);
     }
   };
+
+  addBuilding = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const ownerId = req.user!.id;
+      const { id } = req.params;
+      const data = await this.ownerService.addBuilding(id, ownerId, req.body);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  batchCreateRooms = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const ownerId = req.user!.id;
+      const { id } = req.params;
+      const data = await this.ownerService.batchCreateRooms(id, ownerId, req.body);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  };
 }

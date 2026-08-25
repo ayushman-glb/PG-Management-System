@@ -29,7 +29,7 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
   });
 
   test('should return ALLOW (risk < 40) for known trusted device', async () => {
-    (prisma.userDevice.findFirst as jest.Mock).mockResolvedValue({
+    ((prisma as any).userDevice.findFirst as jest.Mock).mockResolvedValue({
       id: 'dev_1',
       userId,
       visitorIdHash: 'some_hash',
@@ -39,7 +39,7 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
       userAgentHash: 'some_ua_hash',
       lastActive: new Date(),
     });
-    (prisma.loginHistory.findFirst as jest.Mock).mockResolvedValue({
+    ((prisma as any).loginHistory.findFirst as jest.Mock).mockResolvedValue({
       id: 'lh_1',
       userId,
       ipAddress,
@@ -52,8 +52,8 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
   });
 
   test('should return STEP_UP (40 <= risk <= 69) for new unrecognized device with VPN proxy anomaly', async () => {
-    (prisma.userDevice.findFirst as jest.Mock).mockResolvedValue(null);
-    (prisma.loginHistory.findFirst as jest.Mock).mockResolvedValue({
+    ((prisma as any).userDevice.findFirst as jest.Mock).mockResolvedValue(null);
+    ((prisma as any).loginHistory.findFirst as jest.Mock).mockResolvedValue({
       id: 'lh_prev',
       userId,
       ipAddress: '10.0.0.1',
@@ -67,7 +67,7 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
   });
 
   test('should return BLOCK (risk >= 70) for blocked or revoked device', async () => {
-    (prisma.userDevice.findFirst as jest.Mock).mockResolvedValue({
+    ((prisma as any).userDevice.findFirst as jest.Mock).mockResolvedValue({
       id: 'dev_blocked',
       userId,
       visitorIdHash: 'some_hash',
@@ -84,13 +84,7 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
   });
 
   test('should calculate impossible travel velocity correctly and flag IMPOSSIBLE_TRAVEL signal (+35)', async () => {
-    // Previous login in London (51.5074, -0.1278) 10 minutes ago.
-    // Device is TRUSTED (-40). IMPOSSIBLE_TRAVEL fires at +35. NEW_COUNTRY +25.
-    // Net score: -40 + 35 + 25 = 20 → ALLOW (trusted device; single compound signal not enough to BLOCK).
-    // This is the CORRECT behavior post-calibration — a trusted user in London who appears in Tokyo
-    // via a VPN should be asked to do 2FA or pass silently, not hard-blocked.
-    // To reach STEP_UP (>=40), combine with additional signals (e.g. VPN, failed attempts).
-    (prisma.userDevice.findFirst as jest.Mock).mockResolvedValue({
+    ((prisma as any).userDevice.findFirst as jest.Mock).mockResolvedValue({
       id: 'dev_known',
       userId,
       visitorIdHash: 'some_hash',
@@ -100,7 +94,7 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
       userAgentHash: 'some_ua_hash',
     });
 
-    (prisma.loginHistory.findFirst as jest.Mock).mockResolvedValue({
+    ((prisma as any).loginHistory.findFirst as jest.Mock).mockResolvedValue({
       id: 'lh_london',
       userId,
       latitude: 51.5074,
@@ -125,9 +119,7 @@ describe('RiskEngine Multi-Signal Scoring & Impossible Travel', () => {
     );
 
     // Signal must be detected regardless of net score
-    expect(assessment.signals.some((s) => s.includes('IMPOSSIBLE_TRAVEL'))).toBe(true);
-    // Score: -40 (trusted) + 35 (travel) + 25 (new country) = 20 — ALLOW for trusted device
-    // This confirms calibration: travel alone doesn't hard-block a known device
+    expect(assessment.signals.some((s: string) => s.includes('IMPOSSIBLE_TRAVEL'))).toBe(true);
     expect(assessment.riskScore).toBeGreaterThanOrEqual(0);
   });
 

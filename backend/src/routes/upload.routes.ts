@@ -22,4 +22,24 @@ router.post(
   uploadController.handleUpload
 );
 
+router.post(
+  '/upload/single',
+  uploadLimiter,
+  handleSingleFileUpload,
+  processSecurityPipeline,
+  uploadController.handleUpload
+);
+
+router.put(
+  '/replace/:id',
+  uploadLimiter,
+  handleSingleFileUpload,
+  processSecurityPipeline,
+  uploadController.handleUpload
+);
+
+router.delete('/:id', uploadController.handleDelete);
+router.post('/bulk-delete', uploadController.handleBulkDelete);
+router.patch('/reorder', uploadController.handleReorder);
+
 export { router as uploadRoutes };

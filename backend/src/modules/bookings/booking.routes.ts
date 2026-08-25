@@ -14,11 +14,14 @@ router.get('/', authenticate, (req, res, next) => {
   }
   return bookingController.getOwnerKanban(req, res, next);
 });
+router.post('/', authenticate, requireResident, bookingController.apply);
 router.post('/apply', authenticate, requireResident, bookingController.apply);
 router.get('/resident', authenticate, requireResident, bookingController.getResidentBookings);
 router.get('/owner-kanban', authenticate, requireOwner, bookingController.getOwnerKanban);
+router.post('/room-change', authenticate, requireResident, bookingController.requestRoomChange);
+router.get('/:id', authenticate, bookingController.getBookingById);
+router.post('/:id/cancel', authenticate, bookingController.cancel);
 router.patch('/:id/status', authenticate, bookingController.updateStatus);
 router.post('/:id/allocate', authenticate, requireOwner, bookingController.allocateRoom);
-router.post('/room-change', authenticate, requireResident, bookingController.requestRoomChange);
 
 export { router as bookingRoutes };

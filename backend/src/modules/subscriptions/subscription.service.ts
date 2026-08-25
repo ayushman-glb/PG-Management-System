@@ -197,4 +197,19 @@ export class SubscriptionService {
       tierName: activeSub.plan.name,
     };
   }
+
+  async cancelSubscription(ownerId: string): Promise<any> {
+    const activeSub = await this.getOwnerSubscription(ownerId);
+    if (!activeSub) {
+      throw new BadRequestError('No active subscription found to cancel.');
+    }
+
+    const updated = await this.db.subscription.update({
+      where: { id: activeSub.id },
+      data: { status: SubscriptionStatus.CANCELLED },
+      include: { plan: true },
+    });
+
+    return updated;
+  }
 }

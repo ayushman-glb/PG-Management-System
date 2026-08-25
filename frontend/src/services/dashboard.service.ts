@@ -28,16 +28,16 @@ export interface DashboardOverview {
 export const dashboardService = {
   getOverview: async (): Promise<DashboardOverview> => {
     const response = await api.get('/dashboard/overview');
-    return response.data.data;
+    return (response as any)?.data ?? response;
   },
 
   getRevenueAnalytics: async () => {
     const response = await api.get('/dashboard/revenue');
-    return response.data.data;
+    return (response as any)?.data ?? response;
   },
 
   getOccupancyAnalytics: async () => {
     const response = await api.get('/dashboard/occupancy');
-    return response.data.data;
+    return (response as any)?.data ?? response;
   },
 };

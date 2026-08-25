@@ -163,6 +163,81 @@ export class PropertyService {
     });
   }
 
+  async getPublicProperties(limit: number = 10): Promise<any[]> {
+    const pgs = await this.db.pG.findMany({
+      where: {
+        status: PGStatus.APPROVED,
+      },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        location: true,
+        images: { orderBy: { order: 'asc' } },
+        amenities: { include: { amenity: true } },
+        floors: {
+          include: {
+            rooms: {
+              include: {
+                beds: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return pgs.map((pg) => {
+      let totalBeds = 0;
+      let availableBeds = 0;
+      let minRent = pg.basePrice || 0;
+      const roomTypesAvailable: Record<string, { available: number; total: number; minRent: number }> = {};
+
+      for (const floor of pg.floors) {
+        for (const room of floor.rooms) {
+          if (!roomTypesAvailable[room.roomType]) {
+            roomTypesAvailable[room.roomType] = { available: 0, total: 0, minRent: room.baseRent };
+          } else {
+            roomTypesAvailable[room.roomType].minRent = Math.min(roomTypesAvailable[room.roomType].minRent, room.baseRent);
+          }
+          if (minRent === 0 || room.baseRent < minRent) {
+            minRent = room.baseRent;
+          }
+
+          for (const bed of room.beds) {
+            totalBeds++;
+            roomTypesAvailable[room.roomType].total++;
+            if (bed.status === 'AVAILABLE') {
+              availableBeds++;
+              roomTypesAvailable[room.roomType].available++;
+            }
+          }
+        }
+      }
+
+      return {
+        ...pg,
+        address: pg.location?.address,
+        city: pg.location?.city,
+        state: pg.location?.state,
+        minRent,
+        totalBeds,
+        availableBedsCount: availableBeds,
+        amenities: pg.amenities.map((a) => a.amenity?.name || a.amenityId).filter(Boolean),
+        images: pg.images.map((img) => img.secureUrl),
+        stats: {
+          totalFloors: pg.floors.length,
+          totalBeds,
+          availableBeds,
+        },
+        availability: {
+          totalBeds,
+          availableBeds,
+          roomTypes: roomTypesAvailable,
+        },
+      };
+    });
+  }
+
   async getPGDetails(pgId: string, userId?: string, userRole?: Role): Promise<any> {
     const pg = await this.db.pG.findUnique({
       where: { id: pgId },

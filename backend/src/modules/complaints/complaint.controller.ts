@@ -60,11 +60,22 @@ export class ComplaintController {
     try {
       if (!req.user?.id) throw new BadRequestError('User context missing.');
       const { id } = req.params;
-      const { accepted, rejectionReason } = req.body;
-      if (accepted === undefined) throw new BadRequestError('accepted (boolean) is required.');
+      const { accepted, satisfied, rejectionReason } = req.body;
+      const isAccepted = accepted !== undefined ? Boolean(accepted) : satisfied !== undefined ? Boolean(satisfied) : true;
 
-      const updated = await this.complaintService.acknowledgeResolution(id, req.user.id, Boolean(accepted), rejectionReason);
-      return ApiResponse.success(res, accepted ? 'Resolution acknowledged. Complaint closed.' : 'Complaint reopened for further review.', updated);
+      const updated = await this.complaintService.acknowledgeResolution(id, req.user.id, isAccepted, rejectionReason);
+      return ApiResponse.success(res, isAccepted ? 'Resolution acknowledged. Complaint closed.' : 'Complaint reopened for further review.', updated);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getById = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const complaint = await this.complaintService.getComplaintById(id, req.user.id, req.user.role);
+      return ApiResponse.success(res, 'Complaint details retrieved.', complaint);
     } catch (error) {
       next(error);
     }

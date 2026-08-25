@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { User, Phone, MapPin, Building2, Calendar, Shield, ArrowRight, CheckCircle2 } from "lucide-react";
-import type { Page } from "../../../App";
+import type { Page } from "@/app/App";
 import { useTheme } from "../../../theme";
 import { authService } from "../../../services/auth.service";
 

@@ -20,6 +20,7 @@ router.post('/transfer-requests/:id/complete', requireOwner, roomController.comp
 // Room Management
 router.post('/', requireOwner, roomController.createRoom);
 router.get('/floor/:floorId', roomController.getRoomsByFloor);
+router.put('/:id/convert', requireOwner, roomController.convertRoom);
 router.patch('/:id/status', requireOwner, roomController.updateStatus);
 
 export { router as roomRoutes };

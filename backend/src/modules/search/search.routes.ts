@@ -8,6 +8,8 @@ const searchController = new SearchController(searchService);
 const router = Router();
 
 // Public Unauthenticated Search
+router.get('/autocomplete', searchController.getAutocomplete);
+router.get('/featured', searchController.getFeatured);
 router.get('/', searchController.searchPGs);
 router.get('/pgs', searchController.searchPGs);
 

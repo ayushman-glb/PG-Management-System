@@ -1,4 +1,4 @@
-import type { Page } from "../App";
+import type { Page } from "@/app/App";
 import DashboardLayout from "./DashboardLayout";
 import { useTheme } from "../theme";
 

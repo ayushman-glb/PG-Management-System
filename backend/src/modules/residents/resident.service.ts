@@ -213,7 +213,7 @@ export class ResidentService {
       throw new NotFoundError('Resident not found');
     }
 
-    const activeAlloc = user.roomAllocations[0];
+    const activeAlloc = (user as any).roomAllocations?.[0] || null;
     const activePg = activeAlloc?.pg;
     const activeRoom = activeAlloc?.room;
     const activeBed = activeAlloc?.bed;
@@ -251,11 +251,11 @@ export class ResidentService {
 
     const currentMonth = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' }).format(new Date());
 
-    const activeAgreement = user.residentAgreements[0] || null;
+    const activeAgreement = user.residentAgreements?.[0] || null;
     const rentAmount = activeAlloc?.rent ?? activeAgreement?.rentAmount ?? 0;
     const depositAmount = activeAlloc?.deposit ?? activeAgreement?.depositAmount ?? 0;
 
-    const invoices = user.invoices.map((inv) => ({
+    const invoices = (user.invoices || []).map((inv: any) => ({
       id: inv.id,
       invoiceNumber: inv.invoiceNumber,
       month: `${inv.billingMonth}/${inv.billingYear}`,
@@ -264,7 +264,7 @@ export class ResidentService {
       totalAmount: inv.totalAmount,
       balanceDue: inv.balanceDue,
       status: inv.status,
-      dueDate: new Date(inv.dueDate).toISOString().split('T')[0],
+      dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '—',
       createdAt: inv.createdAt,
     }));
 
@@ -312,9 +312,9 @@ export class ResidentService {
       mealPlan: activePg?.mealPlans?.[0] || null,
       invoices,
       payments: invoices, // Compatible alias for UI billing table
-      agreements: user.residentAgreements,
+      agreements: user.residentAgreements || [],
       agreement: activeAgreement,
-      complaints: user.complaintsCreated.map((c) => ({
+      complaints: (user.complaintsCreated || []).map((c: any) => ({
         id: c.id,
         ticketCode: `TICK-${c.id.slice(-4).toUpperCase()}`,
         category: c.category,
@@ -322,12 +322,12 @@ export class ResidentService {
         description: c.description,
         priority: c.priority,
         status: c.status,
-        createdAt: new Date(c.createdAt).toISOString().split('T')[0],
+        createdAt: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '—',
       })),
-      recentComplaints: user.complaintsCreated,
-      documents: user.documents,
-      visitorPasses: user.visitorPasses,
-      gatePasses: user.gatePasses,
+      recentComplaints: user.complaintsCreated || [],
+      documents: user.documents || [],
+      visitorPasses: user.visitorPasses || [],
+      gatePasses: user.gatePasses || [],
     };
   }
 

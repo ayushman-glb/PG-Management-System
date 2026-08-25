@@ -171,4 +171,33 @@ export class ComplaintService {
       },
     });
   }
+
+  async getComplaintById(complaintId: string, userId: string, userRole: Role): Promise<any> {
+    const complaint = await this.db.complaint.findUnique({
+      where: { id: complaintId },
+      include: {
+        pg: { select: { id: true, name: true, ownerId: true } },
+        room: true,
+        resident: { include: { profile: true } },
+        messages: {
+          include: {
+            sender: { select: { id: true, username: true, role: true, avatarUrl: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        histories: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    if (!complaint) throw new NotFoundError('Complaint not found.');
+
+    if (userRole === Role.RESIDENT && complaint.residentId !== userId) {
+      throw new ForbiddenError('You are not authorized to view this complaint.');
+    }
+    if (userRole === Role.PG_OWNER && complaint.pg?.ownerId !== userId) {
+      throw new ForbiddenError('You do not own the property for this complaint.');
+    }
+
+    return complaint;
+  }
 }

@@ -51,4 +51,23 @@ export class SearchController {
       next(error);
     }
   };
+
+  getAutocomplete = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const q = (req.query.q || req.query.query || '') as string;
+      const suggestions = await this.searchService.getAutocomplete(q);
+      return ApiResponse.success(res, 'Search suggestions retrieved.', suggestions);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getFeatured = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const featured = await this.searchService.getFeatured();
+      return ApiResponse.success(res, 'Featured properties retrieved.', featured);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
