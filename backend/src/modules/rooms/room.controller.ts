@@ -57,4 +57,58 @@ export class RoomController {
       next(error);
     }
   };
+
+  createTransferRequest = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const residentId = req.user?.id || req.body.residentId;
+      const data = await this.roomService.createRoomTransferRequest({
+        ...req.body,
+        residentId,
+      });
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getTransferRequests = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await this.roomService.getRoomTransferRequests(req.query as any);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  approveTransferRequest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { targetBedId, scheduledDate, notes } = req.body;
+      const data = await this.roomService.approveRoomTransfer(id, targetBedId, scheduledDate, notes);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  rejectTransferRequest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { rejectionReason } = req.body;
+      const data = await this.roomService.rejectRoomTransfer(id, rejectionReason);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  completeTransferRequest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const data = await this.roomService.completeRoomTransfer(id);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

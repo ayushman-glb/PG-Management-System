@@ -29,9 +29,10 @@ export const globalErrorHandler = (
   }
 
   // 1. AppError (Domain & Business Logic Exceptions)
-  if (err instanceof AppError) {
-    const action = err.statusCode === 401 ? (err.errorCode === 'TOKEN_EXPIRED' ? 'refresh' : 'login') : err.statusCode === 403 ? 'contact_admin' : 'retry';
-    return ApiResponse.error(res, err.message, [], err.statusCode, err.errorCode, action);
+  if (err instanceof AppError || err?.isOperational || err?.statusCode) {
+    const errCode = err.errorCode || err.code;
+    const action = err.statusCode === 401 ? (errCode === 'TOKEN_EXPIRED' ? 'refresh' : 'login') : err.statusCode === 403 ? 'contact_admin' : 'retry';
+    return ApiResponse.error(res, err.message, err.errors || [], err.statusCode, errCode, action);
   }
 
   // 2. Zod Validation Errors

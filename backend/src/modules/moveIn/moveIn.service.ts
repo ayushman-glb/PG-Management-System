@@ -7,13 +7,19 @@ export class MoveOutService {
     return (global as any).prismaSingleton || prisma;
   }
 
-  async requestMoveOut(residentId: string, allocationId: string, requestedDate: string, reason: string): Promise<any> {
-    const allocation = await this.db.roomAllocation.findUnique({
-      where: { id: allocationId },
+  async requestMoveOut(residentId: string, allocationOrBookingId: string, requestedDate: string, reason: string): Promise<any> {
+    let allocation = await this.db.roomAllocation.findFirst({
+      where: {
+        OR: [
+          { id: allocationOrBookingId },
+          { bookingId: allocationOrBookingId },
+          { residentId, isActive: true },
+        ],
+      },
       include: { pg: true, bed: true, room: true },
     });
 
-    if (!allocation || allocation.residentId !== residentId || !allocation.isActive) {
+    if (!allocation || allocation.residentId !== residentId) {
       throw new BadRequestError('Active room allocation not found.');
     }
 
@@ -36,15 +42,20 @@ export class MoveOutService {
       bedNumber: allocation.bed.bedNumber,
       depositAmount: allocation.deposit,
       pendingDues,
-      requestedMoveOutDate: new Date(requestedDate),
-      reason,
+      requestedMoveOutDate: requestedDate ? new Date(requestedDate) : new Date(),
+      reason: reason || 'End of stay',
       status: 'MOVE_OUT_REQUESTED',
     };
   }
 
-  async settleAndReleaseCheckout(ownerId: string, allocationId: string, deductions: number = 0, deductionReason?: string): Promise<any> {
-    const allocation = await this.db.roomAllocation.findUnique({
-      where: { id: allocationId },
+  async settleAndReleaseCheckout(ownerId: string, allocationOrBookingId: string, deductions: number = 0, deductionReason?: string): Promise<any> {
+    let allocation = await this.db.roomAllocation.findFirst({
+      where: {
+        OR: [
+          { id: allocationOrBookingId },
+          { bookingId: allocationOrBookingId },
+        ],
+      },
       include: { pg: true, bed: true, booking: true },
     });
 
@@ -109,5 +120,29 @@ export class MoveOutService {
         netRefundAmount,
       };
     });
+  }
+
+  async getMoveOutRequests(pgId?: string) {
+    const where: any = { isActive: false };
+    if (pgId) where.pgId = pgId;
+
+    const allocations = await this.db.roomAllocation.findMany({
+      where,
+      include: { resident: { include: { profile: true } }, room: true, bed: true, pg: true },
+      orderBy: { checkOutDate: 'desc' },
+      take: 50,
+    });
+
+    return allocations.map((a) => ({
+      allocationId: a.id,
+      bookingId: a.bookingId,
+      residentId: a.residentId,
+      residentName: a.resident.profile ? `${a.resident.profile.firstName} ${a.resident.profile.lastName}` : a.resident.email,
+      pgName: a.pg.name,
+      roomNumber: a.room.roomNumber,
+      bedNumber: a.bed.bedNumber,
+      deposit: a.deposit,
+      checkOutDate: a.checkOutDate,
+    }));
   }
 }

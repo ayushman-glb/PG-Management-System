@@ -11,13 +11,10 @@ const options: swaggerJSDoc.Options = {
       description: `
 ## RoomBae Zero-Trust API Documentation & Testing Console
 
-RoomBae provides an end-to-end PG and Co-living management platform with 7 access tiers:
-- **GOD**: Platform owner root control & global multi-tenant business analytics
-- **ADMIN**: Verification reviewer, property approval, and platform operations
-- **OWNER**: PG property owner managing buildings, rooms, beds, billing & KYC
-- **MANAGER / STAFF**: On-premise facility administration
-- **RESIDENT**: Tenant portal for rent payments, gate passes, visitor passes, and maintenance
-- **PUBLIC**: Marketplace listing search and discovery
+RoomBae provides an end-to-end PG and Co-living management platform with 3 canonical roles:
+- **ADMIN**: Verification reviewer, property approval, platform operations, and system administration
+- **PG_OWNER**: PG property owner managing buildings, rooms, beds, billing, complaints & KYC
+- **RESIDENT**: Tenant portal for rent payments, gate passes, visitor passes, room transfers, and maintenance
 
 ### Authentication Instructions:
 1. Call **POST** \`/auth/login\` with your user credentials.

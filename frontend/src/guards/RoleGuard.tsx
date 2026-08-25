@@ -39,14 +39,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     );
   }
 
-  const rawRole = (user.role || "RESIDENT").toUpperCase();
-  const normalizedUserRole = rawRole === "PG_OWNER" ? "OWNER" : rawRole === "SUPER_ADMIN" ? "GOD" : rawRole;
-  const normalizedAllowed = allowedRoles.map((r) => {
-    const u = r.toUpperCase();
-    return u === "PG_OWNER" ? "OWNER" : u === "SUPER_ADMIN" ? "GOD" : u;
-  });
-
-  const isAllowed = normalizedAllowed.includes(normalizedUserRole);
+  const userRole = (user.role || "RESIDENT").toUpperCase();
+  const isAllowed = allowedRoles.map((r) => r.toUpperCase()).includes(userRole);
 
   if (!isAllowed) {
     return fallback ? <>{fallback}</> : (

@@ -1,10 +1,29 @@
-import { PrismaClient, User, Role, PGStatus, VerificationStatus } from '@prisma/client';
+import { PrismaClient, User, Role, PGStatus, VerificationStatus, PaymentStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { BadRequestError, NotFoundError } from '../../core/errors/CustomErrors';
 
 export class AdminService {
   private get db(): PrismaClient {
     return (global as any).prismaSingleton || prisma;
+  }
+
+  async getDashboardStats(): Promise<any> {
+    const [totalUsers, totalPGs, totalBookings, totalRevenue] = await Promise.all([
+      this.db.user.count(),
+      this.db.pG.count(),
+      this.db.booking.count(),
+      this.db.payment.aggregate({
+        where: { status: PaymentStatus.VERIFIED },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    return {
+      totalUsers,
+      totalPGs,
+      totalBookings,
+      totalRevenue: totalRevenue._sum.amount || 0,
+    };
   }
 
   async listUsers(role?: Role, query?: string, page: number = 1, limit: number = 20): Promise<any> {

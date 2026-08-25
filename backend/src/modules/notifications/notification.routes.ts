@@ -10,7 +10,11 @@ const router = Router();
 
 router.get('/', authenticate, notifController.getMyNotifications);
 router.patch('/:id/read', authenticate, notifController.markAsRead);
+router.patch('/read-all', authenticate, notifController.markAllAsRead);
+router.post('/read-all', authenticate, notifController.markAllAsRead);
+router.patch('/mark-all-read', authenticate, notifController.markAllAsRead);
 router.post('/mark-all-read', authenticate, notifController.markAllAsRead);
+router.post('/announcement', authenticate, requireOwner, notifController.broadcastAnnouncement);
 router.post('/announcements', authenticate, requireOwner, notifController.broadcastAnnouncement);
 
 export { router as notificationRoutes };

@@ -435,12 +435,8 @@ export default function Auth({ navigate }: Props) {
       const rawRole = (loginRes?.user?.role || "").toUpperCase();
       if (rawRole === "RESIDENT") {
         navigate("resident-portal");
-      } else if (rawRole === "GOD" || rawRole === "SUPER_ADMIN") {
-        navigate("god-console");
       } else if (rawRole === "ADMIN") {
         navigate("admin-console");
-      } else if (rawRole === "OWNER" || rawRole === "MANAGER" || rawRole === "STAFF") {
-        navigate("dashboard");
       } else {
         navigate("dashboard");
       }
@@ -475,8 +471,6 @@ export default function Auth({ navigate }: Props) {
       setTimeout(() => {
         if (rawRole === "RESIDENT") {
           navigate("resident-portal");
-        } else if (rawRole === "GOD" || rawRole === "SUPER_ADMIN") {
-          navigate("god-console");
         } else if (rawRole === "ADMIN") {
           navigate("admin-console");
         } else {
@@ -508,13 +502,24 @@ export default function Auth({ navigate }: Props) {
         setAuthError("Please complete all required personal details.");
         return;
       }
-      await authService.register({
-        name: fullName.trim(),
-        email: email.trim(),
-        password,
-        role: selectedRole === "OWNER" ? "OWNER" : "RESIDENT",
-        phone: phone ? `+91${phone}` : undefined,
-      });
+      if (selectedRole === "OWNER") {
+        await authService.registerOwner({
+          name: fullName.trim(),
+          email: email.trim(),
+          password,
+          phone: phone ? `+91${phone}` : undefined,
+          currentAddress: `${city}, ${state} - ${pincode}`,
+          numPGsToRegister: 1,
+        });
+      } else {
+        await authService.register({
+          name: fullName.trim(),
+          email: email.trim(),
+          password,
+          phone: phone ? `+91${phone}` : undefined,
+          currentAddress: `${city}, ${state} - ${pincode}`,
+        });
+      }
 
       clearIncompleteDraft();
       setAuthSuccessMsg("✓ Account created successfully! Access granted to RoomBae Enterprise.");

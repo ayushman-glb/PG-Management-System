@@ -2,11 +2,11 @@ import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 
 const GOD_ADMIN = {
-  name: "GOD",
+  name: "GOD (Admin)",
   email: "ayushman@globussoft.in",
   pass: "987456",
   phone: "+919900000001",
-  role: "GOD",
+  role: "ADMIN",
 };
 
 const OWNER = {
@@ -14,7 +14,7 @@ const OWNER = {
   email: "ayushmansaha917@gmail.com",
   pass: "123456",
   phone: "+916297750585",
-  role: "OWNER",
+  role: "PG_OWNER",
 };
 
 const RESIDENT = {

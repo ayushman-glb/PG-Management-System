@@ -39,7 +39,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setUser = useCallback((u: User | null) => {
     const normalizedUser = u ? {
       ...u,
-      role: (String(u.role || "").toUpperCase() === "SUPER_ADMIN" ? "GOD" : u.role) as any
+      role: (u.role === "PG_OWNER" || u.role === "ADMIN" || u.role === "RESIDENT"
+        ? u.role
+        : (String(u.role).toUpperCase() === "OWNER" ? "PG_OWNER" : "RESIDENT")) as any
     } : null;
 
     setUserState(normalizedUser);
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (normalizedUser) {
         localStorage.setItem("user", JSON.stringify(normalizedUser));
         const r = String(normalizedUser.role || "").toUpperCase();
-        if (r === "OWNER" || r === "GOD" || r === "SUPER_ADMIN" || r === "ADMIN") {
+        if (r === "PG_OWNER" || r === "ADMIN") {
           localStorage.setItem("roombaeOwnerId", normalizedUser.id);
         }
         if ((normalizedUser as any).residentCode) {

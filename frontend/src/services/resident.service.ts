@@ -1,42 +1,9 @@
-import { env } from "@config/env";
-import type { ApiResponse } from "../types";
-import { authService } from "./auth.service";
+import { api } from "./api";
 
 export class ResidentService {
-  private getToken(): string | null {
-    return authService.getToken();
-  }
-
-  private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const token = this.getToken();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${env.API_URL}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: "include",
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Resident API request failed");
-    }
-    return data;
-  }
-
   async onboardResident(kycData: any) {
-    const res = await this.request("/residents/onboard", {
-      method: "POST",
-      body: JSON.stringify(kycData),
-    });
-    return res.data;
+    const res = await api.post("/residents/onboard", kycData);
+    return res?.data ?? res;
   }
 
   async getResidentDirectory(params?: { propertyId?: string; search?: string; status?: string }) {
@@ -46,36 +13,33 @@ export class ResidentService {
     if (params?.status) query.append("status", params.status);
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/residents/directory${queryString}`);
-    return res.data;
+    const res = await api.get(`/residents/directory${queryString}`);
+    return res?.data ?? res;
   }
 
   async getPortalMe() {
-    const res = await this.request("/residents/portal/me");
-    return res.data;
+    const res = await api.get("/residents/portal/me");
+    return res?.data ?? res;
   }
 
   async updateResidentStatus(residentId: string, status: string, reason?: string) {
-    const res = await this.request(`/residents/${residentId}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status, reason }),
-    });
-    return res.data;
+    const res = await api.patch(`/residents/${residentId}/status`, { status, reason });
+    return res?.data ?? res;
   }
 
   async getResidents() {
-    const res = await this.request("/residents");
-    return res.data || res;
+    const res = await api.get("/residents");
+    return res?.data ?? res;
   }
 
   async getResidentById(id: string) {
-    const res = await this.request(`/residents/${id}`);
-    return res.data || res;
+    const res = await api.get(`/residents/${id}`);
+    return res?.data ?? res;
   }
 
   async getResidentStatusHistory(residentId: string) {
-    const res = await this.request(`/residents/${residentId}/status-history`);
-    return res.data;
+    const res = await api.get(`/residents/${residentId}/status-history`);
+    return res?.data ?? res;
   }
 }
 

@@ -8,7 +8,12 @@ const moveInController = new MoveInController(moveOutService);
 
 const router = Router();
 
-router.post('/checkout-request', authenticate, requireResident, moveInController.requestMoveOut);
-router.post('/checkout-settle', authenticate, requireOwner, moveInController.settleCheckout);
+router.use(authenticate);
+
+router.post('/checkout-request', requireResident, moveInController.requestMoveOut);
+router.post('/request-move-out', requireResident, moveInController.requestMoveOut);
+router.post('/checkout-settle', requireOwner, moveInController.settleCheckout);
+router.post('/process-settlement', requireOwner, moveInController.settleCheckout);
+router.get('/move-out-requests', requireOwner, moveInController.getMoveOutRequests);
 
 export { router as moveInRoutes };

@@ -67,13 +67,9 @@ interface Props {
 
 export default function DashboardLayout({ children, navigate, activePage }: Props) {
   const { user, logout } = useAuth();
-  const rawRole = String(user?.role || "").toUpperCase();
-  const isGod = rawRole === "GOD" || rawRole === "SUPER_ADMIN";
-  const isAdmin = rawRole === "ADMIN";
+  const isAdmin = String(user?.role || "").toUpperCase() === "ADMIN";
 
-  const sidebarItems = isGod
-    ? [{ icon: ShieldCheck, label: "GOD Console", page: "god-console" as Page }, ...baseSidebarItems]
-    : isAdmin
+  const sidebarItems = isAdmin
     ? [{ icon: ShieldCheck, label: "Admin Console", page: "admin-console" as Page }, ...baseSidebarItems]
     : baseSidebarItems;
 

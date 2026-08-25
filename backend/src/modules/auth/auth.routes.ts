@@ -4,12 +4,22 @@ import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { authenticate } from '../../middleware/authMiddleware';
 import { authLimiter } from '../../middleware/rateLimiter';
+import { generateCsrfToken } from '../../middleware/csrfMiddleware';
 
 const authRepository = new AuthRepository();
 const authService = new AuthService(authRepository);
 const authController = new AuthController(authService);
 
 const router = Router();
+
+// CSRF Bootstrap Endpoint (Public)
+router.get('/csrf-token', (req, res) => {
+  const token = generateCsrfToken(req, res);
+  res.json({
+    success: true,
+    data: { csrfToken: token },
+  });
+});
 
 // Public Authentication Endpoints
 router.post('/register/resident', authLimiter, authController.registerResident);

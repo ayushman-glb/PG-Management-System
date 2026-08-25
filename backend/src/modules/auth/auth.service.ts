@@ -258,7 +258,10 @@ export class AuthService {
   async login(identifier: string, password: string, options?: { visitorId?: string; deviceLabel?: string; ipAddress?: string; userAgent?: string }): Promise<IAuthResult> {
     const user = await this.authRepo.findByIdentifier(identifier);
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials.');
+      throw new UnauthorizedError(
+        "We couldn't find an account with these details. Would you like to sign up instead?",
+        'ACCOUNT_NOT_FOUND_OR_INVALID'
+      );
     }
 
     if (user.isSuspended || !user.isActive) {
@@ -273,7 +276,10 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedError('Invalid credentials.');
+      throw new UnauthorizedError(
+        "We couldn't find an account with these details. Would you like to sign up instead?",
+        'ACCOUNT_NOT_FOUND_OR_INVALID'
+      );
     }
 
     // Register or record device

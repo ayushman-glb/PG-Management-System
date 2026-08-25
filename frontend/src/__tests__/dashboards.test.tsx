@@ -16,17 +16,6 @@ vi.mock("@services/api", () => ({
   },
 }));
 
-vi.mock("@services/god.service", () => ({
-  godService: {
-    getOverview: vi.fn(),
-    getOwners: vi.fn(),
-    getResidents: vi.fn(),
-    getOwnerById: vi.fn(),
-    approveKyc: vi.fn(),
-    rejectKyc: vi.fn(),
-  },
-}));
-
 vi.mock("@hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({
     user: { id: "usr_test_1", name: "Test User", email: "user@roombae.com", role: "RESIDENT" },
@@ -136,9 +125,7 @@ vi.mock("../hooks/useAdaptiveLoading", () => ({
 // Import components under test
 import Dashboard from "../features/dashboard/pages/Dashboard";
 import ResidentPortal from "../features/residents/pages/ResidentPortal";
-import GodConsole from "../features/dashboard/pages/GodConsole";
 import { api } from "@services/api";
-import { godService } from "@services/god.service";
 
 describe("Frontend Dashboard Components — 3-State Render Verification", () => {
   beforeEach(() => {
@@ -247,76 +234,6 @@ describe("Frontend Dashboard Components — 3-State Render Verification", () => 
         expect(screen.getByText(/Unable to Load Resident Portal/i)).toBeInTheDocument();
       });
       expect(screen.getByRole("button", { name: /Try Again/i })).toBeInTheDocument();
-    });
-  });
-
-  describe("3. GOD Platform Supervisor Console (GodConsole.tsx)", () => {
-    it("renders loading skeleton during overview fetch", async () => {
-      (godService.getOverview as any).mockImplementation(() => new Promise(() => {}));
-      (godService.getOwners as any).mockImplementation(() => new Promise(() => {}));
-
-      render(<GodConsole navigate={vi.fn()} />);
-      expect(screen.getByTitle("Refresh Metrics")).toBeInTheDocument();
-    });
-
-    it("renders success state with platform KPIs and Owner Directory", async () => {
-      (godService.getOverview as any).mockResolvedValue({
-        totalOwners: 10,
-        totalResidents: 152,
-        totalBeds: 152,
-        occupiedBeds: 152,
-        availableBeds: 0,
-        activeSubscriptions: 10,
-        occupancyRate: 100,
-        monthlySaaSRevenue: 49990,
-        annualRunRate: 599880,
-        totalPlatformRevenue: 699860,
-        growthMetrics: { mrrGrowthPercent: 14.5, ownerGrowthPercent: 20 },
-        subscriptionsByTier: [{ tier: "PROFESSIONAL", count: 10 }],
-        systemMetrics: {
-          systemHealth: "Optimal",
-          uptime: "99.98%",
-          pendingKycCount: 1,
-          pendingPropertyApprovals: 0,
-        },
-      });
-
-      (godService.getOwners as any).mockResolvedValue([
-        {
-          id: "6a830d3dcf7a206d0f69feae",
-          name: "Meenakshi Sundaram",
-          email: "meenakshi.owner@roombae.com",
-          phone: "+91 98765 43210",
-          kycStatus: "PENDING",
-          subscriptionTier: "PROFESSIONAL",
-          propertyCount: 1,
-          bedCount: 16,
-          occupancyRate: 100,
-          createdAt: "2026-01-15T00:00:00.000Z",
-        },
-      ]);
-
-      render(<GodConsole navigate={vi.fn()} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Platform Master Console/i)).toBeInTheDocument();
-      });
-
-      expect(screen.getByText(/Platform Revenue Velocity/i)).toBeInTheDocument();
-      expect(screen.getByText("₹49,990")).toBeInTheDocument();
-      expect(screen.getByText("10")).toBeInTheDocument();
-    });
-
-    it("renders explicit error banner on API failure with retry action", async () => {
-      (godService.getOverview as any).mockRejectedValue(new Error("GOD telemetry endpoint unreachable"));
-      (godService.getOwners as any).mockRejectedValue(new Error("GOD telemetry endpoint unreachable"));
-
-      render(<GodConsole navigate={vi.fn()} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/GOD telemetry endpoint unreachable/i)).toBeInTheDocument();
-      });
-      expect(screen.getByRole("button", { name: /Retry/i })).toBeInTheDocument();
     });
   });
 });

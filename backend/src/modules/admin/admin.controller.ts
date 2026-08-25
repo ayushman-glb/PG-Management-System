@@ -7,10 +7,20 @@ import { AuthRequest } from '../../middleware/authMiddleware';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  getStats = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const stats = await this.adminService.getDashboardStats();
+      return ApiResponse.success(res, 'Admin stats retrieved.', stats);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   listUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { role, query, page, limit } = req.query;
-      const data = await this.adminService.listUsers(role as any, query as string, page ? Number(page) : 1, limit ? Number(limit) : 20);
+      const { role, query, search, page, limit } = req.query;
+      const q = (search || query) as string;
+      const data = await this.adminService.listUsers(role as any, q, page ? Number(page) : 1, limit ? Number(limit) : 20);
       return ApiResponse.success(res, 'Users retrieved.', data.users, {
         total: data.total,
         page: data.page,
@@ -28,6 +38,17 @@ export class AdminController {
       const { isActive, isSuspended } = req.body;
       const user = await this.adminService.setUserStatus(id, Boolean(isActive), Boolean(isSuspended));
       return ApiResponse.success(res, 'User status updated.', user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  suspendUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { isSuspended } = req.body;
+      const user = await this.adminService.setUserStatus(id, !isSuspended, Boolean(isSuspended));
+      return ApiResponse.success(res, 'User suspension status updated.', user);
     } catch (error) {
       next(error);
     }

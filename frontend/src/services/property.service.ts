@@ -1,39 +1,6 @@
-import { env } from "@config/env";
-import type { ApiResponse } from "../types";
-import { authService } from "./auth.service";
+import { api } from "./api";
 
 export class PropertyService {
-  private getToken(): string | null {
-    return authService.getToken();
-  }
-
-  private async request<T = any>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<ApiResponse<T>> {
-    const token = this.getToken();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${env.API_URL}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: "include",
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Property API request failed");
-    }
-    return data;
-  }
-
   async getPublicProperties(params?: {
     city?: string;
     minRent?: number;
@@ -51,30 +18,27 @@ export class PropertyService {
     if (params?.limit) query.append("limit", params.limit.toString());
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    const res = await this.request(`/properties/public${queryString}`);
-    return res.data;
+    const res = await api.get(`/properties/public${queryString}`);
+    return res?.data ?? res;
   }
 
   async getPropertyById(id: string) {
-    const res = await this.request(`/properties/${id}`);
-    return res.data;
+    const res = await api.get(`/properties/${id}`);
+    return res?.data ?? res;
   }
 
   async createProperty(propertyData: any) {
-    const res = await this.request("/properties", {
-      method: "POST",
-      body: JSON.stringify(propertyData),
-    });
-    return res.data;
+    const res = await api.post("/properties", propertyData);
+    return res?.data ?? res;
   }
 
   async getOwnerSummary() {
     try {
-      const res = await this.request("/dashboard/overview");
-      return res.data;
-    } catch (e) {
-      const res = await this.request("/properties/owner-summary");
-      return res.data;
+      const res = await api.get("/dashboard/overview");
+      return res?.data ?? res;
+    } catch {
+      const res = await api.get("/properties/owner-summary");
+      return res?.data ?? res;
     }
   }
 }

@@ -35,17 +35,14 @@ export class BedService {
     });
   }
 
-  async updateBedStatus(bedId: string, ownerId: string, status: BedStatus): Promise<Bed> {
+  async updateBedStatus(bedId: string, status: BedStatus, remarks?: string): Promise<Bed> {
     const bed = await this.db.bed.findUnique({
       where: { id: bedId },
-      include: { pg: true },
     });
 
     if (!bed) throw new NotFoundError('Bed not found.');
-    if (bed.pg.ownerId !== ownerId) throw new ForbiddenError('You do not own this property.');
 
     if (bed.status === BedStatus.OCCUPIED && status === BedStatus.AVAILABLE) {
-      // Clear resident assignment when releasing bed
       return await this.db.bed.update({
         where: { id: bedId },
         data: { status, currentResidentId: null },
@@ -56,5 +53,59 @@ export class BedService {
       where: { id: bedId },
       data: { status },
     });
+  }
+
+  async createBedHold(data: { bedId: string; reason: string; holdStartDate?: string; holdEndDate?: string; notes?: string }) {
+    const bed = await this.db.bed.findUnique({ where: { id: data.bedId } });
+    if (!bed) throw new NotFoundError('Bed not found.');
+
+    await this.db.bed.update({
+      where: { id: data.bedId },
+      data: { status: BedStatus.RESERVED },
+    });
+
+    return {
+      id: `hold_${data.bedId}`,
+      bedId: data.bedId,
+      reason: data.reason,
+      holdStartDate: data.holdStartDate || new Date().toISOString(),
+      holdEndDate: data.holdEndDate || new Date(Date.now() + 7 * 86400000).toISOString(),
+      notes: data.notes,
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  async releaseBedHold(holdIdOrBedId: string) {
+    const bedId = holdIdOrBedId.replace('hold_', '');
+    const bed = await this.db.bed.findUnique({ where: { id: bedId } });
+    if (bed) {
+      await this.db.bed.update({
+        where: { id: bedId },
+        data: { status: BedStatus.AVAILABLE },
+      });
+    }
+    return { success: true, message: 'Bed hold released.' };
+  }
+
+  async getBedHolds(pgId?: string) {
+    const where: any = { status: BedStatus.RESERVED };
+    if (pgId) where.pgId = pgId;
+
+    const beds = await this.db.bed.findMany({
+      where,
+      include: { room: true, pg: true },
+    });
+
+    return beds.map((b) => ({
+      id: `hold_${b.id}`,
+      bedId: b.id,
+      bedNumber: b.bedNumber,
+      roomNumber: b.room.roomNumber,
+      pgName: b.pg.name,
+      reason: 'Temporary Reservation',
+      status: 'ACTIVE',
+      createdAt: b.updatedAt,
+    }));
   }
 }

@@ -84,7 +84,7 @@ export const verifyCsrfTokenSignature = (token: unknown): boolean => {
 /**
  * Express middleware to issue and set CSRF cookie + header.
  */
-export const generateCsrfToken = (req: Request, res: Response, next: NextFunction): void => {
+export const generateCsrfToken = (req: Request, res: Response, next?: NextFunction): string | void => {
   let token = req.cookies?.[CSRF_COOKIE_NAME];
   if (!token || !verifyCsrfTokenSignature(token)) {
     token = createSignedCsrfToken();
@@ -98,7 +98,10 @@ export const generateCsrfToken = (req: Request, res: Response, next: NextFunctio
     });
   }
   res.setHeader(CSRF_HEADER_NAME, token);
-  next();
+  if (typeof next === 'function') {
+    return next();
+  }
+  return token;
 };
 
 /**

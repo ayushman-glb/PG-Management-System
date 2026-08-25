@@ -14,6 +14,10 @@ import { moveInRoutes } from '../modules/moveIn';
 import { notificationRoutes } from '../modules/notifications';
 import { analyticsRoutes } from '../modules/analytics';
 import { adminRoutes } from '../modules/admin';
+import { dashboardRoutes } from '../modules/dashboard';
+import { residentRoutes } from '../modules/residents';
+import { ownerRoutes } from '../modules/owners';
+import { uploadRoutes } from './upload.routes';
 import { env } from '../config/env';
 
 const apiRouter = Router();
@@ -31,6 +35,9 @@ apiRouter.get('/', (req, res) => {
     environment: env.NODE_ENV,
     endpoints: {
       auth: '/api/v1/auth',
+      dashboard: '/api/v1/dashboard',
+      residents: '/api/v1/residents',
+      owners: '/api/v1/owners',
       subscriptions: '/api/v1/subscriptions',
       pgs: '/api/v1/pgs',
       properties: '/api/v1/properties',
@@ -62,10 +69,11 @@ apiRouter.get('/health', (req, res) => {
   });
 });
 
-import { uploadRoutes } from './upload.routes';
-
 // Domain Routes
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
+apiRouter.use('/residents', residentRoutes);
+apiRouter.use('/owners', ownerRoutes);
 apiRouter.use('/subscriptions', subscriptionRoutes);
 apiRouter.use('/pgs', propertyRoutes);
 apiRouter.use('/properties', propertyRoutes);

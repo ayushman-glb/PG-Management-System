@@ -34,7 +34,6 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
 const Landing = lazyWithRetry(() => import("@features/dashboard/pages/Landing"));
 const Dashboard = lazyWithRetry(() => import("@features/dashboard/pages/Dashboard"));
 const AdminConsole = lazyWithRetry(() => import("@features/dashboard/pages/AdminConsole"));
-const GodConsole = lazyWithRetry(() => import("@features/dashboard/pages/GodConsole"));
 const Properties = lazyWithRetry(() => import("@features/properties/pages/Properties"));
 const Residents = lazyWithRetry(() => import("@features/residents/pages/Residents"));
 const Billing = lazyWithRetry(() => import("@features/billing/pages/Billing"));
@@ -59,9 +58,8 @@ interface RoutesProps {
   navigate: (page: Page) => void;
 }
 
-const OWNER_ROLES = ["OWNER", "MANAGER", "STAFF"];
-const ADMIN_ROLES = ["ADMIN", "GOD", "SUPER_ADMIN"];
-const GOD_ROLES = ["GOD", "SUPER_ADMIN"];
+const OWNER_ROLES = ["PG_OWNER"];
+const ADMIN_ROLES = ["ADMIN"];
 const RESIDENT_ROLES = ["RESIDENT"];
 
 export const AppRoutes: React.FC<RoutesProps> = ({ page, navigate }) => {
@@ -107,18 +105,11 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
         </RouteGuard>
       );
     case "admin-console":
+    case "god-console":
       return (
         <RouteGuard>
           <RoleGuard allowedRoles={ADMIN_ROLES}>
             <AdminConsole navigate={navigate} />
-          </RoleGuard>
-        </RouteGuard>
-      );
-    case "god-console":
-      return (
-        <RouteGuard>
-          <RoleGuard allowedRoles={GOD_ROLES}>
-            <GodConsole navigate={navigate} />
           </RoleGuard>
         </RouteGuard>
       );

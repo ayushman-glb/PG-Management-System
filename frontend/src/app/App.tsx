@@ -162,8 +162,6 @@ export default function App() {
             ? "complete-profile"
             : role === "RESIDENT"
             ? "resident-portal"
-            : role === "GOD" || role === "SUPER_ADMIN"
-            ? "god-console"
             : role === "ADMIN"
             ? "admin-console"
             : "dashboard";

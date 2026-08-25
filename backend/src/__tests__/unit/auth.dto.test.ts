@@ -39,13 +39,13 @@ describe('Auth DTO Schemas Unit Tests', () => {
   });
 
   describe('RegisterSchema', () => {
-    test('validates valid OWNER signup payload', () => {
+    test('validates valid PG_OWNER signup payload', () => {
       const result = RegisterSchema.safeParse({
         body: {
           name: 'Jane Owner',
           email: 'owner@roombae.com',
           password: 'SecurePassword123!',
-          role: 'OWNER',
+          role: 'PG_OWNER',
           phone: '+919876543210',
         },
       });

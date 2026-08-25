@@ -318,10 +318,49 @@ export class AuthService {
     return res.data || res;
   }
 
-  async register(data: { name: string; email: string; password: string; role?: string; phone?: string }) {
-    const res = await this.request("/auth/register", {
+  async register(data: {
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
+    phone?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    currentAddress?: string;
+  }) {
+    let visitorId: string | undefined;
+    let deviceLabel: string | undefined;
+    try {
+      const { deviceIdentityProvider } = await import("./deviceIdentity");
+      const identity = await deviceIdentityProvider.getDeviceIdentity();
+      visitorId = identity.visitorId;
+      deviceLabel = identity.deviceLabel;
+    } catch {}
+
+    const nameParts = (data.name || "").trim().split(" ");
+    const firstName = data.firstName || nameParts[0] || "Resident";
+    const lastName = data.lastName || nameParts.slice(1).join(" ") || "User";
+    const username = data.username || data.email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "") + "_" + Math.floor(100 + Math.random() * 900);
+
+    const payload = {
+      ...data,
+      email: data.email.trim(),
+      phone: data.phone || "+919876543210",
+      username,
+      password: data.password,
+      firstName,
+      lastName,
+      currentAddress: data.currentAddress || "Bangalore, India",
+      acceptedTermsVersion: "1.0",
+      acceptedPrivacyVersion: "1.0",
+      visitorId,
+      deviceLabel,
+    };
+
+    const res = await this.request("/auth/register/resident", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     if (res.data?.accessToken) {
       this.setToken(res.data.accessToken, "LOGIN");
@@ -329,7 +368,60 @@ export class AuthService {
     if (res.data?.refreshToken) {
       this.setRefreshToken(res.data.refreshToken, false);
     }
-    return res.data;
+    return res.data || res;
+  }
+
+  async registerOwner(data: {
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email: string;
+    password: string;
+    phone?: string;
+    currentAddress?: string;
+    numPGsToRegister?: number;
+  }) {
+    let visitorId: string | undefined;
+    let deviceLabel: string | undefined;
+    try {
+      const { deviceIdentityProvider } = await import("./deviceIdentity");
+      const identity = await deviceIdentityProvider.getDeviceIdentity();
+      visitorId = identity.visitorId;
+      deviceLabel = identity.deviceLabel;
+    } catch {}
+
+    const nameParts = (data.name || "").trim().split(" ");
+    const firstName = data.firstName || nameParts[0] || "Owner";
+    const lastName = data.lastName || nameParts.slice(1).join(" ") || "User";
+    const username = data.username || data.email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "") + "_" + Math.floor(100 + Math.random() * 900);
+
+    const payload = {
+      email: data.email.trim(),
+      phone: data.phone || "+919876543210",
+      username,
+      password: data.password,
+      firstName,
+      lastName,
+      currentAddress: data.currentAddress || "Bangalore, India",
+      numPGsToRegister: data.numPGsToRegister || 1,
+      acceptedTermsVersion: "1.0",
+      acceptedPrivacyVersion: "1.0",
+      visitorId,
+      deviceLabel,
+    };
+
+    const res = await this.request("/auth/register/owner", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.data?.accessToken) {
+      this.setToken(res.data.accessToken, "LOGIN");
+    }
+    if (res.data?.refreshToken) {
+      this.setRefreshToken(res.data.refreshToken, false);
+    }
+    return res.data || res;
   }
 
   async sendOtp(email: string) {

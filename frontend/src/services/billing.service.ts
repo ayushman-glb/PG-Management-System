@@ -1,5 +1,5 @@
 import { env } from "@config/env";
-import type { ApiResponse } from "../types";
+import { api } from "./api";
 import { authService } from "./auth.service";
 
 export interface CreateOrderParams {
@@ -44,40 +44,9 @@ export interface VerifiedPaymentResult {
 }
 
 export class BillingService {
-  private getToken(): string | null {
-    return authService.getToken();
-  }
-
-  private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const token = this.getToken();
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${env.API_URL}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: "include",
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Billing API request failed");
-    }
-    return data;
-  }
-
   async createBillingOrder(residentId: string, baseAmount: number, details?: Partial<CreateOrderParams>): Promise<PaymentOrderData> {
-    const res = await this.request<PaymentOrderData>("/payments/create-order", {
-      method: "POST",
-      body: JSON.stringify({ residentId, baseAmount, ...details }),
-    });
-    return res.data;
+    const res = await api.post<PaymentOrderData>("/payments/create-order", { residentId, baseAmount, ...details });
+    return (res as any)?.data ?? res;
   }
 
   async verifyPayment(
@@ -86,11 +55,13 @@ export class BillingService {
     razorpayPaymentId: string,
     razorpaySignature: string
   ): Promise<VerifiedPaymentResult> {
-    const res = await this.request<VerifiedPaymentResult>("/payments/verify", {
-      method: "POST",
-      body: JSON.stringify({ paymentId, razorpayOrderId, razorpayPaymentId, razorpaySignature }),
+    const res = await api.post<VerifiedPaymentResult>("/payments/verify", {
+      paymentId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
     });
-    return res.data;
+    return (res as any)?.data ?? res;
   }
 
   async getInvoices(params: { status?: string; pgId?: string; page?: number; limit?: number } = {}) {
@@ -100,18 +71,18 @@ export class BillingService {
     if (params.page) query.set("page", String(params.page));
     if (params.limit) query.set("limit", String(params.limit));
 
-    const res = await this.request(`/billing/invoices?${query.toString()}`);
-    return res.data;
+    const res = await api.get(`/billing/invoices?${query.toString()}`);
+    return res?.data ?? res;
   }
 
   async getInvoiceById(id: string) {
-    const res = await this.request(`/billing/invoices/${id}`);
-    return res.data;
+    const res = await api.get(`/billing/invoices/${id}`);
+    return res?.data ?? res;
   }
 
   async getUserDues(userId: string) {
-    const res = await this.request(`/billing/dues/${userId}`);
-    return res.data;
+    const res = await api.get(`/billing/dues/${userId}`);
+    return res?.data ?? res;
   }
 
   async getPaymentHistory(params: {
@@ -132,8 +103,8 @@ export class BillingService {
     if (params.page) query.set("page", String(params.page));
     if (params.limit) query.set("limit", String(params.limit));
 
-    const res = await this.request(`/payments/history?${query.toString()}`);
-    return res.data;
+    const res = await api.get(`/payments/history?${query.toString()}`);
+    return res?.data ?? res;
   }
 
   async getPaymentAnalytics(ownerId?: string, pgId?: string) {
@@ -141,25 +112,22 @@ export class BillingService {
     if (ownerId) query.set("ownerId", ownerId);
     if (pgId) query.set("pgId", pgId);
 
-    const res = await this.request(`/analytics/owner?${query.toString()}`);
-    return res.data;
+    const res = await api.get(`/analytics/owner?${query.toString()}`);
+    return res?.data ?? res;
   }
 
   async getPaymentById(paymentId: string) {
-    const res = await this.request(`/payments/${paymentId}`);
-    return res.data;
+    const res = await api.get(`/payments/${paymentId}`);
+    return res?.data ?? res;
   }
 
   async processRefund(paymentId: string, amount?: number, reason?: string) {
-    const res = await this.request(`/payments/${paymentId}/refund`, {
-      method: "POST",
-      body: JSON.stringify({ amount, reason }),
-    });
-    return res.data;
+    const res = await api.post(`/payments/${paymentId}/refund`, { amount, reason });
+    return res?.data ?? res;
   }
 
   async sendReceiptEmail(_paymentId: string, _email?: string) {
-    return { success: true, message: 'Receipt dispatched' };
+    return { success: true, message: "Receipt dispatched" };
   }
 
   getInvoicePdfUrl(invoiceId: string) {
@@ -172,7 +140,7 @@ export class BillingService {
 
   getExportCsvUrl(params: Record<string, string> = {}) {
     const query = new URLSearchParams(params);
-    const token = this.getToken();
+    const token = authService.getToken();
     if (token) query.set("token", token);
     return `${env.API_URL}/payments/history?format=csv&${query.toString()}`;
   }
