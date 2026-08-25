@@ -63,7 +63,7 @@ export class AgreementController {
     try {
       if (!req.user?.id) throw new BadRequestError('User context missing.');
       const { id } = req.params;
-      const { signatureType, signatureData } = req.body;
+      const { signatureType, signatureData, consent, override } = req.body;
       if (!signatureType || !signatureData) {
         throw new BadRequestError('signatureType (DRAWN/TYPED/UPLOADED) and signatureData are required.');
       }
@@ -71,6 +71,8 @@ export class AgreementController {
       const updated = await this.agreementService.signAgreement(id, req.user.id, {
         signatureType,
         signatureData,
+        consent,
+        override,
         ipAddress: req.ip,
       });
 

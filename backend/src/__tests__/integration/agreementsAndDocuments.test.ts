@@ -94,7 +94,7 @@ describe('Agreements, Digital Signatures & Document Vault Integration Suite', ()
       expect(updated.documentHash).toBeDefined();
     });
 
-    it('Resident cannot duplicate signature on the same agreement', async () => {
+    it('Resident cannot duplicate signature on the same agreement without override flag', async () => {
       if (!createdAgreement || !residentUser) return;
 
       await expect(
@@ -104,6 +104,22 @@ describe('Agreements, Digital Signatures & Document Vault Integration Suite', ()
           consent: true,
         })
       ).rejects.toThrow('You have already digitally signed this agreement.');
+    });
+
+    it('Resident CAN override previous signature when override flag is set to true', async () => {
+      if (!createdAgreement || !residentUser) return;
+
+      const overridden = await agreementService.signAgreement(createdAgreement.id, residentUser.id, {
+        signatureType: 'DRAWN',
+        signatureData: 'data:image/png;base64,overriddenNewSignature',
+        consent: true,
+        override: true,
+      });
+
+      expect(overridden.status).toBe(AgreementStatus.SIGNED_BY_RESIDENT);
+      expect(overridden.signatures.length).toBe(1);
+      expect(overridden.signatures[0].signatureType).toBe('DRAWN');
+      expect(overridden.documentHash).toBeDefined();
     });
 
     it('Owner signs agreement -> status transitions to COMPLETED', async () => {

@@ -28,6 +28,7 @@ export interface SignAgreementDTO {
   signatureType: SignatureType;
   signatureData: string;
   consent?: boolean;
+  override?: boolean;
 }
 
 export interface AgreementVerificationDTO {
@@ -71,4 +72,5 @@ export const SignAgreementSchema = z.object({
   signatureType: z.enum(['DRAWN', 'TYPED', 'UPLOADED']),
   signatureData: z.string().min(1, 'Signature data is required'),
   consent: z.boolean().optional(),
+  override: z.boolean().optional(),
 });

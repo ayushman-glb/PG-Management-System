@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ShieldCheck, CheckCircle2, PenTool, AlertTriangle } from "lucide-react";
+import { X, Download, ShieldCheck, CheckCircle2, PenTool, AlertTriangle, RefreshCw, Ban } from "lucide-react";
 import { SignatureCanvas } from "@components/SignatureCanvas";
+import { DownloadPermissionModal } from "@components/DownloadPermissionModal";
 import { useTheme } from "@theme/index";
 import { agreementService } from "@services/agreement.service";
 import { useDocumentDownload } from "@hooks/useDocumentDownload";
@@ -20,6 +21,9 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 }) => {
   const [showSignPad, setShowSignPad] = useState(false);
   const [signerRole, setSignerRole] = useState<"RESIDENT" | "OWNER">("RESIDENT");
+  const [isOverrideMode, setIsOverrideMode] = useState(false);
+  const [showResignPrompt, setShowResignPrompt] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
   const { darkMode } = useTheme();
@@ -36,16 +40,16 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   if (!agreement) return null;
 
   const residentName = agreement.resident?.profile
-    ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`.trim()
+    ? `${agreement.resident.profile.firstName || ''} ${agreement.resident.profile.lastName || ''}`.trim() || agreement.resident?.name || agreement.resident?.username || "Resident"
     : agreement.resident?.name || agreement.resident?.username || "Resident";
 
   const ownerName = agreement.owner?.profile
-    ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`.trim()
+    ? `${agreement.owner.profile.firstName || ''} ${agreement.owner.profile.lastName || ''}`.trim() || agreement.owner?.name || agreement.owner?.username || "Property Owner"
     : agreement.owner?.name || agreement.owner?.username || "Property Owner";
 
   const propertyName = agreement.pg?.name || "RoomBae PG Property";
   const propertyAddress = agreement.pg?.location
-    ? `${agreement.pg.location.address}, ${agreement.pg.location.city} - ${agreement.pg.location.pincode}`
+    ? `${agreement.pg.location.address || ''}, ${agreement.pg.location.city || ''} - ${agreement.pg.location.pincode || ''}`
     : agreement.pg?.address || "Bengaluru, Karnataka";
 
   const roomNumber = agreement.allocation?.room?.roomNumber || agreement.roomNumber || agreement.room?.roomNumber || "—";
@@ -54,6 +58,38 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   const rentAmount = Number(agreement.rentAmount || 0);
   const depositAmount = Number(agreement.depositAmount || 0);
+
+  const hasResidentSignature = agreement.signatures?.some(
+    (s: any) => s.signerRole === "RESIDENT" || s.signerType === "RESIDENT"
+  );
+  const hasOwnerSignature = agreement.signatures?.some(
+    (s: any) => s.signerRole === "PG_OWNER" || s.signerType === "OWNER"
+  );
+
+  const handleInitiateSign = (role: "RESIDENT" | "OWNER") => {
+    setSignerRole(role);
+    setSignError(null);
+
+    const alreadySigned = role === "RESIDENT" ? hasResidentSignature : hasOwnerSignature;
+    if (alreadySigned) {
+      setShowResignPrompt(true);
+    } else {
+      setIsOverrideMode(false);
+      setShowSignPad(true);
+    }
+  };
+
+  const handleConfirmOverride = () => {
+    setShowResignPrompt(false);
+    setIsOverrideMode(true);
+    setShowSignPad(true);
+  };
+
+  const handleDiscardResign = () => {
+    setShowResignPrompt(false);
+    setIsOverrideMode(false);
+    setSignError(null);
+  };
 
   const handleSaveSignature = async (payload: {
     signatureType: SignatureType;
@@ -68,16 +104,32 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
         signatureType: payload.signatureType,
         signatureData: payload.signatureData,
         consent: payload.consent,
+        override: isOverrideMode,
       });
 
       onSignComplete?.(updated);
       setShowSignPad(false);
+      setIsOverrideMode(false);
     } catch (e: any) {
       console.error("Signature signing error:", e);
-      setSignError(e.message || "Failed to submit digital signature. Please try again.");
+      if (e.message?.includes("already digitally signed")) {
+        setShowSignPad(false);
+        setShowResignPrompt(true);
+      } else {
+        setSignError(e.message || "Failed to submit digital signature. Please try again.");
+      }
     } finally {
       setIsSigning(false);
     }
+  };
+
+  const handleConfirmDownload = async () => {
+    setShowDownloadModal(false);
+    await download({
+      entityId: agreement.id,
+      documentType: 'SIGNED_AGREEMENT',
+      fileName: `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`,
+    });
   };
 
   const modalBg = darkMode
@@ -96,12 +148,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
   const accentText = darkMode ? "text-amber-400" : "text-[#C58B63]";
 
-  const hasResidentSignature = agreement.signatures?.some(
-    (s: any) => s.signerRole === "RESIDENT" || s.signerType === "RESIDENT"
-  );
-  const hasOwnerSignature = agreement.signatures?.some(
-    (s: any) => s.signerRole === "PG_OWNER" || s.signerType === "OWNER"
-  );
+  const agreementFileName = `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`;
 
   return (
     <AnimatePresence>
@@ -151,13 +198,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                 <button
                   type="button"
                   disabled={isDownloading(agreement.id, 'SIGNED_AGREEMENT')}
-                  onClick={() =>
-                    download({
-                      entityId: agreement.id,
-                      documentType: 'SIGNED_AGREEMENT',
-                      fileName: `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`,
-                    })
-                  }
+                  onClick={() => setShowDownloadModal(true)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
                     darkMode
                       ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
@@ -302,39 +343,79 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                 {!showSignPad && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        setSignerRole("RESIDENT");
-                        setShowSignPad(true);
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/30 cursor-pointer"
+                      onClick={() => handleInitiateSign("RESIDENT")}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/30 cursor-pointer transition-colors"
                     >
-                      Sign as Resident ✍️
+                      {hasResidentSignature ? "Re-Sign as Resident ✍️" : "Sign as Resident ✍️"}
                     </button>
                     <button
-                      onClick={() => {
-                        setSignerRole("OWNER");
-                        setShowSignPad(true);
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold hover:bg-blue-500/30 cursor-pointer"
+                      onClick={() => handleInitiateSign("OWNER")}
+                      className="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold hover:bg-blue-500/30 cursor-pointer transition-colors"
                     >
-                      Sign as Owner ✍️
+                      {hasOwnerSignature ? "Re-Sign as Owner ✍️" : "Sign as Owner ✍️"}
                     </button>
                   </div>
                 )}
               </div>
 
+              {/* Re-signing options modal / prompt */}
+              {showResignPrompt && (
+                <div
+                  className={`p-4 rounded-2xl border space-y-3 ${
+                    darkMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[#FDF3EB] border-[#D9A87C]'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-500">Signature Already Registered</p>
+                      <p className={`text-[11px] mt-1 leading-relaxed ${darkMode ? 'text-neutral-300' : 'text-[#54423A]'}`}>
+                        You have already digitally signed this lease agreement. How would you like to proceed?
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleConfirmOverride}
+                      className="py-1.5 px-3 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs flex items-center gap-1.5 hover:bg-amber-400 cursor-pointer transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Option 1: Override Previous Signature
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardResign}
+                      className={`py-1.5 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+                        darkMode
+                          ? 'border-white/10 hover:bg-white/10 text-neutral-300'
+                          : 'border-[#E6D7CA] bg-white text-[#6E5A52] hover:bg-neutral-50'
+                      }`}
+                    >
+                      <Ban className="w-3.5 h-3.5 text-red-400" />
+                      Option 2: Discard Recent Sign &amp; Keep Existing
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {showSignPad ? (
                 <div className="space-y-2">
                   {isSigning && (
-                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
-                      Applying electronic signature and computing document hash...
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold flex items-center gap-2">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      Applying electronic signature ({isOverrideMode ? 'Overriding' : 'Registering'}) and computing document hash...
                     </div>
                   )}
                   <SignatureCanvas
                     signerName={signerRole === "RESIDENT" ? residentName : ownerName}
                     signerType={signerRole}
                     onSaveSignature={handleSaveSignature}
-                    onCancel={() => setShowSignPad(false)}
+                    onCancel={() => {
+                      setShowSignPad(false);
+                      setIsOverrideMode(false);
+                    }}
                   />
                 </div>
               ) : (
@@ -384,6 +465,17 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
           </div>
         </motion.div>
       </div>
+
+      {/* Storage & Download Permission Modal */}
+      <DownloadPermissionModal
+        isOpen={showDownloadModal}
+        fileName={agreementFileName}
+        documentTitle={`Model Lease Agreement — ${agreement.agreementNumber || 'RMB-AGR'}`}
+        documentType="Adobe PDF (.pdf)"
+        isDownloading={isDownloading(agreement.id, 'SIGNED_AGREEMENT')}
+        onConfirm={handleConfirmDownload}
+        onDeny={() => setShowDownloadModal(false)}
+      />
     </AnimatePresence>
   );
 };

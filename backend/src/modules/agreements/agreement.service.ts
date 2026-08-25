@@ -209,7 +209,17 @@ export class AgreementService {
     // Check if already signed by this party
     const alreadySigned = agreement.signatures.some((s) => s.signerId === signerId || s.signerRole === signerRole);
     if (alreadySigned) {
-      throw new BadRequestError('You have already digitally signed this agreement.');
+      if (data.override === true) {
+        // Remove existing signature for this signer to allow re-signing with updated data
+        await this.db.digitalSignature.deleteMany({
+          where: {
+            agreementId,
+            signerRole,
+          },
+        });
+      } else {
+        throw new BadRequestError('You have already digitally signed this agreement.');
+      }
     }
 
     // Save signature
@@ -269,11 +279,11 @@ export class AgreementService {
       data: {
         actorId: signerId,
         actorRole: signerRole,
-        action: 'AGREEMENT_DIGITALLY_SIGNED',
+        action: data.override ? 'AGREEMENT_SIGNATURE_OVERRIDDEN' : 'AGREEMENT_DIGITALLY_SIGNED',
         resource: 'Agreement',
         resourceId: agreementId,
         ipAddress: data.ipAddress,
-        newState: JSON.stringify({ status: nextStatus, signerRole, documentHash }),
+        newState: JSON.stringify({ status: nextStatus, signerRole, documentHash, overridden: !!data.override }),
       },
     });
 
@@ -295,22 +305,22 @@ export class AgreementService {
       throw new NotFoundError('Agreement not found for the provided verification code.');
     }
 
-    const residentName = agreement.resident.profile
-      ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`
-      : agreement.resident.username;
+    const residentName = agreement.resident?.profile
+      ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`.trim()
+      : agreement.resident?.username || 'Resident';
 
-    const ownerName = agreement.owner.profile
-      ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`
-      : agreement.owner.username;
+    const ownerName = agreement.owner?.profile
+      ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`.trim()
+      : agreement.owner?.username || 'Property Owner';
 
-    const propertyAddress = agreement.pg.location
+    const propertyAddress = agreement.pg?.location
       ? `${agreement.pg.location.address}, ${agreement.pg.location.city} - ${agreement.pg.location.pincode}`
       : null;
 
     return {
       agreementNumber: agreement.agreementNumber,
       status: agreement.status,
-      propertyName: agreement.pg.name,
+      propertyName: agreement.pg?.name || 'RoomBae Property',
       propertyAddress,
       residentName,
       ownerName,
@@ -318,8 +328,8 @@ export class AgreementService {
       endDate: agreement.endDate,
       monthlyRent: agreement.rentAmount,
       securityDeposit: agreement.depositAmount,
-      signaturesCount: agreement.signatures.length,
-      signatures: agreement.signatures.map((s) => ({
+      signaturesCount: (agreement.signatures || []).length,
+      signatures: (agreement.signatures || []).map((s) => ({
         role: s.signerRole,
         signedAt: s.signedAt,
         type: s.signatureType,
@@ -345,13 +355,13 @@ export class AgreementService {
 
     if (!agreement) throw new NotFoundError('Agreement not found.');
 
-    const residentName = agreement.resident.profile
-      ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`.trim()
-      : agreement.resident.username;
+    const residentName = agreement.resident?.profile
+      ? `${agreement.resident.profile.firstName || ''} ${agreement.resident.profile.lastName || ''}`.trim() || agreement.resident?.username || 'Resident'
+      : agreement.resident?.username || 'Resident';
 
-    const ownerName = agreement.owner.profile
-      ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`.trim()
-      : agreement.owner.username;
+    const ownerName = agreement.owner?.profile
+      ? `${agreement.owner.profile.firstName || ''} ${agreement.owner.profile.lastName || ''}`.trim() || agreement.owner?.username || 'Property Owner'
+      : agreement.owner?.username || 'Property Owner';
 
     const frontendVerifyUrl = `${env.CLIENT_URL || env.FRONTEND_URL}/verify-agreement?num=${agreement.agreementNumber}`;
     let qrCodeDataUrl: string | null = null;
@@ -362,7 +372,7 @@ export class AgreementService {
     }
 
     const pgAddress = agreement.pg?.location
-      ? `${agreement.pg.location.address}, ${agreement.pg.location.city}${agreement.pg.location.state ? ', ' + agreement.pg.location.state : ''}${agreement.pg.location.pincode ? ' - ' + agreement.pg.location.pincode : ''}`
+      ? `${agreement.pg.location.address || ''}, ${agreement.pg.location.city || ''}${agreement.pg.location.state ? ', ' + agreement.pg.location.state : ''}${agreement.pg.location.pincode ? ' - ' + agreement.pg.location.pincode : ''}`.trim()
       : undefined;
 
     const html = renderAgreementHtml({
@@ -372,12 +382,12 @@ export class AgreementService {
       endDate: agreement.endDate,
       version: agreement.version,
       ownerName,
-      ownerEmail: agreement.owner.email,
-      ownerPhone: agreement.owner.phone || undefined,
+      ownerEmail: agreement.owner?.email || 'owner@roombae.com',
+      ownerPhone: agreement.owner?.phone || undefined,
       residentName,
-      residentEmail: agreement.resident.email,
-      residentPhone: agreement.resident.phone || undefined,
-      pgName: agreement.pg.name,
+      residentEmail: agreement.resident?.email || 'resident@roombae.com',
+      residentPhone: agreement.resident?.phone || undefined,
+      pgName: agreement.pg?.name || 'RoomBae Co-Living PG',
       pgAddress,
       floorNumber: agreement.allocation?.floor?.floorNumber,
       roomNumber: agreement.allocation?.room?.roomNumber,
@@ -387,7 +397,7 @@ export class AgreementService {
       depositAmount: agreement.depositAmount,
       lockInPeriodMonths: agreement.lockInPeriodMonths,
       noticePeriodDays: agreement.noticePeriodDays,
-      signatures: agreement.signatures.map((sig) => ({
+      signatures: (agreement.signatures || []).map((sig) => ({
         signerRole: sig.signerRole,
         signatureType: sig.signatureType,
         signedAt: sig.signedAt,
@@ -400,7 +410,7 @@ export class AgreementService {
 
     const pdfBuffer = await PdfBrowserManager.generatePdfFromHtml(html);
 
-    // Record in PDFDocument collection
+    // Record in PDFDocument collection safely
     try {
       await this.db.pDFDocument.create({
         data: {

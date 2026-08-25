@@ -51,6 +51,7 @@ export class AgreementService {
       signatureType: SignatureType;
       signatureData: string;
       consent?: boolean;
+      override?: boolean;
     }
   ): Promise<Agreement> {
     return api.post<Agreement>(`/agreements/${id}/sign`, payload);

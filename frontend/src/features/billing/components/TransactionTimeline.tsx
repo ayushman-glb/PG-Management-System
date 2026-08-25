@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Download, FileText, CheckCircle2, Clock, RotateCcw, AlertTriangle } from "lucide-react";
+import { DownloadPermissionModal } from "../../../components/DownloadPermissionModal";
 import { useTheme } from "../../../theme";
-import { useDocumentDownload } from "../../../hooks/useDocumentDownload";
+import { useDocumentDownload, DocumentType } from "../../../hooks/useDocumentDownload";
 
 export interface TransactionItem {
   id: string;
@@ -29,6 +30,12 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
 }) => {
   const { darkMode } = useTheme();
   const [filter, setFilter] = useState<"ALL" | "PAID" | "PENDING" | "REFUNDED">("ALL");
+  const [pendingDownload, setPendingDownload] = useState<{
+    entityId: string;
+    documentType: DocumentType;
+    fileName: string;
+    documentTitle: string;
+  } | null>(null);
   const { download, isDownloading, getError } = useDocumentDownload();
 
   const cardBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
@@ -147,10 +154,11 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                           <button
                             type="button"
                             disabled={isDownloading(invoiceTargetId, 'INVOICE')}
-                            onClick={() => download({
+                            onClick={() => setPendingDownload({
                               entityId: invoiceTargetId,
                               documentType: 'INVOICE',
                               fileName: `RoomBae-Invoice-${item.invoiceNumber || invoiceTargetId}.pdf`,
+                              documentTitle: `GST Invoice #${item.invoiceNumber || invoiceTargetId}`,
                             })}
                             title="Download GST Invoice (PDF)"
                             className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
@@ -173,10 +181,11 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                           <button
                             type="button"
                             disabled={isDownloading(item.id, 'PAYMENT_RECEIPT')}
-                            onClick={() => download({
+                            onClick={() => setPendingDownload({
                               entityId: item.id,
                               documentType: 'PAYMENT_RECEIPT',
                               fileName: `RoomBae-Receipt-${item.invoiceNumber || item.id}.pdf`,
+                              documentTitle: `Payment Receipt #${item.invoiceNumber || item.id}`,
                             })}
                             title="Download Payment Receipt"
                             className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
@@ -212,6 +221,27 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
           })
         )}
       </div>
+
+      {/* Storage Download Permission Modal */}
+      {pendingDownload && (
+        <DownloadPermissionModal
+          isOpen={!!pendingDownload}
+          fileName={pendingDownload.fileName}
+          documentTitle={pendingDownload.documentTitle}
+          documentType="Adobe PDF (.pdf)"
+          isDownloading={isDownloading(pendingDownload.entityId, pendingDownload.documentType)}
+          onConfirm={async () => {
+            const dl = pendingDownload;
+            setPendingDownload(null);
+            await download({
+              entityId: dl.entityId,
+              documentType: dl.documentType,
+              fileName: dl.fileName,
+            });
+          }}
+          onDeny={() => setPendingDownload(null)}
+        />
+      )}
     </div>
   );
 };

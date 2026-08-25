@@ -26,7 +26,22 @@ export class PdfBrowserManager {
     this.isLaunching = true;
     try {
       console.log('🚀 [PdfBrowserManager] Launching shared Puppeteer Chromium instance...');
-      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+      let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+
+      // Ensure configured executablePath actually exists on host filesystem
+      if (executablePath) {
+        try {
+          const fs = require('fs');
+          if (!fs.existsSync(executablePath)) {
+            console.warn(
+              `⚠️ [PdfBrowserManager] Configured PUPPETEER_EXECUTABLE_PATH '${executablePath}' not found on disk. Falling back to bundled Chrome.`
+            );
+            executablePath = undefined;
+          }
+        } catch {
+          executablePath = undefined;
+        }
+      }
 
       const browser = await puppeteer.launch({
         headless: true,
@@ -36,6 +51,7 @@ export class PdfBrowserManager {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--no-zygote',
           '--font-render-hinting=medium',
         ],
       });
