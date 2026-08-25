@@ -751,14 +751,14 @@ export default function Auth({ navigate }: Props) {
                           type="button"
                           onClick={() => {
                             if (loginRole === "owner") {
-                              setLoginIdentifier("ayushmansaha917@gmail.com");
-                              setLoginPassword("123456");
+                              setLoginIdentifier("33200122040@tib.edu.in");
+                              setLoginPassword("Ayush@#123");
                             } else if (loginRole === "resident") {
                               setLoginIdentifier("ankursaha985@gmail.com");
-                              setLoginPassword("654123");
+                              setLoginPassword("Ankur@#123");
                             } else if (loginRole === "admin") {
-                              setLoginIdentifier("ayushman@globussoft.in");
-                              setLoginPassword("987456");
+                              setLoginIdentifier("33200122040@tib.edu.in");
+                              setLoginPassword("god@3456");
                             }
                           }}
                           className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
