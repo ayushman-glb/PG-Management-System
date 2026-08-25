@@ -1,8 +1,9 @@
-import puppeteer, { Browser, PDFOptions } from 'puppeteer';
+import puppeteer, { Browser, PDFOptions } from 'puppeteer-core';
 
 /**
  * Production-Grade Puppeteer Browser Lifecycle Manager.
  * Reuses a single headless Chromium instance across PDF generation requests with auto-restart on crash.
+ * Uses @sparticuz/chromium for pre-compiled serverless/Render Chromium binary resolution.
  */
 export class PdfBrowserManager {
   private static browserInstance: Browser | null = null;
@@ -26,34 +27,62 @@ export class PdfBrowserManager {
     this.isLaunching = true;
     try {
       console.log('🚀 [PdfBrowserManager] Launching shared Puppeteer Chromium instance...');
-      let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
 
-      // Ensure configured executablePath actually exists on host filesystem
-      if (executablePath) {
+      let chromium: any = null;
+      try {
+        const mod = await import('@sparticuz/chromium');
+        chromium = mod.default || mod;
+      } catch (e) {
+        console.warn('⚠️ [PdfBrowserManager] @sparticuz/chromium not loaded via dynamic import, falling back to local runner.');
+      }
+
+      let executablePath: string | undefined;
+      const args: string[] = chromium?.args || [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-zygote',
+      ];
+      const headless: boolean | 'shell' = typeof chromium?.headless !== 'undefined' ? chromium.headless : true;
+
+      if (process.platform === 'linux' && chromium) {
+        executablePath = await chromium.executablePath();
+      } else {
+        // On Windows / macOS local development:
         try {
-          const fs = require('fs');
-          if (!fs.existsSync(executablePath)) {
-            console.warn(
-              `⚠️ [PdfBrowserManager] Configured PUPPETEER_EXECUTABLE_PATH '${executablePath}' not found on disk. Falling back to bundled Chrome.`
-            );
-            executablePath = undefined;
-          }
+          const fullPuppeteer = require('puppeteer');
+          const localBrowser = await fullPuppeteer.launch({
+            headless: true,
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-gpu',
+              '--no-zygote',
+              '--font-render-hinting=medium',
+            ],
+          });
+
+          localBrowser.on('disconnected', () => {
+            console.warn('⚠️ [PdfBrowserManager] Puppeteer browser disconnected.');
+            this.browserInstance = null;
+          });
+
+          this.browserInstance = localBrowser;
+          console.log('✅ [PdfBrowserManager] Puppeteer Chromium instance ready (local dev).');
+          return localBrowser;
         } catch {
-          executablePath = undefined;
+          if (chromium) {
+            executablePath = await chromium.executablePath();
+          }
         }
       }
 
       const browser = await puppeteer.launch({
-        headless: true,
+        args,
         executablePath,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-zygote',
-          '--font-render-hinting=medium',
-        ],
+        headless,
       });
 
       browser.on('disconnected', () => {

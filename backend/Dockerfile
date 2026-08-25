@@ -29,9 +29,7 @@ RUN apk add --no-cache \
     ca-certificates \
     ttf-freefont
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    NODE_ENV=production \
+ENV NODE_ENV=production \
     PORT=5000
 
 RUN addgroup -g 1001 -S nodejs && \

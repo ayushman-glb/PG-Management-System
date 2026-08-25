@@ -101,8 +101,48 @@ export class AgreementController {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=agreement_${id}.pdf`);
       return res.send(pdfBuffer);
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      const correlationId = req.headers['x-correlation-id'] || req.headers['x-request-id'] || 'N/A';
+      console.error(
+        `[AgreementController:downloadPDF] [correlationId: ${correlationId}] ${req.method} ${req.originalUrl} - Error:`,
+        error
+      );
+
+      const errorMsg = error?.message || '';
+      if (
+        errorMsg.includes('Could not find Chrome') ||
+        errorMsg.includes('PDF Engine Initialization') ||
+        errorMsg.includes('Chromium') ||
+        errorMsg.includes('ENOENT')
+      ) {
+        return res.status(503).json({
+          success: false,
+          error: 'PDF service temporarily unavailable. Please try again shortly.',
+          code: 'PDF_ENGINE_UNAVAILABLE',
+        });
+      }
+
+      if (error.statusCode === 404 || error.name === 'NotFoundError') {
+        return res.status(404).json({
+          success: false,
+          error: error.message || 'Agreement not found.',
+          code: 'AGREEMENT_NOT_FOUND',
+        });
+      }
+
+      if (error.statusCode === 403 || error.name === 'ForbiddenError') {
+        return res.status(403).json({
+          success: false,
+          error: error.message || 'Access denied.',
+          code: 'FORBIDDEN',
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to generate PDF',
+        code: 'PDF_GENERATION_FAILED',
+      });
     }
   };
 }

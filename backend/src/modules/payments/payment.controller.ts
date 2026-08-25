@@ -108,7 +108,27 @@ export class PaymentController {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=receipt_${id}.pdf`);
       return res.send(pdfBuffer);
-    } catch (error) {
+    } catch (error: any) {
+      const correlationId = req.headers['x-correlation-id'] || req.headers['x-request-id'] || 'N/A';
+      console.error(
+        `[PaymentController:downloadReceipt] [correlationId: ${correlationId}] ${req.method} ${req.originalUrl} - Error:`,
+        error
+      );
+
+      const errorMsg = error?.message || '';
+      if (
+        errorMsg.includes('Could not find Chrome') ||
+        errorMsg.includes('PDF Engine Initialization') ||
+        errorMsg.includes('Chromium') ||
+        errorMsg.includes('ENOENT')
+      ) {
+        return res.status(503).json({
+          success: false,
+          error: 'PDF service temporarily unavailable. Please try again shortly.',
+          code: 'PDF_ENGINE_UNAVAILABLE',
+        });
+      }
+
       next(error);
     }
   };
