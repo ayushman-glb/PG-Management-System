@@ -66,4 +66,18 @@ export class BillingController {
       next(error);
     }
   };
+
+  downloadInvoicePdf = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { id } = req.params;
+      const pdfBuffer = await this.billingService.generateInvoicePDF(id, req.user.id, req.user.role);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice_${id}.pdf`);
+      return res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

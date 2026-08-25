@@ -238,21 +238,59 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({ resi
               </div>
             )}
 
+            {activeTab === "agreement" && (
+              <div className="space-y-4">
+                {resident.residentAgreements?.[0] || resident.agreement ? (
+                  (() => {
+                    const agr = resident.residentAgreements?.[0] || resident.agreement;
+                    return (
+                      <div className="p-5 rounded-2xl bg-neutral-900/60 border border-white/10 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="text-sm font-bold text-white">{agr.agreementNumber}</h4>
+                            <p className="text-xs text-neutral-400">Status: <span className="text-amber-400 font-semibold">{agr.status}</span></p>
+                          </div>
+                          <a
+                            href={`/api/v1/agreements/${agr.id}/pdf`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-4 py-2 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400"
+                          >
+                            Download PDF
+                          </a>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-xs text-neutral-300">
+                          <p><span className="text-neutral-500">Monthly Rent:</span> ₹{Number(agr.rentAmount || 0).toLocaleString('en-IN')}</p>
+                          <p><span className="text-neutral-500">Deposit:</span> ₹{Number(agr.depositAmount || 0).toLocaleString('en-IN')}</p>
+                          <p><span className="text-neutral-500">Lock-in Period:</span> {agr.lockInPeriodMonths || 3} Months</p>
+                          <p><span className="text-neutral-500">Notice Period:</span> {agr.noticePeriodDays || 30} Days</p>
+                          <p><span className="text-neutral-500">Start Date:</span> {new Date(agr.startDate).toLocaleDateString('en-IN')}</p>
+                          <p><span className="text-neutral-500">End Date:</span> {new Date(agr.endDate).toLocaleDateString('en-IN')}</p>
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-neutral-400 text-sm">No active lease agreement on file for this resident.</p>
+                )}
+              </div>
+            )}
+
             {activeTab === "payments" && (
               <div className="space-y-3">
-                {(resident.payments || []).map((p: any) => (
+                {(resident.payments || resident.invoices || []).map((p: any) => (
                   <div key={p.id || p.inv} className="p-4 rounded-xl bg-neutral-900 border border-white/10 flex justify-between items-center">
                     <div>
                       <p className="text-sm font-bold text-white">{p.invoiceNumber || p.inv}</p>
-                      <p className="text-xs text-neutral-400">Paid on {p.paymentDate || p.date}</p>
+                      <p className="text-xs text-neutral-400">Period: {p.billingMonth ? `${p.billingMonth}/${p.billingYear}` : (p.paymentDate || p.date)}</p>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-extrabold text-emerald-400">₹{p.totalAmount || p.amount}</span>
+                      <span className="text-sm font-extrabold text-emerald-400">₹{Number(p.totalAmount || p.amount || 0).toLocaleString('en-IN')}</span>
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">{p.status || "PAID"}</span>
                     </div>
                   </div>
                 ))}
-                {(!resident.payments || resident.payments.length === 0) && (
+                {(!resident.payments && !resident.invoices) && (
                   <p className="text-neutral-400 text-sm">No payment records found.</p>
                 )}
               </div>

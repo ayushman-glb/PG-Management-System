@@ -102,6 +102,7 @@ enum RoomChangeStatus {
 }
 
 enum AgreementStatus {
+  DRAFT
   PENDING_SIGNATURE
   SIGNED_BY_RESIDENT
   SIGNED_BY_OWNER
@@ -236,19 +237,39 @@ enum NotificationChannel {
 enum DocumentType {
   AADHAAR_FRONT
   AADHAAR_BACK
+  AADHAAR_COMBINED
   PAN_CARD
   PASSPORT
+  DRIVING_LICENSE
+  PASSPORT_PHOTO
+  COLLEGE_OFFICE_ID
+  GUARDIAN_PROOF
   POLICE_VERIFICATION
   PROPERTY_DEED
+  RENTAL_LICENSE
+  GST_CERTIFICATE
+  BANK_DOCUMENT
   ELECTRICITY_BILL
   RENT_AGREEMENT
   OTHER
 }
 
 enum VerificationStatus {
+  NOT_UPLOADED
+  UPLOADED
   PENDING
+  UNDER_REVIEW
   VERIFIED
   REJECTED
+  EXPIRED
+}
+
+enum PassStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  CANCELLED
 }
 
 enum OTPType {
@@ -324,6 +345,8 @@ model User {
   revenueRecorded    RevenueEntry[]       @relation("OwnerRevenue")
   documents          Document[]           @relation("UserDocuments")
   verifiedDocuments  Document[]           @relation("VerifierDocuments")
+  visitorPasses      VisitorPass[]        @relation("ResidentVisitorPasses")
+  gatePasses         GatePass[]           @relation("ResidentGatePasses")
   auditLogs          AuditLog[]           @relation("UserAuditLogs")
 
   @@index([role])
@@ -492,6 +515,8 @@ model PG {
   reviews           Review[]
   expenses          Expense[]
   revenueEntries    RevenueEntry[]
+  visitorPasses     VisitorPass[]
+  gatePasses        GatePass[]
 
   @@index([ownerId])
   @@index([status])
@@ -802,8 +827,8 @@ model RoomChangeRequest {
 
 model Agreement {
   id                 String          @id @default(auto()) @map("_id") @db.ObjectId
-  bookingId          String          @db.ObjectId
-  booking            Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId          String?         @db.ObjectId
+  booking            Booking?        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   residentId         String          @db.ObjectId
   resident           User            @relation("ResidentAgreements", fields: [residentId], references: [id], onDelete: Cascade)
   ownerId            String          @db.ObjectId
@@ -821,6 +846,8 @@ model Agreement {
   startDate          DateTime
   endDate            DateTime
   agreementPdfUrl    String?
+  documentHash       String?
+  version            Int             @default(1)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -829,6 +856,7 @@ model Agreement {
   @@index([residentId])
   @@index([ownerId])
   @@index([pgId])
+  @@index([status])
 }
 
 model DigitalSignature {
@@ -1160,24 +1188,70 @@ model RevenueEntry {
 }
 
 model Document {
-  id             String             @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String             @db.ObjectId
-  user           User               @relation("UserDocuments", fields: [userId], references: [id], onDelete: Cascade)
-  documentType   DocumentType
-  documentNumber String?
-  fileUrl        String
-  mimeType       String?
-  fileSize       Int?
-  status         VerificationStatus @default(PENDING)
-  verifiedById   String?            @db.ObjectId
-  verifiedBy     User?              @relation("VerifierDocuments", fields: [verifiedById], references: [id])
-  verifiedAt     DateTime?
-  rejectionReason String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String             @db.ObjectId
+  user               User               @relation("UserDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  documentType       DocumentType
+  title              String?
+  documentNumber     String?
+  fileUrl            String
+  mimeType           String?
+  fileSize           Int?
+  status             VerificationStatus @default(PENDING)
+  version            Int                @default(1)
+  isCurrent          Boolean            @default(true)
+  parentDocumentId   String?            @db.ObjectId
+  hash               String?
+  cloudinaryPublicId String?
+  verifiedById       String?            @db.ObjectId
+  verifiedBy         User?              @relation("VerifierDocuments", fields: [verifiedById], references: [id])
+  verifiedAt         DateTime?
+  rejectionReason    String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([userId])
   @@index([status])
+}
+
+model VisitorPass {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  residentId    String     @db.ObjectId
+  resident      User       @relation("ResidentVisitorPasses", fields: [residentId], references: [id], onDelete: Cascade)
+  pgId          String     @db.ObjectId
+  pg            PG         @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  passCode      String     @unique
+  visitorName   String
+  visitorMobile String
+  relation      String     @default("Friend")
+  visitDate     DateTime
+  timeSlot      String
+  status        PassStatus @default(APPROVED)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([residentId])
+  @@index([pgId])
+}
+
+model GatePass {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  residentId    String     @db.ObjectId
+  resident      User       @relation("ResidentGatePasses", fields: [residentId], references: [id], onDelete: Cascade)
+  pgId          String     @db.ObjectId
+  pg            PG         @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  passCode      String     @unique
+  passType      String     @default("DAY_OUTING")
+  destination   String
+  departureTime String
+  returnTime    String
+  reason        String
+  status        PassStatus @default(APPROVED)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([residentId])
+  @@index([pgId])
 }
 
 model AuditLog {

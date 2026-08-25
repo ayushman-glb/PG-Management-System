@@ -17,8 +17,10 @@ import { adminRoutes } from '../modules/admin';
 import { dashboardRoutes } from '../modules/dashboard';
 import { residentRoutes } from '../modules/residents';
 import { ownerRoutes } from '../modules/owners';
+import { documentRoutes } from '../modules/documents';
 import { uploadRoutes } from './upload.routes';
 import { env } from '../config/env';
+import { prisma } from '../config/prisma';
 
 const apiRouter = Router();
 
@@ -48,6 +50,7 @@ apiRouter.get('/', (req, res) => {
       billing: '/api/v1/billing',
       payments: '/api/v1/payments',
       agreements: '/api/v1/agreements',
+      documents: '/api/v1/documents',
       complaints: '/api/v1/complaints',
       moveIn: '/api/v1/move-in',
       notifications: '/api/v1/notifications',
@@ -59,12 +62,33 @@ apiRouter.get('/', (req, res) => {
   });
 });
 
-apiRouter.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    status: 'HEALTHY',
+apiRouter.get('/health', async (req, res) => {
+  const startTime = Date.now();
+  let dbStatus = 'DISCONNECTED';
+  let dbLatency = 0;
+
+  try {
+    const dbStart = Date.now();
+    await (prisma as any).$runCommandRaw({ ping: 1 });
+    dbLatency = Date.now() - dbStart;
+    dbStatus = 'CONNECTED';
+  } catch (error) {
+    dbStatus = 'DISCONNECTED';
+  }
+
+  const isHealthy = dbStatus === 'CONNECTED';
+  const statusCode = isHealthy ? 200 : 503;
+
+  res.status(statusCode).json({
+    success: isHealthy,
+    status: isHealthy ? 'HEALTHY' : 'DEGRADED',
     service: 'RoomBae REST API v1',
     environment: env.NODE_ENV,
+    latencyMs: Date.now() - startTime,
+    database: {
+      status: dbStatus,
+      latencyMs: dbLatency,
+    },
     timestamp: new Date().toISOString(),
   });
 });
@@ -84,6 +108,7 @@ apiRouter.use('/bookings', bookingRoutes);
 apiRouter.use('/billing', billingRoutes);
 apiRouter.use('/payments', paymentRoutes);
 apiRouter.use('/agreements', agreementRoutes);
+apiRouter.use('/documents', documentRoutes);
 apiRouter.use('/complaints', complaintRoutes);
 apiRouter.use('/move-in', moveInRoutes);
 apiRouter.use('/notifications', notificationRoutes);

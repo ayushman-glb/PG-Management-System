@@ -22,6 +22,7 @@ import {
   NotificationChannel,
   DocumentType,
   VerificationStatus,
+  PassStatus,
   LegalDocType,
   Gender,
 } from '@prisma/client';
@@ -88,6 +89,8 @@ async function main() {
 
   await safeDelete('AuditLog', () => prisma.auditLog.deleteMany({}));
   await safeDelete('PDFDocument', () => prisma.pDFDocument.deleteMany({}));
+  await safeDelete('VisitorPass', () => prisma.visitorPass.deleteMany({}));
+  await safeDelete('GatePass', () => prisma.gatePass.deleteMany({}));
   await safeDelete('Document', () => prisma.document.deleteMany({}));
   await safeDelete('Notification', () => prisma.notification.deleteMany({}));
   await safeDelete('NotificationPreference', () => prisma.notificationPreference.deleteMany({}));
@@ -907,6 +910,8 @@ async function main() {
       },
     });
 
+    const agreementStatus = i === 0 ? AgreementStatus.PENDING_SIGNATURE : i === 1 ? AgreementStatus.DRAFT : AgreementStatus.COMPLETED;
+
     await prisma.agreement.create({
       data: {
         bookingId: booking.id,
@@ -914,7 +919,7 @@ async function main() {
         ownerId: ownerUser.id,
         pgId: targetBed.pgId,
         agreementNumber: `AGR-RB-${2000 + i}`,
-        status: AgreementStatus.COMPLETED,
+        status: agreementStatus,
         rentAmount: targetBed.baseRent,
         depositAmount: targetBed.depositAmount,
         lockInPeriodMonths: 3,
@@ -1139,6 +1144,97 @@ async function main() {
       priority: ComplaintPriority.LOW,
       status: ComplaintStatus.IN_PROGRESS,
       createdAt: getHistoricalDate(0, 2),
+    },
+  });
+
+  // KYC Documents for Ankur Saha
+  await prisma.document.createMany({
+    data: [
+      {
+        userId: ankurUser.id,
+        documentType: DocumentType.AADHAAR_FRONT,
+        title: 'Aadhaar Card (Front)',
+        documentNumber: 'XXXX-XXXX-9842',
+        fileUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800',
+        mimeType: 'image/jpeg',
+        fileSize: 245000,
+        status: VerificationStatus.VERIFIED,
+        version: 1,
+        isCurrent: true,
+        verifiedById: ownerUser.id,
+        verifiedAt: getHistoricalDate(11, 2),
+      },
+      {
+        userId: ankurUser.id,
+        documentType: DocumentType.AADHAAR_BACK,
+        title: 'Aadhaar Card (Back)',
+        documentNumber: 'XXXX-XXXX-9842',
+        fileUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800',
+        mimeType: 'image/jpeg',
+        fileSize: 230000,
+        status: VerificationStatus.VERIFIED,
+        version: 1,
+        isCurrent: true,
+        verifiedById: ownerUser.id,
+        verifiedAt: getHistoricalDate(11, 2),
+      },
+      {
+        userId: ankurUser.id,
+        documentType: DocumentType.PAN_CARD,
+        title: 'PAN Card',
+        documentNumber: 'ABCPS9876K',
+        fileUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
+        mimeType: 'image/jpeg',
+        fileSize: 180000,
+        status: VerificationStatus.VERIFIED,
+        version: 1,
+        isCurrent: true,
+        verifiedById: ownerUser.id,
+        verifiedAt: getHistoricalDate(11, 2),
+      },
+      {
+        userId: ankurUser.id,
+        documentType: DocumentType.COLLEGE_OFFICE_ID,
+        title: 'Employee ID Card',
+        documentNumber: 'EMP-TM-84920',
+        fileUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800',
+        mimeType: 'image/jpeg',
+        fileSize: 195000,
+        status: VerificationStatus.VERIFIED,
+        version: 1,
+        isCurrent: true,
+        verifiedById: ownerUser.id,
+        verifiedAt: getHistoricalDate(11, 2),
+      },
+    ],
+  });
+
+  // Passes for Ankur Saha
+  await prisma.visitorPass.create({
+    data: {
+      residentId: ankurUser.id,
+      pgId: ankurAssignedBed!.pgId,
+      passCode: 'VP-849201',
+      visitorName: 'Rohan Sharma',
+      visitorMobile: '9876543210',
+      relation: 'Colleague',
+      visitDate: new Date(),
+      timeSlot: '17:00 - 19:00',
+      status: PassStatus.APPROVED,
+    },
+  });
+
+  await prisma.gatePass.create({
+    data: {
+      residentId: ankurUser.id,
+      pgId: ankurAssignedBed!.pgId,
+      passCode: 'GP-392019',
+      passType: 'DAY_OUTING',
+      destination: 'Indiranagar Social',
+      departureTime: '18:30',
+      returnTime: '22:00',
+      reason: 'Team Dinner',
+      status: PassStatus.APPROVED,
     },
   });
 

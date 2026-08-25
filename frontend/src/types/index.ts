@@ -15,3 +15,5 @@ export * from "./Invoice";
 export * from "./Owner";
 export * from "./Notification";
 export * from "./Visitor";
+export * from "./Agreement";
+export * from "./Document";

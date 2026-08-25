@@ -23,7 +23,7 @@ export type Page =
   | "auth"
   | "complete-profile"
   | "resident-portal"
-
+  | "verify-agreement"
   | "resident-register"
   | "shortlist"
   | "tours"
@@ -75,6 +75,7 @@ const VALID_PAGES: Set<string> = new Set([
   "auth",
   "complete-profile",
   "resident-portal",
+  "verify-agreement",
   "resident-register",
   "shortlist",
   "tours",

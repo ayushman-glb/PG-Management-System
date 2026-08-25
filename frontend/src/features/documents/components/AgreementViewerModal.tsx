@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, ShieldCheck, CheckCircle2, PenTool, AlertTriangle } from "lucide-react";
 import { SignatureCanvas } from "@components/SignatureCanvas";
 import { useTheme } from "@theme/index";
-import { env } from "@config/env";
+import { agreementService } from "@services/agreement.service";
 import { useDocumentDownload } from "@hooks/useDocumentDownload";
+import { SignatureType } from "../../../types/Agreement";
 
 interface AgreementViewerModalProps {
   agreement: any;
@@ -18,9 +19,9 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   onSignComplete,
 }) => {
   const [showSignPad, setShowSignPad] = useState(false);
-  const [signerType, setSignerType] = useState<"RESIDENT" | "OWNER">(
-    "RESIDENT",
-  );
+  const [signerRole, setSignerRole] = useState<"RESIDENT" | "OWNER">("RESIDENT");
+  const [isSigning, setIsSigning] = useState(false);
+  const [signError, setSignError] = useState<string | null>(null);
   const { darkMode } = useTheme();
   const { download, isDownloading, getError } = useDocumentDownload();
 
@@ -34,33 +35,48 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   if (!agreement) return null;
 
-  const handleSaveSignature = async (
-    signatureSvg: string,
-    type: "RESIDENT" | "OWNER",
-  ) => {
+  const residentName = agreement.resident?.profile
+    ? `${agreement.resident.profile.firstName} ${agreement.resident.profile.lastName}`.trim()
+    : agreement.resident?.name || agreement.resident?.username || "Resident";
+
+  const ownerName = agreement.owner?.profile
+    ? `${agreement.owner.profile.firstName} ${agreement.owner.profile.lastName}`.trim()
+    : agreement.owner?.name || agreement.owner?.username || "Property Owner";
+
+  const propertyName = agreement.pg?.name || "RoomBae PG Property";
+  const propertyAddress = agreement.pg?.location
+    ? `${agreement.pg.location.address}, ${agreement.pg.location.city} - ${agreement.pg.location.pincode}`
+    : agreement.pg?.address || "Bengaluru, Karnataka";
+
+  const roomNumber = agreement.allocation?.room?.roomNumber || agreement.roomNumber || agreement.room?.roomNumber || "—";
+  const bedNumber = agreement.allocation?.bed?.bedNumber || agreement.bedNumber || agreement.bed?.bedNumber || "—";
+  const roomType = agreement.allocation?.room?.roomType || agreement.roomType || "Standard";
+
+  const rentAmount = Number(agreement.rentAmount || 0);
+  const depositAmount = Number(agreement.depositAmount || 0);
+
+  const handleSaveSignature = async (payload: {
+    signatureType: SignatureType;
+    signatureData: string;
+    consent: boolean;
+  }) => {
     try {
-      const res = await fetch(
-        `${env.API_URL}/agreements/${agreement.id}/sign`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            signerType: type,
-            signerName:
-              type === "RESIDENT"
-                ? agreement.resident?.name || "Rahul Sharma"
-                : agreement.owner?.name || "Rajesh Kumar",
-            signatureDataSvg: signatureSvg,
-          }),
-        },
-      );
-      const json = await res.json();
-      if (json.success) {
-        onSignComplete?.(json.data.agreement);
-        setShowSignPad(false);
-      }
-    } catch (e) {
-      console.error(e);
+      setIsSigning(true);
+      setSignError(null);
+
+      const updated = await agreementService.signAgreement(agreement.id, {
+        signatureType: payload.signatureType,
+        signatureData: payload.signatureData,
+        consent: payload.consent,
+      });
+
+      onSignComplete?.(updated);
+      setShowSignPad(false);
+    } catch (e: any) {
+      console.error("Signature signing error:", e);
+      setSignError(e.message || "Failed to submit digital signature. Please try again.");
+    } finally {
+      setIsSigning(false);
     }
   };
 
@@ -80,6 +96,13 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
   const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
   const accentText = darkMode ? "text-amber-400" : "text-[#C58B63]";
 
+  const hasResidentSignature = agreement.signatures?.some(
+    (s: any) => s.signerRole === "RESIDENT" || s.signerType === "RESIDENT"
+  );
+  const hasOwnerSignature = agreement.signatures?.some(
+    (s: any) => s.signerRole === "PG_OWNER" || s.signerType === "OWNER"
+  );
+
   return (
     <AnimatePresence>
       <div
@@ -93,9 +116,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
           className={`w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border flex flex-col ${modalBg}`}
           data-lenis-prevent
         >
-          <div
-            className={`relative p-6 flex justify-between items-center ${headerBg}`}
-          >
+          <div className={`relative p-6 flex justify-between items-center ${headerBg}`}>
             <button
               onClick={onClose}
               className={`absolute top-4 right-4 p-2 rounded-full transition-all cursor-pointer ${
@@ -121,7 +142,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                 <strong className={accentText}>
                   {agreement.agreementNumber || "RMB-AGR-2026-001"}
                 </strong>{" "}
-                • Indian Legal Contract Standard
+                • Indian Tenancy Contract Standard
               </p>
             </div>
 
@@ -130,11 +151,13 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                 <button
                   type="button"
                   disabled={isDownloading(agreement.id, 'SIGNED_AGREEMENT')}
-                  onClick={() => download({
-                    entityId: agreement.id,
-                    documentType: 'SIGNED_AGREEMENT',
-                    fileName: `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`,
-                  })}
+                  onClick={() =>
+                    download({
+                      entityId: agreement.id,
+                      documentType: 'SIGNED_AGREEMENT',
+                      fileName: `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`,
+                    })
+                  }
                   className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
                     darkMode
                       ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
@@ -142,7 +165,9 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                   }`}
                 >
                   <Download
-                    className={`w-4 h-4 ${darkMode ? "text-amber-400" : "text-black"} ${isDownloading(agreement.id, 'SIGNED_AGREEMENT') ? 'animate-spin' : ''}`}
+                    className={`w-4 h-4 ${darkMode ? "text-amber-400" : "text-black"} ${
+                      isDownloading(agreement.id, 'SIGNED_AGREEMENT') ? 'animate-spin' : ''
+                    }`}
                   />{" "}
                   {isDownloading(agreement.id, 'SIGNED_AGREEMENT') ? "Generating PDF..." : "Download PDF"}
                 </button>
@@ -160,6 +185,12 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
             className="p-6 overflow-y-auto flex-1 space-y-6 text-xs leading-relaxed"
             data-lenis-prevent
           >
+            {signError && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+                {signError}
+              </div>
+            )}
+
             <div
               className={`p-4 rounded-2xl border flex items-center gap-3 ${
                 darkMode
@@ -170,159 +201,109 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               <ShieldCheck className={`w-6 h-6 flex-shrink-0 ${accentText}`} />
               <div>
                 <p className={`font-semibold ${textPrimary}`}>
-                  Digitally Executed under Indian Contract Act 1872 &amp; IT Act
-                  2000
+                  Digitally Executed under Indian Contract Act 1872 &amp; IT Act 2000
                 </p>
                 <p className={`text-[11px] ${textMuted}`}>
-                  Contains HMAC SHA-256 cryptographic signature timestamps and
-                  QR verification hash.
+                  Contains SHA-256 cryptographic signature timestamps and public QR verification code.
                 </p>
               </div>
             </div>
 
             <div className={`p-5 rounded-2xl border space-y-3 ${cardBg}`}>
-              <h4
-                className={`text-xs font-bold uppercase tracking-wider ${accentText}`}
-              >
+              <h4 className={`text-xs font-bold uppercase tracking-wider ${accentText}`}>
                 1. PARTIES TO THIS LEASE AGREEMENT
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className={`font-semibold ${textPrimary}`}>
-                    LESSOR / OWNER:
-                  </p>
-                  <p className={textPrimary}>
-                    {agreement.owner?.name || "Rajesh Kumar"}
-                  </p>
-                  <p className={textMuted}>
-                    Address:{" "}
-                    {agreement.owner?.address || "Indiranagar, Bengaluru"}
-                  </p>
-                  <p className={textMuted}>
-                    Contact: {agreement.owner?.phone || "+91 98765 43210"}
-                  </p>
+                  <p className={`font-semibold ${textPrimary}`}>LESSOR / OWNER:</p>
+                  <p className={textPrimary}>{ownerName}</p>
+                  <p className={textMuted}>Email: {agreement.owner?.email || "—"}</p>
+                  <p className={textMuted}>Contact: {agreement.owner?.phone || "+91 98765 43210"}</p>
                 </div>
                 <div>
-                  <p className={`font-semibold ${textPrimary}`}>
-                    LESSEE / RESIDENT:
-                  </p>
-                  <p className={textPrimary}>
-                    {agreement.resident?.name || "Rahul Sharma"}
-                  </p>
-                  <p className={textMuted}>
-                    Permanent Address:{" "}
-                    {agreement.resident?.permanentAddress || "New Delhi"}
-                  </p>
-                  <p className={textMuted}>
-                    Contact: {agreement.resident?.phone || "+91 98765 43210"}
-                  </p>
+                  <p className={`font-semibold ${textPrimary}`}>LESSEE / RESIDENT:</p>
+                  <p className={textPrimary}>{residentName}</p>
+                  <p className={textMuted}>Email: {agreement.resident?.email || "—"}</p>
+                  <p className={textMuted}>Contact: {agreement.resident?.phone || "+91 98765 43210"}</p>
                 </div>
               </div>
             </div>
 
             <div className={`p-5 rounded-2xl border space-y-3 ${cardBg}`}>
-              <h4
-                className={`text-xs font-bold uppercase tracking-wider ${accentText}`}
-              >
+              <h4 className={`text-xs font-bold uppercase tracking-wider ${accentText}`}>
                 2. PREMISES &amp; FINANCIAL OBLIGATIONS
               </h4>
-              <div
-                className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${textPrimary}`}
-              >
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${textPrimary}`}>
                 <p>
-                  • Assigned PG Property:{" "}
-                  <strong className={textPrimary}>
-                    {agreement.pg?.name || "RoomBae Indiranagar Luxe"}
-                  </strong>
+                  • Assigned PG Property: <strong className={textPrimary}>{propertyName}</strong>
                 </p>
                 <p>
-                  • Room &amp; Bed Inventory:{" "}
+                  • Room &amp; Bed:{" "}
                   <strong className={accentText}>
-                    Room {agreement.roomNumber || "101"} (Bed{" "}
-                    {agreement.bedNumber || "101-A"})
+                    Room {roomNumber} · Bed {bedNumber} ({roomType})
                   </strong>
                 </p>
                 <p>
                   • Monthly License Fee (Rent):{" "}
                   <strong className={textPrimary}>
-                    ₹{agreement.rentAmount || "8,500"} / month
+                    ₹{rentAmount.toLocaleString('en-IN')} / month
                   </strong>{" "}
-                  (Due by 5th)
+                  (Payable on or before 5th)
                 </p>
                 <p>
                   • Refundable Security Deposit:{" "}
                   <strong className={textPrimary}>
-                    ₹{agreement.securityDeposit || "17,000"}
+                    ₹{depositAmount.toLocaleString('en-IN')}
                   </strong>
                 </p>
                 <p>
-                  • Monthly Maintenance Charges:{" "}
+                  • Lock-in Period:{" "}
                   <strong className={textPrimary}>
-                    ₹{agreement.maintenanceCharges || "500"} / month
+                    {agreement.lockInPeriodMonths || 3} Months
                   </strong>
                 </p>
                 <p>
-                  • Notice Period Requirements:{" "}
+                  • Notice Period:{" "}
                   <strong className={accentText}>
                     {agreement.noticePeriodDays || 30} Days Written Notice
                   </strong>
+                </p>
+                <p className="md:col-span-2 text-slate-400">
+                  • Property Address: {propertyAddress}
                 </p>
               </div>
             </div>
 
             <div className={`p-5 rounded-2xl border space-y-3 ${cardBg}`}>
-              <h4
-                className={`text-xs font-bold uppercase tracking-wider ${accentText}`}
-              >
+              <h4 className={`text-xs font-bold uppercase tracking-wider ${accentText}`}>
                 3. HOUSE RULES, CURFEW &amp; CODE OF CONDUCT
               </h4>
               <div className={`space-y-2 ${textPrimary}`}>
                 <p>
-                  • <strong>Curfew &amp; Security:</strong>{" "}
-                  {agreement.curfewTime || "10:30 PM main gate lock time"}.
-                  Biometric access logs recorded.
+                  • <strong>Curfew &amp; Security:</strong> Main gate closing hours 10:30 PM. Digital entry log maintained.
                 </p>
                 <p>
-                  • <strong>Visitor Policy:</strong>{" "}
-                  {agreement.visitorPolicy ||
-                    "Visitors permitted in common ground lobby till 8:00 PM"}
-                  . Overnight stay strictly prohibited without prior written
-                  permission.
+                  • <strong>Visitor Policy:</strong> Visitors permitted in common lounge between 09:00 AM - 08:00 PM with visitor pass.
                 </p>
                 <p>
-                  • <strong>Prohibited Conduct:</strong> Strictly No Smoking,
-                  Alcohol, illegal substances, or unauthorized sub-letting
-                  allowed inside the premises.
+                  • <strong>Damage Liability:</strong> Tenant is liable for any damage to room inventory and fixtures.
                 </p>
                 <p>
-                  • <strong>Damage &amp; Repairs:</strong>{" "}
-                  {agreement.damagePolicy ||
-                    "Resident is liable for any physical structural damage caused to room fixtures, AC, or bed frames."}
-                </p>
-                <p>
-                  • <strong>Termination &amp; Dispute Jurisdiction:</strong>{" "}
-                  Agreement terminable by either party with 30-day prior written
-                  notice. Disputes subject to local City Civil Courts under
-                  Indian Contract Act 1872.
+                  • <strong>Termination:</strong> Either party may terminate with written notice as defined in the terms.
                 </p>
               </div>
             </div>
 
-            <div
-              className={`p-5 rounded-2xl border space-y-4 ${cardBg} border-amber-500/30`}
-            >
+            <div className={`p-5 rounded-2xl border space-y-4 ${cardBg} border-amber-500/30`}>
               <div className="flex justify-between items-center">
-                <h4
-                  className={`text-xs font-bold uppercase tracking-wider ${accentText} flex items-center gap-2`}
-                >
-                  <PenTool className="w-4 h-4" /> Cryptographic Signatures
-                  Status
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${accentText} flex items-center gap-2`}>
+                  <PenTool className="w-4 h-4" /> Cryptographic Signatures Status
                 </h4>
                 {!showSignPad && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        setSignerType("RESIDENT");
+                        setSignerRole("RESIDENT");
                         setShowSignPad(true);
                       }}
                       className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold hover:bg-amber-500/30 cursor-pointer"
@@ -331,7 +312,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                     </button>
                     <button
                       onClick={() => {
-                        setSignerType("OWNER");
+                        setSignerRole("OWNER");
                         setShowSignPad(true);
                       }}
                       className="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold hover:bg-blue-500/30 cursor-pointer"
@@ -343,36 +324,32 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               </div>
 
               {showSignPad ? (
-                <SignatureCanvas
-                  signerName={
-                    signerType === "RESIDENT"
-                      ? agreement.resident?.name || "Rahul Sharma"
-                      : agreement.owner?.name || "Rajesh Kumar"
-                  }
-                  signerType={signerType}
-                  onSaveSignature={handleSaveSignature}
-                  onCancel={() => setShowSignPad(false)}
-                />
+                <div className="space-y-2">
+                  {isSigning && (
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
+                      Applying electronic signature and computing document hash...
+                    </div>
+                  )}
+                  <SignatureCanvas
+                    signerName={signerRole === "RESIDENT" ? residentName : ownerName}
+                    signerType={signerRole}
+                    onSaveSignature={handleSaveSignature}
+                    onCancel={() => setShowSignPad(false)}
+                  />
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div
-                    className={`p-4 rounded-xl border space-y-2 ${subCardBg}`}
-                  >
-                    <p
-                      className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}
-                    >
+                  <div className={`p-4 rounded-xl border space-y-2 ${subCardBg}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}>
                       RESIDENT SIGNATURE
                     </p>
-                    {agreement.signatures?.some(
-                      (s: any) => s.signerType === "RESIDENT",
-                    ) ? (
+                    {hasResidentSignature ? (
                       <div className="space-y-1">
                         <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-4 h-4" /> Signed &amp;
-                          Verified
+                          <CheckCircle2 className="w-4 h-4" /> Signed &amp; Verified
                         </span>
                         <p className={`text-[10px] ${textMuted}`}>
-                          HMAC SHA-256 Validated
+                          {residentName} • Digitally Executed
                         </p>
                       </div>
                     ) : (
@@ -382,24 +359,17 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                     )}
                   </div>
 
-                  <div
-                    className={`p-4 rounded-xl border space-y-2 ${subCardBg}`}
-                  >
-                    <p
-                      className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}
-                    >
+                  <div className={`p-4 rounded-xl border space-y-2 ${subCardBg}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}>
                       OWNER / LESSOR SIGNATURE
                     </p>
-                    {agreement.signatures?.some(
-                      (s: any) => s.signerType === "OWNER",
-                    ) ? (
+                    {hasOwnerSignature ? (
                       <div className="space-y-1">
                         <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-4 h-4" /> Signed &amp;
-                          Stamp Verified
+                          <CheckCircle2 className="w-4 h-4" /> Signed &amp; Stamp Verified
                         </span>
                         <p className={`text-[10px] ${textMuted}`}>
-                          Digital Stamp Timestamped
+                          {ownerName} • Authorized Signatory
                         </p>
                       </div>
                     ) : (

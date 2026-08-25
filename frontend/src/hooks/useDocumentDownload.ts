@@ -19,19 +19,26 @@ export type DocumentType =
   | 'KYC_DOCUMENT'
   | 'KYC_VERIFICATION';
 
-const DOCUMENT_TYPE_ENDPOINTS: Record<DocumentType, string> = {
-  INVOICE: 'invoice',
-  PAYMENT_RECEIPT: 'receipt',
-  RENT_RECEIPT: 'receipt',
-  REFUND_RECEIPT: 'refund',
-  SECURITY_DEPOSIT_RECEIPT: 'receipt',
-  TRANSACTION_RECEIPT: 'receipt',
-  LEASE_AGREEMENT: 'agreement',
-  SIGNED_AGREEMENT: 'agreement',
-  DIGITAL_AGREEMENT: 'agreement',
-  KYC_DOCUMENT: 'kyc',
-  KYC_VERIFICATION: 'kyc',
-};
+export function getDocumentUrl(documentType: DocumentType, entityId: string): string {
+  switch (documentType) {
+    case 'LEASE_AGREEMENT':
+    case 'SIGNED_AGREEMENT':
+    case 'DIGITAL_AGREEMENT':
+      return `${env.API_URL}/agreements/${entityId}/pdf`;
+    case 'INVOICE':
+      return `${env.API_URL}/billing/invoices/${entityId}/pdf`;
+    case 'PAYMENT_RECEIPT':
+    case 'RENT_RECEIPT':
+    case 'TRANSACTION_RECEIPT':
+    case 'SECURITY_DEPOSIT_RECEIPT':
+      return `${env.API_URL}/payments/${entityId}/pdf`;
+    case 'KYC_DOCUMENT':
+    case 'KYC_VERIFICATION':
+      return `${env.API_URL}/documents/${entityId}/download`;
+    default:
+      return `${env.API_URL}/documents/${entityId}`;
+  }
+}
 
 const FRIENDLY_NAMES: Record<DocumentType, string> = {
   INVOICE: 'Invoice',
@@ -128,8 +135,7 @@ export const useDocumentDownload = () => {
     clearError(key);
     setState(key, 'generating');
 
-    const endpointSegment = DOCUMENT_TYPE_ENDPOINTS[documentType];
-    const url = `${env.API_URL}/documents/${endpointSegment}/${entityId}`;
+    const url = getDocumentUrl(documentType, entityId);
     const friendlyName = FRIENDLY_NAMES[documentType];
     const resolvedFileName = fileName ?? `RoomBae-${friendlyName}-${entityId.slice(-8).toUpperCase()}.pdf`;
 

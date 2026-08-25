@@ -47,6 +47,7 @@ const Operations = lazyWithRetry(() => import("@features/operations/pages/Operat
 
 const ContentPage = lazyWithRetry(() => import("@features/dashboard/pages/ContentPage"));
 const ResidentPortal = lazyWithRetry(() => import("@features/residents/pages/ResidentPortal"));
+const VerifyAgreementPage = lazyWithRetry(() => import("@features/documents/pages/VerifyAgreementPage"));
 const ResidentRegister = lazyWithRetry(() => import("@features/residents/pages/ResidentRegister"));
 const ShortlistPage = lazyWithRetry(() => import("@features/search/pages/ShortlistPage"));
 const ToursPage = lazyWithRetry(() => import("@features/search/pages/ToursPage"));
@@ -191,6 +192,8 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
       return <CompleteProfile navigate={navigate} />;
     case "resident-register":
       return <ResidentRegister navigate={navigate} />;
+    case "verify-agreement":
+      return <VerifyAgreementPage navigate={navigate} />;
     case "about":
     case "blog":
     case "careers":

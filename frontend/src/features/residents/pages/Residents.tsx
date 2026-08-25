@@ -437,12 +437,12 @@ export default function Residents({ navigate }: Props) {
                   </h4>
                   <div className="space-y-3 text-sm">
                     {[
-                      { label: "Move-in Date", value: selected.joined },
+                      { label: "Move-in Date", value: selected.joined || selected.checkInDate || "—" },
                       { label: "Lease Term", value: "11 months" },
-                      { label: "Agreement Status", value: "Active" },
+                      { label: "Agreement Status", value: selected.agreementStatus || "Active" },
                       {
                         label: "Security Deposit",
-                        value: `₹${(selected.rent * 2).toLocaleString()}`,
+                        value: `₹${(Number(selected.depositAmount || selected.rent * 2 || 0)).toLocaleString('en-IN')}`,
                       },
                     ].map((item) => (
                       <div key={item.label} className="flex justify-between gap-4">
@@ -473,11 +473,11 @@ export default function Residents({ navigate }: Props) {
                     {[
                       {
                         label: "Monthly Rent",
-                        value: `₹${selected.rent.toLocaleString()}`,
+                        value: `₹${(Number(selected.rent || selected.rentAmount || 0)).toLocaleString('en-IN')}`,
                       },
                       {
                         label: "Total Paid",
-                        value: `₹${(selected.rent * 6).toLocaleString()}`,
+                        value: `₹${(Number(selected.rent || selected.rentAmount || 0) * 6).toLocaleString('en-IN')}`,
                       },
                       {
                         label: "Late Fees",
@@ -488,7 +488,7 @@ export default function Residents({ navigate }: Props) {
                         value:
                           selected.status === "Active"
                             ? "₹0"
-                            : `₹${selected.rent.toLocaleString()}`,
+                            : `₹${(Number(selected.rent || selected.rentAmount || 0)).toLocaleString('en-IN')}`,
                       },
                     ].map((item) => (
                       <div key={item.label} className="flex justify-between gap-4">
