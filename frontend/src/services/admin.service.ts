@@ -2,7 +2,8 @@ import { api } from "./api";
 
 export class AdminService {
   async getDashboardStats() {
-    return api.get("/admin/stats");
+    const res = await api.get("/admin/stats");
+    return res?.data ?? res;
   }
 
   async listUsers(params: { role?: string; search?: string; page?: number; limit?: number } = {}) {
@@ -13,27 +14,33 @@ export class AdminService {
     if (params.limit) query.set("limit", String(params.limit));
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return api.get(`/admin/users${queryString}`);
+    const res = await api.get(`/admin/users${queryString}`);
+    return res?.data ?? res;
   }
 
   async setUserSuspension(userId: string, isSuspended: boolean, reason?: string) {
-    return api.patch(`/admin/users/${userId}/suspend`, { isSuspended, reason });
+    const res = await api.patch(`/admin/users/${userId}/suspend`, { isSuspended, reason });
+    return res?.data ?? res;
   }
 
   async getPendingPGs() {
-    return api.get("/admin/pgs/pending");
+    const res = await api.get("/admin/pgs/pending");
+    return res?.data ?? res;
   }
 
   async verifyPG(pgId: string, status: 'APPROVED' | 'REJECTED', rejectionReason?: string) {
-    return api.patch(`/admin/pgs/${pgId}/verify`, { status, rejectionReason });
+    const res = await api.patch(`/admin/pgs/${pgId}/verify`, { status, rejectionReason });
+    return res?.data ?? res;
   }
 
   async getPendingKYCDocuments() {
-    return api.get("/admin/kyc/pending");
+    const res = await api.get("/admin/kyc/pending");
+    return res?.data ?? res;
   }
 
   async verifyKYCDocument(docId: string, status: 'VERIFIED' | 'REJECTED', rejectionReason?: string) {
-    return api.patch(`/admin/kyc/${docId}/verify`, { status, rejectionReason });
+    const res = await api.patch(`/admin/kyc/${docId}/verify`, { status, rejectionReason });
+    return res?.data ?? res;
   }
 
   async getAuditLogs(params: { page?: number; limit?: number } = {}) {
@@ -41,7 +48,8 @@ export class AdminService {
     if (params.page) query.set("page", String(params.page));
     if (params.limit) query.set("limit", String(params.limit));
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return api.get(`/admin/audit-logs${queryString}`);
+    const res = await api.get(`/admin/audit-logs${queryString}`);
+    return res?.data ?? res;
   }
 }
 

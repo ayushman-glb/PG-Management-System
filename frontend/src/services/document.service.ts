@@ -4,30 +4,38 @@ import { DocumentItem } from "../types/Document";
 export class DocumentService {
   async getUserDocuments(userId?: string): Promise<DocumentItem[]> {
     const url = userId ? `/documents?userId=${userId}` : "/documents";
-    return api.get<DocumentItem[]>(url);
+    const res = await api.get<any>(url);
+    const data = res?.data ?? res;
+    return Array.isArray(data) ? data : [];
   }
 
   async uploadDocument(formData: FormData): Promise<DocumentItem> {
-    return api.post<DocumentItem>("/documents/upload", formData);
+    const res = await api.post<any>("/documents/upload", formData);
+    return res?.data ?? res;
   }
 
   async reuploadDocument(id: string, formData: FormData): Promise<DocumentItem> {
-    return api.post<DocumentItem>(`/documents/${id}/reupload`, formData);
+    const res = await api.post<any>(`/documents/${id}/reupload`, formData);
+    return res?.data ?? res;
   }
 
   async getDocument(id: string): Promise<DocumentItem> {
-    return api.get<DocumentItem>(`/documents/${id}`);
+    const res = await api.get<any>(`/documents/${id}`);
+    return res?.data ?? res;
   }
 
   async getVersionHistory(id: string): Promise<DocumentItem[]> {
-    return api.get<DocumentItem[]>(`/documents/${id}/history`);
+    const res = await api.get<any>(`/documents/${id}/history`);
+    const data = res?.data ?? res;
+    return Array.isArray(data) ? data : [];
   }
 
   async verifyDocument(id: string, status: string, rejectionReason?: string): Promise<DocumentItem> {
-    return api.patch<DocumentItem>(`/documents/${id}/verify`, {
+    const res = await api.patch<any>(`/documents/${id}/verify`, {
       status,
       rejectionReason,
     });
+    return res?.data ?? res;
   }
 }
 

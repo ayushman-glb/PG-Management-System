@@ -110,25 +110,26 @@ export default function ResidentPortal({ navigate }: Props) {
     try {
       setPortalError(null);
       setIsProfileIncomplete(false);
-      const portalRes = await api.getPortalMe();
+      const res: any = await api.getPortalMe();
+      const portalRes = res?.data ?? res;
       if (portalRes?.profile?.status) {
         setResidentStatus(portalRes.profile.status);
       }
-      if (portalRes?.complaints?.length) {
+      if (Array.isArray(portalRes?.complaints)) {
         setComplaintsList(portalRes.complaints);
       }
-      if (portalRes?.visitorPasses?.length) {
+      if (Array.isArray(portalRes?.visitorPasses)) {
         setVisitorPassesList(portalRes.visitorPasses);
       }
-      if (portalRes?.gatePasses?.length) {
+      if (Array.isArray(portalRes?.gatePasses)) {
         setGatePassesList(portalRes.gatePasses);
       }
-      if (portalRes?.payments?.length) {
+      if (Array.isArray(portalRes?.payments)) {
         setPaymentsList(portalRes.payments);
       }
-      if (portalRes?.agreements?.length) {
+      if (Array.isArray(portalRes?.agreements)) {
         setAgreementsList(portalRes.agreements);
-        setMockAgreement(portalRes.agreements[0]);
+        setMockAgreement(portalRes.agreements[0] || null);
       }
       if (portalRes?.profile) {
         setResidentProfile(portalRes.profile);
@@ -652,7 +653,8 @@ export default function ResidentPortal({ navigate }: Props) {
                   </div>
                   <button
                     onClick={() => {
-                      const pendingPayment = paymentsList.find(p => p.status === 'PENDING');
+                      const list = Array.isArray(paymentsList) ? paymentsList : [];
+                      const pendingPayment = list.find(p => p && p.status === 'PENDING');
                       setPayModalAmount(pendingPayment?.totalAmount || portalData?.rentAmount || 8500);
                       setPayModalTitle(pendingPayment ? `Invoice ${pendingPayment.invoiceNumber}` : `Monthly Rent - ${portalData?.currentMonth || "Current Month"}`);
                       setPayModalCategory(pendingPayment?.category || "RENT");
@@ -665,7 +667,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 </div>
 
                 <div className="space-y-3">
-                  {paymentsList.map((pay) => (
+                  {(Array.isArray(paymentsList) ? paymentsList : []).map((pay) => (
                     <div key={pay.id} className={`p-4 rounded-2xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                       <div>
                         <div className="flex items-center gap-2">
@@ -753,7 +755,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 </form>
 
                 <div className="space-y-3">
-                  {complaintsList.map((ticket) => (
+                  {(Array.isArray(complaintsList) ? complaintsList : []).map((ticket) => (
                     <div key={ticket.id} className={`p-4 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                       <div className="flex justify-between items-start">
                         <div>
@@ -821,7 +823,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 </form>
 
                 <div className="space-y-3">
-                  {visitorPassesList.map((pass) => (
+                  {(Array.isArray(visitorPassesList) ? visitorPassesList : []).map((pass) => (
                     <div key={pass.id} className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                       <div>
                         <div className="flex items-center gap-2">
@@ -927,7 +929,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 </form>
 
                 <div className="space-y-3">
-                  {gatePassesList.map((pass) => (
+                  {(Array.isArray(gatePassesList) ? gatePassesList : []).map((pass) => (
                     <div key={pass.id} className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
                       <div>
                         <div className="flex items-center gap-2">

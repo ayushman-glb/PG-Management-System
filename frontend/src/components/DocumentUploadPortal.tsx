@@ -44,11 +44,13 @@ export const DocumentUploadPortal: React.FC = () => {
     try {
       setIsLoading(true);
       setErrorMsg(null);
-      const docs = await documentService.getUserDocuments();
-      setDocuments(docs || []);
+      const res: any = await documentService.getUserDocuments();
+      const docList = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+      setDocuments(docList);
     } catch (e: any) {
       console.error('Error loading documents:', e);
       setErrorMsg('Unable to load uploaded documents. Please try again.');
+      setDocuments([]);
     } finally {
       setIsLoading(false);
     }
@@ -170,7 +172,8 @@ export const DocumentUploadPortal: React.FC = () => {
       {/* Document Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {docSlots.map((slot) => {
-          const uploadedDoc = documents.find((d) => d.documentType === slot.type);
+          const docList = Array.isArray(documents) ? documents : [];
+          const uploadedDoc = docList.find((d) => d && d.documentType === slot.type);
           const isVerified = uploadedDoc?.status === 'VERIFIED';
           const isRejected = uploadedDoc?.status === 'REJECTED';
           const isBusy = uploadingType === slot.type || reuploadingDocId === uploadedDoc?.id;

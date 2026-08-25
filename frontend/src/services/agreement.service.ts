@@ -11,7 +11,8 @@ export class AgreementService {
     if (params?.limit) query.append("limit", String(params.limit));
 
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return api.get<{ agreements: Agreement[]; total: number }>(`/agreements${queryString}`);
+    const res = await api.get<any>(`/agreements${queryString}`);
+    return res?.data ?? res;
   }
 
   async getResidentAgreements(_residentId?: string) {
@@ -19,7 +20,8 @@ export class AgreementService {
   }
 
   async getAgreementById(id: string): Promise<Agreement> {
-    return api.get<Agreement>(`/agreements/${id}`);
+    const res = await api.get<any>(`/agreements/${id}`);
+    return res?.data ?? res;
   }
 
   async createAgreement(payload: {
@@ -34,15 +36,18 @@ export class AgreementService {
     noticePeriodDays?: number;
     status?: string;
   }): Promise<Agreement> {
-    return api.post<Agreement>("/agreements", payload);
+    const res = await api.post<any>("/agreements", payload);
+    return res?.data ?? res;
   }
 
   async updateAgreement(id: string, payload: any): Promise<Agreement> {
-    return api.patch<Agreement>(`/agreements/${id}`, payload);
+    const res = await api.patch<any>(`/agreements/${id}`, payload);
+    return res?.data ?? res;
   }
 
   async sendAgreement(id: string): Promise<Agreement> {
-    return api.post<Agreement>(`/agreements/${id}/send`, {});
+    const res = await api.post<any>(`/agreements/${id}/send`, {});
+    return res?.data ?? res;
   }
 
   async signAgreement(
@@ -54,11 +59,13 @@ export class AgreementService {
       override?: boolean;
     }
   ): Promise<Agreement> {
-    return api.post<Agreement>(`/agreements/${id}/sign`, payload);
+    const res = await api.post<any>(`/agreements/${id}/sign`, payload);
+    return res?.data ?? res;
   }
 
   async verifyAgreement(agreementNumber: string) {
-    return api.get(`/agreements/verify/${agreementNumber}`);
+    const res = await api.get<any>(`/agreements/verify/${agreementNumber}`);
+    return res?.data ?? res;
   }
 
   getAgreementPdfUrl(id: string) {
