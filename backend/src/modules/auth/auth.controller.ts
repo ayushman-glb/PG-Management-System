@@ -1,46 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service';
 import { ApiResponse } from '../../utils/apiResponse';
-import { BadRequestError } from '../../core/errors/CustomErrors';
+import { BadRequestError, UnauthorizedError } from '../../core/errors/CustomErrors';
 import { AuthRequest } from '../../middleware/authMiddleware';
 import { resolveFrontendUrl } from '../../config/frontendUrl';
+import { setAuthCookies, clearAuthCookies } from '../../utils/cookieHelpers';
+import { logger } from '../../utils/logger';
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  private setCookies(res: Response, accessToken: string, refreshToken: string) {
-    const isProd = process.env.NODE_ENV === 'production';
-    if (accessToken) {
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? 'none' : 'lax',
-        maxAge: 15 * 60 * 1000, // 15 mins
-      });
-    }
-    if (refreshToken) {
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-    }
-  }
-
-  private clearCookies(res: Response) {
-    const isProd = process.env.NODE_ENV === 'production';
-    res.clearCookie('accessToken', {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
-    });
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
-    });
-  }
 
   registerResident = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -131,7 +99,7 @@ export class AuthController {
       });
 
       if (!result.require2FA) {
-        this.setCookies(res, result.accessToken, result.refreshToken);
+        setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       }
 
       return ApiResponse.success(res, result.require2FA ? '2FA Code dispatched to registered email.' : 'Login successful.', result);
@@ -151,7 +119,7 @@ export class AuthController {
         userAgent: req.headers['user-agent'],
       });
 
-      this.setCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       return ApiResponse.success(res, 'Two-Factor Authentication verified successfully.', result);
     } catch (error) {
       next(error);
@@ -160,11 +128,24 @@ export class AuthController {
 
   refreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      if (process.env.DEBUG_AUTH === 'true') {
+        logger.debug('refresh-token request received', {
+          correlationId: (req as any).correlationId || req.headers['x-correlation-id'],
+          hasCookieHeader: !!req.headers.cookie,
+          cookieNames: req.cookies ? Object.keys(req.cookies) : [],
+          hasRefreshTokenCookie: !!req.cookies?.refreshToken,
+          origin: req.headers.origin,
+          referer: req.headers.referer,
+        });
+      }
+
       const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
-      if (!refreshToken) throw new BadRequestError('Refresh token required.');
+      if (!refreshToken) {
+        throw new UnauthorizedError('Refresh token required.', 'REFRESH_TOKEN_MISSING');
+      }
 
       const result = await this.authService.refreshToken(refreshToken, req.ip, req.headers['user-agent']);
-      this.setCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       return ApiResponse.success(res, 'Tokens refreshed successfully.', result);
     } catch (error) {
       next(error);
@@ -175,7 +156,7 @@ export class AuthController {
     try {
       const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
       await this.authService.logout(refreshToken);
-      this.clearCookies(res);
+      clearAuthCookies(res);
       return ApiResponse.success(res, 'Logged out successfully.');
     } catch (error) {
       next(error);
@@ -187,7 +168,7 @@ export class AuthController {
       const user = (req as AuthRequest).user;
       if (!user?.id) throw new BadRequestError('User context missing.');
       await this.authService.logoutAllDevices(user.id);
-      this.clearCookies(res);
+      clearAuthCookies(res);
       return ApiResponse.success(res, 'Logged out from all devices successfully.');
     } catch (error) {
       next(error);
@@ -271,7 +252,7 @@ export class AuthController {
       }
 
       if (result.accessToken && result.refreshToken) {
-        this.setCookies(res, result.accessToken, result.refreshToken);
+        setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
 
         const targetPage = !result.isProfileComplete
           ? 'complete-profile'
@@ -309,7 +290,7 @@ export class AuthController {
       });
 
       if (result.accessToken && result.refreshToken) {
-        this.setCookies(res, result.accessToken, result.refreshToken);
+        setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       }
 
       return ApiResponse.success(res, result.message || 'Google authentication processed.', result);
@@ -367,7 +348,7 @@ export class AuthController {
         }
       );
 
-      this.setCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       return ApiResponse.success(res, result.message, { accessToken: result.accessToken });
     } catch (error) {
       next(error);

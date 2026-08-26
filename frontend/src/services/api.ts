@@ -120,7 +120,11 @@ class ApiClient {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
       const errorMsg = errorData.message || errorData.error?.message || `HTTP Error ${res.status}`;
-      throw new Error(errorMsg);
+      const err: any = new Error(errorMsg);
+      err.status = res.status;
+      err.code = errorData.error?.code || errorData.code;
+      err.action = errorData.error?.action || errorData.action;
+      throw err;
     }
 
     if (method !== "GET" && typeof window !== "undefined") {

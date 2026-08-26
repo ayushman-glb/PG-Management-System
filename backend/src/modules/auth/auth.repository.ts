@@ -214,6 +214,15 @@ export class AuthRepository {
     });
   }
 
+  async findSessionByTokenHashAny(refreshTokenHash: string): Promise<(Session & { user: User }) | null> {
+    return await this.db.session.findFirst({
+      where: {
+        refreshTokenHash,
+      },
+      include: { user: true },
+    });
+  }
+
   async revokeSession(sessionId: string): Promise<void> {
     await this.db.session.update({
       where: { id: sessionId },

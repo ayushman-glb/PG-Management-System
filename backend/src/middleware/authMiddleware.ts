@@ -33,13 +33,13 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
   }
 
   if (!token) {
-    return next(new UnauthorizedError('Authentication token required.'));
+    return next(new UnauthorizedError('Authentication token required.', 'NO_ACCESS_TOKEN'));
   }
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as any;
     if (!decoded || !decoded.id) {
-      return next(new UnauthorizedError('Invalid token payload.'));
+      return next(new UnauthorizedError('Invalid token payload.', 'TOKEN_INVALID'));
     }
 
     const user = await prisma.user.findUnique({
@@ -55,15 +55,15 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     });
 
     if (!user) {
-      return next(new UnauthorizedError('User account associated with token not found.'));
+      return next(new UnauthorizedError('User account associated with token not found.', 'USER_NOT_FOUND'));
     }
 
     if (user.isSuspended || !user.isActive) {
-      return next(new UnauthorizedError('Account is inactive or suspended.'));
+      return next(new UnauthorizedError('Account is inactive or suspended.', 'ACCOUNT_INACTIVE'));
     }
 
     if (user.tokenVersion !== decoded.tokenVersion) {
-      return next(new UnauthorizedError('Session has been revoked. Please sign in again.'));
+      return next(new UnauthorizedError('Session has been revoked. Please sign in again.', 'SESSION_INVALID'));
     }
 
     req.user = {
@@ -76,9 +76,9 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     return next();
   } catch (err: any) {
     if (err.name === 'TokenExpiredError') {
-      return next(new UnauthorizedError('Token expired.'));
+      return next(new UnauthorizedError('Token expired.', 'TOKEN_EXPIRED'));
     }
-    return next(new UnauthorizedError('Invalid token signature.'));
+    return next(new UnauthorizedError('Invalid token signature.', 'TOKEN_INVALID'));
   }
 };
 
@@ -86,7 +86,7 @@ export const requireRole = (...roles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
     if (!user) {
-      return next(new UnauthorizedError('Authentication required.'));
+      return next(new UnauthorizedError('Authentication required.', 'NO_ACCESS_TOKEN'));
     }
 
     if (!roles.includes(user.role)) {

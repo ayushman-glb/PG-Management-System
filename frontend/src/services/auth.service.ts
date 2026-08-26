@@ -105,10 +105,15 @@ export class AuthService {
       // Clean up any legacy keys that may have been written by older builds.
       localStorage.removeItem("accessToken");
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       localStorage.removeItem("roombae_access_token");
       // Refresh token clearance is intentional on logout.
       localStorage.removeItem("roombae_refresh_token");
       sessionStorage.removeItem("roombae_refresh_token");
+      sessionStorage.removeItem("user");
+      if (typeof document !== "undefined") {
+        document.cookie = "hasSession=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+      }
     } catch {}
     disconnectSocket();
     // Broadcast logout to other open tabs.
@@ -121,13 +126,17 @@ export class AuthService {
   }
 
   public hasStoredSession(): boolean {
-    // Access token is in-memory only, so also check refresh token stores
-    // (which survive page reloads) to determine if a session can be restored.
-    return Boolean(
-      this.inMemoryToken ||
-      this.getStoredRefreshToken() ||
-      (typeof document !== "undefined" && document.cookie.includes("refreshToken"))
-    );
+    // Access token is in-memory only.
+    // Check if in-memory token, stored refresh token, cached user session, or hasSession marker cookie exists.
+    try {
+      if (this.inMemoryToken) return true;
+      if (this.getStoredRefreshToken()) return true;
+      if (typeof localStorage !== "undefined" && localStorage.getItem("user")) return true;
+      if (typeof sessionStorage !== "undefined" && sessionStorage.getItem("user")) return true;
+      if (typeof document !== "undefined" && document.cookie.includes("hasSession=1")) return true;
+    } catch {}
+    // If no session marker exists, visitor is anonymous: skip silent refresh to prevent log noise
+    return false;
   }
 
   private inMemoryCsrfToken: string | null = null;

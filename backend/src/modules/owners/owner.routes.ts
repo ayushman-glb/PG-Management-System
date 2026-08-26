@@ -13,6 +13,9 @@ router.use(authenticate);
 
 router.post('/onboard', ownerController.submitOnboarding);
 router.get('/verifications', requireRole(Role.ADMIN), ownerController.getPendingVerifications);
+router.get('/verification-queue', requireRole(Role.ADMIN), ownerController.getPendingVerifications);
+router.get('/overview', requireRole(Role.PG_OWNER, Role.ADMIN), ownerController.getOwnerOverview);
+router.get('/me', requireRole(Role.PG_OWNER, Role.ADMIN), ownerController.getOwnerMe);
 router.post('/property/:id/building', requireRole(Role.PG_OWNER), ownerController.addBuilding);
 router.post('/property/:id/rooms/batch', requireRole(Role.PG_OWNER), ownerController.batchCreateRooms);
 router.get('/:id/status', ownerController.getOnboardingStatus);

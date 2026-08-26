@@ -54,4 +54,24 @@ export class OwnerController {
       next(err);
     }
   };
+
+  getOwnerOverview = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const ownerId = req.user!.id;
+      const data = await this.ownerService.getOnboardingStatus(ownerId);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  getOwnerMe = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const ownerId = req.user!.id;
+      const data = await this.ownerService.getOnboardingStatus(ownerId);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  };
 }

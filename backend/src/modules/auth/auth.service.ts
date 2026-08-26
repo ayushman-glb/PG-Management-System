@@ -64,8 +64,10 @@ export interface IAuthResult {
   twoFactorToken?: string;
 }
 
+export const SESSION_SCHEMA_VERSION = 2;
+
 export class AuthService {
-  constructor(private readonly authRepo: AuthRepository) {}
+  constructor(private authRepo: AuthRepository = new AuthRepository()) {}
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
@@ -85,6 +87,7 @@ export class AuthService {
     const payload = {
       id: user.id,
       tokenVersion: user.tokenVersion,
+      v: SESSION_SCHEMA_VERSION,
       random: crypto.randomBytes(16).toString('hex'),
     };
     return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
@@ -410,23 +413,42 @@ export class AuthService {
     let decoded: any;
     try {
       decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
-    } catch {
-      throw new UnauthorizedError('Invalid or expired refresh token.');
+    } catch (err: any) {
+      if (err?.name === 'TokenExpiredError') {
+        throw new UnauthorizedError('Refresh token has expired. Please sign in again.', 'REFRESH_TOKEN_EXPIRED');
+      }
+      throw new UnauthorizedError('Invalid refresh token.', 'REFRESH_TOKEN_INVALID');
+    }
+
+    if (!decoded?.v || decoded.v < SESSION_SCHEMA_VERSION) {
+      throw new UnauthorizedError('Session schema version expired. Please sign in again.', 'REFRESH_TOKEN_INVALID');
     }
 
     const refreshTokenHash = this.hashToken(refreshToken);
     const session = await this.authRepo.findSessionByTokenHash(refreshTokenHash);
+    
     if (!session || !session.user) {
-      throw new UnauthorizedError('Session revoked or invalid.');
+      // Check if this token was previously valid but is now revoked (Token Reuse Detection)
+      const anySession = await this.authRepo.findSessionByTokenHashAny(refreshTokenHash);
+      if (anySession && anySession.userId) {
+        logger.warn(`[SECURITY] Refresh token reuse detected for userId: ${anySession.userId}. Revoking all sessions.`);
+        await this.authRepo.revokeAllUserSessions(anySession.userId);
+        await this.authRepo.incrementTokenVersion(anySession.userId);
+        throw new UnauthorizedError(
+          'Token reuse detected. All sessions have been terminated for security. Please sign in again.',
+          'TOKEN_REUSE_DETECTED'
+        );
+      }
+      throw new UnauthorizedError('Refresh session is invalid or has been revoked.', 'REFRESH_TOKEN_REVOKED');
     }
 
     const user = session.user;
     if (user.tokenVersion !== decoded.tokenVersion || user.isSuspended || !user.isActive) {
       await this.authRepo.revokeSession(session.id);
-      throw new UnauthorizedError('Token revoked due to security state change.');
+      throw new UnauthorizedError('Token revoked due to security state change.', 'SESSION_INVALID');
     }
 
-    // Rotate refresh token
+    // Rotate refresh token: revoke current session and issue new session
     await this.authRepo.revokeSession(session.id);
 
     const newAccessToken = this.generateAccessToken(user);

@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
 import { env } from '../config/env';
+import { isOriginAllowed } from '../config/corsOrigins';
+import { getCookieEnvironmentOptions } from '../utils/cookieHelpers';
 
 const CSRF_COOKIE_NAME = 'csrf-token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -85,16 +87,23 @@ export const verifyCsrfTokenSignature = (token: unknown): boolean => {
  * Express middleware to issue and set CSRF cookie + header.
  */
 export const generateCsrfToken = (req: Request, res: Response, next?: NextFunction): string | void => {
-  let token = req.cookies?.[CSRF_COOKIE_NAME];
+  let token = req.cookies?.[CSRF_COOKIE_NAME] || req.cookies?.['csrfToken'];
   if (!token || !verifyCsrfTokenSignature(token)) {
     token = createSignedCsrfToken();
-    const isProduction = env.NODE_ENV === 'production';
+    const { secure, sameSite } = getCookieEnvironmentOptions();
     res.cookie(CSRF_COOKIE_NAME, token, {
       httpOnly: false, // Must be readable by client script if extracting for header
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure,
+      sameSite,
       path: '/',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+    res.cookie('csrfToken', token, {
+      httpOnly: false,
+      secure,
+      sameSite,
+      path: '/',
+      maxAge: 24 * 60 * 60 * 1000,
     });
   }
   res.setHeader(CSRF_HEADER_NAME, token);
@@ -106,6 +115,7 @@ export const generateCsrfToken = (req: Request, res: Response, next?: NextFuncti
 
 /**
  * Validates Double Submit CSRF token for state-mutating requests (POST, PUT, PATCH, DELETE).
+ * - Enforces Origin/Referer verification.
  * - Enforces CSRF on cookie-dependent auth endpoints (register, login, logout, logout-all, refresh-token).
  * - Bypasses pure Bearer-token authenticated API requests.
  * - Exempts OAuth callbacks and signature-authenticated webhooks.
@@ -114,6 +124,31 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   // Only validate state-changing methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
+  }
+
+  // 1. Origin / Referer validation
+  const originHeader = req.headers?.origin;
+  const refererHeader = req.headers?.referer;
+  let requestOrigin: string | undefined;
+  if (originHeader) {
+    requestOrigin = originHeader;
+  } else if (refererHeader) {
+    try {
+      requestOrigin = new URL(refererHeader).origin;
+    } catch {}
+  }
+
+  if (requestOrigin && !isOriginAllowed(requestOrigin)) {
+    res.status(403).json({
+      success: false,
+      message: 'Request origin not allowed by CSRF protection',
+      error: {
+        code: 'CSRF_ORIGIN_MISMATCH',
+        message: 'The request origin does not match allowed CORS origins',
+        action: 'retry',
+      },
+    });
+    return;
   }
 
   // Check if path is exempt
@@ -129,7 +164,7 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
     return next();
   }
 
-  const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
+  const cookieToken = req.cookies?.[CSRF_COOKIE_NAME] || req.cookies?.['csrfToken'];
   const headerToken = req.headers[CSRF_HEADER_NAME] || req.headers[CSRF_HEADER_NAME.toLowerCase()];
 
   if (!headerToken || typeof headerToken !== 'string') {

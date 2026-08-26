@@ -141,6 +141,30 @@ describe('CSRF Double Submit Cookie Middleware', () => {
     expect(safeCompareCsrf('same_length_1', 'same_length_2')).toBe(false);
     expect(safeCompareCsrf('exact_match_token_12345', 'exact_match_token_12345')).toBe(true);
   });
+
+  test('validateCsrf rejects requests with unallowed Origin header', () => {
+    const token = createSignedCsrfToken();
+    const req: any = {
+      method: 'POST',
+      path: '/api/v1/properties',
+      headers: {
+        origin: 'https://malicious-attacker.com',
+        'x-csrf-token': token,
+      },
+      cookies: { 'csrf-token': token },
+    };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const next = jest.fn();
+
+    validateCsrf(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: 'CSRF_ORIGIN_MISMATCH' }),
+      })
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
 });
 
 

@@ -8,6 +8,7 @@ import { env } from "./env";
  * cross-site data theft and CSRF from multi-tenant hosting platforms.
  */
 export const getRawAllowedOrigins = (): string[] => [
+  ...(process.env.CORS_ORIGINS || "").split(","),
   ...(process.env.CORS_ALLOWED_ORIGINS || "").split(","),
   env.CLIENT_URL,
   env.FRONTEND_URL,
@@ -58,8 +59,10 @@ export const isOriginAllowed = (origin?: string): boolean => {
     return true;
   }
 
-  // 2. Allow Vercel preview & production deployment domains (*.vercel.app)
-  if (/^https:\/\/[a-zA-Z0-9_.-]+\.vercel\.app$/.test(cleanOrigin)) {
+  // 2. Allow project-specific Vercel preview & production deployments
+  const PROJECT_PREVIEW_PATTERN = /^https:\/\/pg-management-system-[a-z0-9_-]+-ayushman-8850s-projects\.vercel\.app$/;
+  const PROJECT_PROD_PATTERN = /^https:\/\/pg-management-system(-[a-z0-9_-]+)?\.vercel\.app$/;
+  if (PROJECT_PREVIEW_PATTERN.test(cleanOrigin) || PROJECT_PROD_PATTERN.test(cleanOrigin)) {
     return true;
   }
 

@@ -49,5 +49,18 @@ describe("CORS & Preflight OPTIONS Middleware Unit Tests", () => {
     expect(isOriginAllowed("https://ayushman-glb.github.io/PG-Management-System")).toBe(true);
     expect(isOriginAllowed("https://evil-unauthorized-site.com")).toBe(false);
   });
+
+  test("Should accept project-specific Vercel preview/production URLs and REJECT unrelated Vercel apps", () => {
+    const { isOriginAllowed } = require("../config/corsOrigins");
+    // Valid project preview deployment URLs
+    expect(isOriginAllowed("https://pg-management-system-4i7wpxbe4-ayushman-8850s-projects.vercel.app")).toBe(true);
+    expect(isOriginAllowed("https://pg-management-system-9c04620f-ayushman-8850s-projects.vercel.app")).toBe(true);
+    expect(isOriginAllowed("https://pg-management-system.vercel.app")).toBe(true);
+
+    // Unrelated / third-party Vercel apps must be rejected (no credentialed wildcard)
+    expect(isOriginAllowed("https://some-other-app.vercel.app")).toBe(false);
+    expect(isOriginAllowed("https://malicious-attacker-site.vercel.app")).toBe(false);
+    expect(isOriginAllowed("https://unrelated-pg-app.vercel.app")).toBe(false);
+  });
 });
 
