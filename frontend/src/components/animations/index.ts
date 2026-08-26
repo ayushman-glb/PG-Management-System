@@ -5,5 +5,4 @@ export * from "./MotionCard";
 export * from "./MotionPrimitives";
 export * from "./ScrollProgressBar";
 export * from "./SmoothScroll";
-export * from "./TypedText";
 export * from "./GSAPAnimations";

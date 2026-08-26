@@ -1,5 +1,7 @@
-import { motion, type HTMLMotionProps } from "framer-motion";
 import React from "react";
+import { motion, type HTMLMotionProps } from "framer-motion";
+import { TIMING, EASING } from "./constants";
+import { useReducedMotion } from "./useReducedMotion";
 
 interface MotionCardProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
@@ -19,25 +21,35 @@ export function MotionCard({
   style = {},
   ...props
 }: MotionCardProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 12 }}
+      exit={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
       transition={{
-        duration: 0.4,
-        delay,
-        ease: [0.25, 0.1, 0.25, 1],
+        duration: prefersReducedMotion ? 0 : TIMING.NORMAL,
+        delay: prefersReducedMotion ? 0 : delay,
+        ease: EASING.OUT_CUBIC,
       }}
-      whileHover={{
-        y: hoverY,
-        scale: hoverScale,
-        transition: { duration: 0.2, ease: "easeOut" },
-      }}
-      whileTap={{
-        scale: tapScale,
-        transition: { duration: 0.1 },
-      }}
+      whileHover={
+        prefersReducedMotion
+          ? undefined
+          : {
+              y: hoverY,
+              scale: hoverScale,
+              transition: { duration: TIMING.MICRO, ease: "easeOut" },
+            }
+      }
+      whileTap={
+        prefersReducedMotion
+          ? undefined
+          : {
+              scale: tapScale,
+              transition: { duration: 0.1 },
+            }
+      }
       className={className}
       style={style}
       {...props}
@@ -61,14 +73,20 @@ export function MotionButton({
   type = "button",
   ...props
 }: MotionButtonProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.button
       type={type}
-      whileHover={{
-        scale: hoverScale,
-        transition: { duration: 0.15, ease: "easeOut" },
-      }}
-      whileTap={{ scale: tapScale }}
+      whileHover={
+        prefersReducedMotion
+          ? undefined
+          : {
+              scale: hoverScale,
+              transition: { duration: TIMING.MICRO, ease: "easeOut" },
+            }
+      }
+      whileTap={prefersReducedMotion ? undefined : { scale: tapScale }}
       onClick={onClick}
       className={className}
       {...props}
@@ -84,17 +102,24 @@ export function MotionRow({
   index = 0,
   ...props
 }: HTMLMotionProps<"div"> & { index?: number }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ opacity: 0, x: -12 }}
+      initial={{ opacity: 0, x: prefersReducedMotion ? 0 : -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
-        duration: 0.3,
-        delay: index * 0.05,
+        duration: prefersReducedMotion ? 0 : TIMING.MICRO,
+        delay: prefersReducedMotion ? 0 : index * 0.04,
         ease: "easeOut",
       }}
-      whileHover={{ backgroundColor: "rgba(217, 168, 124, 0.06)" }}
+      whileHover={
+        prefersReducedMotion
+          ? undefined
+          : { backgroundColor: "var(--color-surface)" }
+      }
       className={className}
+      style={{ transition: "background-color 0.15s ease" }}
       {...props}
     >
       {children}
