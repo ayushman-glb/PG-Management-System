@@ -88,8 +88,8 @@ export default function MoveInDashboardPage({ navigate }: Props) {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"}`}>
+      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("pg-listing")} className="p-2 rounded-xl border border-white/10 hover:bg-white/5">
@@ -119,7 +119,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
                   activeTab === tab.id
                     ? "luxury-btn-primary"
                     : darkMode
-                    ? "bg-[#2B2725] text-slate-300 hover:bg-[#332D2B]"
+                    ? "bg-[#252525] text-slate-300 hover:bg-[#1e1e1e]"
                     : "bg-white text-slate-700 hover:bg-slate-100"
                 }`}
               >
@@ -133,7 +133,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
         {/* Tab 1: Rent & Payments */}
         {activeTab === "payments" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`md:col-span-2 p-6 rounded-3xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+            <div className={`md:col-span-2 p-6 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
               <h3 className="text-lg font-bold mb-4">Rent Dues & Razorpay Integration</h3>
               <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between mb-6">
                 <div>
@@ -160,7 +160,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
               </div>
             </div>
 
-            <div className={`p-6 rounded-3xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+            <div className={`p-6 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
               <h3 className="text-base font-bold mb-3">Occupancy Pass</h3>
               <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold space-y-2">
                 <p>Status: ACTIVE RESIDENT</p>
@@ -174,7 +174,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
         {/* Tab 2: Chat & Messages */}
         {activeTab === "messages" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[550px]">
-            <div className={`p-4 rounded-3xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+            <div className={`p-4 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
               <h3 className="text-sm font-bold mb-3 px-2">Message Threads</h3>
               <div className="space-y-2">
                 {threads.map((t) => (
@@ -195,7 +195,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
               </div>
             </div>
 
-            <div className={`md:col-span-2 p-6 rounded-3xl border flex flex-col justify-between ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+            <div className={`md:col-span-2 p-6 rounded-3xl border flex flex-col justify-between ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
               <div className="space-y-3 overflow-y-auto max-h-[420px] pr-2">
                 {messages.length === 0 ? (
                   <div className="text-center py-20 text-xs opacity-50">No messages in thread yet. Type a message below!</div>
@@ -215,7 +215,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
                   placeholder="Type your message to owner/staff..."
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
-                  className={`flex-1 p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#1D1B1A] border-[#4A443F]" : "bg-slate-50 border-slate-200"}`}
+                  className={`flex-1 p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#2e2e2e]" : "bg-slate-50 border-slate-200"}`}
                 />
                 <button type="submit" className="luxury-btn-primary p-3 rounded-xl">
                   <Send className="w-4 h-4" />
@@ -227,7 +227,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
 
         {/* Tab 3: Move-In Checklist */}
         {activeTab === "moveInInfo" && (
-          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Key className="w-5 h-5 text-amber-500" /> Move-In Instructions & House Rules
             </h3>
@@ -260,7 +260,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
 
         {/* Tab 4: Complaints & Maintenance */}
         {activeTab === "complaints" && (
-          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold">Maintenance Tickets</h3>
               <button onClick={() => navigate("complaints")} className="luxury-btn-primary px-4 py-2 text-xs font-bold">

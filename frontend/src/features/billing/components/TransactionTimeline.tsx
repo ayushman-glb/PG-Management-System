@@ -38,10 +38,10 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
   } | null>(null);
   const { download, isDownloading, getError } = useDocumentDownload();
 
-  const cardBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
-  const rowBg = darkMode ? "bg-[#332D2B] border-[#4A443F] hover:bg-[#3D3632]" : "bg-[#F8EEE5] border-[#E6D7CA] hover:bg-[#EDE0D4]";
-  const textPrimary = darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]";
+  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
+  const rowBg = darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] hover:bg-[#252525]" : "bg-[#f7f7f7] border-[#dddddd] hover:bg-[#f2f2f2]";
+  const textPrimary = darkMode ? "text-[#f7f7f7]" : "text-[#222222]";
+  const textMuted = darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]";
 
   const filtered = transactions.filter((t) => filter === "ALL" || t.status === filter);
 
@@ -59,7 +59,7 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
         </div>
 
         {/* Filter Pills */}
-        <div className={`flex items-center p-1 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+        <div className={`flex items-center p-1 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
           {(["ALL", "PAID", "PENDING", "REFUNDED"] as const).map((f) => (
             <button
               key={f}
@@ -162,7 +162,7 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                             })}
                             title="Download GST Invoice (PDF)"
                             className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
-                              darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
+                              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#a1a1aa] hover:text-white" : "bg-[#ffffff] border-[#dddddd] text-[#6a6a6a] hover:text-black"
                             }`}
                           >
                             <FileText className={`w-4 h-4 ${isDownloading(invoiceTargetId, 'INVOICE') ? 'animate-spin' : ''}`} />
@@ -189,7 +189,7 @@ export const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                             })}
                             title="Download Payment Receipt"
                             className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 ${
-                              darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
+                              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#a1a1aa] hover:text-white" : "bg-[#ffffff] border-[#dddddd] text-[#6a6a6a] hover:text-black"
                             }`}
                           >
                             <Download className={`w-4 h-4 ${isDownloading(item.id, 'PAYMENT_RECEIPT') ? 'animate-spin' : ''}`} />

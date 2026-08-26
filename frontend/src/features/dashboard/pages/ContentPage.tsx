@@ -293,14 +293,14 @@ export default function ContentPage({ navigate, page }: Props) {
   return (
     <div
       className={`min-h-screen font-sans transition-colors duration-300 ${
-        darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"
+        darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"
       }`}
     >
       <header
         className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
           darkMode
-            ? "bg-[#2B2725]/90 border-[#4A443F]"
-            : "bg-[#FFFDFB]/80 border-[#E6D7CA]/70"
+            ? "bg-[#252525]/90 border-[#2e2e2e]"
+            : "bg-[#ffffff]/80 border-[#dddddd]/70"
         } px-4 py-4 md:px-6 md:py-5`}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
@@ -314,15 +314,15 @@ export default function ContentPage({ navigate, page }: Props) {
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
               style={{
                 background: darkMode
-                  ? "linear-gradient(135deg, #C89A4B, #D8B36A)"
-                  : "linear-gradient(135deg, #D9A87C, #C58B63)",
+                  ? "linear-gradient(135deg, #ff385c, #ff385c)"
+                  : "linear-gradient(135deg, #ff385c, #ff385c)",
               }}
             >
               <Building2 className="h-4.5 w-4.5" />
             </span>
             <span
               className={`font-bold ${
-                darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+                darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
               }`}
             >
               RoomBae
@@ -339,22 +339,22 @@ export default function ContentPage({ navigate, page }: Props) {
           <div
             className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
               darkMode
-                ? "border-[#4A443F] bg-[#332D2B] text-[#C89A4B]"
-                : "border-[#E6D7CA] bg-[#F8EEE5] text-[#C58B63]"
+                ? "border-[#2e2e2e] bg-[#1e1e1e] text-[#ff385c]"
+                : "border-[#dddddd] bg-[#f7f7f7] text-[#ff385c]"
             }`}
           >
             <Icon className="h-3.5 w-3.5" /> {content.eyebrow}
           </div>
           <h1
             className={`text-4xl font-black leading-tight md:text-6xl ${
-              darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+              darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
             }`}
           >
             {content.title}
           </h1>
           <p
             className={`mt-6 max-w-2xl text-lg leading-relaxed ${
-              darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"
+              darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"
             }`}
           >
             {content.description}
@@ -367,31 +367,31 @@ export default function ContentPage({ navigate, page }: Props) {
           ).map(([title, description]) => (
             <article
               key={title}
-              className={`luxury-card p-6 rounded-2xl border transition-all ${
+              className={` p-6 rounded-2xl border transition-all ${
                 darkMode
-                  ? "bg-[#332D2B] border-[#4A443F]"
-                  : "bg-[#FFFDFB] border-[#E6D7CA]"
+                  ? "bg-[#1e1e1e] border-[#2e2e2e]"
+                  : "bg-[#ffffff] border-[#dddddd]"
               }`}
             >
               <div
                 className={`mb-6 flex h-10 w-10 items-center justify-center rounded-xl ${
                   darkMode
-                    ? "bg-[#2B2725] text-[#C89A4B]"
-                    : "bg-[#F8EEE5] text-[#C58B63]"
+                    ? "bg-[#252525] text-[#ff385c]"
+                    : "bg-[#f7f7f7] text-[#ff385c]"
                 }`}
               >
                 <CheckCircle className="h-5 w-5" />
               </div>
               <h2
                 className={`font-bold ${
-                  darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+                  darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
                 }`}
               >
                 {title}
               </h2>
               <p
                 className={`mt-2 text-sm leading-relaxed ${
-                  darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"
+                  darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"
                 }`}
               >
                 {description}
@@ -404,8 +404,8 @@ export default function ContentPage({ navigate, page }: Props) {
           className="mt-16 overflow-hidden rounded-3xl p-8 text-white md:p-12 shadow-xl"
           style={{
             background: darkMode
-              ? "linear-gradient(135deg, #C89A4B 0%, #D8B36A 100%)"
-              : "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)",
+              ? "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)"
+              : "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)",
           }}
         >
           <div className="relative max-w-2xl">
@@ -420,8 +420,8 @@ export default function ContentPage({ navigate, page }: Props) {
               onClick={() => navigate("auth")}
               className={`mt-7 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-transform hover:scale-105 shadow-md ${
                 darkMode
-                  ? "bg-[#1D1B1A] text-[#E8C98A]"
-                  : "bg-[#FFFDFB] text-[#C58B63]"
+                  ? "bg-[#121212] text-[#E8C98A]"
+                  : "bg-[#ffffff] text-[#ff385c]"
               }`}
             >
               Start free trial <ArrowRight className="h-4 w-4" />

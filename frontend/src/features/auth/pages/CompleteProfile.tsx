@@ -113,7 +113,7 @@ export default function CompleteProfile({ navigate }: Props) {
   return (
     <div
       className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
-        darkMode ? "bg-neutral-950 text-white" : "bg-[#FDF8F5] text-[#3B2A24]"
+        darkMode ? "bg-neutral-950 text-white" : "bg-[#FDF8F5] text-[#222222]"
       }`}
     >
       <div

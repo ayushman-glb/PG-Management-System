@@ -122,7 +122,7 @@ export default function Operations({ navigate, page }: Props) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
             <div
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#2B2725] text-[#C89A4B]" : "bg-[#F8EEE5] text-[#C58B63]"}`}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#252525] text-[#ff385c]" : "bg-[#f7f7f7] text-[#ff385c]"}`}
             >
               <Icon className="w-5 h-5" />
             </div>
@@ -256,7 +256,7 @@ export default function Operations({ navigate, page }: Props) {
               {activity.map(([property, text, time, ActivityIcon]) => (
                 <div key={text} className="flex items-start gap-3">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#332D2B] text-[#C89A4B]" : "bg-[#F8EEE5] text-[#C58B63]"}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#1e1e1e] text-[#ff385c]" : "bg-[#f7f7f7] text-[#ff385c]"}`}
                   >
                     <ActivityIcon className="w-4 h-4" />
                   </div>
@@ -300,7 +300,7 @@ export default function Operations({ navigate, page }: Props) {
                 <button
                   key={destination}
                   onClick={() => navigate(destination as Page)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${darkMode ? "bg-slate-700/50 hover:bg-[#332D2B] text-slate-300 hover:text-[#C89A4B]" : "bg-slate-50 hover:bg-[#F8EEE5] text-slate-700 hover:text-[#C58B63]"}`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${darkMode ? "bg-slate-700/50 hover:bg-[#1e1e1e] text-slate-300 hover:text-[#ff385c]" : "bg-slate-50 hover:bg-[#f7f7f7] text-slate-700 hover:text-[#ff385c]"}`}
                 >
                   {label}
                   <span aria-hidden="true">→</span>

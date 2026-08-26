@@ -12,15 +12,15 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
   return (
     <div
       className={`min-h-[100dvh] flex flex-col justify-between font-sans transition-colors duration-300 ${
-        darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"
+        darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"
       }`}
     >
       {/* Header */}
       <header
         className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
           darkMode
-            ? "bg-[#2B2725]/90 border-[#4A443F]"
-            : "bg-[#FFFDFB]/80 border-[#E6D7CA]/70"
+            ? "bg-[#252525]/90 border-[#2e2e2e]"
+            : "bg-[#ffffff]/80 border-[#dddddd]/70"
         } px-4 py-4 md:px-6 md:py-5`}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
@@ -34,15 +34,15 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
               style={{
                 background: darkMode
-                  ? "linear-gradient(135deg, #C89A4B, #D8B36A)"
-                  : "linear-gradient(135deg, #D9A87C, #C58B63)",
+                  ? "linear-gradient(135deg, #ff385c, #ff385c)"
+                  : "linear-gradient(135deg, #ff385c, #ff385c)",
               }}
             >
               <Building2 className="h-4.5 w-4.5" />
             </span>
             <span
               className={`font-bold text-lg ${
-                darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+                darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
               }`}
             >
               RoomBae
@@ -69,7 +69,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
 
           <h1
             className={`text-4xl md:text-6xl font-black tracking-tight mb-4 ${
-              darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"
+              darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
             }`}
           >
             Looking for a room that doesn't exist?
@@ -77,7 +77,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
 
           <p
             className={`text-base md:text-lg mb-8 leading-relaxed ${
-              darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"
+              darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"
             }`}
           >
             The link you followed may be broken, or the page may have been relocated.
@@ -97,8 +97,8 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               onClick={() => navigate("pg-listing")}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border transition-all hover:scale-105 cursor-pointer ${
                 darkMode
-                  ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]"
-                  : "bg-white border-[#E6D7CA] text-[#3B2A24] hover:bg-[#FFF8F2]"
+                  ? "bg-[#252525] border-[#2e2e2e] text-[#f7f7f7] hover:bg-[#1e1e1e]"
+                  : "bg-white border-[#dddddd] text-[#222222] hover:bg-[#ffffff]"
               }`}
             >
               <Compass className="w-4 h-4 text-amber-500" />
@@ -109,8 +109,8 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               onClick={() => navigate("dashboard")}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border transition-all hover:scale-105 cursor-pointer ${
                 darkMode
-                  ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]"
-                  : "bg-white border-[#E6D7CA] text-[#3B2A24] hover:bg-[#FFF8F2]"
+                  ? "bg-[#252525] border-[#2e2e2e] text-[#f7f7f7] hover:bg-[#1e1e1e]"
+                  : "bg-white border-[#dddddd] text-[#222222] hover:bg-[#ffffff]"
               }`}
             >
               <LayoutDashboard className="w-4 h-4 text-amber-500" />

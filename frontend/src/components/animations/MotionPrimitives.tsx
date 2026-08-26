@@ -36,7 +36,7 @@ export function AnimatedTabs({
   return (
     <div
       className={`flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
-        darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"
+        darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"
       } ${className}`}
     >
       {tabs.map((tab) => {
@@ -52,11 +52,11 @@ export function AnimatedTabs({
             className={`relative flex items-center ${fullWidth ? "flex-1 justify-center text-center" : ""} gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 select-none cursor-pointer z-10 ${
               isActive
                 ? darkMode
-                  ? "text-[#F7F3EE]"
-                  : "text-[#3B2A24]"
+                  ? "text-[#f7f7f7]"
+                  : "text-[#222222]"
                 : darkMode
-                ? "text-[#C6B9AE] hover:text-[#F7F3EE]"
-                : "text-[#6E5A52] hover:text-[#3B2A24]"
+                ? "text-[#a1a1aa] hover:text-[#f7f7f7]"
+                : "text-[#6a6a6a] hover:text-[#222222]"
             }`}
           >
             {isActive && (
@@ -65,24 +65,24 @@ export function AnimatedTabs({
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 className={`absolute inset-0 rounded-xl shadow-sm -z-10 ${
                   darkMode
-                    ? "bg-[#332D2B] border border-[#C89A4B]/40 shadow-[0_2px_10px_rgba(200,154,75,0.15)]"
-                    : "bg-[#FFFDFB] border border-[#D9A87C]/50 shadow-[0_2px_10px_rgba(217,168,124,0.2)]"
+                    ? "bg-[#1e1e1e] border border-[#ff385c]/40 shadow-[0_2px_10px_rgba(200,154,75,0.15)]"
+                    : "bg-[#ffffff] border border-[#ff385c]/50 shadow-[0_2px_10px_rgba(217,168,124,0.2)]"
                 }`}
               />
             )}
 
-            {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (darkMode ? "text-[#C89A4B]" : "text-[#D9A87C]") : ""}`} />}
+            {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (darkMode ? "text-[#ff385c]" : "text-[#ff385c]") : ""}`} />}
             <span>{tab.label}</span>
             {tab.count !== undefined && (
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                   isActive
                     ? darkMode
-                      ? "bg-[#C89A4B]/20 text-[#E8C98A]"
-                      : "bg-[#D9A87C]/20 text-[#C58B63]"
+                      ? "bg-[#ff385c]/20 text-[#E8C98A]"
+                      : "bg-[#ff385c]/20 text-[#ff385c]"
                     : darkMode
-                    ? "bg-[#3D3632] text-[#C6B9AE]"
-                    : "bg-[#E6D7CA] text-[#6E5A52]"
+                    ? "bg-[#252525] text-[#a1a1aa]"
+                    : "bg-[#dddddd] text-[#6a6a6a]"
                 }`}
               >
                 {tab.count}
@@ -142,7 +142,7 @@ export function SpotlightCard({
       whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={`relative rounded-2xl border overflow-hidden transition-all duration-300 ${
-        darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"
+        darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
       } ${className}`}
       style={{
         boxShadow: isHovered
@@ -243,7 +243,7 @@ export function AnimatedAccordion({
           <div
             key={item.id}
             className={`rounded-2xl border overflow-hidden transition-colors ${
-              darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"
+              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
             }`}
           >
             <button
@@ -255,11 +255,11 @@ export function AnimatedAccordion({
                 {Icon && (
                   <Icon
                     className={`w-4.5 h-4.5 ${
-                      darkMode ? "text-[#C89A4B]" : "text-[#D9A87C]"
+                      darkMode ? "text-[#ff385c]" : "text-[#ff385c]"
                     }`}
                   />
                 )}
-                <span className={darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}>
+                <span className={darkMode ? "text-[#f7f7f7]" : "text-[#222222]"}>
                   {item.title}
                 </span>
               </div>
@@ -267,7 +267,7 @@ export function AnimatedAccordion({
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: 0.2, ease: "easeInOut" }}
               >
-                <ChevronDown className={`w-4 h-4 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`} />
+                <ChevronDown className={`w-4 h-4 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`} />
               </motion.div>
             </button>
 
@@ -282,8 +282,8 @@ export function AnimatedAccordion({
                   <div
                     className={`px-4 pb-4 pt-1 text-sm border-t ${
                       darkMode
-                        ? "border-[#4A443F] text-[#C6B9AE]"
-                        : "border-[#E6D7CA] text-[#6E5A52]"
+                        ? "border-[#2e2e2e] text-[#a1a1aa]"
+                        : "border-[#dddddd] text-[#6a6a6a]"
                     }`}
                   >
                     {item.content}
@@ -339,7 +339,7 @@ export function AnimatedDialog({
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
             className={`relative w-full ${maxWidth} rounded-3xl border shadow-2xl p-6 overflow-hidden z-10 ${
-              darkMode ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE]" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]"
+              darkMode ? "bg-[#252525] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
             }`}
           >
             {title && (
@@ -453,7 +453,7 @@ export function FloatingTooltip({
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.15 }}
             className={`absolute ${positionClasses[position]} z-50 px-2.5 py-1 text-xs font-medium rounded-lg border shadow-lg whitespace-nowrap pointer-events-none ${
-              darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#F7F3EE]" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]"
+              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
             }`}
           >
             {content}

@@ -168,8 +168,8 @@ export default function ResidentPortal({ navigate }: Props) {
   // Guided Onboarding State for new residents without bed allocation
   if (isProfileIncomplete) {
     return (
-      <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+      <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"}`}>
+        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#252525]/90 border-[#2e2e2e]" : "bg-[#ffffff]/90 border-[#dddddd]"}`}>
           <Logo onClick={() => navigate("landing")} badge="RESIDENT" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -179,7 +179,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 await logout();
                 navigate("auth");
               }}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#2e2e2e] text-[#a1a1aa] hover:bg-[#1e1e1e]" : "border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7]"}`}
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -188,7 +188,7 @@ export default function ResidentPortal({ navigate }: Props) {
         </header>
 
         <main className="flex-1 max-w-3xl w-full mx-auto p-6 flex items-center justify-center">
-          <div className={`p-8 md:p-10 rounded-3xl border text-center space-y-6 shadow-xl ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}>
+          <div className={`p-8 md:p-10 rounded-3xl border text-center space-y-6 shadow-xl ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
             <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto text-3xl">
               🏠
             </div>
@@ -207,7 +207,7 @@ export default function ResidentPortal({ navigate }: Props) {
               </button>
               <button
                 onClick={() => loadPortalData()}
-                className={`w-full sm:w-auto px-5 py-3 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-[#4A433F] hover:bg-[#332D2B]" : "border-[#E6D7CA] hover:bg-[#F8EEE5]"}`}
+                className={`w-full sm:w-auto px-5 py-3 rounded-xl border text-sm font-semibold transition-colors ${darkMode ? "border-[#2e2e2e] hover:bg-[#1e1e1e]" : "border-[#dddddd] hover:bg-[#f7f7f7]"}`}
               >
                 Refresh Status
               </button>
@@ -221,8 +221,8 @@ export default function ResidentPortal({ navigate }: Props) {
   // General Portal Network / Server Error View
   if (portalError && !portalData) {
     return (
-      <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+      <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"}`}>
+        <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#252525]/90 border-[#2e2e2e]" : "bg-[#ffffff]/90 border-[#dddddd]"}`}>
           <Logo onClick={() => navigate("landing")} badge="RESIDENT" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -232,7 +232,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 await logout();
                 navigate("auth");
               }}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
+              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#2e2e2e] text-[#a1a1aa] hover:bg-[#1e1e1e]" : "border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7]"}`}
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -241,7 +241,7 @@ export default function ResidentPortal({ navigate }: Props) {
         </header>
 
         <main className="flex-1 max-w-lg w-full mx-auto p-6 flex items-center justify-center">
-          <div className={`p-8 rounded-3xl border text-center space-y-4 shadow-xl ${darkMode ? "bg-[#2B2725] border-rose-500/30" : "bg-white border-rose-200"}`}>
+          <div className={`p-8 rounded-3xl border text-center space-y-4 shadow-xl ${darkMode ? "bg-[#252525] border-rose-500/30" : "bg-white border-rose-200"}`}>
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto text-2xl font-bold">
               ⚠️
             </div>
@@ -336,12 +336,12 @@ export default function ResidentPortal({ navigate }: Props) {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-      <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+    <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"}`}>
+      <header className={`sticky top-0 z-30 px-4 md:px-8 py-3.5 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#252525]/90 border-[#2e2e2e]" : "bg-[#ffffff]/90 border-[#dddddd]"}`}>
         <div className="flex items-center gap-3 overflow-hidden">
           <Logo onClick={() => navigate("landing")} badge={user?.id?.slice(0, 8) || "—"} />
-          <div className="hidden lg:block border-l border-[#E6D7CA] dark:border-[#4A433F] pl-3">
-            <p className={`text-xs font-medium truncate ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+          <div className="hidden lg:block border-l border-[#dddddd] dark:border-[#2e2e2e] pl-3">
+            <p className={`text-xs font-medium truncate ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
               {portalData?.profile?.propertyName || portalData?.pg?.name || "RoomBae PG"} — Room {portalData?.profile?.roomNumber || portalData?.room?.roomNumber || "N/A"} ({portalData?.profile?.bedNumber || portalData?.bed?.bedNumber || "Unassigned"})
             </p>
           </div>
@@ -357,7 +357,7 @@ export default function ResidentPortal({ navigate }: Props) {
               await logout();
               navigate("auth");
             }}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${darkMode ? "border-[#2e2e2e] text-[#a1a1aa] hover:bg-[#1e1e1e]" : "border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7]"}`}
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Sign Out</span>
@@ -366,7 +366,7 @@ export default function ResidentPortal({ navigate }: Props) {
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto p-4 md:p-6 gap-6">
-        <aside className={`w-full md:w-64 flex-shrink-0 luxury-card p-3 flex flex-row md:flex-col gap-1.5 overflow-x-auto ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+        <aside className={`w-full md:w-64 flex-shrink-0  p-3 flex flex-row md:flex-col gap-1.5 overflow-x-auto ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
           {[
             { id: "overview", label: "Dashboard", icon: Home },
             { id: "agreements", label: "Digital Agreement 📜", icon: PenTool },
@@ -388,11 +388,11 @@ export default function ResidentPortal({ navigate }: Props) {
                 onClick={() => setActiveTab(item.id as Tab)}
                 className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all text-left cursor-pointer ${isActive
                     ? darkMode
-                      ? "bg-[#C89A4B] text-[#1D1B1A] font-bold shadow-md"
-                      : "bg-[#D9A87C] text-white font-bold shadow-md"
+                      ? "bg-[#ff385c] text-[#121212] font-bold shadow-md"
+                      : "bg-[#ff385c] text-white font-bold shadow-md"
                     : darkMode
-                      ? "text-[#C6B9AE] hover:bg-[#2B2725]"
-                      : "text-[#6E5A52] hover:bg-[#F8EEE5]"
+                      ? "text-[#a1a1aa] hover:bg-[#252525]"
+                      : "text-[#6a6a6a] hover:bg-[#f7f7f7]"
                   }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
@@ -405,16 +405,16 @@ export default function ResidentPortal({ navigate }: Props) {
         <main className="flex-1 min-w-0 space-y-6">
           {activeTab === "overview" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`bento-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${darkMode ? "bg-gradient-to-r from-[#332D2B] to-[#2B2725] border-[#4A433F]" : "bg-gradient-to-r from-[#FFFDFB] to-[#F8EEE5] border-[#E6D7CA]"}`}>
+              <div className={`bento-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${darkMode ? "bg-gradient-to-r from-[#1e1e1e] to-[#252525] border-[#2e2e2e]" : "bg-gradient-to-r from-[#ffffff] to-[#f7f7f7] border-[#dddddd]"}`}>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                       Rent Due Soon
                     </span>
-                    <span className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>{portalData?.currentMonth || "—"}</span>
+                    <span className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>{portalData?.currentMonth || "—"}</span>
                   </div>
                   <h2 className="text-2xl font-black">₹{portalData?.rentAmount || 0} / month</h2>
-                  <p className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Due date: {portalData?.dueDate || "—"} · {portalData?.room?.roomNumber || "—"} {portalData?.bed?.bedNumber || "—"}</p>
+                  <p className={`text-xs mt-0.5 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Due date: {portalData?.dueDate || "—"} · {portalData?.room?.roomNumber || "—"} {portalData?.bed?.bedNumber || "—"}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -430,14 +430,14 @@ export default function ResidentPortal({ navigate }: Props) {
                   </button>
                   <button
                     onClick={() => setSelectedAgreement(mockAgreement)}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-bold border ${darkMode ? "border-[#4A433F] text-[#C6B9AE] hover:bg-[#332D2B]" : "border-[#E6D7CA] text-[#6E5A52] hover:bg-[#F8EEE5]"}`}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold border ${darkMode ? "border-[#2e2e2e] text-[#a1a1aa] hover:bg-[#1e1e1e]" : "border-[#dddddd] text-[#6a6a6a] hover:bg-[#f7f7f7]"}`}
                   >
                     Review Agreement
                   </button>
                 </div>
               </div>
 
-              <div className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-4 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-4 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">MY STATUS:</span>
@@ -477,7 +477,7 @@ export default function ResidentPortal({ navigate }: Props) {
               </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-amber-500 mb-1">
                     <Building className="w-4 h-4" /> Room Allotment
                   </div>
@@ -485,7 +485,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   <div className="text-xs text-slate-400">{portalData?.bed?.bedNumber || "—"} ({portalData?.room?.roomType || "—"})</div>
                 </div>
 
-                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-emerald-500 mb-1">
                     <Wifi className="w-4 h-4" /> Guest WiFi
                   </div>
@@ -493,7 +493,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   <div className="text-xs font-mono text-slate-400">Pass: {portalData?.wifiPassword || "—"}</div>
                 </div>
 
-                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-blue-500 mb-1">
                     <Wrench className="w-4 h-4" /> Active Complaints
                   </div>
@@ -501,7 +501,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   <div className="text-xs text-slate-400">{complaintsList.filter(c => c.status === 'IN_PROGRESS').length} In Progress</div>
                 </div>
 
-                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+                <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold text-purple-500 mb-1">
                     <QrCode className="w-4 h-4" /> Active Passes
                   </div>
@@ -514,16 +514,16 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "agreements" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                   <div>
                     <h2 className="text-xl font-black">Digital Rental Agreements</h2>
-                    <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Legally binding PG lease contracts with cryptographic signatures &amp; QR stamps</p>
+                    <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Legally binding PG lease contracts with cryptographic signatures &amp; QR stamps</p>
                   </div>
                 </div>
 
                 {mockAgreement ? (
-                <div className={`p-5 rounded-2xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                <div className={`p-5 rounded-2xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm">{mockAgreement.agreementNumber || "—"}</span>
@@ -543,7 +543,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   </button>
                 </div>
                 ) : (
-                <div className={`p-5 rounded-2xl border text-center ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                <div className={`p-5 rounded-2xl border text-center ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                   <p className="text-sm text-slate-400">No active agreements found.</p>
                 </div>
                 )}
@@ -559,11 +559,11 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "profile" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-black">My Profile &amp; KYC Verification</h2>
-                    <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Personal identity, emergency contacts, and encrypted KYC status</p>
+                    <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Personal identity, emergency contacts, and encrypted KYC status</p>
                   </div>
                   <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
                     <CheckCircle2 className="w-4 h-4" /> KYC Verified
@@ -602,14 +602,14 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "room" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="mb-6">
                   <h2 className="text-xl font-black">Room Allotment & Roommates</h2>
-                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>{portalData?.room?.roomNumber || "—"} · {portalData?.room?.roomType || "—"} · {portalData?.floor || "—"} Floor</p>
+                  <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>{portalData?.room?.roomNumber || "—"} · {portalData?.room?.roomType || "—"} · {portalData?.floor || "—"} Floor</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                  <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-sm">{portalData?.bed?.bedNumber || "—"} (Your Bed)</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">Occupied</span>
@@ -619,7 +619,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   </div>
 
                   {portalData?.roommate && (
-                  <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                  <div className={`p-4 rounded-2xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-sm">{portalData?.roommate?.bedNumber || "—"} (Roommate)</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">Occupied</span>
@@ -633,7 +633,7 @@ export default function ResidentPortal({ navigate }: Props) {
                 <h3 className="text-sm font-bold text-amber-500 uppercase tracking-wider mb-3">Room Amenities Included</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                   {["High-Speed WiFi", "Split AC 1.5 Ton", "Attached Bath & Geyser", "Individual Study Desk", "Housekeeping (Daily)", "Power Backup 24x7", "Individual Wardrobe", "Laundry Service"].map((amenity, i) => (
-                    <div key={i} className={`p-3 rounded-xl border flex items-center gap-2 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                    <div key={i} className={`p-3 rounded-xl border flex items-center gap-2 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                       <span>{amenity}</span>
                     </div>
@@ -645,11 +645,11 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "billing" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                   <div>
                     <h2 className="text-xl font-black">Rent Billing &amp; GST Invoices</h2>
-                    <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Monthly rent payment, Razorpay gateway, and downloadable official GST tax receipts</p>
+                    <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Monthly rent payment, Razorpay gateway, and downloadable official GST tax receipts</p>
                   </div>
                   <button
                     onClick={() => {
@@ -668,7 +668,7 @@ export default function ResidentPortal({ navigate }: Props) {
 
                 <div className="space-y-3">
                   {(Array.isArray(paymentsList) ? paymentsList : []).map((pay) => (
-                    <div key={pay.id} className={`p-4 rounded-2xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                    <div key={pay.id} className={`p-4 rounded-2xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm">{pay.invoiceNumber}</span>
@@ -685,7 +685,7 @@ export default function ResidentPortal({ navigate }: Props) {
                           type="button"
                           disabled={downloadingId === pay.id}
                           onClick={() => handleDownloadInvoice(pay)}
-                          className={`p-2 rounded-xl border hover:bg-white/10 disabled:opacity-50 ${darkMode ? "border-[#4A433F]" : "border-[#E6D7CA]"}`}
+                          className={`p-2 rounded-xl border hover:bg-white/10 disabled:opacity-50 ${darkMode ? "border-[#2e2e2e]" : "border-[#dddddd]"}`}
                           title="Download PDF Invoice"
                         >
                           <Download className={`w-4 h-4 text-amber-500 ${downloadingId === pay.id ? 'animate-spin' : ''}`} />
@@ -700,13 +700,13 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "maintenance" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="mb-6">
                   <h2 className="text-xl font-black">Maintenance &amp; Helpdesk</h2>
-                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Raise tickets for plumbing, electrical, WiFi, or room repairs</p>
+                  <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Raise tickets for plumbing, electrical, WiFi, or room repairs</p>
                 </div>
 
-                <form onSubmit={handleCreateComplaint} className={`p-4 rounded-2xl border mb-6 space-y-4 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                <form onSubmit={handleCreateComplaint} className={`p-4 rounded-2xl border mb-6 space-y-4 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                   <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
                     <Plus className="w-4 h-4" /> Raise New Complaint Ticket
                   </h3>
@@ -716,13 +716,13 @@ export default function ResidentPortal({ navigate }: Props) {
                       placeholder="Issue Title (e.g. AC Filter Clean)"
                       value={newComplaint.title}
                       onChange={(e) => setNewComplaint({ ...newComplaint, title: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                       required
                     />
                     <select
                       value={newComplaint.category}
                       onChange={(e) => setNewComplaint({ ...newComplaint, category: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                     >
                       <option value="Plumbing">Plumbing</option>
                       <option value="Electrical">Electrical</option>
@@ -734,7 +734,7 @@ export default function ResidentPortal({ navigate }: Props) {
                     <select
                       value={newComplaint.priority}
                       onChange={(e) => setNewComplaint({ ...newComplaint, priority: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                     >
                       <option value="LOW">Low Priority</option>
                       <option value="MEDIUM">Medium Priority</option>
@@ -746,7 +746,7 @@ export default function ResidentPortal({ navigate }: Props) {
                     placeholder="Describe the issue in detail..."
                     value={newComplaint.description}
                     onChange={(e) => setNewComplaint({ ...newComplaint, description: e.target.value })}
-                    className={`w-full px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                     rows={2}
                   />
                   <button type="submit" className="px-5 py-2 rounded-xl bg-amber-500 text-neutral-950 font-bold text-xs hover:bg-amber-400">
@@ -756,7 +756,7 @@ export default function ResidentPortal({ navigate }: Props) {
 
                 <div className="space-y-3">
                   {(Array.isArray(complaintsList) ? complaintsList : []).map((ticket) => (
-                    <div key={ticket.id} className={`p-4 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                    <div key={ticket.id} className={`p-4 rounded-2xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="flex items-center gap-2">
@@ -779,13 +779,13 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "visitors" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="mb-6">
                   <h2 className="text-xl font-black">Digital Visitor Passes</h2>
-                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Generate QR-stamped guest entrance passes for visitors</p>
+                  <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Generate QR-stamped guest entrance passes for visitors</p>
                 </div>
 
-                <form onSubmit={handleCreateVisitorPass} className={`p-4 rounded-2xl border mb-6 space-y-4 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                <form onSubmit={handleCreateVisitorPass} className={`p-4 rounded-2xl border mb-6 space-y-4 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                   <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
                     <Plus className="w-4 h-4" /> Request New Visitor Pass
                   </h3>
@@ -795,7 +795,7 @@ export default function ResidentPortal({ navigate }: Props) {
                       placeholder="Visitor Full Name"
                       value={newVisitor.visitorName}
                       onChange={(e) => setNewVisitor({ ...newVisitor, visitorName: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                       required
                     />
                     <input
@@ -803,13 +803,13 @@ export default function ResidentPortal({ navigate }: Props) {
                       placeholder="Visitor Mobile Number"
                       value={newVisitor.visitorMobile}
                       onChange={(e) => setNewVisitor({ ...newVisitor, visitorMobile: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                       required
                     />
                     <select
                       value={newVisitor.relation}
                       onChange={(e) => setNewVisitor({ ...newVisitor, relation: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                     >
                       <option value="Parent">Parent</option>
                       <option value="Sibling">Sibling</option>
@@ -824,7 +824,7 @@ export default function ResidentPortal({ navigate }: Props) {
 
                 <div className="space-y-3">
                   {(Array.isArray(visitorPassesList) ? visitorPassesList : []).map((pass) => (
-                    <div key={pass.id} className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                    <div key={pass.id} className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm">{pass.visitorName} ({pass.relation})</span>
@@ -843,10 +843,10 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "meals" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="mb-6">
                   <h2 className="text-xl font-black">Mess &amp; Meal Menu Planner</h2>
-                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Daily nutritive meal schedule with 1-click meal skip toggle</p>
+                  <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Daily nutritive meal schedule with 1-click meal skip toggle</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -858,7 +858,7 @@ export default function ResidentPortal({ navigate }: Props) {
                   ].map((meal, idx) => {
                     const isSkipped = skippedMeals[meal.type];
                     return (
-                      <div key={idx} className={`p-4 rounded-2xl border flex flex-col justify-between ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                      <div key={idx} className={`p-4 rounded-2xl border flex flex-col justify-between ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-bold text-sm text-amber-500">{meal.type}</span>
@@ -886,13 +886,13 @@ export default function ResidentPortal({ navigate }: Props) {
 
           {activeTab === "gatepass" && (
             <div className="space-y-6 animate-fade-in">
-              <div className={`luxury-card p-6 ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+              <div className={` p-6 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
                 <div className="mb-6">
                   <h2 className="text-xl font-black">Outing &amp; Night Gate Passes</h2>
-                  <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>Digital leave &amp; gate approval passes for campus exit</p>
+                  <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Digital leave &amp; gate approval passes for campus exit</p>
                 </div>
 
-                <form onSubmit={handleCreateGatePass} className={`p-4 rounded-2xl border mb-6 space-y-4 ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                <form onSubmit={handleCreateGatePass} className={`p-4 rounded-2xl border mb-6 space-y-4 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                   <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2">
                     <Plus className="w-4 h-4" /> Apply for Outing Gate Pass
                   </h3>
@@ -900,7 +900,7 @@ export default function ResidentPortal({ navigate }: Props) {
                     <select
                       value={newGatepass.passType}
                       onChange={(e) => setNewGatepass({ ...newGatepass, passType: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                     >
                       <option value="DAY_OUTING">Day Outing</option>
                       <option value="NIGHT_OUT">Night Outing</option>
@@ -911,7 +911,7 @@ export default function ResidentPortal({ navigate }: Props) {
                       placeholder="Destination / City"
                       value={newGatepass.destination}
                       onChange={(e) => setNewGatepass({ ...newGatepass, destination: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                       required
                     />
                     <input
@@ -919,7 +919,7 @@ export default function ResidentPortal({ navigate }: Props) {
                       placeholder="Reason for Leave"
                       value={newGatepass.reason}
                       onChange={(e) => setNewGatepass({ ...newGatepass, reason: e.target.value })}
-                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#332D2B] border-[#4A433F]" : "bg-white border-[#E6D7CA]"}`}
+                      className={`px-3 py-2 rounded-xl border text-xs ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}
                       required
                     />
                   </div>
@@ -930,7 +930,7 @@ export default function ResidentPortal({ navigate }: Props) {
 
                 <div className="space-y-3">
                   {(Array.isArray(gatePassesList) ? gatePassesList : []).map((pass) => (
-                    <div key={pass.id} className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+                    <div key={pass.id} className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-sm">{pass.passType.replace("_", " ")} - {pass.destination}</span>

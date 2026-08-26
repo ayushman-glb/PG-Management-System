@@ -134,19 +134,19 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   const modalBg = darkMode
     ? "bg-neutral-900 border-white/10 text-white shadow-2xl"
-    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] shadow-2xl";
+    : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-2xl";
   const headerBg = darkMode
     ? "bg-gradient-to-r from-amber-500/20 via-neutral-900 to-neutral-900 border-b border-white/10"
-    : "bg-gradient-to-r from-[#F8EEE5] via-[#FFFDFB] to-[#FFFDFB] border-b border-[#E6D7CA]";
+    : "bg-gradient-to-r from-[#f7f7f7] via-[#ffffff] to-[#ffffff] border-b border-[#dddddd]";
   const cardBg = darkMode
     ? "bg-neutral-950 border-white/10 text-neutral-300"
-    : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
+    : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
   const subCardBg = darkMode
     ? "bg-neutral-900 border-white/10 text-neutral-300"
-    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const textPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
-  const accentText = darkMode ? "text-amber-400" : "text-[#C58B63]";
+    : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const accentText = darkMode ? "text-amber-400" : "text-[#ff385c]";
 
   const agreementFileName = `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`;
 
@@ -169,7 +169,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               className={`absolute top-4 right-4 p-2 rounded-full transition-all cursor-pointer ${
                 darkMode
                   ? "bg-white/10 text-neutral-400 hover:text-white"
-                  : "bg-[#E6D7CA]/40 text-[#6E5A52] hover:text-[#3B2A24]"
+                  : "bg-[#dddddd]/40 text-[#6a6a6a] hover:text-[#222222]"
               }`}
             >
               <X className="w-5 h-5" />
@@ -202,7 +202,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                   className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
                     darkMode
                       ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
-                      : "bg-[#D9A87C] text-black hover:bg-[#C58B63] hover:text-white border-[#D9A87C]"
+                      : "bg-[#ff385c] text-black hover:bg-[#ff385c] hover:text-white border-[#ff385c]"
                   }`}
                 >
                   <Download
@@ -236,7 +236,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               className={`p-4 rounded-2xl border flex items-center gap-3 ${
                 darkMode
                   ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
-                  : "bg-[#F4E7DA] border-[#D9A87C]/40 text-[#3B2A24]"
+                  : "bg-[#F4E7DA] border-[#ff385c]/40 text-[#222222]"
               }`}
             >
               <ShieldCheck className={`w-6 h-6 flex-shrink-0 ${accentText}`} />
@@ -362,7 +362,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               {showResignPrompt && (
                 <div
                   className={`p-4 rounded-2xl border space-y-3 ${
-                    darkMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[#FDF3EB] border-[#D9A87C]'
+                    darkMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[#FDF3EB] border-[#ff385c]'
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
@@ -390,7 +390,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                       className={`py-1.5 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
                         darkMode
                           ? 'border-white/10 hover:bg-white/10 text-neutral-300'
-                          : 'border-[#E6D7CA] bg-white text-[#6E5A52] hover:bg-neutral-50'
+                          : 'border-[#dddddd] bg-white text-[#6a6a6a] hover:bg-neutral-50'
                       }`}
                     >
                       <Ban className="w-3.5 h-3.5 text-red-400" />

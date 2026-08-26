@@ -49,8 +49,8 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         className={`w-full ${maxWidthClasses[maxWidth]} rounded-2xl border shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto ${
           darkMode
-            ? "bg-[#252220] border-[#4A443F] text-[#F7F3EE]"
-            : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]"
+            ? "bg-[#252220] border-[#2e2e2e] text-[#f7f7f7]"
+            : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
         }`}
       >
         <div className="flex items-center justify-between pb-4 border-b border-gray-200/20 mb-4">
@@ -58,7 +58,7 @@ export const Modal: React.FC<ModalProps> = ({
           <button
             onClick={onClose}
             className={`p-1.5 rounded-lg transition-colors ${
-              darkMode ? "hover:bg-[#332D2B] text-gray-400" : "hover:bg-gray-100 text-gray-500"
+              darkMode ? "hover:bg-[#1e1e1e] text-gray-400" : "hover:bg-gray-100 text-gray-500"
             }`}
             aria-label="Close modal"
           >

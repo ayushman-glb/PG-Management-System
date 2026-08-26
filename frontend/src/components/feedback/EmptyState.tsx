@@ -20,14 +20,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div
       className={`flex flex-col items-center justify-center p-12 text-center rounded-2xl border ${
-        darkMode ? "bg-[#252220] border-[#3D3632]" : "bg-[#FFFDFB] border-[#E6D7CA]"
+        darkMode ? "bg-[#252220] border-[#252525]" : "bg-[#ffffff] border-[#dddddd]"
       }`}
     >
       <div className="mb-4">{icon}</div>
-      <h3 className={`text-lg font-bold mb-1 ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}>
+      <h3 className={`text-lg font-bold mb-1 ${darkMode ? "text-[#f7f7f7]" : "text-[#222222]"}`}>
         {title}
       </h3>
-      <p className={`text-sm max-w-sm mb-6 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+      <p className={`text-sm max-w-sm mb-6 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
         {description}
       </p>
       {action}

@@ -714,7 +714,7 @@ export default function Auth({ navigate }: Props) {
                     >
                       <div className="mb-6">
                         <h2 className="text-2xl lg:text-3xl font-black">Welcome Back</h2>
-                        <p className={`text-xs mt-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+                        <p className={`text-xs mt-1 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
                           Enter your credentials to access your portal or dashboard
                         </p>
                       </div>
@@ -769,7 +769,7 @@ export default function Auth({ navigate }: Props) {
                               onChange={(e) => setLoginIdentifier(e.target.value)}
                               placeholder={loginRole === "resident" ? "RES1001 or resident@roombae.com" : loginRole === "admin" ? "admin@roombae.com" : "owner@roombae.com"}
                               className={`w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                                darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                                darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
                               }`}
                             />
                             <Mail className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -795,7 +795,7 @@ export default function Auth({ navigate }: Props) {
                               onChange={(e) => setLoginPassword(e.target.value)}
                               placeholder="••••••••"
                               className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                                darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                                darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
                               }`}
                             />
                             <button
@@ -832,9 +832,9 @@ export default function Auth({ navigate }: Props) {
                       </form>
 
                       <div className="flex items-center gap-3 my-6">
-                        <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                        <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
                         <span className="text-xs font-semibold text-slate-400">OR</span>
-                        <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                        <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
                       </div>
 
                       <button
@@ -951,9 +951,9 @@ export default function Auth({ navigate }: Props) {
                           </div>
 
                           <div className="flex items-center gap-3 my-4">
-                            <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                            <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
                             <span className="text-xs font-semibold text-slate-400">OR</span>
-                            <div className={`flex-1 h-px ${darkMode ? "bg-[#4A443F]" : "bg-[#E6D7CA]"}`} />
+                            <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
                           </div>
 
                           <button
@@ -1417,7 +1417,7 @@ export default function Auth({ navigate }: Props) {
                     >
                       <div>
                         <h2 className="text-2xl font-black">Reset Password</h2>
-                        <p className={`text-xs mt-1 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+                        <p className={`text-xs mt-1 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
                           Enter your registered email address to receive password recovery instructions.
                         </p>
                       </div>
@@ -1430,7 +1430,7 @@ export default function Auth({ navigate }: Props) {
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="name@roombae.com"
                           className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                            darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                            darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
                           }`}
                         />
                       </div>
@@ -1473,7 +1473,7 @@ export default function Auth({ navigate }: Props) {
                           <ShieldCheck className="w-5 h-5" />
                         </div>
                         <h2 className="text-2xl font-black">Two-Factor Verification</h2>
-                        <p className={`text-xs ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+                        <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
                           Enter the 6-digit verification code from your Authenticator app (Google Authenticator, Authy, etc.).
                         </p>
                       </div>
@@ -1489,7 +1489,7 @@ export default function Auth({ navigate }: Props) {
                             onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
                             placeholder="123456"
                             className={`w-full px-4 py-3 rounded-xl border text-center text-xl tracking-[0.5em] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                              darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+                              darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
                             }`}
                           />
                         </div>

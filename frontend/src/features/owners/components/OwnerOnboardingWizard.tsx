@@ -217,14 +217,14 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
 
   const modalBg = darkMode
     ? "bg-neutral-900 border-white/10 text-white"
-    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
+    : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
   const cardBg = darkMode
     ? "bg-neutral-950/80 border-white/10 text-white"
-    : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
+    : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
   const inputBg = darkMode
     ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500"
-    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
+    : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
 
   const stepTitles = [
     "Personal Details",
@@ -252,7 +252,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
           className={`w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-3xl border flex flex-col shadow-2xl ${modalBg}`}
         >
           <div
-            className={`p-6 border-b flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}
+            className={`p-6 border-b flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]"}`}
           >
             <div>
               <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-full cursor-pointer ${darkMode ? "bg-white/10 text-neutral-400 hover:text-white" : "bg-[#E6D7CA] text-[#6E5A52] hover:text-[#3B2A24]"}`}
+              className={`p-2 rounded-full cursor-pointer ${darkMode ? "bg-white/10 text-neutral-400 hover:text-white" : "bg-[#dddddd] text-[#6a6a6a] hover:text-[#222222]"}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -375,7 +375,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             {currentStep === 2 && (
               <div className="space-y-4 animate-fade-in">
                 <div
-                  className={`p-4 rounded-2xl border flex items-center gap-3 ${darkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-[#F8EEE5] border-[#D9A87C] text-[#3B2A24]"}`}
+                  className={`p-4 rounded-2xl border flex items-center gap-3 ${darkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-[#f7f7f7] border-[#ff385c] text-[#222222]"}`}
                 >
                   <ShieldCheck className="w-6 h-6 flex-shrink-0" />
                   <div>
@@ -895,12 +895,12 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
           </div>
 
           <div
-            className={`p-4 border-t flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}
+            className={`p-4 border-t flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]"}`}
           >
             <button
               onClick={prevStep}
               disabled={currentStep === 1}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1 disabled:opacity-30 cursor-pointer ${darkMode ? "bg-neutral-800 text-white" : "bg-[#E6D7CA] text-[#3B2A24]"}`}
+              className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1 disabled:opacity-30 cursor-pointer ${darkMode ? "bg-neutral-800 text-white" : "bg-[#dddddd] text-[#222222]"}`}
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>

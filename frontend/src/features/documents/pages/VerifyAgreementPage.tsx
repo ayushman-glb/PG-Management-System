@@ -47,14 +47,14 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
     verify(agreementCode);
   };
 
-  const containerBg = darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]";
-  const cardBg = darkMode ? "bg-[#2B2725] border-[#4A433F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
+  const containerBg = darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]";
+  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
 
   return (
     <div className={`min-h-screen flex flex-col ${containerBg}`}>
       {/* Header */}
       <header className={`px-6 py-4 border-b flex justify-between items-center ${
-        darkMode ? "bg-[#2B2725]/80 border-[#4A433F]" : "bg-[#FFFDFB]/80 border-[#E6D7CA]"
+        darkMode ? "bg-[#252525]/80 border-[#2e2e2e]" : "bg-[#ffffff]/80 border-[#dddddd]"
       }`}>
         <div className="flex items-center gap-3">
           {navigate && (

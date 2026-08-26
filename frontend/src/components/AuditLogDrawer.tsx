@@ -43,11 +43,11 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
       l.user?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
-  const textPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
-  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24] placeholder-[#A8907F]";
+  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
+  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222] placeholder-[#6a6a6a]";
 
   return (
     <AnimatePresence>
@@ -73,14 +73,14 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
             <div className="flex items-center gap-2">
               <button
                 onClick={fetchLogs}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#F8EEE5] text-[#6E5A52] hover:text-[#3B2A24]"}`}
+                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
                 title="Refresh Logs"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={onClose}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#F8EEE5] text-[#6E5A52] hover:text-[#3B2A24]"}`}
+                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
               >
                 <X className="w-5 h-5" />
               </button>

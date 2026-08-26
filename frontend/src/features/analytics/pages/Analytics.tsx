@@ -107,8 +107,8 @@ const paymentData = [
 ];
 
 const categoryPie = [
-  { name: "Plumbing", value: 32, color: "#D9A87C" },
-  { name: "Electrical", value: 28, color: "#C58B63" },
+  { name: "Plumbing", value: 32, color: "#ff385c" },
+  { name: "Electrical", value: 28, color: "#ff385c" },
   { name: "Maintenance", value: 20, color: "#E7C4A0" },
   { name: "Sanitation", value: 12, color: "#D9A441" },
   { name: "Misc", value: 8, color: "#D96B5D" },
@@ -220,8 +220,8 @@ export default function Analytics({ navigate }: Props) {
               change: `${growthPct >= 0 ? "+" : ""}${growthPct.toFixed(1)}%`,
               up: growthPct >= 0,
               icon: CreditCard,
-              color: "text-[#C58B63] dark:text-[#C89A4B]",
-              bg: "bg-[#D9A87C]/10 border-[#D9A87C]/20",
+              color: "text-[#ff385c] dark:text-[#ff385c]",
+              bg: "bg-[#ff385c]/10 border-[#ff385c]/20",
             },
             {
               label: "Avg Occupancy",
@@ -247,15 +247,15 @@ export default function Analytics({ navigate }: Props) {
               change: "+34%",
               up: true,
               icon: TrendingUp,
-              color: "text-[#D9A87C] dark:text-[#C89A4B]",
-              bg: "bg-[#D9A87C]/10 border-[#D9A87C]/20",
+              color: "text-[#ff385c] dark:text-[#ff385c]",
+              bg: "bg-[#ff385c]/10 border-[#ff385c]/20",
             },
           ].map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.label}
-                className={`bento-card bento-card-interactive p-5 ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}
+                className={`bento-card bento-card-interactive p-5 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div
@@ -280,7 +280,7 @@ export default function Analytics({ navigate }: Props) {
                   {s.value}
                 </p>
                 <p
-                  className={`text-xs mt-0.5 ${darkMode ? "text-[#C6B9AE]" : "text-slate-500"}`}
+                  className={`text-xs mt-0.5 ${darkMode ? "text-[#a1a1aa]" : "text-slate-500"}`}
                 >
                   {s.label}
                 </p>
@@ -309,7 +309,7 @@ export default function Analytics({ navigate }: Props) {
               className={`flex items-center gap-4 text-xs ${darkMode ? "text-slate-400" : "text-slate-600"}`}
             >
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 bg-[#D9A87C] rounded-full inline-block" />{" "}
+                <span className="w-3 h-1.5 bg-[#ff385c] rounded-full inline-block" />{" "}
                 Actual
               </span>
               <span className="flex items-center gap-1.5">
@@ -329,46 +329,46 @@ export default function Analytics({ navigate }: Props) {
                 <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
-                    stopColor={darkMode ? "#C89A4B" : "#D9A87C"}
+                    stopColor={darkMode ? "#ff385c" : "#ff385c"}
                     stopOpacity={0.25}
                   />
                   <stop
                     offset="95%"
-                    stopColor={darkMode ? "#C89A4B" : "#D9A87C"}
+                    stopColor={darkMode ? "#ff385c" : "#ff385c"}
                     stopOpacity={0}
                   />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke={darkMode ? "#4A433F" : "#E6D7CA"}
+                stroke={darkMode ? "#2e2e2e" : "#dddddd"}
               />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 11, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
+                tick={{ fontSize: 11, fill: darkMode ? "#a1a1aa" : "#6a6a6a" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
+                tick={{ fontSize: 11, fill: darkMode ? "#a1a1aa" : "#6a6a6a" }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`}
               />
               <Tooltip
                 contentStyle={{
-                  background: darkMode ? "#332D2B" : "#FFFDFB",
-                  border: `1px solid ${darkMode ? "#4A433F" : "#E6D7CA"}`,
+                  background: darkMode ? "#1e1e1e" : "#ffffff",
+                  border: `1px solid ${darkMode ? "#2e2e2e" : "#dddddd"}`,
                   borderRadius: 12,
                   boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-                  color: darkMode ? "#F7F3EE" : "#3B2A24",
+                  color: darkMode ? "#f7f7f7" : "#222222",
                 }}
                 formatter={(v) => [`₹${(Number(v ?? 0) / 1000).toFixed(1)}K`]}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke={darkMode ? "#C89A4B" : "#D9A87C"}
+                stroke={darkMode ? "#ff385c" : "#ff385c"}
                 strokeWidth={2.5}
                 fill="url(#revG)"
                 name="Revenue"
@@ -435,7 +435,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="sunrise"
-                  stroke="#D9A87C"
+                  stroke="#ff385c"
                   strokeWidth={2}
                   dot={false}
                   name="Sunrise PG"
@@ -443,7 +443,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="greenValley"
-                  stroke="#C58B63"
+                  stroke="#ff385c"
                   strokeWidth={2}
                   dot={false}
                   name="Green Valley"
@@ -635,19 +635,19 @@ export default function Analytics({ navigate }: Props) {
                           background:
                             val === 100
                               ? darkMode
-                                ? "#C89A4B"
-                                : "#D9A87C"
+                                ? "#ff385c"
+                                : "#ff385c"
                               : val >= 80
                                 ? darkMode
-                                  ? "#D8B36A"
-                                  : "#C58B63"
+                                  ? "#ff385c"
+                                  : "#ff385c"
                                 : val >= 60
                                   ? darkMode
                                     ? "#E8C98A"
                                     : "#E7C4A0"
                                   : darkMode
-                                    ? "#332D2B"
-                                    : "#F8EEE5",
+                                    ? "#1e1e1e"
+                                    : "#f7f7f7",
                           opacity: val === 0 ? 0.3 : 1,
                         }}
                         title={`${val}%`}
@@ -662,7 +662,7 @@ export default function Analytics({ navigate }: Props) {
                 Empty
               </span>
               <div className="flex gap-1 flex-1">
-                {["#F8EEE5", "#E7C4A0", "#C58B63", "#D9A87C"].map((c) => (
+                {["#f7f7f7", "#E7C4A0", "#ff385c", "#ff385c"].map((c) => (
                   <div
                     key={c}
                     className="flex-1 h-2 rounded-sm"
@@ -685,7 +685,7 @@ export default function Analytics({ navigate }: Props) {
               >
                 Vacancy Prediction
               </h3>
-              <span className="text-xs bg-[#F8EEE5] text-[#C58B63] font-bold px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-[#f7f7f7] text-[#ff385c] font-bold px-2 py-0.5 rounded-full">
                 AI
               </span>
             </div>
@@ -701,13 +701,13 @@ export default function Analytics({ navigate }: Props) {
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke={darkMode ? "#4A433F" : "#E6D7CA"}
+                  stroke={darkMode ? "#2e2e2e" : "#dddddd"}
                 />
                 <XAxis
                   dataKey="month"
                   tick={{
                     fontSize: 10,
-                    fill: darkMode ? "#C6B9AE" : "#6E5A52",
+                    fill: darkMode ? "#a1a1aa" : "#6a6a6a",
                   }}
                   axisLine={false}
                   tickLine={false}
@@ -715,23 +715,23 @@ export default function Analytics({ navigate }: Props) {
                 <YAxis
                   tick={{
                     fontSize: 10,
-                    fill: darkMode ? "#C6B9AE" : "#6E5A52",
+                    fill: darkMode ? "#a1a1aa" : "#6a6a6a",
                   }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: darkMode ? "#332D2B" : "#FFFDFB",
-                    border: `1px solid ${darkMode ? "#4A433F" : "#E6D7CA"}`,
+                    background: darkMode ? "#1e1e1e" : "#ffffff",
+                    border: `1px solid ${darkMode ? "#2e2e2e" : "#dddddd"}`,
                     borderRadius: 8,
                     boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                    color: darkMode ? "#F7F3EE" : "#3B2A24",
+                    color: darkMode ? "#f7f7f7" : "#222222",
                   }}
                 />
                 <Bar
                   dataKey="predicted"
-                  fill={darkMode ? "#C89A4B" : "#D9A87C"}
+                  fill={darkMode ? "#ff385c" : "#ff385c"}
                   radius={[4, 4, 0, 0]}
                   name="Predicted Vacancies"
                 />

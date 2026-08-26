@@ -73,11 +73,11 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
   const [transfers, setTransfers] = useState(INITIAL_TRANSFERS);
   const [beds, setBeds] = useState(INITIAL_BEDS);
 
-  const columnBg = darkMode ? "bg-neutral-900/60 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]";
-  const cardBg = darkMode ? "bg-neutral-800/80 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] shadow-sm";
-  const cardTextPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
-  const cardTextMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
-  const tabBg = darkMode ? "bg-neutral-900/40 border-white/10" : "bg-[#F8EEE5] border-[#E6D7CA]";
+  const columnBg = darkMode ? "bg-neutral-900/60 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]";
+  const cardBg = darkMode ? "bg-neutral-800/80 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-sm";
+  const cardTextPrimary = darkMode ? "text-white" : "text-[#222222]";
+  const cardTextMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const tabBg = darkMode ? "bg-neutral-900/40 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]";
 
   const [selectedTransfer, setSelectedTransfer] = useState<any>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);

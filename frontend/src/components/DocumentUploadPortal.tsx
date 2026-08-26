@@ -103,10 +103,10 @@ export const DocumentUploadPortal: React.FC = () => {
 
   const docSlots = activeRoleTab === 'resident' ? RESIDENT_DOC_TYPES : OWNER_DOC_TYPES;
 
-  const containerBg = darkMode ? "bg-neutral-900/60 border-white/10 text-white" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
-  const cardBg = darkMode ? "bg-neutral-900 border-white/10 text-white shadow-xl" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] shadow-md";
-  const textPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
+  const containerBg = darkMode ? "bg-neutral-900/60 border-white/10 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
+  const cardBg = darkMode ? "bg-neutral-900 border-white/10 text-white shadow-xl" : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-md";
+  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
 
   return (
     <div className="w-full space-y-6">
@@ -150,7 +150,7 @@ export const DocumentUploadPortal: React.FC = () => {
             onClick={loadDocuments}
             disabled={isLoading}
             className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs font-semibold ${
-              darkMode ? "border-white/10 hover:bg-white/10" : "border-[#E6D7CA] hover:bg-white/40"
+              darkMode ? "border-white/10 hover:bg-white/10" : "border-[#dddddd] hover:bg-white/40"
             }`}
             title="Refresh documents"
           >
@@ -226,7 +226,7 @@ export const DocumentUploadPortal: React.FC = () => {
                       type="button"
                       onClick={() => setPreviewDoc(uploadedDoc)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer ${
-                        darkMode ? "bg-white/10 text-white hover:bg-white/20" : "bg-[#F8EEE5] text-[#3B2A24] hover:bg-[#E6D7CA]"
+                        darkMode ? "bg-white/10 text-white hover:bg-white/20" : "bg-[#f7f7f7] text-[#222222] hover:bg-[#dddddd]"
                       }`}
                     >
                       <Eye className="w-3.5 h-3.5" /> Preview

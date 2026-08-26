@@ -21,19 +21,19 @@ const sizeClasses = {
 
 export const LUXURY_PALETTES = {
   luxury: {
-    light: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)",
-    dark: "linear-gradient(135deg, #C89A4B 0%, #D8B36A 100%)",
+    light: "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)",
+    dark: "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)",
   },
   gold: {
-    light: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)",
-    dark: "linear-gradient(135deg, #C89A4B 0%, #D8B36A 100%)",
+    light: "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)",
+    dark: "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)",
   },
   amber: {
-    light: "linear-gradient(135deg, #E7C4A0 0%, #D9A87C 100%)",
-    dark: "linear-gradient(135deg, #D8B36A 0%, #E8C98A 100%)",
+    light: "linear-gradient(135deg, #E7C4A0 0%, #ff385c 100%)",
+    dark: "linear-gradient(135deg, #ff385c 0%, #E8C98A 100%)",
   },
   bronze: {
-    light: "linear-gradient(135deg, #C58B63 0%, #A0643F 100%)",
+    light: "linear-gradient(135deg, #ff385c 0%, #A0643F 100%)",
     dark: "linear-gradient(135deg, #B57E38 0%, #945E20 100%)",
   },
   rose: {
@@ -113,7 +113,7 @@ export function Avatar({
           className={`
             absolute bottom-0 right-0 rounded-full border-2
             ${size === "xs" || size === "sm" ? "w-2.5 h-2.5" : "w-3 h-3"}
-            ${darkMode ? "border-[#1D1B1A]" : "border-white"}
+            ${darkMode ? "border-[#121212]" : "border-white"}
             ${isOnline ? "bg-emerald-500" : "bg-amber-500"}
           `}
         />
@@ -129,26 +129,26 @@ export function AvatarThemeSelector() {
     {
       id: "luxury",
       label: "Default Gold",
-      previewLight: "linear-gradient(135deg, #D9A87C, #C58B63)",
-      previewDark: "linear-gradient(135deg, #C89A4B, #D8B36A)",
+      previewLight: "linear-gradient(135deg, #ff385c, #ff385c)",
+      previewDark: "linear-gradient(135deg, #ff385c, #ff385c)",
     },
     {
       id: "multi",
       label: "Smart Multi",
-      previewLight: "linear-gradient(135deg, #D9A87C, #E7C4A0)",
-      previewDark: "linear-gradient(135deg, #C89A4B, #5E9F72)",
+      previewLight: "linear-gradient(135deg, #ff385c, #E7C4A0)",
+      previewDark: "linear-gradient(135deg, #ff385c, #5E9F72)",
     },
     {
       id: "bronze",
       label: "Warm Bronze",
-      previewLight: "linear-gradient(135deg, #C58B63, #A0643F)",
+      previewLight: "linear-gradient(135deg, #ff385c, #A0643F)",
       previewDark: "linear-gradient(135deg, #B57E38, #945E20)",
     },
     {
       id: "amber",
       label: "Champagne",
-      previewLight: "linear-gradient(135deg, #E7C4A0, #D9A87C)",
-      previewDark: "linear-gradient(135deg, #D8B36A, #E8C98A)",
+      previewLight: "linear-gradient(135deg, #E7C4A0, #ff385c)",
+      previewDark: "linear-gradient(135deg, #ff385c, #E8C98A)",
     },
     {
       id: "emerald",
@@ -165,8 +165,8 @@ export function AvatarThemeSelector() {
   ];
 
   return (
-    <div className={`p-3 rounded-xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
-      <p className={`text-xs font-semibold mb-2.5 ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+    <div className={`p-3 rounded-xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
+      <p className={`text-xs font-semibold mb-2.5 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
         Avatar Color Theme
       </p>
       <div className="flex items-center gap-2 flex-wrap">
@@ -181,11 +181,11 @@ export function AvatarThemeSelector() {
                 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all
                 ${isSelected
                   ? darkMode
-                    ? "bg-[#332D2B] text-[#F7F3EE] ring-2 ring-[#C89A4B]"
-                    : "bg-[#F8EEE5] text-[#3B2A24] ring-2 ring-[#D9A87C]"
+                    ? "bg-[#1e1e1e] text-[#f7f7f7] ring-2 ring-[#ff385c]"
+                    : "bg-[#f7f7f7] text-[#222222] ring-2 ring-[#ff385c]"
                   : darkMode
-                    ? "text-[#756A63] hover:text-[#F7F3EE] hover:bg-[#332D2B]"
-                    : "text-[#6E5A52] hover:text-[#3B2A24] hover:bg-[#F8EEE5]"
+                    ? "text-[#6a6a6a] hover:text-[#f7f7f7] hover:bg-[#1e1e1e]"
+                    : "text-[#6a6a6a] hover:text-[#222222] hover:bg-[#f7f7f7]"
                 }
               `}
             >

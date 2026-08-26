@@ -11,7 +11,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <div
       className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
-        darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"
+        darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"
       }`}
     >
       <div className="w-full max-w-md">{children}</div>

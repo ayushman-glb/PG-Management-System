@@ -41,8 +41,8 @@ export default function ShortlistPage({ navigate }: Props) {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"}`}>
+      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("pg-listing")} className="p-2 rounded-xl border border-white/10 hover:bg-white/5">
@@ -69,7 +69,7 @@ export default function ShortlistPage({ navigate }: Props) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {shortlist.map((pg) => (
-              <div key={pg.id} className={`rounded-2xl border overflow-hidden p-5 flex flex-col justify-between ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+              <div key={pg.id} className={`rounded-2xl border overflow-hidden p-5 flex flex-col justify-between ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
                 <div>
                   <div className="relative h-44 rounded-xl overflow-hidden mb-4">
                     <img src={pg.logo || (pg.galleryImages && pg.galleryImages[0]) || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&auto=format"} alt={pg.name} className="w-full h-full object-cover" />

@@ -19,10 +19,10 @@ export const Card: React.FC<CardProps> = ({
         rounded-2xl border p-5 transition-all duration-300
         ${
           darkMode
-            ? "bg-[#252220] border-[#3D3632] text-[#F7F3EE]"
-            : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]"
+            ? "bg-[#252220] border-[#252525] text-[#f7f7f7]"
+            : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
         }
-        ${hoverEffect ? (darkMode ? "hover:border-[#C89A4B]/50 hover:shadow-lg" : "hover:border-[#D9A87C] hover:shadow-md") : ""}
+        ${hoverEffect ? (darkMode ? "hover:border-[#ff385c]/50 hover:shadow-lg" : "hover:border-[#ff385c] hover:shadow-md") : ""}
         ${className}
       `}
       {...props}

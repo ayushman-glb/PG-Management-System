@@ -71,9 +71,9 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
     setActiveIndex((prev) => (prev - 1 + DEFAULT_CARDS.length) % DEFAULT_CARDS.length);
   };
 
-  const cardBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
-  const textPrimary = darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]";
+  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
+  const textPrimary = darkMode ? "text-[#f7f7f7]" : "text-[#222222]";
+  const textMuted = darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]";
 
   return (
     <div className={`p-6 rounded-3xl border shadow-xl backdrop-blur-xl ${cardBg}`}>
@@ -92,7 +92,7 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
             type="button"
             onClick={() => setShowFullNumber(!showFullNumber)}
             className={`p-2 rounded-xl border transition-all cursor-pointer ${
-              darkMode ? "bg-[#332D2B] border-[#4A443F] text-[#C6B9AE] hover:text-white" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#6E5A52] hover:text-black"
+              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#a1a1aa] hover:text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#6a6a6a] hover:text-black"
             }`}
             title="Toggle Card Number Visibility"
           >
@@ -170,7 +170,7 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 mt-4">
-        <div className={`flex items-center p-1 rounded-2xl border ${darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+        <div className={`flex items-center p-1 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
           <button
             type="button"
             onClick={() => setActiveType("DEBIT")}

@@ -225,7 +225,7 @@ export default function Billing({ navigate }: Props) {
             <div
               key={stat.label}
               className={`p-4 rounded-2xl border ${
-                darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -281,7 +281,7 @@ export default function Billing({ navigate }: Props) {
         {activeTab === "invoices" && (
           <div
             className={`rounded-2xl border overflow-hidden ${
-              darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-white border-[#E6D7CA]"
+              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
             }`}
           >
             <div className="p-4 border-b border-slate-200/20 flex flex-col sm:flex-row gap-3 justify-between items-center">
@@ -294,8 +294,8 @@ export default function Billing({ navigate }: Props) {
                   onChange={(e) => setSearch(e.target.value)}
                   className={`w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
                     darkMode
-                      ? "bg-[#1D1B1A] border-[#4A443F] text-white"
-                      : "bg-[#FFF8F2] border-[#E6D7CA] text-slate-900"
+                      ? "bg-[#121212] border-[#2e2e2e] text-white"
+                      : "bg-[#ffffff] border-[#dddddd] text-slate-900"
                   }`}
                 />
               </div>
@@ -321,7 +321,7 @@ export default function Billing({ navigate }: Props) {
               <table className="w-full text-left text-xs">
                 <thead
                   className={`uppercase font-bold tracking-wider border-b ${
-                    darkMode ? "bg-[#2B2725] border-[#4A443F] text-slate-400" : "bg-[#FFF8F2] border-[#E6D7CA] text-slate-500"
+                    darkMode ? "bg-[#252525] border-[#2e2e2e] text-slate-400" : "bg-[#ffffff] border-[#dddddd] text-slate-500"
                   }`}
                 >
                   <tr>

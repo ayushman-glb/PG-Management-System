@@ -80,9 +80,9 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
 
   if (!isOpen) return null;
 
-  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const textPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
+  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
 
   return (
     <AnimatePresence>
@@ -112,7 +112,7 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#F8EEE5] text-[#6E5A52] hover:text-[#3B2A24]"}`}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -144,10 +144,10 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
                   n.isRead
                     ? darkMode
                       ? 'bg-neutral-800/40 border-white/5 opacity-70'
-                      : 'bg-[#F8EEE5]/60 border-[#E6D7CA] opacity-70'
+                      : 'bg-[#f7f7f7]/60 border-[#dddddd] opacity-70'
                     : darkMode
                       ? 'bg-neutral-800/90 border-amber-500/30 shadow-lg'
-                      : 'bg-[#FFFDFB] border-[#D9A87C] shadow-md'
+                      : 'bg-[#ffffff] border-[#ff385c] shadow-md'
                 }`}
               >
                 <div className="flex items-start justify-between">

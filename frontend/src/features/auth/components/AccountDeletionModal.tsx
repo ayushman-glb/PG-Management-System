@@ -48,8 +48,8 @@ export const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({
     }
   };
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
+  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
 
   return (
     <AnimatePresence>

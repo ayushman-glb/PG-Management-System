@@ -22,9 +22,9 @@ const BREAKDOWN_CIRCLES = [
 export const SpendBreakdownChart: React.FC = () => {
   const { darkMode } = useTheme();
 
-  const cardBg = darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]";
-  const textPrimary = darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]";
+  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
+  const textPrimary = darkMode ? "text-[#f7f7f7]" : "text-[#222222]";
+  const textMuted = darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]";
 
   return (
     <div className={`p-6 rounded-3xl border shadow-xl backdrop-blur-xl space-y-6 ${cardBg}`}>
@@ -51,15 +51,15 @@ export const SpendBreakdownChart: React.FC = () => {
               dataKey="label"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: darkMode ? "#C6B9AE" : "#6E5A52" }}
+              tick={{ fontSize: 10, fill: darkMode ? "#a1a1aa" : "#6a6a6a" }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: darkMode ? "#332D2B" : "#FFFDFB",
-                borderColor: darkMode ? "#4A443F" : "#E6D7CA",
+                backgroundColor: darkMode ? "#1e1e1e" : "#ffffff",
+                borderColor: darkMode ? "#2e2e2e" : "#dddddd",
                 borderRadius: "12px",
                 fontSize: "12px",
-                color: darkMode ? "#F7F3EE" : "#3B2A24",
+                color: darkMode ? "#f7f7f7" : "#222222",
               }}
             />
             <Bar dataKey="amount" fill="#7c3aed" radius={[8, 8, 0, 0]} />
@@ -78,7 +78,7 @@ export const SpendBreakdownChart: React.FC = () => {
               key={c.name}
               whileHover={{ y: -3 }}
               className={`p-3 rounded-2xl border flex flex-col items-center justify-center ${
-                darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"
+                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"
               }`}
             >
               <div
@@ -96,7 +96,7 @@ export const SpendBreakdownChart: React.FC = () => {
       </div>
 
       {/* Account Info Bar Matching Mockup */}
-      <div className={`p-4 rounded-2xl border space-y-3 ${darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"}`}>
+      <div className={`p-4 rounded-2xl border space-y-3 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
         <div className="flex items-center justify-between text-xs font-mono">
           <span className={textMuted}>Account Number:</span>
           <span className={`font-bold ${textPrimary}`}>2255 4595 9874 4423</span>

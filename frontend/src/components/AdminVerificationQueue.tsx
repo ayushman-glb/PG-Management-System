@@ -51,9 +51,9 @@ export const AdminVerificationQueue: React.FC<AdminVerificationQueueProps> = ({ 
     setQueue(prev => prev.map(item => item.id === id ? { ...item, status: 'REJECTED' } : item));
   };
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24]";
-  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#F8EEE5] border-[#E6D7CA] text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
+  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
 
   return (
     <AnimatePresence>

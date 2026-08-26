@@ -62,8 +62,8 @@ export default function ToursPage({ navigate }: Props) {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"}`}>
+      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("pg-listing")} className="p-2 rounded-xl border border-white/10 hover:bg-white/5">
@@ -95,7 +95,7 @@ export default function ToursPage({ navigate }: Props) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {tours.map((t) => (
-              <div key={t.id} className={`p-6 rounded-2xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+              <div key={t.id} className={`p-6 rounded-2xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400">
@@ -132,7 +132,7 @@ export default function ToursPage({ navigate }: Props) {
 
       {showRequestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className={`w-full max-w-md p-6 rounded-3xl border ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-white border-[#E6D7CA]"}`}>
+          <div className={`w-full max-w-md p-6 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
             <h3 className="text-lg font-bold mb-4">Schedule Property Visit</h3>
             <form onSubmit={handleCreateTour} className="space-y-4">
               <div>
@@ -143,7 +143,7 @@ export default function ToursPage({ navigate }: Props) {
                   placeholder="e.g. 660f1a9b2c3d4e5f6a7b8c9d"
                   value={selectedPropertyId}
                   onChange={(e) => setSelectedPropertyId(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#1D1B1A] border-[#4A443F]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#2e2e2e]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 
@@ -154,7 +154,7 @@ export default function ToursPage({ navigate }: Props) {
                   required
                   value={newSlot}
                   onChange={(e) => setNewSlot(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#1D1B1A] border-[#4A443F]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#2e2e2e]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 
@@ -165,7 +165,7 @@ export default function ToursPage({ navigate }: Props) {
                   placeholder="Looking for double sharing AC room..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#1D1B1A] border-[#4A443F]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#2e2e2e]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 

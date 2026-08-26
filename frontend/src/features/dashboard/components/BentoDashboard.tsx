@@ -53,13 +53,13 @@ export const BentoDashboard: React.FC = () => {
 
   const cardBg = darkMode
     ? "bg-neutral-900/90 border-white/10 text-white"
-    : "bg-[#FFFDFB] border-[#E6D7CA] text-[#3B2A24] shadow-md";
+    : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-md";
   const heroCardBg = darkMode
     ? "bg-gradient-to-br from-amber-500/10 via-neutral-900 to-neutral-900 border-amber-500/20 text-white"
-    : "bg-gradient-to-br from-[#F8EEE5] via-[#FFFDFB] to-[#FFFDFB] border-[#D9A87C]/40 text-[#3B2A24] shadow-md";
-  const textPrimary = darkMode ? "text-white" : "text-[#3B2A24]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6E5A52]";
-  const accentText = darkMode ? "text-amber-400" : "text-[#C58B63]";
+    : "bg-gradient-to-br from-[#f7f7f7] via-[#ffffff] to-[#ffffff] border-[#ff385c]/40 text-[#222222] shadow-md";
+  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const accentText = darkMode ? "text-amber-400" : "text-[#ff385c]";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
@@ -97,7 +97,7 @@ export const BentoDashboard: React.FC = () => {
             </span>
           </div>
           <div
-            className={`h-3 w-full rounded-full overflow-hidden p-0.5 ${darkMode ? "bg-white/10" : "bg-[#F8EEE5]"}`}
+            className={`h-3 w-full rounded-full overflow-hidden p-0.5 ${darkMode ? "bg-white/10" : "bg-[#f7f7f7]"}`}
           >
             <motion.div
               initial={{ width: 0 }}
@@ -140,10 +140,10 @@ export const BentoDashboard: React.FC = () => {
               </defs>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: darkMode ? "#171717" : "#FFFDFB",
-                  borderColor: darkMode ? "#333" : "#E6D7CA",
+                  backgroundColor: darkMode ? "#171717" : "#ffffff",
+                  borderColor: darkMode ? "#333" : "#dddddd",
                   borderRadius: "12px",
-                  color: darkMode ? "#FFF" : "#3B2A24",
+                  color: darkMode ? "#FFF" : "#222222",
                 }}
                 formatter={(val: any) => [
                   `₹${(val / 100000).toFixed(2)} Lakhs`,

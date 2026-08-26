@@ -316,7 +316,7 @@ export default function ResidentRegister({ navigate }: Props) {
       </header>
 
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8 space-y-8">
-        <div className={`apple-card p-4 md:p-6 border shadow-sm ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+        <div className={` p-4 md:p-6 border shadow-sm ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 dark:bg-slate-700 z-0" />
             <div
@@ -362,7 +362,7 @@ export default function ResidentRegister({ navigate }: Props) {
           </div>
         </div>
 
-        <div ref={stepCardRef} className={`luxury-card p-6 md:p-8 ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+        <div ref={stepCardRef} className={` p-6 md:p-8 ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -913,7 +913,7 @@ export default function ResidentRegister({ navigate }: Props) {
 
       {previewModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className={`luxury-card w-full max-w-lg p-6 ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+          <div className={` w-full max-w-lg p-6 ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-base">{previewModal.fileName}</h3>
               <button onClick={() => setPreviewModal(null)}><X className="w-5 h-5" /></button>
@@ -936,7 +936,7 @@ export default function ResidentRegister({ navigate }: Props) {
 
       {submitted && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className={`luxury-card w-full max-w-md p-8 text-center animate-slide-in-up ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+          <div className={` w-full max-w-md p-8 text-center animate-slide-in-up ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10" />
             </div>

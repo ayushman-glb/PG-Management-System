@@ -34,7 +34,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.strokeStyle = '#D9A87C';
+    ctx.strokeStyle = '#ff385c';
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';

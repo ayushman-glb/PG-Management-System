@@ -230,7 +230,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
           contact: (user as any)?.phone || "+919876543210",
         },
         theme: {
-          color: "#D9A87C",
+          color: "#ff385c",
         },
       };
 
@@ -285,7 +285,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={`w-full max-w-5xl rounded-3xl border shadow-2xl overflow-hidden relative ${
-            darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
+            darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
           }`}
         >
           {/* Modal Header & Close Button */}
