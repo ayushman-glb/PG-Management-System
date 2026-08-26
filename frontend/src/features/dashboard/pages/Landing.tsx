@@ -1,1568 +1,561 @@
-import { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MotionCard } from "@components/animations/MotionCard";
-import { TypedText } from "@components/animations/TypedText";
 import {
-  Building2,
-  Users,
-  CreditCard,
-  Bell,
-  BarChart3,
-  Shield,
-  Zap,
-  Cloud,
-  ChevronDown,
-  Star,
-  Check,
   ArrowRight,
   Play,
-  BedDouble,
-  MessageSquare,
-  UserCheck,
-  QrCode,
-  Smartphone,
-  TrendingUp,
-  Package,
-  Bot,
-  Coffee,
   Menu,
   X,
-  Globe,
-  Link,
-  ExternalLink,
-  AtSign,
-  DollarSign,
+  ChevronRight,
+  User,
 } from "lucide-react";
 import type { Page } from "@app/App";
 import { ThemeToggle } from "@theme/index";
-import { Avatar } from "@components/ui/Avatar";
 import { Logo } from "@components/ui/Logo";
 import { Button } from "@components/ui/Button";
+import { SearchPill } from "@components/ui/SearchPill";
+import { CategoryStrip } from "@components/ui/CategoryStrip";
+import { PropertyCard, PropertyCardData } from "@components/ui/PropertyCard";
 import { useAuth } from "@hooks/useAuth";
 
 interface Props {
   navigate: (p: Page) => void;
 }
 
-const features = [
-  {
-    icon: Building2,
-    title: "Multi PG Management",
-    desc: "Manage multiple properties from a single dashboard with unified analytics and controls.",
-  },
-  {
-    icon: BedDouble,
-    title: "Room & Bed Management",
-    desc: "Real-time bed allocation, availability tracking, and floor-level room visualization.",
-  },
-  {
-    icon: Users,
-    title: "Resident Onboarding",
-    desc: "Digital onboarding with KYC verification, document upload, and automated welcome workflows.",
-  },
-  {
-    icon: Shield,
-    title: "Digital Agreements",
-    desc: "E-sign rental agreements with legally binding digital signatures and secure storage.",
-  },
-  {
-    icon: CreditCard,
-    title: "Rent Collection",
-    desc: "Automated rent reminders, recurring payments, and late fee calculations.",
-  },
-  {
-    icon: DollarSign,
-    title: "Online Payments",
-    desc: "Accept UPI, cards, net banking. Auto-reconcile with your accounting in real time.",
-  },
-  {
-    icon: QrCode,
-    title: "QR Entry",
-    desc: "Contactless check-in with QR codes. Visitor logs and resident entry history.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Complaint Management",
-    desc: "Kanban-style complaint tracking with priority escalation and SLA monitoring.",
-  },
-  {
-    icon: UserCheck,
-    title: "Visitor Management",
-    desc: "Log and manage visitor entries, pre-approvals, and time-stamped access records.",
-  },
-  {
-    icon: BarChart3,
-    title: "Analytics Dashboard",
-    desc: "Revenue trends, occupancy heatmaps, payment graphs, and predictive insights.",
-  },
-  {
-    icon: Smartphone,
-    title: "WhatsApp Notifications",
-    desc: "Automated rent reminders, payment receipts, and alerts via WhatsApp.",
-  },
-  {
-    icon: Coffee,
-    title: "Staff Management",
-    desc: "Assign roles, track attendance, manage housekeeping staff and maintenance crew.",
-  },
-  {
-    icon: Package,
-    title: "Expense Tracking",
-    desc: "Track utilities, repairs, vendor payments and get P&L reports per property.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Predictive Vacancy",
-    desc: "AI-powered predictions for upcoming vacancies to minimize empty bed losses.",
-  },
-  {
-    icon: Bot,
-    title: "Chatbot Support",
-    desc: "Automated chatbot for resident queries, complaint logging, and payment status.",
-  },
-];
+export const Landing: React.FC<Props> = ({ navigate }) => {
+  const { isAuthenticated, user, logout } = useAuth();
+  const rawRole = (user?.role || "").toUpperCase();
 
-const testimonials = [
-  {
-    name: "Priya Sharma",
-    role: "PG Owner, 3 Properties",
-    avatar: "PS",
-    rating: 5,
-    text: "RoomBae transformed how I run my three properties. Rent collection is fully automated now. I save 15+ hours every month.",
-    location: "Bengaluru",
-  },
-  {
-    name: "Arjun Mehta",
-    role: "Resident, Techie PG",
-    avatar: "AM",
-    rating: 5,
-    text: "The app is incredibly easy to use. I can raise complaints, pay rent, and track my agreement all from one place. Love it!",
-    location: "Hyderabad",
-  },
-  {
-    name: "Sunita Rao",
-    role: "Property Manager, 8 PGs",
-    avatar: "SR",
-    rating: 5,
-    text: "Analytics alone are worth it. I identified my best-performing property and vacancy patterns I had no idea existed.",
-    location: "Pune",
-  },
-  {
-    name: "Vikram Nair",
-    role: "PG Owner, 2 Properties",
-    avatar: "VN",
-    rating: 5,
-    text: "Onboarding residents used to take hours with paper forms. Now it is fully digital and takes 10 minutes. Game changer.",
-    location: "Chennai",
-  },
-];
-
-const faqs = [
-  {
-    q: "How long does setup take?",
-    a: "Most owners go live within 24 hours. Our onboarding team helps you migrate existing data and configure your properties step-by-step.",
-  },
-  {
-    q: "Can I manage multiple PGs from one account?",
-    a: "Yes. You can manage unlimited PGs under a single account with a unified dashboard and property-level reports.",
-  },
-  {
-    q: "Is my data secure?",
-    a: "We use bank-grade 256-bit encryption, SOC 2 certified infrastructure, and daily encrypted backups. Your data is always safe.",
-  },
-  {
-    q: "Do you support online rent payments?",
-    a: "Yes — UPI, credit/debit cards, net banking, and wallets are all supported with automatic reconciliation.",
-  },
-  {
-    q: "Is there a mobile app?",
-    a: "Our web app is fully responsive and works on any device. Native iOS and Android apps are in active development.",
-  },
-  {
-    q: "What kind of support do you offer?",
-    a: "We offer email, WhatsApp, and phone support. Enterprise customers get a dedicated success manager.",
-  },
-];
-
-const whyUs = [
-  {
-    icon: Zap,
-    title: "Fast Setup",
-    desc: "Go live in under 24 hours with guided onboarding.",
-  },
-  {
-    icon: Shield,
-    title: "Secure Platform",
-    desc: "SOC 2 certified, 256-bit encryption, daily backups.",
-  },
-  {
-    icon: Cloud,
-    title: "Cloud Hosted",
-    desc: "Always available, auto-scaling, zero maintenance.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Scalable",
-    desc: "Grows with your portfolio — 1 PG or 100 PGs.",
-  },
-  {
-    icon: CreditCard,
-    title: "Easy Billing",
-    desc: "Automated invoicing, reminders, and reconciliation.",
-  },
-  {
-    icon: Bot,
-    title: "Automation First",
-    desc: "Reduce manual work by 80% with smart workflows.",
-  },
-];
-
-const stats = [
-  { value: "10,000+", label: "Residents" },
-  { value: "500+", label: "PGs" },
-  { value: "99.99%", label: "Uptime" },
-  { value: "₹50Cr+", label: "Rent Processed" },
-];
-
-const logos = [
-  "Oyo Rooms",
-  "NestAway",
-  "Stanza Living",
-  "Hello World",
-  "Colive",
-  "Zolo",
-];
-
-export default function Landing({ navigate }: Props) {
-  const { user, isAuthenticated, logout } = useAuth();
-  const rawRole = String(user?.role || "").toUpperCase();
+  const [activeProductTab, setActiveProductTab] = useState<"homes" | "coliving" | "services">("homes");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [animateStats, setAnimateStats] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLElement>(null);
-  const heroBgRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    const scope = containerRef.current;
-    if (!scope || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    gsap.registerPlugin(ScrollTrigger);
-
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" }, delay: 0.05 });
-    
-    const animateIfPresent = (selector: string, from: any, to: any, pos?: string) => {
-        if (scope.querySelector(selector)) tl.fromTo(selector, from, to, pos);
-    };
-
-    animateIfPresent(".hero-badge", { opacity: 0, y: -18 }, { opacity: 1, y: 0, duration: 0.55 });
-    animateIfPresent(".hero-title", { opacity: 0, y: 32, clipPath: "inset(100% 0 0 0)" }, { opacity: 1, y: 0, clipPath: "inset(0% 0 0 0)", duration: 0.75 }, "-=0.35");
-    animateIfPresent(".hero-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.45");
-    animateIfPresent(".hero-cta", { opacity: 0, y: 16, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, "-=0.4");
-    animateIfPresent(".hero-mockup", { opacity: 0, y: 52, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.85, ease: "power2.out" }, "-=0.45");
-
-    if (navRef.current) {
-        let lastY = 0;
-        let navHidden = false;
-        ScrollTrigger.create({
-          start: "top -90",
-          onUpdate: (self) => {
-            const currentY = self.scroll();
-            const scrollingDown = currentY > lastY;
-            if (scrollingDown && !navHidden && currentY > 140) {
-              gsap.to(navRef.current, { y: "-110%", duration: 0.38, ease: "power2.inOut" });
-              navHidden = true;
-            } else if (!scrollingDown && navHidden) {
-              gsap.to(navRef.current, { y: "0%", duration: 0.42, ease: "power3.out" });
-              navHidden = false;
-            }
-            lastY = currentY;
-          },
-        });
-    }
-
-    gsap.utils.toArray<HTMLElement>(".reveal-section", scope).forEach((sec) => {
-      gsap.fromTo(sec, { opacity: 0, y: 36 }, {
-        opacity: 1, y: 0,
-        duration: 0.75, ease: "power2.out",
-        scrollTrigger: { trigger: sec, start: "top 87%", toggleActions: "play none none none" },
-      });
-    });
-
-    gsap.utils.toArray<HTMLElement>(".feature-card", scope).forEach((card, i) => {
-      gsap.fromTo(card, { opacity: 0, y: 28, scale: 0.97 }, {
-        opacity: 1, y: 0, scale: 1,
-        duration: 0.55, ease: "power2.out",
-        delay: (i % 4) * 0.07,
-        scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
-      });
-    });
-
-    gsap.utils.toArray<HTMLElement>(".testimonial-card", scope).forEach((card, i) => {
-      gsap.fromTo(card, { opacity: 0, y: 24 }, {
-        opacity: 1, y: 0,
-        duration: 0.55, ease: "power2.out",
-        delay: i * 0.1,
-        scrollTrigger: { trigger: card, start: "top 90%", toggleActions: "play none none none" },
-      });
-    });
-
-    gsap.utils.toArray<HTMLElement>(".pricing-card", scope).forEach((card, i) => {
-      gsap.fromTo(card, { opacity: 0, y: 30, scale: 0.97 }, {
-        opacity: 1, y: 0, scale: 1,
-        duration: 0.6, ease: "power2.out",
-        delay: i * 0.12,
-        scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none none" },
-      });
-    });
-
-    const logoSection = scope.querySelector(".logo-ticker");
-    if (logoSection) {
-      gsap.to(logoSection, {
-        x: "-25%",
-        ease: "none",
-        scrollTrigger: { trigger: logoSection, start: "top bottom", end: "bottom top", scrub: 1.5 },
-      });
-    }
-  }, { scope: containerRef });
-
-  useEffect(() => {
-    const timer = setTimeout(() => setAnimateStats(true), 300);
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!heroBgRef.current) return;
-      const x = (e.clientX / window.innerWidth - 0.5) * 22;
-      const y = (e.clientY / window.innerHeight - 0.5) * 14;
-      gsap.to(heroBgRef.current, { x, y, duration: 1.4, ease: "power1.out" });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
-
-  const prices = {
-    starter: { monthly: 999, yearly: 799 },
-    pro: { monthly: 2499, yearly: 1999 },
-    enterprise: { monthly: 4999, yearly: 3999 },
-  };
+  const sampleProperties: PropertyCardData[] = [
+    {
+      id: "p1",
+      name: "Zolo Stays Prime • Single Suite",
+      location: "Koramangala 5th Block, Bengaluru",
+      price: 14500,
+      rating: 4.96,
+      reviews: 128,
+      sharingType: "Private Suite",
+      isGuestFavorite: true,
+      images: [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      ],
+    },
+    {
+      id: "p2",
+      name: "Stanza Living • Nordic Studio",
+      location: "HSR Layout Sector 2, Bengaluru",
+      price: 18000,
+      rating: 4.92,
+      reviews: 94,
+      sharingType: "Studio Apartment",
+      isGuestFavorite: true,
+      images: [
+        "https://images.unsplash.com/photo-1502005229762-ee1b2b8ab98f?w=800&q=80",
+        "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+        "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80",
+      ],
+    },
+    {
+      id: "p3",
+      name: "Urban Nest Luxury Living",
+      location: "Indiranagar 100ft Road, Bengaluru",
+      price: 16500,
+      rating: 4.88,
+      reviews: 62,
+      sharingType: "Double Sharing",
+      isGuestFavorite: false,
+      images: [
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+        "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80",
+      ],
+    },
+    {
+      id: "p4",
+      name: "Silicon Oasis Suites",
+      location: "Whitefield ITPL Main Rd, Bengaluru",
+      price: 12000,
+      rating: 4.85,
+      reviews: 47,
+      sharingType: "Double Sharing",
+      isGuestFavorite: true,
+      images: [
+        "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=800&q=80",
+        "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=800&q=80",
+      ],
+    },
+    {
+      id: "p5",
+      name: "CyberHub Executive Residency",
+      location: "DLF Phase 3, Cyber City, Gurugram",
+      price: 21000,
+      rating: 4.98,
+      reviews: 156,
+      sharingType: "Private 1BHK",
+      isGuestFavorite: true,
+      images: [
+        "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800&q=80",
+        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
+      ],
+    },
+    {
+      id: "p6",
+      name: "Bandra SeaView Co-Living",
+      location: "Pali Hill, Bandra West, Mumbai",
+      price: 26000,
+      rating: 4.95,
+      reviews: 210,
+      sharingType: "Private Studio",
+      isGuestFavorite: true,
+      images: [
+        "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80",
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      ],
+    },
+    {
+      id: "p7",
+      name: "HITEC City Scholars Lodge",
+      location: "Madhapur, HITEC City, Hyderabad",
+      price: 13500,
+      rating: 4.87,
+      reviews: 73,
+      sharingType: "Triple Sharing",
+      isGuestFavorite: false,
+      images: [
+        "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=800&q=80",
+        "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800&q=80",
+      ],
+    },
+    {
+      id: "p8",
+      name: "Kalyani Nagar Executive Stays",
+      location: "Kalyani Nagar, Pune",
+      price: 15000,
+      rating: 4.91,
+      reviews: 89,
+      sharingType: "Double Sharing",
+      isGuestFavorite: true,
+      images: [
+        "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80",
+        "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&q=80",
+      ],
+    },
+  ];
 
   return (
-    <div ref={containerRef} className="min-h-screen aurora-bg text-[#3B2A24] font-sans relative overflow-hidden">
-      <div className="aurora-orb-1 -top-24 -left-24 opacity-70" />
-      <div className="aurora-orb-2 top-1/3 -right-32 opacity-60" />
-      <div className="aurora-orb-1 bottom-1/4 left-1/4 opacity-50" />
-
-      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 glass-nav navbar-animated">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between gap-4">
-          <Logo onClick={() => navigate("landing")} />
-
-          <div className="hidden md:flex items-center gap-6 lg:gap-8">
-            {["Features", "Pricing"].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors cursor-pointer"
-              >
-                {item}
-              </a>
-            ))}
-            <button
-              onClick={() => navigate("about")}
-              className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors cursor-pointer"
-            >
-              About
-            </button>
-            <button
-              onClick={() => navigate("blog")}
-              className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors cursor-pointer"
-            >
-              Blog
-            </button>
-            <button
-              onClick={() => navigate("pg-listing")}
-              className="text-sm text-[#6E5A52] dark:text-[#C6B9AE] hover:text-[#C58B63] dark:hover:text-[#C89A4B] font-medium transition-colors cursor-pointer"
-            >
-              Find PGs
-            </button>
+    <div className="min-h-screen bg-white dark:bg-[#121212] text-[#222222] dark:text-[#f7f7f7] font-sans relative overflow-x-clip transition-colors">
+      {/* ─── Airbnb 80px Top Navigation ─────────────────────────── */}
+      <header className="sticky top-0 left-0 right-0 z-50 h-20 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-[#ebebeb] dark:border-[#242424] transition-colors">
+        <div className="max-w-7xl mx-auto h-full px-4 md:px-6 flex items-center justify-between gap-4">
+          {/* Left: Brand Logo */}
+          <div className="flex-shrink-0">
+            <Logo onClick={() => navigate("landing")} size="md" />
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
-            {isAuthenticated && user ? (
-              <>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    if (rawRole === "RESIDENT") navigate("resident-portal");
-                    else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") navigate("admin-console");
-                    else navigate("dashboard");
-                  }}
-                >
-                  {rawRole === "RESIDENT"
-                    ? "Resident Portal 🏠"
-                    : rawRole === "ADMIN" || rawRole === "SUPER_ADMIN"
-                    ? "Admin Console 🛡️"
-                    : "Owner Dashboard 🏢"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={async () => {
-                    await logout();
-                    navigate("auth");
-                  }}
-                >
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("auth")}
-                >
-                  Sign in
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate("auth")}
-                >
-                  Start Free Trial
-                </Button>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
+          {/* Center: Airbnb 3-Product Navigation Tabs */}
+          <nav aria-label="Product categories" className="hidden md:flex items-center gap-6 lg:gap-8">
             <button
               type="button"
-              aria-label="Toggle Navigation Menu"
-              className="p-2 rounded-xl border border-[#E6D7CA] dark:border-[#4A433F] text-[#3B2A24] dark:text-[#F7F3EE] cursor-pointer"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => setActiveProductTab("homes")}
+              className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer ${
+                activeProductTab === "homes"
+                  ? "text-[#222222] dark:text-white"
+                  : "text-[#6a6a6a] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white"
+              }`}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              Homes & PGs
+              {activeProductTab === "homes" && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#222222] dark:bg-white rounded-full" />
+              )}
             </button>
-          </div>
-        </div>
 
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              key="mobile-menu"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="md:hidden border-t border-[#E6D7CA] dark:border-[#4A433F] bg-[#FFFDFB]/95 dark:bg-[#2B2725]/95 backdrop-blur-xl px-6 py-5 flex flex-col gap-3.5 shadow-xl"
+            <button
+              type="button"
+              onClick={() => {
+                setActiveProductTab("coliving");
+                navigate("pg-listing");
+              }}
+              className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer ${
+                activeProductTab === "coliving"
+                  ? "text-[#222222] dark:text-white"
+                  : "text-[#6a6a6a] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white"
+              }`}
             >
-              {["Features", "Pricing"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-sm font-semibold text-[#3B2A24] dark:text-[#F7F3EE]"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item}
-                </a>
-              ))}
-              <button
-                onClick={() => { navigate("about"); setMobileMenuOpen(false); }}
-                className="text-left text-sm font-semibold text-[#3B2A24] dark:text-[#F7F3EE]"
-              >
-                About
-              </button>
-              <button
-                onClick={() => { navigate("blog"); setMobileMenuOpen(false); }}
-                className="text-left text-sm font-semibold text-[#3B2A24] dark:text-[#F7F3EE]"
-              >
-                Blog
-              </button>
-              <button
-                onClick={() => { navigate("pg-listing"); setMobileMenuOpen(false); }}
-                className="text-left text-sm font-semibold text-[#3B2A24] dark:text-[#F7F3EE]"
-              >
-                Find PGs
-              </button>
-              <div className="pt-2 flex flex-col gap-2">
-                {isAuthenticated && user ? (
-                  <>
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        if (rawRole === "RESIDENT") navigate("resident-portal");
-                        else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") navigate("admin-console");
-                        else navigate("dashboard");
-                      }}
-                    >
-                      {rawRole === "RESIDENT"
-                        ? "Resident Portal 🏠"
-                        : rawRole === "ADMIN" || rawRole === "SUPER_ADMIN"
-                        ? "Admin Console 🛡️"
-                        : "Owner Dashboard 🏢"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      fullWidth
-                      onClick={async () => {
-                        setMobileMenuOpen(false);
-                        await logout();
-                        navigate("auth");
-                      }}
-                    >
-                      Sign Out
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      fullWidth
-                      onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
-                    >
-                      Sign in
-                    </Button>
-                    <Button
-                      variant="primary"
-                      fullWidth
-                      onClick={() => { navigate("auth"); setMobileMenuOpen(false); }}
-                    >
-                      Start Free Trial
-                    </Button>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
+              Co-Living Hubs
+              {activeProductTab === "coliving" && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#222222] dark:bg-white rounded-full" />
+              )}
+            </button>
 
-
-      <section ref={heroRef} className="hero-gradient pt-32 pb-20 px-6 overflow-hidden relative">
-        <div
-          ref={heroBgRef}
-          className="hero-bg-parallax pointer-events-none absolute inset-0 will-change-transform"
-          aria-hidden="true"
-          style={{
-            background:
-              "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(217,168,124,0.12) 0%, transparent 70%)",
-          }}
-        />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center max-w-4xl mx-auto mb-16">
-            <div className="hero-badge inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 bg-[#D9A87C] rounded-full animate-pulse" />
-              Trusted by 500+ Luxury PG Owners across India
-            </div>
-
-            <h1
-              className="hero-title text-clamp-hero font-black text-[#3B2A24] dark:text-[#F7F3EE] mb-6"
-              style={{ color: "var(--text-main)" }}
+            <button
+              type="button"
+              onClick={() => setActiveProductTab("services")}
+              className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                activeProductTab === "services"
+                  ? "text-[#222222] dark:text-white"
+                  : "text-[#6a6a6a] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white"
+              }`}
             >
-
-              Manage Every PG.{" "}
-              <span className="gradient-text min-h-[1.2em] inline-block">
-                <TypedText
-                  strings={[
-                    "Every Resident.",
-                    "Every Room & Bed.",
-                    "Every Rent Payment.",
-                    "Every Complaint.",
-                  ]}
-                  typeSpeed={60}
-                  backSpeed={40}
-                  backDelay={2000}
-                />
+              <span>Services</span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-[#ff385c] text-white px-1.5 py-0.2 rounded-full">
+                NEW
               </span>
-            </h1>
-            <p className="hero-sub text-clamp-sub text-[#6E5A52] dark:text-[#C6B9AE] max-w-2xl mx-auto mb-10">
-              The boutique PG Management platform for property owners. Manage
-              rooms, residents, billing, complaints, analytics and payments from
-              one warm, elegant dashboard.
-            </p>
-            <div className="hero-cta flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="lg"
-                onClick={() => navigate("auth")}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
+              {activeProductTab === "services" && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#222222] dark:bg-white rounded-full" />
+              )}
+            </button>
+          </nav>
+
+          {/* Right: Host CTA, Globe, Theme, User Menu */}
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("auth")}
+              className="hidden lg:block text-xs font-semibold px-3.5 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#222222] dark:text-[#f7f7f7] transition-colors cursor-pointer"
+            >
+              RoomBae your property
+            </button>
+
+            <ThemeToggle />
+
+            {/* User Pill Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="flex items-center gap-2.5 p-1.5 pl-3 rounded-full border border-[#dddddd] dark:border-[#2e2e2e] hover:shadow-md transition-all cursor-pointer bg-white dark:bg-[#1e1e1e]"
+                aria-label="User navigation menu"
               >
-                Start Free Trial
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => setShowDemo(true)}
-                leftIcon={<Play className="w-4 h-4 text-[#C58B63]" />}
-              >
-                Watch Demo
-              </Button>
-            </div>
-            <p className="text-sm text-[#A8907F] dark:text-[#756A63] mt-5">
-              No credit card required · 14-day free trial · Cancel anytime
-            </p>
-
-          </div>
-
-          <div className="hero-mockup relative max-w-5xl mx-auto">
-            <div className="glass rounded-2xl border border-white/80 shadow-2xl shadow-blue-100/50 overflow-hidden">
-              <div className="bg-slate-100/80 px-4 py-3 flex items-center gap-2 border-b border-slate-200/50">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                <Menu className="w-4 h-4 text-[#222222] dark:text-[#f7f7f7]" />
+                <div className="w-8 h-8 rounded-full bg-[#ff385c] text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  {isAuthenticated && user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                 </div>
-                <div className="flex-1 mx-4 bg-white/80 rounded-lg px-3 py-1.5 text-xs text-slate-400 font-medium">
-                  app.pgmanager.in/dashboard
-                </div>
-              </div>
-              <div className="bg-white p-6 grid grid-cols-12 gap-4">
-                <div className="col-span-2 hidden md:block">
-                  <div className="space-y-1">
-                    {[
-                      BarChart3,
-                      Building2,
-                      Users,
-                      CreditCard,
-                      MessageSquare,
-                    ].map((Icon, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-2 px-2 py-2 rounded-lg text-xs ${i === 0 ? "bg-[#D9A87C] text-white" : "text-slate-400"}`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        {i === 0 && (
-                          <span className="font-medium">Dashboard</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              </button>
 
-                <div className="col-span-12 md:col-span-10 space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      {
-                        label: "Occupancy",
-                        value: "94%",
-                        trend: "+3%",
-                        color: "text-[#C58B63]",
-                        bg: "bg-[#F8EEE5]",
-                      },
-                      {
-                        label: "Revenue",
-                        value: "₹4.2L",
-                        trend: "+12%",
-                        color: "text-[#D9A87C]",
-                        bg: "bg-[#F8EEE5]",
-                      },
-                      {
-                        label: "Available Beds",
-                        value: "8",
-                        trend: "-2",
-                        color: "text-teal-600",
-                        bg: "bg-teal-50",
-                      },
-                      {
-                        label: "Pending Payments",
-                        value: "12",
-                        trend: "-5%",
-                        color: "text-orange-600",
-                        bg: "bg-orange-50",
-                      },
-                    ].map((stat) => (
-                      <div
-                        key={stat.label}
-                        className={`${stat.bg} rounded-xl p-3`}
-                      >
-                        <p className="text-xs text-slate-500 mb-1">
-                          {stat.label}
-                        </p>
-                        <p className={`text-lg font-bold ${stat.color}`}>
-                          {stat.value}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {stat.trend} this month
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2 bg-slate-50 rounded-xl p-3">
-                      <p className="text-xs font-semibold text-slate-600 mb-3">
-                        Revenue Overview
-                      </p>
-                      <div className="flex items-end gap-1.5 h-20">
-                        {[60, 75, 55, 80, 70, 90, 85, 95, 88, 92, 78, 100].map(
-                          (h, i) => (
-                            <div
-                              key={i}
-                              className={`flex-1 rounded-t-md ${i === 11 ? "bg-[#D9A87C]" : "bg-[#E7C4A0]"}`}
-                              style={{ height: `${h}%` }}
-                            />
-                          ),
-                        )}
-                      </div>
-                    </div>
-                    <div
-                      className="rounded-xl p-3 text-white shadow-md"
-                      style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                    >
-                      <p className="text-xs font-medium opacity-80 mb-2">
-                        Beds Status
-                      </p>
-                      <div className="relative w-16 h-16 mx-auto">
-                        <svg
-                          viewBox="0 0 36 36"
-                          className="w-full h-full -rotate-90"
-                        >
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r="14"
-                            fill="none"
-                            stroke="rgba(255,255,255,0.2)"
-                            strokeWidth="4"
-                          />
-                          <circle
-                            cx="18"
-                            cy="18"
-                            r="14"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="4"
-                            strokeDasharray="83 100"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-sm font-bold">94%</span>
+              {/* User Dropdown Menu */}
+              <AnimatePresence>
+                {mobileMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-12 w-64 rounded-2xl bg-white dark:bg-[#1e1e1e] border border-[#dddddd] dark:border-[#2e2e2e] shadow-xl py-2 z-50 text-sm overflow-hidden"
+                  >
+                    {isAuthenticated && user ? (
+                      <>
+                        <div className="px-4 py-2 border-b border-[#dddddd] dark:border-[#2e2e2e]">
+                          <p className="font-bold text-xs text-[#222222] dark:text-[#f7f7f7] truncate">{user.name || "Member"}</p>
+                          <p className="text-[11px] text-[#6a6a6a] dark:text-[#a1a1aa] truncate">{user.email}</p>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -left-4 xl:-left-8 top-16 animate-float hidden lg:block">
-              <div className="glass rounded-2xl border border-white/80 dark:border-[#4A433F] p-3.5 shadow-xl bg-white/90 dark:bg-[#332D2B]/90">
-                <div className="flex items-center gap-3 mb-1.5">
-                  <div className="w-8 h-8 bg-green-100 dark:bg-emerald-950/60 rounded-xl flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-green-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-slate-500 dark:text-[#C6B9AE]">Payment received</p>
-                    <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-[#F7F3EE]">₹12,500</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <p className="text-[11px] text-green-600 dark:text-emerald-400 font-medium">Just now</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -right-4 xl:-right-8 top-28 animate-float-delay hidden lg:block">
-              <div className="glass rounded-2xl border border-white/80 dark:border-[#4A433F] p-3.5 shadow-xl bg-white/90 dark:bg-[#332D2B]/90">
-                <p className="text-[11px] text-slate-500 dark:text-[#C6B9AE] mb-0.5">Occupancy Rate</p>
-                <p className="text-xl md:text-2xl font-black text-[#C58B63] dark:text-[#C89A4B]">94%</p>
-                <p className="text-[11px] text-slate-400 dark:text-[#756A63] mt-0.5">+3% this month</p>
-              </div>
-            </div>
-
-            <div
-              className="absolute -left-2 xl:-left-4 bottom-10 animate-float hidden xl:block"
-              style={{ animationDelay: "2s" }}
-            >
-              <div className="glass rounded-2xl border border-white/80 dark:border-[#4A433F] p-3 shadow-xl bg-white/90 dark:bg-[#332D2B]/90">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-[#C58B63] dark:text-[#C89A4B]" />
-                  <p className="text-xs font-medium text-slate-700 dark:text-[#F7F3EE]">
-                    3 complaints resolved today
-                  </p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 px-6 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-center text-sm text-slate-400 font-semibold uppercase tracking-widest mb-8">
-            Trusted by leading PG businesses
-          </p>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 mb-14">
-            {logos.map((logo) => (
-              <div
-                key={logo}
-                className="text-slate-300 font-bold text-lg hover:text-slate-400 transition-colors cursor-default"
-              >
-                {logo}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, i) => (
-              <div
-                key={stat.label}
-                className={`text-center py-8 px-6 bg-white rounded-2xl border border-slate-100 shadow-sm card-hover ${animateStats ? "animate-count-up" : "opacity-0"}`}
-                style={{ animationDelay: `${i * 0.1}s` }}
-              >
-                <p className="text-4xl font-black gradient-text mb-2">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-slate-500 font-medium">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="reveal-section py-24 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-4">
-              Everything you need
-            </div>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
-              Built for modern PG management
-            </h2>
-            <p className="text-slate-500 text-lg leading-relaxed">
-              Every feature you need to run a professional, scalable PG business
-              — in one platform.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {features.map((feature, idx) => {
-              const Icon = feature.icon;
-              return (
-                <MotionCard
-                  key={feature.title}
-                  delay={idx * 0.04}
-                  hoverY={-6}
-                  hoverScale={1.02}
-                  className="feature-card group bg-[#FFFDFB] hover:bg-[#F8EEE5]/50 border border-[#E6D7CA] rounded-2xl p-5 cursor-default"
-                >
-                  <div
-                    className="feature-icon w-10 h-10 rounded-xl flex items-center justify-center mb-4 shadow-sm text-white"
-                    style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1.5 leading-snug">
-                    {feature.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    {feature.desc}
-                  </p>
-                </MotionCard>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 px-6 bg-slate-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
-              Powerful dashboards, at a glance
-            </h2>
-            <p className="text-slate-500 text-lg">
-              Everything from revenue charts to occupancy heatmaps — designed
-              for clarity.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                label: "Analytics Overview",
-                gradient: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)",
-                icon: BarChart3,
-              },
-              {
-                label: "Resident Management",
-                gradient: "linear-gradient(135deg, #C58B63 0%, #B5743F 100%)",
-                icon: Users,
-              },
-              {
-                label: "Revenue Insights",
-                gradient: "linear-gradient(135deg, #E7C4A0 0%, #D9A87C 100%)",
-                icon: TrendingUp,
-              },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.label}
-                  onClick={() => navigate("dashboard")}
-                  className="rounded-2xl p-6 cursor-pointer hover:scale-[1.02] transition-transform shadow-lg text-white"
-                  style={{ background: item.gradient }}
-                >
-                  <div className="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-white font-bold text-lg mb-2">
-                    {item.label}
-                  </h3>
-                  <p className="text-white/70 text-sm">
-                    Click to explore the full dashboard →
-                  </p>
-                  <div className="mt-6 flex items-end gap-1 h-12">
-                    {[40, 60, 45, 70, 55, 80, 75, 90, 85, 95].map((h, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 bg-white/30 rounded-t-sm"
-                        style={{ height: `${h}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              onClick={() => navigate("complaints")}
-              className="bg-white border border-[#E6D7CA] rounded-2xl p-6 cursor-pointer hover:border-[#D9A87C] hover:shadow-md transition-all"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-slate-900">Complaint Status</h3>
-                <span className="text-xs text-[#C58B63] font-medium">
-                  View all →
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  {
-                    label: "Pending",
-                    count: 8,
-                    color: "bg-red-100 text-red-700",
-                  },
-                  {
-                    label: "In Progress",
-                    count: 5,
-                    color: "bg-yellow-100 text-yellow-700",
-                  },
-                  {
-                    label: "Resolved",
-                    count: 23,
-                    color: "bg-green-100 text-green-700",
-                  },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className={`${s.color} rounded-xl p-4 text-center`}
-                  >
-                    <p className="text-2xl font-black">{s.count}</p>
-                    <p className="text-xs font-medium mt-0.5">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div
-              onClick={() => navigate("residents")}
-              className="bg-white border border-[#E6D7CA] rounded-2xl p-6 cursor-pointer hover:border-[#D9A87C] hover:shadow-md transition-all"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-slate-900">Recent Residents</h3>
-                <span className="text-xs text-[#C58B63] font-medium">
-                  View all →
-                </span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  {
-                    name: "Ankit Joshi",
-                    room: "Room 202A",
-                    status: "Active",
-                    avatar: "AJ",
-                  },
-                  {
-                    name: "Meera Pillai",
-                    room: "Room 104B",
-                    status: "Active",
-                    avatar: "MP",
-                  },
-                  {
-                    name: "Suresh Babu",
-                    room: "Room 301C",
-                    status: "Due",
-                    avatar: "SB",
-                  },
-                ].map((r) => (
-                  <div key={r.name} className="flex items-center gap-3">
-                    <Avatar name={r.name} initials={r.avatar} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {r.name}
-                      </p>
-                      <p className="text-xs text-slate-500">{r.room}</p>
-                    </div>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${r.status === "Active" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
-                    >
-                      {r.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-[#F8EEE5] border border-[#E6D7CA] text-[#C58B63] text-xs font-semibold px-4 py-2 rounded-full mb-6">
-                Why RoomBae?
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
-                Built for how real PG owners actually work
-              </h2>
-              <p className="text-slate-500 text-lg mb-10 leading-relaxed">
-                We talked to 200+ PG owners before writing a single line of
-                code. Every feature solves a real pain point.
-              </p>
-              <button
-                onClick={() => navigate("auth")}
-                className="flex items-center gap-2 luxury-btn-primary px-6 py-3 transition-all"
-              >
-                Get Started Free
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="relative">
-              <div className="space-y-0">
-                {whyUs.map((item, i) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.title} className="flex gap-4 pb-8 relative">
-                      {i < whyUs.length - 1 && (
-                        <div className="absolute left-5 top-10 bottom-0 w-0.5 bg-slate-100" />
-                      )}
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md text-white z-10"
-                        style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                      >
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="pt-1">
-                        <h3 className="font-bold text-slate-900 mb-1">
-                          {item.title}
-                        </h3>
-                        <p className="text-slate-500 text-sm leading-relaxed">
-                          {item.desc}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-24 px-6 bg-slate-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
-              Loved by owners and residents
-            </h2>
-            <p className="text-slate-500 text-lg">
-              Real reviews from real PG businesses.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-            {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="testimonial-card bg-white rounded-2xl border border-slate-100 p-6 shadow-sm card-hover"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-4 h-4 fill-amber-400 text-amber-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                  "{t.text}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <Avatar name={t.name} initials={t.avatar} size="md" />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {t.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {t.role} · {t.location}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className="py-24 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-slate-500 text-lg mb-8">
-              Start free. Scale as you grow. No hidden fees.
-            </p>
-
-            <div className="inline-flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${billing === "monthly" ? "bg-white shadow-sm text-slate-900" : "text-slate-500"}`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBilling("yearly")}
-                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${billing === "yearly" ? "bg-white shadow-sm text-slate-900" : "text-slate-500"}`}
-              >
-                Yearly
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                  Save 20%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            <div className="pricing-card bg-white border border-slate-200 rounded-2xl p-8 card-hover">
-              <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-1">
-                  Starter
-                </h3>
-                <p className="text-slate-500 text-sm">Perfect for 1-2 PGs</p>
-              </div>
-              <div className="mb-8">
-                <span className="text-4xl font-black text-slate-900">
-                  ₹{prices.starter[billing]}
-                </span>
-                <span className="text-slate-500 text-sm ml-1">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Up to 30 beds",
-                  "Single PG",
-                  "Basic analytics",
-                  "WhatsApp reminders",
-                  "Email support",
-                ].map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-center gap-3 text-sm text-slate-600"
-                  >
-                    <div className="w-4 h-4 bg-[#F8EEE5] rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-[#C58B63]" />
-                    </div>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => navigate("auth")}
-                className="w-full py-3 rounded-xl border-2 border-[#D9A87C] text-[#C58B63] font-semibold text-sm hover:bg-[#F8EEE5] transition-colors"
-              >
-                Start Free Trial
-              </button>
-            </div>
-
-            <div className="pricing-card pricing-card-popular rounded-2xl p-8 shadow-2xl shadow-blue-200 -translate-y-4 scale-[1.02]">
-              <div className="absolute top-4 right-4 bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full">
-                Most Popular
-              </div>
-              <div className="relative mb-6">
-                <h3 className="text-lg font-bold text-white mb-1">
-                  Professional
-                </h3>
-                <p className="text-white/70 text-sm">
-                  For growing PG businesses
-                </p>
-              </div>
-              <div className="relative mb-8">
-                <span className="text-4xl font-black text-white">
-                  ₹{prices.pro[billing]}
-                </span>
-                <span className="text-white/70 text-sm ml-1">/month</span>
-              </div>
-              <ul className="relative space-y-3 mb-8">
-                {[
-                  "Up to 150 beds",
-                  "Up to 5 PGs",
-                  "Advanced analytics",
-                  "Online payments",
-                  "Digital agreements",
-                  "QR entry system",
-                  "Priority support",
-                ].map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-center gap-3 text-sm text-white/90"
-                  >
-                    <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-white" />
-                    </div>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => navigate("auth")}
-                className="relative w-full py-3 rounded-xl bg-white text-[#C58B63] font-semibold text-sm hover:bg-white/90 transition-colors shadow-md"
-              >
-                Start Free Trial
-              </button>
-            </div>
-
-            <div className="pricing-card bg-white border border-slate-200 rounded-2xl p-8 card-hover">
-              <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-1">
-                  Enterprise
-                </h3>
-                <p className="text-slate-500 text-sm">For large portfolios</p>
-              </div>
-              <div className="mb-8">
-                <span className="text-4xl font-black text-slate-900">
-                  ₹{prices.enterprise[billing]}
-                </span>
-                <span className="text-slate-500 text-sm ml-1">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Unlimited beds",
-                  "Unlimited PGs",
-                  "Custom analytics",
-                  "API access",
-                  "White-labeling",
-                  "Dedicated manager",
-                  "24/7 phone support",
-                ].map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-center gap-3 text-sm text-slate-600"
-                  >
-                    <div className="w-4 h-4 bg-[#F8EEE5] rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-[#C58B63]" />
-                    </div>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => navigate("auth")}
-                className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 transition-colors"
-              >
-                Contact Sales
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="faq" className="py-24 px-6 bg-slate-50">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl font-black text-slate-900 mb-4">
-              Frequently asked questions
-            </h2>
-            <p className="text-slate-500">
-              Everything you need to know to get started.
-            </p>
-          </div>
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <div
-                key={i}
-                className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm"
-              >
-                <button
-                  className="w-full flex items-center justify-between px-6 py-5 text-left"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                >
-                  <span className="font-semibold text-slate-900 text-sm pr-4">
-                    {faq.q}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {openFaq === i && (
-                  <div className="px-6 pb-5">
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                      {faq.a}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div
-            className="rounded-3xl p-12 text-center relative overflow-hidden shadow-2xl"
-            style={{ background: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)" }}
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.2),transparent_60%)]" />
-            <div className="relative">
-              <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
-                Ready to transform your PG business?
-              </h2>
-              <p className="text-white/85 text-lg mb-8 max-w-xl mx-auto">
-                Join 500+ PG owners who already save hours every week with PG
-                Manager.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button
-                  onClick={() => navigate("auth")}
-                  className="flex items-center gap-2 bg-[#FFFDFB] text-[#C58B63] font-bold px-8 py-3.5 rounded-2xl shadow-lg hover:scale-105 transition-all text-base"
-                >
-                  Start Free Trial
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => navigate("pg-listing")}
-                  className="text-white/90 hover:text-white font-semibold text-base transition-colors"
-                >
-                  Browse PG Listings →
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-slate-100 bg-white px-6 py-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-            <div className="col-span-2">
-              <div className="flex items-center gap-[#C58B63] mb-4">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
-                  style={{ background: "linear-gradient(135deg, #D9A87C, #C58B63)" }}
-                >
-                  <Building2 className="w-4 h-4" />
-                </div>
-                <span className="font-bold text-slate-900 text-lg ml-2.5">
-                  RoomBae
-                </span>
-              </div>
-              <p className="text-sm text-slate-500 leading-relaxed max-w-xs mb-6">
-                The all-in-one platform for modern PG management. Built for
-                property owners who want to scale.
-              </p>
-              <div className="flex items-center gap-3">
-                {[Globe, Link, ExternalLink, AtSign].map((Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="w-8 h-8 bg-slate-100 hover:bg-[#F8EEE5] rounded-lg flex items-center justify-center text-slate-500 hover:text-[#C58B63] transition-colors"
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {[
-              {
-                title: "Company",
-                items: [
-                  ["About", "about"],
-                  ["Blog", "blog"],
-                  ["Careers", "careers"],
-                  ["Press", "press"],
-                ],
-              },
-              {
-                title: "Product",
-                items: [
-                  ["Features", "features"],
-                  ["Pricing", "pricing"],
-                  ["Changelog", "changelog"],
-                  ["Roadmap", "roadmap"],
-                ],
-              },
-              {
-                title: "Resources",
-                items: [
-                  ["Documentation", "documentation"],
-                  ["Help Center", "help-center"],
-                  ["API Reference", "api-reference"],
-                  ["Status", "status"],
-                ],
-              },
-            ].map((col) => (
-              <div key={col.title}>
-                <h4 className="font-semibold text-slate-900 text-sm mb-4">
-                  {col.title}
-                </h4>
-                <ul className="space-y-2.5">
-                  {col.items.map(([label, destination]) => (
-                    <li key={destination}>
-                      {destination === "features" ||
-                      destination === "pricing" ? (
-                        <a
-                          href={`#${destination}`}
-                          className="text-sm text-slate-500 hover:text-[#C58B63] transition-colors"
-                        >
-                          {label}
-                        </a>
-                      ) : (
                         <button
-                          onClick={() => navigate(destination as Page)}
-                          className="text-sm text-slate-500 hover:text-[#C58B63] transition-colors"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            if (rawRole === "RESIDENT") navigate("resident-portal");
+                            else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") navigate("admin-console");
+                            else navigate("dashboard");
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold text-[#222222] dark:text-[#f7f7f7] flex items-center justify-between cursor-pointer"
                         >
-                          {label}
+                          <span>{rawRole === "RESIDENT" ? "Resident Portal" : "Management Dashboard"}</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#ff385c]" />
                         </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                        <button
+                          onClick={() => { setMobileMenuOpen(false); navigate("pg-listing"); }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#6a6a6a] dark:text-[#a1a1aa] cursor-pointer"
+                        >
+                          Explore All PGs
+                        </button>
+                        <div className="h-[1px] bg-[#dddddd] dark:bg-[#2e2e2e] my-1" />
+                        <button
+                          onClick={async () => {
+                            setMobileMenuOpen(false);
+                            await logout();
+                            navigate("auth");
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#c13515] font-medium cursor-pointer"
+                        >
+                          Log out
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-bold text-[#222222] dark:text-[#f7f7f7] cursor-pointer"
+                        >
+                          Sign up
+                        </button>
+                        <button
+                          onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#222222] dark:text-[#f7f7f7] cursor-pointer"
+                        >
+                          Log in
+                        </button>
+                        <div className="h-[1px] bg-[#dddddd] dark:bg-[#2e2e2e] my-1" />
+                        <button
+                          onClick={() => { setMobileMenuOpen(false); navigate("pg-listing"); }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#6a6a6a] dark:text-[#a1a1aa] cursor-pointer"
+                        >
+                          Find PGs & Co-Living
+                        </button>
+                        <button
+                          onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#6a6a6a] dark:text-[#a1a1aa] cursor-pointer"
+                        >
+                          Host your PG
+                        </button>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ─── Hero Section with Signature Search Pill ─────────────── */}
+      <section className="pt-8 pb-10 px-4 md:px-6 bg-white dark:bg-[#121212] transition-colors">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-clamp-hero font-bold tracking-tight text-[#222222] dark:text-[#f7f7f7] mb-6">
+            Find premium PGs & Co-Living spaces.
+          </h1>
+          {/* Centered Airbnb 3-Segment Search Pill */}
+          <div className="max-w-3xl mx-auto mb-8">
+            <SearchPill onSearch={() => navigate("pg-listing")} />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Airbnb Sticky Category Filter Strip ─────────────────── */}
+      <CategoryStrip
+        selectedCategory={selectedCategory}
+        onSelectCategory={(id) => {
+          setSelectedCategory(id);
+          if (id !== "all") navigate("pg-listing");
+        }}
+        onOpenFilters={() => navigate("pg-listing")}
+      />
+
+      {/* ─── Photo-First Property Grid (Airbnb 4-Col Layout) ─────── */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-[#222222] dark:text-[#f7f7f7]">
+              Trending stays across top tech hubs
+            </h2>
+            <p className="text-sm text-[#6a6a6a] dark:text-[#a1a1aa]">
+              Verified luxury & student co-living spaces with premium amenities
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("pg-listing")}
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-[#ff385c] hover:underline cursor-pointer"
+          >
+            <span>Show all</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+          {sampleProperties.map((prop) => (
+            <PropertyCard
+              key={prop.id}
+              property={prop}
+              onClick={() => navigate("pg-details")}
+            />
+          ))}
+        </div>
+
+        <div className="mt-12 text-center">
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => navigate("pg-listing")}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
+          >
+            Explore 500+ Verified PGs
+          </Button>
+        </div>
+      </main>
+
+      {/* ─── Airbnb Host / Property Owner Conversion Banner ───────── */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-12">
+        <div className="relative rounded-3xl overflow-hidden bg-neutral-950 text-white p-8 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+          <div className="max-w-xl z-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#ff385c] mb-2 inline-block">
+              For Property Owners
+            </span>
+            <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">
+              Turn your PG property into a high-yield co-living space.
+            </h2>
+            <p className="text-sm md:text-base text-neutral-300 mb-8 leading-relaxed">
+              Automate rent collection, resident KYC verification, room allocations, and complaint tickets with RoomBae's all-in-one property management OS.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => navigate("auth")}
+              >
+                Start Managing for Free
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-white border-white/40 hover:bg-white/10"
+                onClick={() => setShowDemo(true)}
+              >
+                Watch 2-Min Demo
+              </Button>
+            </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-400">
-              © 2025 RoomBae. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              {[
-                ["Privacy Policy", "privacy-policy"],
-                ["Terms of Service", "terms-of-service"],
-                ["Cookie Policy", "cookie-policy"],
-              ].map(([label, destination]) => (
-                <button
-                  key={destination}
-                  onClick={() => navigate(destination as Page)}
-                  className="text-xs text-slate-400 hover:text-[#C58B63] transition-colors"
-                >
-                  {label}
-                </button>
-              ))}
+          <div className="relative w-full md:w-1/2 aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-white/10">
+            <img
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1000&q=80"
+              alt="Luxury property"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Inspiration for Future Stays (City Directory) ───────── */}
+      <section className="border-t border-[#ebebeb] dark:border-[#242424] bg-[#f7f7f7] dark:bg-[#181818] py-12 px-4 md:px-6 transition-colors">
+        <div className="max-w-7xl mx-auto">
+          <h3 className="text-base font-bold text-[#222222] dark:text-[#f7f7f7] mb-6">
+            Popular destinations for student & professional stays
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 text-xs">
+            {[
+              { city: "Bengaluru", count: "140+ Properties", sub: "Koramangala, HSR, Indiranagar" },
+              { city: "Mumbai", count: "95+ Properties", sub: "Bandra, Andheri, Powai" },
+              { city: "Delhi NCR", count: "120+ Properties", sub: "Gurugram, Noida, South Ex" },
+              { city: "Hyderabad", count: "80+ Properties", sub: "HITEC City, Gachibowli" },
+              { city: "Pune", count: "65+ Properties", sub: "Kalyani Nagar, Viman Nagar" },
+              { city: "Chennai", count: "45+ Properties", sub: "OMR, Velachery, Guindy" },
+            ].map((item) => (
+              <button
+                key={item.city}
+                type="button"
+                onClick={() => navigate("pg-listing")}
+                className="text-left group cursor-pointer"
+              >
+                <p className="font-bold text-[#222222] dark:text-[#f7f7f7] group-hover:text-[#ff385c] transition-colors">
+                  {item.city}
+                </p>
+                <p className="text-[#6a6a6a] dark:text-[#a1a1aa] mt-0.5">{item.count}</p>
+                <p className="text-[10px] text-[#929292] truncate mt-0.5">{item.sub}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Airbnb 3-Column Footer & Global Legal Band ───────────── */}
+      <footer className="border-t border-[#dddddd] dark:border-[#2e2e2e] bg-white dark:bg-[#121212] pt-12 pb-8 px-4 md:px-6 text-xs text-[#6a6a6a] dark:text-[#a1a1aa] transition-colors">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-[#ebebeb] dark:border-[#242424]">
+            <div>
+              <h4 className="font-bold text-[#222222] dark:text-[#f7f7f7] mb-3">Support</h4>
+              <ul className="space-y-2.5">
+                <li><button onClick={() => navigate("help-center")} className="hover:underline cursor-pointer">Help Center & Support</button></li>
+                <li><a href="mailto:support@roombae.com" className="hover:underline">Contact Support Team</a></li>
+                <li><a href="tel:+918000492233" className="hover:underline">+91 80004 92233</a></li>
+                <li><button onClick={() => navigate("terms-of-service")} className="hover:underline cursor-pointer">Cancellation Options</button></li>
+                <li><button onClick={() => navigate("privacy-policy")} className="hover:underline cursor-pointer">Safety Information</button></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-[#222222] dark:text-[#f7f7f7] mb-3">Hosting</h4>
+              <ul className="space-y-2.5">
+                <li><button onClick={() => navigate("auth")} className="hover:underline cursor-pointer">List your PG or Co-Living space</button></li>
+                <li><button onClick={() => navigate("documentation")} className="hover:underline cursor-pointer">RoomBae for Property Owners</button></li>
+                <li><button onClick={() => navigate("roadmap")} className="hover:underline cursor-pointer">Pricing & Plans</button></li>
+                <li><button onClick={() => navigate("blog")} className="hover:underline cursor-pointer">Community Forum & Best Practices</button></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-[#222222] dark:text-[#f7f7f7] mb-3">RoomBae</h4>
+              <ul className="space-y-2.5">
+                <li><button onClick={() => navigate("about")} className="hover:underline cursor-pointer">About Us</button></li>
+                <li><button onClick={() => navigate("blog")} className="hover:underline cursor-pointer">Newsroom & Blog</button></li>
+                <li><button onClick={() => navigate("careers")} className="hover:underline cursor-pointer">Careers</button></li>
+                <li><button onClick={() => navigate("privacy-policy")} className="hover:underline cursor-pointer">Privacy Policy</button></li>
+                <li><button onClick={() => navigate("terms-of-service")} className="hover:underline cursor-pointer">Terms of Service</button></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span>© {new Date().getFullYear()} RoomBae Technologies, Inc.</span>
+              <span>·</span>
+              <button onClick={() => navigate("privacy-policy")} className="hover:underline cursor-pointer">Privacy</button>
+              <span>·</span>
+              <button onClick={() => navigate("terms-of-service")} className="hover:underline cursor-pointer">Terms</button>
+              <span>·</span>
+              <button onClick={() => navigate("cookie-policy")} className="hover:underline cursor-pointer">Sitemap</button>
+            </div>
+
+            <div className="flex items-center gap-6 font-semibold text-[#222222] dark:text-[#f7f7f7]">
+              <span className="flex items-center gap-1 cursor-pointer hover:underline">
+                🌐 English (IN)
+              </span>
+              <span className="cursor-pointer hover:underline">
+                ₹ INR
+              </span>
             </div>
           </div>
         </div>
       </footer>
 
+      {/* Demo Modal */}
       {showDemo && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
           onClick={() => setShowDemo(false)}
         >
           <div
-            className="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white dark:bg-[#1e1e1e] shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-[#dddddd] dark:border-[#2e2e2e] px-6 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#C58B63]">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#ff385c]">
                   Product tour
                 </p>
-                <h2 className="mt-1 text-lg font-black text-slate-900">
+                <h2 className="mt-1 text-lg font-bold text-[#222222] dark:text-[#f7f7f7]">
                   See RoomBae in action
                 </h2>
               </div>
               <button
                 onClick={() => setShowDemo(false)}
                 aria-label="Close demo"
-                className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="grid gap-6 bg-slate-50 p-6 md:grid-cols-[1.2fr_0.8fr]">
-              <div
-                className="relative aspect-video overflow-hidden rounded-2xl p-6 text-white shadow-lg"
-                style={{ background: "linear-gradient(135deg, #D9A87C 0%, #C58B63 100%)" }}
-              >
-                <div
-                  className="absolute inset-0 opacity-20"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)",
-                    backgroundSize: "28px 28px",
-                  }}
-                />
-                <div className="relative flex h-full flex-col justify-between">
-                  <div className="flex items-center justify-between text-xs font-semibold text-white/70">
-                    <span>RoomBae</span>
-                    <span>Live dashboard preview</span>
-                  </div>
-                  <div>
-                    <p className="text-4xl font-black">94%</p>
-                    <p className="mt-1 text-sm text-white/70">
-                      Portfolio occupancy
-                    </p>
-                    <div className="mt-5 flex h-16 items-end gap-1.5">
-                      {[45, 62, 50, 75, 68, 88, 80, 96].map((height, index) => (
-                        <span
-                          key={index}
-                          className="flex-1 rounded-t-md bg-white/70"
-                          style={{ height: `${height}%` }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+            <div className="p-6">
+              <div className="aspect-video w-full rounded-xl bg-neutral-900 flex items-center justify-center text-white mb-4">
+                <Play className="w-12 h-12 text-[#ff385c]" />
               </div>
-              <div className="flex flex-col justify-center">
-                <h3 className="text-xl font-black text-slate-900">
-                  One view for the work that matters.
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500">
-                  Track occupancy, collect rent, resolve complaints, and keep
-                  residents informed without jumping between spreadsheets.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowDemo(false);
-                    navigate("auth");
-                  }}
-                  className="mt-6 flex items-center justify-center gap-2 luxury-btn-primary px-4 py-3 text-sm font-bold flex-shrink-0"
-                >
-                  Start free trial <ArrowRight className="h-4 w-4" />
-                </button>
+              <p className="text-sm text-[#6a6a6a] dark:text-[#a1a1aa] mb-6">
+                RoomBae helps thousands of property owners automate billing, KYC, and complaint tracking effortlessly.
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button variant="ghost" onClick={() => setShowDemo(false)}>Close</Button>
+                <Button variant="primary" onClick={() => { setShowDemo(false); navigate("auth"); }}>Get Started</Button>
               </div>
             </div>
           </div>
@@ -1570,4 +563,6 @@ export default function Landing({ navigate }: Props) {
       )}
     </div>
   );
-}
+};
+
+export default Landing;

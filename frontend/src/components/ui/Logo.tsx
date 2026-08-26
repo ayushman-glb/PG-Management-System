@@ -42,13 +42,12 @@ export const Logo: React.FC<LogoProps> = ({
       type="button"
       onClick={onClick}
       aria-label="RoomBae Home"
-      className={`flex items-center gap-2.5 flex-shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D9A87C] rounded-xl ${className}`}
+      className={`flex items-center gap-2.5 flex-shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff385c] rounded-xl ${className}`}
     >
       <div
-        className={`${iconSizes[size]} rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 transition-transform group-hover:scale-105 shadow-md`}
+        className={`${iconSizes[size]} rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 transition-transform group-hover:scale-105 shadow-sm`}
         style={{
-          background: "linear-gradient(135deg, #D9A87C, #C58B63)",
-          boxShadow: "0 4px 14px rgba(197, 139, 99, 0.4)",
+          background: "linear-gradient(135deg, #ff385c 0%, #e00b41 100%)",
         }}
       >
         <Building2 className={`${svgSizes[size]} text-white`} />
@@ -64,17 +63,17 @@ export const Logo: React.FC<LogoProps> = ({
               : variant === "auto"
               ? "inline-block"
               : "inline-block"
-          } ${darkMode ? "text-[#F7F3EE]" : "text-[#3B2A24]"}`}
+          } ${darkMode ? "text-[#f7f7f7]" : "text-[#ff385c]"}`}
         >
           RoomBae
         </span>
 
         {badge && (
           <span
-            className={`hidden sm:inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+            className={`hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
               darkMode
-                ? "bg-[#332D2B] text-[#C89A4B] border border-[#4A433F]"
-                : "bg-[#F8EEE5] text-[#C58B63] border border-[#E6D7CA]"
+                ? "bg-[#252525] text-white border border-[#333333]"
+                : "bg-[#f7f7f7] text-[#222222] border border-[#dddddd]"
             }`}
           >
             {badge}

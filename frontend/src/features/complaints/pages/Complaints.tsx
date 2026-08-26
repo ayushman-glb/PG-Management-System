@@ -327,7 +327,7 @@ export default function Complaints({ navigate }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="complaint-detail-title"
-            className={`rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
+            className={`rounded-2xl w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div
@@ -447,7 +447,7 @@ export default function Complaints({ navigate }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="new-complaint-title"
-            className={`rounded-2xl w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
+            className={`rounded-2xl w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl ${darkMode ? "bg-slate-800" : "bg-white"}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div

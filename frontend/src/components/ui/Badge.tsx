@@ -3,7 +3,7 @@ import { useTheme } from "@theme/index";
 
 export interface BadgeProps {
   children: React.ReactNode;
-  variant?: "success" | "warning" | "error" | "info" | "neutral";
+  variant?: "success" | "warning" | "error" | "info" | "neutral" | "guest-favorite" | "rausch";
   className?: string;
 }
 
@@ -15,16 +15,20 @@ export const Badge: React.FC<BadgeProps> = ({
   const { darkMode } = useTheme();
 
   const variantStyles = {
-    success: darkMode ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-emerald-100 text-emerald-800 border-emerald-200",
-    warning: darkMode ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-amber-100 text-amber-800 border-amber-200",
-    error: darkMode ? "bg-red-500/20 text-red-300 border-red-500/30" : "bg-red-100 text-red-800 border-red-200",
-    info: darkMode ? "bg-sky-500/20 text-sky-300 border-sky-500/30" : "bg-sky-100 text-sky-800 border-sky-200",
-    neutral: darkMode ? "bg-[#332D2B] text-[#C6B9AE] border-[#4A443F]" : "bg-[#F8EEE5] text-[#6E5A52] border-[#E6D7CA]",
+    "guest-favorite": darkMode
+      ? "bg-white text-[#222222] border-white font-bold shadow-sm"
+      : "bg-white text-[#222222] border-[#dddddd] font-bold shadow-sm",
+    rausch: "bg-[#ff385c] text-white border-[#ff385c] font-bold",
+    success: darkMode ? "bg-emerald-950/60 text-emerald-300 border-emerald-800" : "bg-emerald-50 text-emerald-800 border-emerald-200",
+    warning: darkMode ? "bg-amber-950/60 text-amber-300 border-amber-800" : "bg-amber-50 text-amber-800 border-amber-200",
+    error: darkMode ? "bg-rose-950/60 text-rose-300 border-rose-800" : "bg-rose-50 text-rose-800 border-rose-200",
+    info: darkMode ? "bg-sky-950/60 text-sky-300 border-sky-800" : "bg-sky-50 text-sky-800 border-sky-200",
+    neutral: darkMode ? "bg-[#1e1e1e] text-[#d4d4d8] border-[#2e2e2e]" : "bg-[#f7f7f7] text-[#3f3f3f] border-[#dddddd]",
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variantStyles[variant]} ${className}`}
     >
       {children}
     </span>

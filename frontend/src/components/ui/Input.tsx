@@ -15,35 +15,35 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full flex flex-col gap-1.5">
         {label && (
-          <label className={`text-xs font-semibold ${darkMode ? "text-[#C6B9AE]" : "text-[#6E5A52]"}`}>
+          <label className={`text-xs font-bold uppercase tracking-wider ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
             {label}
           </label>
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-3.5 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute left-3.5 flex items-center pointer-events-none text-neutral-400">
               {leftIcon}
             </div>
           )}
           <input
             ref={ref}
             className={`
-              w-full rounded-xl border px-3.5 py-2.5 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2
+              w-full rounded-lg border px-3.5 py-3.5 min-h-[50px] text-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#222222] dark:focus:ring-[#f7f7f7]
               ${leftIcon ? "pl-10" : ""}
               ${rightIcon ? "pr-10" : ""}
               ${
                 darkMode
-                  ? "bg-[#332D2B] border-[#4A443F] text-[#F7F3EE] placeholder-[#8C7E75] focus-visible:ring-[#C89A4B] focus-visible:border-transparent"
-                  : "bg-white border-[#E6D7CA] text-[#3B2A24] placeholder-[#A08C82] focus-visible:ring-[#D9A87C] focus-visible:border-transparent"
+                  ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#f7f7f7] placeholder-[#71717a]"
+                  : "bg-white border-[#dddddd] text-[#222222] placeholder-[#929292]"
               }
-              ${error ? "border-red-500 focus-visible:ring-red-500" : ""}
+              ${error ? "border-[#c13515] focus:ring-[#c13515]" : ""}
               ${className}
             `}
             {...props}
           />
           {rightIcon && <div className="absolute right-3.5 flex items-center">{rightIcon}</div>}
         </div>
-        {error && <span className="text-xs text-red-500 mt-0.5">{error}</span>}
+        {error && <span className="text-xs text-[#c13515] font-medium mt-0.5">{error}</span>}
       </div>
     );
   }

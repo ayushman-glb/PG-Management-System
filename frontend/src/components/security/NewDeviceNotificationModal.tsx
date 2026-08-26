@@ -71,7 +71,7 @@ export const NewDeviceNotificationModal: React.FC<NewDeviceNotificationModalProp
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 15 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-lg overflow-hidden bg-neutral-950 border border-amber-500/30 rounded-2xl p-6 shadow-2xl shadow-amber-500/10 text-white"
+            className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-neutral-950 border border-amber-500/30 rounded-2xl p-6 shadow-2xl shadow-amber-500/10 text-white"
           >
             {onClose && (
               <button

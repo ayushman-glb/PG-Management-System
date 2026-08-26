@@ -70,29 +70,27 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       title={darkMode ? "Switch to light theme" : "Switch to dark theme"}
       className={`
         relative w-14 h-7 min-h-[28px] max-h-[28px] rounded-full transition-all duration-300 flex-shrink-0
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer border border-[#dddddd] dark:border-[#2e2e2e]
         ${darkMode
-          ? "bg-gradient-to-r from-[#C89A4B] to-[#D8B36A] focus-visible:ring-[#C89A4B]"
-          : "bg-gradient-to-r from-[#D9A87C] to-[#E7C4A0] focus-visible:ring-[#D9A87C]"
+          ? "bg-[#252525] focus-visible:ring-[#ff385c]"
+          : "bg-[#f2f2f2] focus-visible:ring-[#ff385c]"
         }
         ${className}
       `}
       style={{
-        boxShadow: darkMode ? "0 2px 10px rgba(200,154,75,0.4)" : "0 2px 10px rgba(217,168,124,0.35)",
         minHeight: "28px",
         maxHeight: "28px",
         height: "28px"
       }}
-
     >
       <span
         className={`
           absolute top-0.5 left-0.5 w-6 h-6 rounded-full
           flex items-center justify-center text-xs select-none
-          transition-all duration-300 ease-in-out shadow-md
+          transition-all duration-300 ease-in-out shadow-sm
           ${darkMode
-            ? "translate-x-7 bg-[#1D1B1A] text-[#E8C98A]"
-            : "translate-x-0 bg-white text-[#C58B63]"
+            ? "translate-x-7 bg-[#121212] text-white"
+            : "translate-x-0 bg-white text-[#ff385c]"
           }
         `}
         aria-hidden="true"

@@ -53,6 +53,7 @@ const ShortlistPage = lazyWithRetry(() => import("@features/search/pages/Shortli
 const ToursPage = lazyWithRetry(() => import("@features/search/pages/ToursPage"));
 const ApplicationPage = lazyWithRetry(() => import("@features/search/pages/ApplicationPage"));
 const MoveInDashboardPage = lazyWithRetry(() => import("@features/search/pages/MoveInDashboardPage"));
+const NotFoundPage = lazyWithRetry(() => import("@features/dashboard/pages/NotFoundPage"));
 
 interface RoutesProps {
   page: Page;
@@ -208,6 +209,8 @@ function renderRoute(page: Page, navigate: (p: Page) => void) {
     case "terms-of-service":
     case "cookie-policy":
       return <ContentPage navigate={navigate} page={page} />;
+    case "not-found":
+      return <NotFoundPage navigate={navigate} />;
     default:
       return <Landing navigate={navigate} />;
   }

@@ -1,182 +1,138 @@
 import { useState, useEffect } from "react";
 import {
   Search,
-  MapPin,
-  Star,
-  Wifi,
-  Coffee,
-  Car,
-  Shield,
-  Zap,
-  Filter,
   SlidersHorizontal,
-  Heart,
 } from "lucide-react";
 import type { Page } from "@app/App";
-import { ThemeToggle, useTheme } from "@theme/index";
+import { ThemeToggle } from "@theme/index";
 import { BackButton } from "@app/navigation";
 import { api } from "@services/api";
+import { PropertyCard, PropertyCardData } from "@components/ui/PropertyCard";
+import { CategoryStrip } from "@components/ui/CategoryStrip";
+import { Logo } from "@components/ui/Logo";
 
 interface Props {
   navigate: (p: Page) => void;
 }
 
-const amenityIcons: Record<
-  string,
-  React.ComponentType<{ className?: string }>
-> = {
-  WiFi: Wifi,
-  Meals: Coffee,
-  Parking: Car,
-  Security: Shield,
-  "Power Backup": Zap,
-};
-
-const pgs = [
+const defaultPgs: PropertyCardData[] = [
   {
     id: 1,
-    name: "Sunrise PG Homes",
-    location: "Koramangala 5th Block",
+    name: "Sunrise PG Homes • Private & Shared",
+    location: "Koramangala 5th Block, Bengaluru",
     city: "Bengaluru",
     price: 8500,
-    rating: 4.9,
+    rating: 4.92,
     reviews: 128,
-    type: "Mixed",
-    amenities: ["WiFi", "Meals", "Parking", "Security", "Power Backup"],
+    sharingType: "Single & Double",
     images: [
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
     ],
-    available: 3,
-    badge: "Top Rated",
-    badgeColor: "bg-amber-400",
-    liked: false,
+    isGuestFavorite: true,
   },
   {
     id: 2,
-    name: "Green Valley Residency",
-    location: "HSR Layout Sector 1",
+    name: "Green Valley Residency • Women's Wing",
+    location: "HSR Layout Sector 1, Bengaluru",
     city: "Bengaluru",
     price: 7500,
-    rating: 4.7,
+    rating: 4.85,
     reviews: 89,
-    type: "Women's",
-    amenities: ["WiFi", "Meals", "Security"],
+    sharingType: "Double Sharing",
     images: [
-      "https://images.unsplash.com/photo-1565182999561-18d7dc61c393?w=600&h=400&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1565182999561-18d7dc61c393?w=800&q=80",
+      "https://images.unsplash.com/photo-1502005229762-ee1b2b8ab98f?w=800&q=80",
     ],
-    available: 5,
-    badge: "Women's Only",
-    badgeColor: "bg-pink-500",
+    isGuestFavorite: true,
     liked: true,
   },
   {
     id: 3,
-    name: "Urban Nest Co-living",
-    location: "Indiranagar 100ft Road",
+    name: "Urban Nest Co-Living Suites",
+    location: "Indiranagar 100ft Road, Bengaluru",
     city: "Bengaluru",
     price: 12000,
-    rating: 4.8,
+    rating: 4.96,
     reviews: 214,
-    type: "Mixed",
-    amenities: ["WiFi", "Meals", "Parking", "Security", "Power Backup"],
+    sharingType: "Private Studio",
     images: [
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
     ],
-    available: 2,
-    badge: "Premium",
-    badgeColor: "luxury-btn-primary",
-    liked: false,
+    isGuestFavorite: true,
   },
   {
     id: 4,
-    name: "City Heights PG",
-    location: "Whitefield ITPL Road",
+    name: "City Heights PG & Co-Living",
+    location: "Whitefield ITPL Road, Bengaluru",
     city: "Bengaluru",
     price: 9000,
-    rating: 4.6,
+    rating: 4.78,
     reviews: 67,
-    type: "Men's",
-    amenities: ["WiFi", "Security", "Power Backup"],
+    sharingType: "Triple Sharing",
     images: [
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
     ],
-    available: 7,
-    badge: null,
-    badgeColor: "",
-    liked: false,
+    isGuestFavorite: false,
   },
   {
     id: 5,
-    name: "Serene Stay PG",
-    location: "Electronic City Phase 1",
-    city: "Bengaluru",
+    name: "Serene Stay Eco PG",
+    location: "Electronic City Phase 1, Bengaluru",
     price: 7000,
-    rating: 4.5,
+    rating: 4.82,
     reviews: 45,
-    type: "Mixed",
-    amenities: ["WiFi", "Meals", "Security"],
+    sharingType: "Double Sharing",
     images: [
-      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&h=400&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80",
     ],
-    available: 10,
-    badge: "Budget Pick",
-    badgeColor: "bg-green-500",
-    liked: false,
+    isGuestFavorite: false,
   },
   {
     id: 6,
-    name: "Metro Living PG",
-    location: "Marathahalli Bridge",
-    city: "Bengaluru",
+    name: "Metro Living Co-Op",
+    location: "Marathahalli Bridge, Bengaluru",
     price: 10500,
-    rating: 4.7,
+    rating: 4.89,
     reviews: 103,
-    type: "Mixed",
-    amenities: ["WiFi", "Meals", "Parking", "Security"],
+    sharingType: "Single Suite",
     images: [
-      "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=600&h=400&fit=crop&auto=format",
+      "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=800&q=80",
     ],
-    available: 4,
-    badge: null,
-    badgeColor: "",
+    isGuestFavorite: true,
     liked: true,
   },
 ];
 
 export default function PGListing({ navigate }: Props) {
   const [search, setSearch] = useState("");
-  const [pgType, setPgType] = useState<"All" | "Men's" | "Women's" | "Mixed">(
-    "All",
-  );
-  const [maxPrice, setMaxPrice] = useState(15000);
-  const [likes, setLikes] = useState<Record<number, boolean>>(
-    Object.fromEntries(pgs.map((p) => [p.id, p.liked])),
-  );
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [pgType, setPgType] = useState<"All" | "Men's" | "Women's" | "Mixed">("All");
+  const [maxPrice, setMaxPrice] = useState(25000);
   const [showFilters, setShowFilters] = useState(false);
-  const [pgList, setPgList] = useState(pgs);
-  const { darkMode } = useTheme();
+  const [pgList, setPgList] = useState<PropertyCardData[]>(defaultPgs);
 
   useEffect(() => {
-    api.getPublicProperties({ city: search || undefined, maxRent: maxPrice }).then(res => {
+    api.getPublicProperties({ city: search || undefined, maxRent: maxPrice }).then((res) => {
       if (res && res.properties && Array.isArray(res.properties) && res.properties.length > 0) {
-        const mappedBackendPgs = res.properties.map((p: any, idx: number) => ({
+        const mappedBackendPgs: PropertyCardData[] = res.properties.map((p: any, idx: number) => ({
           id: p.id || idx + 100,
           name: p.name,
-          location: p.address,
-          city: p.city,
+          location: p.address || "Bengaluru",
+          city: p.city || "Bengaluru",
           price: p.minRent || 8500,
-          rating: 4.8,
-          reviews: 15,
-          type: "Mixed",
-          amenities: p.amenities && p.amenities.length > 0 ? p.amenities : ["WiFi", "Meals", "Security"],
-          images: p.images && p.images.length > 0 ? p.images : ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&auto=format"],
-          available: p.availableBedsCount || p.totalBeds || 4,
-          badge: "Verified PG",
-          badgeColor: "bg-emerald-500",
-          liked: false
+          rating: 4.85,
+          reviews: 24,
+          sharingType: p.sharingType || "Single / Double",
+          images: p.images && p.images.length > 0
+            ? p.images
+            : ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"],
+          isGuestFavorite: true,
+          liked: false,
         }));
 
-        setPgList([...mappedBackendPgs, ...pgs]);
+        setPgList([...mappedBackendPgs, ...defaultPgs]);
       }
     }).catch(() => {});
   }, [search, maxPrice]);
@@ -185,261 +141,134 @@ export default function PGListing({ navigate }: Props) {
     const matchSearch =
       pg.name.toLowerCase().includes(search.toLowerCase()) ||
       pg.location.toLowerCase().includes(search.toLowerCase());
-    const matchType = pgType === "All" || pg.type === pgType;
     const matchPrice = pg.price <= maxPrice;
-    return matchSearch && matchType && matchPrice;
+    return matchSearch && matchPrice;
   });
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
-      <div className={`sticky top-0 z-40 border-b transition-colors ${darkMode ? "bg-[#2B2725] border-[#4A443F]" : "bg-[#FFFDFB] border-[#E6D7CA]"}`}>
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <div className="flex items-center gap-2">
-              <BackButton />
-              <button
-                type="button"
-                onClick={() => navigate("landing")}
-                className={`hidden sm:flex items-center gap-2 transition-colors text-sm font-medium ${darkMode ? "text-[#C6B9AE] hover:text-white" : "text-[#6E5A52] hover:text-[#3B2A24]"}`}
-              >
-                <span>Home</span>
-              </button>
-            </div>
+    <div className="min-h-screen bg-white dark:bg-[#121212] text-[#222222] dark:text-[#f7f7f7] font-sans transition-colors">
+      {/* ─── Airbnb Top Sticky Header ───────────────────────────── */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-[#121212] border-b border-[#dddddd] dark:border-[#2e2e2e] transition-colors">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <Logo onClick={() => navigate("landing")} size="sm" />
+          </div>
 
-            <div className={`order-3 basis-full flex min-w-0 max-w-2xl flex-1 items-center gap-3 rounded-2xl border px-4 py-3 sm:order-none sm:basis-auto ${
-              darkMode ? "bg-[#332D2B] border-[#4A443F]" : "bg-[#F8EEE5] border-[#E6D7CA]"
-            }`}>
-              <Search className={`w-4 h-4 flex-shrink-0 ${darkMode ? "text-[#756A63]" : "text-[#A8907F]"}`} />
+          {/* Airbnb Compact Search Pill */}
+          <div className="flex-1 max-w-xl mx-2">
+            <div className="search-pill flex items-center h-12 px-4 gap-2">
+              <Search className="w-4 h-4 text-[#ff385c] flex-shrink-0" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by location, name, or amenity..."
-                aria-label="Search properties by location, name, or amenity"
-                className={`flex-1 bg-transparent text-sm outline-none ${darkMode ? "text-[#F7F3EE] placeholder:text-[#756A63]" : "text-[#3B2A24] placeholder:text-[#A8907F]"}`}
+                placeholder="Search by city, neighborhood, or PG name..."
+                aria-label="Search properties"
+                className="w-full bg-transparent text-xs md:text-sm font-medium text-[#222222] dark:text-[#f7f7f7] placeholder-[#6a6a6a] dark:placeholder-[#a1a1aa] outline-none truncate"
               />
             </div>
+          </div>
 
-            <ThemeToggle />
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
               aria-expanded={showFilters}
-              aria-label="Toggle property filters"
-              className={`flex flex-shrink-0 items-center gap-2 border text-sm font-semibold px-3.5 py-2.5 rounded-xl transition-colors ${
-                darkMode
-                  ? "border-[#4A443F] text-[#F7F3EE] hover:bg-[#332D2B]"
-                  : "border-[#E6D7CA] text-[#3B2A24] hover:bg-[#F8EEE5]"
-              }`}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[#dddddd] dark:border-[#2e2e2e] text-xs font-semibold hover:border-black dark:hover:border-white transition-colors cursor-pointer"
             >
-              <SlidersHorizontal className="w-4 h-4" />
-              Filters
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Filters</span>
             </button>
+            <ThemeToggle />
           </div>
+        </div>
 
-          {showFilters && (
-            <div className="mt-4 flex flex-wrap items-center gap-4 pb-2 animate-fade-in">
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                  Type:
-                </span>
-                <div className="flex gap-1.5">
-                  {(["All", "Men's", "Women's", "Mixed"] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setPgType(t)}
-                      aria-pressed={pgType === t}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                        pgType === t
-                          ? "luxury-btn-primary text-white"
-                          : darkMode
-                            ? "bg-[#332D2B] text-slate-300 hover:bg-[#3D3632]"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        {/* Filter Drawer / Dropdown */}
+        {showFilters && (
+          <div className="border-t border-[#dddddd] dark:border-[#2e2e2e] bg-[#f7f7f7] dark:bg-[#1a1a1a] px-4 md:px-6 py-4 animate-fade-in">
+            <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className={`text-xs font-semibold ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+                <span className="text-xs font-bold text-[#6a6a6a] dark:text-[#a1a1aa]">
+                  Sharing Type:
+                </span>
+                {(["All", "Men's", "Women's", "Mixed"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setPgType(t)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                      pgType === t
+                        ? "bg-[#222222] text-white border-[#222222] dark:bg-white dark:text-[#222222] dark:border-white"
+                        : "bg-white dark:bg-[#252525] border-[#dddddd] dark:border-[#333333] text-[#222222] dark:text-[#f7f7f7]"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-[#6a6a6a] dark:text-[#a1a1aa]">
                   Max Price: ₹{maxPrice.toLocaleString()}/mo
                 </span>
                 <input
                   type="range"
                   min={5000}
-                  max={20000}
-                  step={500}
+                  max={35000}
+                  step={1000}
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  aria-label="Maximum monthly price filter"
-                  className="w-32 accent-[#D9A87C]"
+                  aria-label="Maximum monthly rent filter"
+                  className="w-36 accent-[#ff385c]"
                 />
               </div>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+      {/* Category Strip */}
+      <CategoryStrip
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
+
+      {/* ─── Listings Grid ───────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        <div className="flex items-baseline justify-between mb-6">
           <div>
-            <h1 className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
-              PG Accommodations in Bengaluru
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#222222] dark:text-[#f7f7f7]">
+              Over {filtered.length} verified stays available
             </h1>
-            <p className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-              {filtered.length} properties found
+            <p className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa] mt-0.5">
+              Prices include taxes, high-speed WiFi, housekeeping and maintenance
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className={`w-4 h-4 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
-            <select
-              aria-label="Sort properties"
-              className={`text-sm border rounded-xl px-3 py-2 outline-none ${
-                darkMode
-                  ? "bg-[#2B2725] border-[#4A443F] text-[#F7F3EE] focus:ring-[#C89A4B]"
-                  : "bg-white border-slate-200 text-slate-600 focus:ring-[#D9A87C]"
-              }`}
-            >
-              <option>Best Match</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-              <option>Top Rated</option>
-            </select>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {filtered.map((pg) => (
-            <div
+            <PropertyCard
               key={pg.id}
-              className={`bento-card bento-card-interactive border overflow-hidden group ${
-                darkMode
-                  ? "bg-[#2B2725] border-[#4A443F]"
-                  : "bg-[#FFFDFB] border-[#E6D7CA]"
-              }`}
-            >
-              <div className="relative h-48 bg-slate-100 dark:bg-slate-800 overflow-hidden rounded-t-2xl">
-                <img
-                  src={pg.images[0]}
-                  alt={pg.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-                {pg.badge && (
-                  <div
-                    className={`absolute top-3 left-3 ${pg.badgeColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow-md`}
-                  >
-                    {pg.badge}
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setLikes((prev) => ({ ...prev, [pg.id]: !prev[pg.id] }))
-                  }
-                  aria-label={likes[pg.id] ? `Remove ${pg.name} from favorites` : `Add ${pg.name} to favorites`}
-                  aria-pressed={likes[pg.id]}
-                  className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform ${
-                    darkMode ? "bg-[#1D1B1A]/80 backdrop-blur-md" : "bg-white/90 backdrop-blur-md"
-                  }`}
-                >
-                  <Heart
-                    className={`w-4 h-4 ${likes[pg.id] ? "fill-red-500 text-red-500" : "text-slate-400"}`}
-                  />
-                </button>
-
-                <div className={`absolute bottom-3 left-3 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full border border-white/20 ${
-                  darkMode ? "bg-[#1D1B1A]/80 text-slate-200" : "bg-white/90 text-slate-800"
-                }`}>
-                  {pg.type}
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className={`font-bold leading-snug ${darkMode ? "text-white" : "text-slate-900"}`}>
-                    {pg.name}
-                  </h3>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span className={`text-sm font-bold ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
-                      {pg.rating}
-                    </span>
-                    <span className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
-                      ({pg.reviews})
-                    </span>
-                  </div>
-                </div>
-
-                <div className={`flex items-center gap-1.5 text-xs mb-4 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                  <MapPin className="w-3 h-3" />
-                  <span>
-                    {pg.location}, {pg.city}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 flex-wrap mb-4">
-                  {pg.amenities.slice(0, 4).map((a) => {
-                    const Icon = amenityIcons[a];
-                    return Icon ? (
-                      <div
-                        key={a}
-                        title={a}
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-                          darkMode ? "bg-[#332D2B] text-slate-300" : "bg-slate-100 text-slate-500 hover:bg-[#F8EEE5]"
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                    ) : null;
-                  })}
-                  {pg.amenities.length > 4 && (
-                    <span className={`text-xs font-medium ml-1 ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
-                      +{pg.amenities.length - 4} more
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>
-                      ₹{pg.price.toLocaleString()}
-                    </span>
-                    <span className={`text-xs ${darkMode ? "text-slate-500" : "text-slate-400"}`}>/month</span>
-                    <p className="text-xs text-green-500 font-medium mt-0.5">
-                      {pg.available} beds available
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate("pg-details")}
-                    className="luxury-btn-primary text-sm font-semibold px-4 py-2.5"
-                  >
-                    Book Visit
-                  </button>
-                </div>
-              </div>
-            </div>
+              property={pg}
+              onClick={() => navigate("pg-details")}
+            />
           ))}
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-3">🏠</p>
-            <h3 className={`text-lg font-bold mb-1 ${darkMode ? "text-white" : "text-slate-900"}`}>
-              No PGs found
-            </h3>
-            <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-              Try adjusting your filters or search terms.
+          <div className="text-center py-24">
+            <p className="text-5xl mb-3">🏡</p>
+            <h2 className="text-lg font-bold text-[#222222] dark:text-[#f7f7f7] mb-1">
+              No exact matches found
+            </h2>
+            <p className="text-sm text-[#6a6a6a] dark:text-[#a1a1aa]">
+              Try widening your search terms or increasing your maximum price filter.
             </p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

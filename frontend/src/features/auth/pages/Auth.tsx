@@ -24,6 +24,7 @@ import { UploadCard } from "../../../components/UploadCard";
 import { EmailOtpVerificationModal } from "../../../components/auth/EmailOtpVerificationModal";
 import { PhoneOtpModal } from "../components/PhoneOtpModal";
 import { useAuth } from "../../../hooks/useAuth";
+import { Logo } from "../../../components/ui/Logo";
 
 interface Props {
   navigate: (p: Page) => void;
@@ -541,22 +542,10 @@ export default function Auth({ navigate }: Props) {
   const isSignUp = mode === "register";
 
   return (
-    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${darkMode ? "bg-[#1D1B1A] text-[#F7F3EE]" : "bg-[#FFF8F2] text-[#3B2A24]"}`}>
+    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-white text-[#222222]"}`}>
       {/* Top Header Bar */}
-      <header className="w-full px-6 py-4 flex items-center justify-between z-30 border-b border-white/10">
-        <button
-          type="button"
-          onClick={() => navigate("landing")}
-          className="flex items-center gap-3 group cursor-pointer"
-        >
-          <div className="p-2.5 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl shadow-lg shadow-amber-500/20 text-black">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <span className="text-xl font-extrabold tracking-tight block">RoomBae</span>
-            <span className="text-[10px] text-amber-500 font-mono font-bold tracking-wider uppercase">Enterprise SaaS</span>
-          </div>
-        </button>
+      <header className="w-full px-6 py-4 flex items-center justify-between z-30 border-b border-[#ebebeb] dark:border-[#242424]">
+        <Logo onClick={() => navigate("landing")} />
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -567,8 +556,8 @@ export default function Auth({ navigate }: Props) {
       {/* Main Split Authentication Container */}
       <main className="flex-1 flex items-center justify-center p-4 md:p-8 lg:p-12 relative overflow-hidden">
         {/* Background Ambient Glow Orbs */}
-        <div className="absolute top-1/4 left-10 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-700/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#ff385c]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#ff385c]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-6xl relative z-10">
           {/* Incomplete Signup Resume Alert Banner */}
@@ -576,27 +565,27 @@ export default function Auth({ navigate }: Props) {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 text-xs font-semibold flex items-center justify-between gap-3 shadow-xl backdrop-blur-md"
+              className="mb-6 p-4 rounded-2xl bg-[#ff385c]/10 border border-[#ff385c]/30 text-[#ff385c] text-xs font-semibold flex items-center justify-between gap-3 shadow-sm backdrop-blur-md"
             >
               <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+                <Sparkles className="w-5 h-5 text-[#ff385c] shrink-0" />
                 <div>
                   <span className="font-extrabold block">Incomplete Signup Draft Detected</span>
-                  <span className="text-[11px] text-amber-300/80">Resume from where you left off as {incompleteDraft.fullName || "User"}.</span>
+                  <span className="text-[11px] text-[#6a6a6a] dark:text-[#a1a1aa]">Resume from where you left off as {incompleteDraft.fullName || "User"}.</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={resumeIncompleteSignup}
-                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-black font-extrabold text-xs shadow-md hover:bg-amber-400 transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-[#ff385c] text-white font-semibold text-xs shadow-sm hover:bg-[#e00b41] transition-all cursor-pointer"
                 >
                   Resume
                 </button>
                 <button
                   type="button"
                   onClick={clearIncompleteDraft}
-                  className="p-1.5 text-amber-400 hover:text-amber-200 transition-colors cursor-pointer"
+                  className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-white transition-colors cursor-pointer"
                   title="Discard draft"
                 >
                   &times;
@@ -612,27 +601,27 @@ export default function Auth({ navigate }: Props) {
             <motion.div
               layout
               transition={{ type: "spring", stiffness: 220, damping: 28 }}
-              className={`lg:col-span-5 rounded-3xl p-8 lg:p-12 relative overflow-hidden flex flex-col justify-between min-h-[560px] shadow-2xl ${
+              className={`lg:col-span-5 rounded-3xl p-8 lg:p-12 relative overflow-hidden flex flex-col justify-between min-h-[560px] shadow-xl ${
                 isSignUp ? "order-1 lg:order-2" : "order-1 lg:order-1"
               }`}
               style={{
-                background: "linear-gradient(135deg, #2D201A 0%, #1D1B1A 40%, #0F0E0D 100%)",
+                background: darkMode
+                  ? "linear-gradient(135deg, #1e1e1e 0%, #161616 100%)"
+                  : "linear-gradient(135deg, #222222 0%, #121212 100%)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-700/10 rounded-full blur-3xl pointer-events-none" />
-
               <div className="relative z-10 space-y-8">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-mono font-extrabold">
-                  <ShieldCheck className="w-4 h-4" />
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white border border-white/20 text-xs font-mono font-bold">
+                  <ShieldCheck className="w-4 h-4 text-[#ff385c]" />
                   <span>256-BIT ENCRYPTED PLATFORM</span>
                 </div>
 
                 <div>
-                  <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight mb-4">
+                  <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight mb-4">
                     {isSignUp ? "Join 10,000+ PG Residents & Owners" : "Next-Gen Coliving Automation"}
                   </h2>
-                  <p className="text-white/80 text-sm leading-relaxed">
+                  <p className="text-neutral-300 text-sm leading-relaxed">
                     {isSignUp
                       ? "Seamless digital onboarding, verified tenant profiles, automated rental invoices, and instant ticket resolution."
                       : "Access real-time room occupancy, digital agreements, automated GST billing, and priority helpdesk tickets."}
@@ -647,10 +636,10 @@ export default function Auth({ navigate }: Props) {
                     "AES-256-GCM Financial Data Encryption",
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center shrink-0 border border-amber-500/30">
+                      <div className="w-5 h-5 bg-[#ff385c]/20 text-[#ff385c] rounded-full flex items-center justify-center shrink-0 border border-[#ff385c]/30">
                         <Check className="w-3 h-3" />
                       </div>
-                      <span className="text-white/90 text-xs font-semibold">{item}</span>
+                      <span className="text-white/90 text-xs font-medium">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -663,7 +652,7 @@ export default function Auth({ navigate }: Props) {
                   { value: "99.9%", label: "Uptime" },
                 ].map((s) => (
                   <div key={s.label} className="bg-white/5 backdrop-blur-md rounded-2xl p-3 text-center border border-white/10">
-                    <p className="text-xl font-black text-amber-400">{s.value}</p>
+                    <p className="text-xl font-bold text-[#ff385c]">{s.value}</p>
                     <p className="text-white/70 text-[10px] mt-0.5 font-medium">{s.label}</p>
                   </div>
                 ))}
@@ -676,7 +665,7 @@ export default function Auth({ navigate }: Props) {
               transition={{ type: "spring", stiffness: 220, damping: 28 }}
               className={`lg:col-span-7 ${isSignUp ? "order-2 lg:order-1" : "order-2 lg:order-2"}`}
             >
-              <div className={`glass-card rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl border ${darkMode ? "bg-[#2B2725]/90 border-[#4A433F]" : "bg-[#FFFDFB]/90 border-[#E6D7CA]"}`}>
+              <div className={`rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
                 
                 {/* Global Status Messages */}
                 {authSuccessMsg && (
@@ -778,7 +767,7 @@ export default function Auth({ navigate }: Props) {
                               required
                               value={loginIdentifier}
                               onChange={(e) => setLoginIdentifier(e.target.value)}
-                              placeholder={loginRole === "resident" ? "RES1001 or resident@example.com" : loginRole === "admin" ? "admin@roombae.com" : "you@example.com"}
+                              placeholder={loginRole === "resident" ? "RES1001 or resident@roombae.com" : loginRole === "admin" ? "admin@roombae.com" : "owner@roombae.com"}
                               className={`w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
                                 darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
                               }`}
@@ -1054,7 +1043,7 @@ export default function Auth({ navigate }: Props) {
                               <div className="flex gap-2">
                                 <input
                                   type="email"
-                                  placeholder="you@example.com"
+                                  placeholder="name@roombae.com"
                                   value={email}
                                   onChange={(e) => handleEmailInputChange(e.target.value)}
                                   className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
@@ -1439,7 +1428,7 @@ export default function Auth({ navigate }: Props) {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="you@example.com"
+                          placeholder="name@roombae.com"
                           className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
                             darkMode ? "bg-[#1D1B1A] border-[#4A433F] text-[#F7F3EE]" : "bg-[#FFF8F2] border-[#E6D7CA] text-[#3B2A24]"
                           }`}

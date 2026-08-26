@@ -7,6 +7,8 @@ import { AppRoutes } from "./routes";
 import loadingImg from "../assets/loading.png";
 import { authService } from "../services/auth.service";
 import { useUIStore } from "../store/useUIStore";
+import { updateDocumentSEO } from "../config/seo.config";
+import { ErrorBoundary } from "../components/feedback/ErrorBoundary";
 
 export type Page =
   | "landing"
@@ -46,7 +48,8 @@ export type Page =
   | "status"
   | "privacy-policy"
   | "terms-of-service"
-  | "cookie-policy";
+  | "cookie-policy"
+  | "not-found";
 
 import {
   ENABLE_SKELETON_DEBUG_DELAY,
@@ -99,6 +102,7 @@ const VALID_PAGES: Set<string> = new Set([
   "privacy-policy",
   "terms-of-service",
   "cookie-policy",
+  "not-found",
 ]);
 
 function getInitialPageFromPath(): Page {
@@ -108,7 +112,7 @@ function getInitialPageFromPath(): Page {
   const clean = raw.replace(/^PG-Management-System\/?/, "");
   if (clean === "login" || clean === "signup" || clean === "register") return "auth";
   if (VALID_PAGES.has(clean)) return clean as Page;
-  return "landing";
+  return "not-found";
 }
 
 export default function App() {
@@ -221,6 +225,10 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  useEffect(() => {
+    updateDocumentSEO(page);
+  }, [page]);
+
   const navigate = (p: Page) => {
     if (p === page) return;
     directionRef.current = 1;
@@ -279,7 +287,9 @@ export default function App() {
               exit="exit"
               transition={{ duration: 0.18, ease: "easeOut" }}
             >
-              <AppRoutes page={page} navigate={navigate} />
+              <ErrorBoundary>
+                <AppRoutes page={page} navigate={navigate} />
+              </ErrorBoundary>
             </motion.div>
           )}
         </AnimatePresence>

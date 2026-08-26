@@ -141,7 +141,7 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-neutral-900 border border-white/10 p-6 text-white shadow-2xl"
+          className="relative w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-3xl bg-neutral-900 border border-white/10 p-6 text-white shadow-2xl"
         >
           <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
             <div className="flex items-center gap-3">
