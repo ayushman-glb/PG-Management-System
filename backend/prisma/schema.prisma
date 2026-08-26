@@ -326,7 +326,7 @@ model User {
   isSuspended        Boolean   @default(false)
   emailVerified      Boolean   @default(false)
   phoneVerified      Boolean   @default(false)
-  twoFactorEnabled   Boolean   @default(true)
+  twoFactorEnabled   Boolean   @default(false)
   isProfileComplete  Boolean   @default(true)
   currentAddress     String?
   avatarUrl          String?

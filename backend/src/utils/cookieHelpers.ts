@@ -6,15 +6,13 @@ export interface AuthTokens {
   refreshToken?: string;
 }
 
-const CROSS_ORIGIN_DEPLOYMENT = process.env.CROSS_ORIGIN_DEPLOYMENT !== 'false'; // default true
-
 export const getCookieEnvironmentOptions = () => {
-  const isCrossOrigin = CROSS_ORIGIN_DEPLOYMENT;
   const isProd = env.NODE_ENV === 'production' || process.env.NODE_ENV === 'production';
+  const isCrossOrigin = isProd && process.env.CROSS_ORIGIN_DEPLOYMENT !== 'false';
   return {
     isCrossOrigin,
     isProd,
-    secure: isCrossOrigin ? true : isProd,
+    secure: isProd,
     sameSite: (isCrossOrigin ? 'none' : 'lax') as 'none' | 'lax',
   };
 };

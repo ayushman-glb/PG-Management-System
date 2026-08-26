@@ -36,13 +36,30 @@ async function runStep(
   }
 }
 
+let cachedCsrfToken = '';
+
 async function request(path: string, options: RequestInit = {}): Promise<{ status: number; body: any; headers: Headers }> {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as any),
+  };
+
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !headers['x-csrf-token']) {
+    if (!cachedCsrfToken) {
+      const csrfRes = await fetch(`${BASE_URL}/auth/csrf-token`);
+      const csrfData: any = await csrfRes.json().catch(() => ({}));
+      cachedCsrfToken = csrfData.data?.csrfToken || '';
+    }
+    if (cachedCsrfToken) {
+      headers['x-csrf-token'] = cachedCsrfToken;
+      headers['Cookie'] = `csrf-token=${cachedCsrfToken}`;
+    }
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers as any),
-    },
+    headers,
   });
   const body = await res.json().catch(() => ({}));
   return { status: res.status, body, headers: res.headers };
@@ -281,6 +298,12 @@ async function main() {
   console.log(`Passed      : \x1b[32m${passedCount}\x1b[0m`);
   console.log(`Failed      : ${failedCount > 0 ? `\x1b[31m${failedCount}\x1b[0m` : '0'}`);
   console.log(`Total Time  : ${totalDuration}ms`);
+  if (failedCount > 0) {
+    console.log('\n❌ Failures:');
+    results.filter(r => !r.passed).forEach(r => {
+      console.log(`  - [${r.step}] ${r.name}: ${r.details}`);
+    });
+  }
   console.log('================================================================\n');
 
   if (failedCount > 0) {

@@ -422,8 +422,9 @@ export default function Auth({ navigate }: Props) {
       const identifier = loginIdentifier.trim();
       const passwordVal = loginPassword;
       const loginRes = await authService.login({ identifier, password: passwordVal, rememberMe });
-      if (loginRes?.requiresTwoFactor) {
-        setPreAuthToken(loginRes.preAuthToken || null);
+      const is2FARequired = Boolean(loginRes?.requiresTwoFactor || loginRes?.require2FA);
+      if (is2FARequired) {
+        setPreAuthToken(loginRes.preAuthToken || loginRes.twoFactorToken || null);
         setAuthSuccessMsg("Two-factor authentication code required. Please enter your 6-digit TOTP code.");
         setMode("otp");
         return;
@@ -442,9 +443,20 @@ export default function Auth({ navigate }: Props) {
         navigate("dashboard");
       }
     } catch (err: any) {
-      const isSignupNudge = err?.code === "ACCOUNT_NOT_FOUND_OR_INVALID" || err?.message?.includes("couldn't find an account");
-      setAuthError(err?.message || "We couldn't find an account with these details. Would you like to sign up instead?");
-      setShowSignupCta(isSignupNudge);
+      const errCode = err?.code;
+      const isSuspended = errCode === "AUTH_ACCOUNT_SUSPENDED" || (errCode === "FORBIDDEN" && err?.message?.toLowerCase().includes("suspended"));
+      const isDeactivated = errCode === "AUTH_ACCOUNT_DEACTIVATED" || errCode === "ACCOUNT_INACTIVE";
+      const isSignupNudge = errCode === "ACCOUNT_NOT_FOUND_OR_INVALID" || errCode === "USER_NOT_FOUND" || err?.message?.includes("couldn't find an account");
+
+      let displayMessage = err?.message || "Invalid login credentials. Please check your username/email and password.";
+      if (isSuspended) {
+        displayMessage = "This account has been suspended. Please contact platform support.";
+      } else if (isDeactivated) {
+        displayMessage = "This account is inactive. Please contact support or sign up again.";
+      }
+
+      setAuthError(displayMessage);
+      setShowSignupCta(isSignupNudge && !isSuspended && !isDeactivated);
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -725,35 +737,12 @@ export default function Auth({ navigate }: Props) {
                           tabs={[
                             { id: "owner", label: "🏢 PG Owner" },
                             { id: "resident", label: "🏠 Resident" },
-                            { id: "admin", label: "🛡️ Admin Sign In" },
+                            { id: "admin", label: "🛡️ Admin" },
                           ]}
                           activeTab={loginRole}
                           onChange={(id: string) => setLoginRole(id as any)}
                           layoutId="auth-role-tab"
                         />
-                      </div>
-
-                      {/* Quick Test Demo Account Fill Pill */}
-                      <div className="mb-4 flex items-center justify-between px-1">
-                        <span className="text-xs font-medium text-neutral-400">Authoritative Demo:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (loginRole === "owner") {
-                              setLoginIdentifier("33200122040@tib.edu.in");
-                              setLoginPassword("Ayush@#123");
-                            } else if (loginRole === "resident") {
-                              setLoginIdentifier("ankursaha985@gmail.com");
-                              setLoginPassword("Ankur@#123");
-                            } else if (loginRole === "admin") {
-                              setLoginIdentifier("33200122040@tib.edu.in");
-                              setLoginPassword("god@3456");
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] bg-[var(--brand-primary)]/10 hover:bg-[var(--brand-primary)]/15 border border-[var(--brand-primary)]/30 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                        >
-                          ⚡ Fill {loginRole === "resident" ? "Resident (Ankur)" : loginRole === "admin" ? "Admin (GOD)" : "PG Owner (Ayushman)"}
-                        </button>
                       </div>
 
                       <form onSubmit={handleLoginSubmit} className="space-y-4">

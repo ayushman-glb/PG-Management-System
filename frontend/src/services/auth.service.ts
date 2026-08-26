@@ -198,8 +198,8 @@ export class AuthService {
       ...(options.headers as Record<string, string>),
     };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    if (token && typeof token === "string" && token.trim().length > 0 && token !== "undefined" && token !== "null") {
+      headers["Authorization"] = `Bearer ${token.trim()}`;
     }
 
     const method = options.method?.toUpperCase() || 'GET';
@@ -254,9 +254,14 @@ export class AuthService {
       } catch {}
     }
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.message || "Authentication request failed");
+      const errorMsg = data.message || data.error?.message || `Authentication request failed (${response.status})`;
+      const err: any = new Error(errorMsg);
+      err.code = data.error?.code || data.code;
+      err.status = response.status;
+      err.action = data.error?.action || data.action;
+      throw err;
     }
 
     // DEV-ONLY: remove or verify gated before production deploy
@@ -610,18 +615,25 @@ export class AuthService {
   }
 
   async verifyTwoFactor(preAuthTokenOrUserId: string, token: string, rememberMe: boolean = false) {
-    const isPreAuth = preAuthTokenOrUserId.length > 50;
-    const body = isPreAuth
-      ? { preAuthToken: preAuthTokenOrUserId, token, rememberMe }
-      : { userId: preAuthTokenOrUserId, token, rememberMe };
+    const isPreAuth = preAuthTokenOrUserId.length > 30;
+    const body = {
+      twoFactorToken: preAuthTokenOrUserId,
+      preAuthToken: preAuthTokenOrUserId,
+      tokenOrUserId: preAuthTokenOrUserId,
+      userId: !isPreAuth ? preAuthTokenOrUserId : undefined,
+      otp: token,
+      token,
+      totpCode: token,
+      rememberMe,
+    };
 
-    const res = await this.request("/auth/2fa/verify", {
+    const res = await this.request("/auth/verify-2fa", {
       method: "POST",
       body: JSON.stringify(body),
     });
 
     if (res.data?.accessToken) {
-      this.setToken(res.data.accessToken);
+      this.setToken(res.data.accessToken, "LOGIN");
     }
     if (res.data?.refreshToken) {
       this.setRefreshToken(res.data.refreshToken, rememberMe);

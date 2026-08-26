@@ -9,6 +9,7 @@ interface AuthContextValue {
   status: AuthStatus;
   isAuthenticated: boolean;
   isLoading: boolean;
+  loading: boolean;
   login: (credentials: { identifier: string; password: string }) => Promise<User>;
   register: (data: { name: string; email: string; password: string; role?: string; phone?: string }) => Promise<User>;
   logout: () => Promise<void>;
@@ -227,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     status,
     isAuthenticated: !!user && status === "authenticated",
     isLoading: status === "initializing" || status === "refreshing",
+    loading: status === "initializing" || status === "refreshing",
     login,
     register,
     logout,

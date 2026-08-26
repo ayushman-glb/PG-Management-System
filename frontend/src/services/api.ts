@@ -37,8 +37,8 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    if (token && typeof token === "string" && token.trim().length > 0 && token !== "undefined" && token !== "null") {
+      headers["Authorization"] = `Bearer ${token.trim()}`;
     }
 
     // Attach Double-Submit CSRF Header for state-mutating requests

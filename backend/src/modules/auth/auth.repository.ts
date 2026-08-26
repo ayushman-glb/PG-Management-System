@@ -98,6 +98,7 @@ export class AuthRepository {
         passwordHash: data.passwordHash,
         role: data.role,
         currentAddress: data.currentAddress,
+        twoFactorEnabled: false,
         profile: {
           create: {
             firstName: data.firstName,

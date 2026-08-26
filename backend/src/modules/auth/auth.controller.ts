@@ -147,7 +147,7 @@ export class AuthController {
     try {
       const { phone, email } = req.body;
       const target = phone || email;
-      const result = await this.authService.sendPhoneOtp(target);
+      const result = await this.authService.sendOtp(target);
       return ApiResponse.success(res, result.message || 'OTP sent successfully', result);
     } catch (error) {
       next(error);
@@ -164,10 +164,21 @@ export class AuthController {
     }
   };
 
+  sendEmailOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body;
+      const result = await this.authService.sendEmailVerification(email);
+      return ApiResponse.success(res, result.message || 'Verification email sent successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   verifyPhoneOtp = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { phone, otp } = req.body;
-      const result = await this.authService.verifyPhoneOtp(phone, otp);
+      const { phone, otp, code } = req.body;
+      const otpCode = otp || code;
+      const result = await this.authService.verifyPhoneOtp(phone, otpCode);
       return ApiResponse.success(res, result.message || 'Phone verified successfully', result);
     } catch (error) {
       next(error);
@@ -176,11 +187,35 @@ export class AuthController {
 
   verifyEmailOTP = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, otp } = req.body;
-      if (!email || !otp) throw new BadRequestError('Email and OTP code are required.');
+      const { email, otp, code } = req.body;
+      const otpCode = otp || code;
+      if (!email || !otpCode) throw new BadRequestError('Email and OTP code are required.');
 
-      await this.authService.verifyEmailOTP(email, otp);
+      await this.authService.verifyEmailOTP(email, otpCode);
       return ApiResponse.success(res, 'Email verified successfully. You may now sign in.');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  sendPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body;
+      if (!email) throw new BadRequestError('Email is required.');
+      const result = await this.authService.sendPasswordReset(email);
+      return ApiResponse.success(res, result.message || 'Password reset code sent.', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, otp, code, newPassword } = req.body;
+      const otpCode = otp || code;
+      if (!email || !otpCode) throw new BadRequestError('Email and OTP code are required.');
+      const result = await this.authService.verifyPasswordReset(email, otpCode, newPassword);
+      return ApiResponse.success(res, result.message || 'Password reset verified successfully.', result);
     } catch (error) {
       next(error);
     }
@@ -204,7 +239,13 @@ export class AuthController {
         setAuthCookies(res, { accessToken: result.accessToken, refreshToken: result.refreshToken });
       }
 
-      return ApiResponse.success(res, result.require2FA ? '2FA Code dispatched to registered email.' : 'Login successful.', result);
+      const payload = {
+        ...result,
+        requiresTwoFactor: Boolean(result.require2FA),
+        preAuthToken: result.twoFactorToken,
+      };
+
+      return ApiResponse.success(res, result.require2FA ? '2FA Code dispatched to registered email.' : 'Login successful.', payload);
     } catch (error) {
       next(error);
     }
@@ -212,7 +253,9 @@ export class AuthController {
 
   verify2FA = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { twoFactorToken, otp, visitorId } = req.body;
+      const twoFactorToken = req.body.twoFactorToken || req.body.preAuthToken || req.body.tokenOrUserId;
+      const otp = req.body.otp || req.body.token || req.body.totpCode;
+      const { visitorId } = req.body;
       if (!twoFactorToken || !otp) throw new BadRequestError('2FA token and OTP code are required.');
 
       const result = await this.authService.verify2FA(twoFactorToken, otp, {
