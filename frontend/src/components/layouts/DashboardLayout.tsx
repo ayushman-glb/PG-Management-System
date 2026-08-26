@@ -335,8 +335,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
               <Bell className="w-4 h-4" />
               {unreadNotifCount > 0 && (
                 <span
-                  className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                  style={{ background: "#ff385c", boxShadow: "0 0 0 1.5px #fff" }}
+                  className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent-ruby)] ring-2 ring-[var(--bg-card)]"
                 />
               )}
             </button>

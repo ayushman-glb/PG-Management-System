@@ -606,9 +606,9 @@ export default function Auth({ navigate }: Props) {
               }`}
               style={{
                 background: darkMode
-                  ? "linear-gradient(135deg, #1e1e1e 0%, #161616 100%)"
-                  : "linear-gradient(135deg, #222222 0%, #121212 100%)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                  ? "linear-gradient(135deg, #003847 0%, #1a1a1a 100%)"
+                  : "linear-gradient(135deg, #004d61 0%, #1a1a1a 100%)",
+                border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
               <div className="relative z-10 space-y-8">

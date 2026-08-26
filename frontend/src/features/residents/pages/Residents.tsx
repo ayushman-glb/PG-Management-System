@@ -275,9 +275,7 @@ export default function Residents({ navigate }: Props) {
           <div
             className="p-6 md:p-8 text-white shadow-md"
             style={{
-              background: darkMode
-                ? "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)"
-                : "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)"
+              background: "linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)"
             }}
           >
             <div className="flex items-start gap-4 md:gap-5">

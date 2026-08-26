@@ -313,9 +313,7 @@ export default function ContentPage({ navigate, page }: Props) {
             <span
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
               style={{
-                background: darkMode
-                  ? "linear-gradient(135deg, #ff385c, #ff385c)"
-                  : "linear-gradient(135deg, #ff385c, #ff385c)",
+                background: "var(--brand-primary)",
               }}
             >
               <Building2 className="h-4.5 w-4.5" />
@@ -403,9 +401,7 @@ export default function ContentPage({ navigate, page }: Props) {
         <section
           className="mt-16 overflow-hidden rounded-3xl p-8 text-white md:p-12 shadow-xl"
           style={{
-            background: darkMode
-              ? "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)"
-              : "linear-gradient(135deg, #ff385c 0%, #ff385c 100%)",
+            background: "linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)",
           }}
         >
           <div className="relative max-w-2xl">

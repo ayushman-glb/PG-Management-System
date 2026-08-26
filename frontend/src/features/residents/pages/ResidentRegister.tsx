@@ -299,7 +299,7 @@ export default function ResidentRegister({ navigate }: Props) {
         >
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
-            style={{ background: "linear-gradient(135deg, #ff385c, #ff385c)" }}
+            style={{ background: "var(--brand-primary)" }}
           >
             <Building2 className="w-5 h-5" />
           </div>
@@ -323,7 +323,7 @@ export default function ResidentRegister({ navigate }: Props) {
               className="absolute left-0 top-1/2 -translate-y-1/2 h-1 transition-all duration-500 z-0"
               style={{
                 width: `${((step - 1) / (steps.length - 1)) * 100}%`,
-                background: darkMode ? "linear-gradient(90deg, #ff385c, #ff385c)" : "linear-gradient(90deg, #ff385c, #ff385c)",
+                background: "var(--brand-primary)",
               }}
             />
             {steps.map((s) => {

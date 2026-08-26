@@ -45,12 +45,14 @@ export const Logo: React.FC<LogoProps> = ({
       className={`flex items-center gap-2.5 flex-shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded-xl ${className}`}
     >
       <div
-        className={`${iconSizes[size]} rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 transition-transform group-hover:scale-105 shadow-sm`}
+        className={`${iconSizes[size]} rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 transition-transform duration-200 group-hover:scale-105 shadow-sm relative`}
         style={{
-          background: "linear-gradient(135deg, #ff385c 0%, #e00b41 100%)",
+          background: "linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)",
         }}
       >
         <Building2 className={`${svgSizes[size]} text-white`} />
+        {/* Jewel Ruby Dot Accent */}
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--accent-ruby)] border border-[var(--bg-card)] shadow-xs" />
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -63,7 +65,7 @@ export const Logo: React.FC<LogoProps> = ({
               : variant === "auto"
               ? "inline-block"
               : "inline-block"
-          } ${darkMode ? "text-[var(--text-main)]" : "text-[var(--brand-primary)]"}`}
+          } text-[var(--text-main)]`}
         >
           RoomBae
         </span>
@@ -72,7 +74,7 @@ export const Logo: React.FC<LogoProps> = ({
           <span
             className={`hidden sm:inline-block text-xs font-bold px-2 py-0.5 rounded-full ${
               darkMode
-                ? "bg-[var(--bg-nested)] text-white border border-[#333333]"
+                ? "bg-[var(--bg-nested)] text-white border border-[var(--border-main)]"
                 : "bg-[var(--bg-surface)] text-[var(--text-main)] border border-[var(--border-main)]"
             }`}
           >

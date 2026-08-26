@@ -168,11 +168,11 @@ export default function Properties({ navigate }: Props) {
                 className={`rounded-2xl border overflow-hidden cursor-pointer card-hover transition-all ${darkMode ? "bg-slate-800" : "bg-white"} ${
                   selectedProperty?.id === prop.id
                     ? darkMode
-                      ? "border-[var(--brand-primary)] shadow-lg shadow-[#ff385c]/10"
-                      : "border-[var(--brand-primary)] shadow-lg shadow-[#ff385c]/15"
+                      ? "border-[var(--brand-primary)] shadow-lg shadow-[var(--brand-primary)]/15"
+                      : "border-[var(--brand-primary)] shadow-lg shadow-[var(--brand-primary)]/15"
                     : darkMode
-                      ? "border-slate-700"
-                      : "border-slate-100"
+                      ? "border-[var(--border-main)]"
+                      : "border-[var(--border-main)]"
                 }`}
               >
                 <div className="relative h-36 bg-slate-100">
@@ -267,9 +267,7 @@ export default function Properties({ navigate }: Props) {
                         className="h-1.5 rounded-full"
                         style={{
                           width: `${prop.totalBeds && prop.occupied ? (prop.occupied / prop.totalBeds) * 100 : 0}%`,
-                          background: darkMode
-                            ? "linear-gradient(135deg, #ff385c, #ff385c)"
-                            : "linear-gradient(135deg, #ff385c, #ff385c)",
+                          background: "var(--brand-primary)",
                         }}
                       />
                     </div>
@@ -302,7 +300,7 @@ export default function Properties({ navigate }: Props) {
               <span className="flex items-center gap-1.5">
                 <span
                   className="w-3 h-3 rounded inline-block"
-                  style={{ background: darkMode ? "#ff385c" : "#ff385c" }}
+                  style={{ background: "var(--brand-primary)" }}
                 />{" "}
                 Occupied
               </span>

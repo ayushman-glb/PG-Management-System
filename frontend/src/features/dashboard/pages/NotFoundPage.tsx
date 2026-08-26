@@ -33,9 +33,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
             <span
               className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
               style={{
-                background: darkMode
-                  ? "linear-gradient(135deg, #ff385c, #ff385c)"
-                  : "linear-gradient(135deg, #ff385c, #ff385c)",
+                background: "var(--brand-primary)",
               }}
             >
               <Building2 className="h-4.5 w-4.5" />

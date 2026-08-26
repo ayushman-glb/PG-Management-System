@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
 import { useTheme } from "@theme/index";
 import { ChevronDown, X } from "lucide-react";
+import { TIMING, EASING, SPRINGS } from "./constants";
+import { modalOverlay, modalContent, fadeIn, fadeUp, fadeLeft, fadeRight, scaleIn } from "./variants";
 
 // ============================================================================
 // 1. Animated Tabs (Sliding Pill Indicator)
@@ -51,27 +53,29 @@ export function AnimatedTabs({
             aria-pressed={isActive}
             className={`relative flex items-center ${fullWidth ? "flex-1 justify-center text-center" : ""} gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 select-none cursor-pointer z-10 ${
               isActive
-                ? darkMode
-                  ? "text-[var(--text-main)]"
-                  : "text-[var(--text-main)]"
-                : darkMode
-                ? "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                ? "text-[var(--text-main)]"
                 : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
             }`}
           >
             {isActive && (
               <motion.div
                 layoutId={layoutId}
-                transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                transition={SPRINGS.SNAPPY}
                 className={`absolute inset-0 rounded-xl shadow-sm -z-10 ${
                   darkMode
-                    ? "bg-[var(--bg-card)] border border-[var(--brand-primary)]/40 shadow-[0_2px_10px_rgba(200,154,75,0.15)]"
-                    : "bg-[var(--bg-primary)] border border-[var(--brand-primary)]/50 shadow-[0_2px_10px_rgba(217,168,124,0.2)]"
+                    ? "bg-[var(--bg-card)] border border-[var(--brand-primary)]/40 shadow-[0_2px_12px_rgba(0,122,153,0.15)]"
+                    : "bg-[var(--bg-card)] border border-[var(--brand-primary)]/40 shadow-[0_2px_12px_rgba(0,77,97,0.1)]"
                 }`}
               />
             )}
 
-            {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]") : ""}`} />}
+            {Icon && (
+              <Icon
+                className={`w-4 h-4 flex-shrink-0 ${
+                  isActive ? "text-[var(--brand-primary)]" : "text-current"
+                }`}
+              />
+            )}
             <span>{tab.label}</span>
             {tab.count !== undefined && (
               <span
@@ -92,7 +96,7 @@ export function AnimatedTabs({
 }
 
 // ============================================================================
-// 2. Spotlight Card (Cursor Tracking Glow)
+// 2. Spotlight Card (Cursor Tracking Glow in Dark Teal)
 // ============================================================================
 
 export interface SpotlightCardProps {
@@ -113,7 +117,9 @@ export function SpotlightCard({
   const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 });
   const [isHovered, setIsHovered] = useState(false);
 
-  const defaultSpotlight = spotlightColor ?? (darkMode ? "rgba(200, 154, 75, 0.15)" : "rgba(217, 168, 124, 0.18)");
+  const defaultSpotlight =
+    spotlightColor ??
+    (darkMode ? "rgba(0, 122, 153, 0.18)" : "rgba(0, 77, 97, 0.12)");
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -136,15 +142,15 @@ export function SpotlightCard({
       onClick={onClick}
       whileHover={{ y: -4, scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      transition={{ duration: TIMING.MICRO, ease: EASING.OUT_CUBIC }}
       className={`relative rounded-2xl border overflow-hidden transition-all duration-300 ${
-        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
+        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-card)] border-[var(--border-main)]"
       } ${className}`}
       style={{
         boxShadow: isHovered
           ? darkMode
-            ? "0 14px 35px rgba(200, 154, 75, 0.12)"
-            : "0 14px 35px rgba(93, 55, 28, 0.12)"
+            ? "0 14px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 122, 153, 0.15)"
+            : "0 14px 35px rgba(0, 77, 97, 0.12)"
           : undefined,
       }}
     >
@@ -239,7 +245,7 @@ export function AnimatedAccordion({
           <div
             key={item.id}
             className={`rounded-2xl border overflow-hidden transition-colors ${
-              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-card)] border-[var(--border-main)]"
             }`}
           >
             <button
@@ -249,21 +255,17 @@ export function AnimatedAccordion({
             >
               <div className="flex items-center gap-3">
                 {Icon && (
-                  <Icon
-                    className={`w-4.5 h-4.5 ${
-                      darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"
-                    }`}
-                  />
+                  <Icon className="w-4.5 h-4.5 text-[var(--brand-primary)]" />
                 )}
-                <span className={darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"}>
+                <span className="text-[var(--text-main)]">
                   {item.title}
                 </span>
               </div>
               <motion.div
                 animate={{ rotate: isOpen ? 180 : 0 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
+                transition={{ duration: TIMING.MICRO, ease: EASING.SMOOTH }}
               >
-                <ChevronDown className={`w-4 h-4 ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`} />
+                <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
               </motion.div>
             </button>
 
@@ -273,15 +275,9 @@ export function AnimatedAccordion({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                  transition={{ duration: TIMING.NORMAL, ease: EASING.SMOOTH }}
                 >
-                  <div
-                    className={`px-4 pb-4 pt-1 text-sm border-t ${
-                      darkMode
-                        ? "border-[var(--border-main)] text-[var(--text-muted)]"
-                        : "border-[var(--border-main)] text-[var(--text-muted)]"
-                    }`}
-                  >
+                  <div className="px-4 pb-4 pt-1 text-sm border-t border-[var(--border-main)] text-[var(--text-muted)]">
                     {item.content}
                   </div>
                 </motion.div>
@@ -320,31 +316,31 @@ export function AnimatedDialog({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            variants={modalOverlay}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             aria-hidden="true"
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            variants={modalContent}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className={`relative w-full ${maxWidth} rounded-3xl border shadow-2xl p-6 overflow-hidden z-10 ${
-              darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]"
             }`}
           >
             {title && (
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200/20">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--border-subtle)]">
                 <h3 className="text-lg font-bold">{title}</h3>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1 rounded-xl opacity-70 hover:opacity-100 transition-opacity"
+                  className="p-1 rounded-xl opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
                   aria-label="Close dialog"
                 >
                   <X className="w-5 h-5" />
@@ -360,36 +356,38 @@ export function AnimatedDialog({
 }
 
 // ============================================================================
-// 6. Animated Badge / Status Pill
+// 6. Animated Badge / Status Pill (Jewel-Tone Colors)
 // ============================================================================
 
 export interface AnimatedBadgeProps {
   label: string;
-  variant?: "success" | "warning" | "danger" | "info" | "neutral";
+  variant?: "success" | "warning" | "danger" | "teal" | "ruby" | "neutral";
   pulse?: boolean;
   className?: string;
 }
 
 export function AnimatedBadge({
   label,
-  variant = "success",
+  variant = "teal",
   pulse = true,
   className = "",
 }: AnimatedBadgeProps) {
   const variantStyles = {
-    success: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    teal: "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border-[var(--brand-primary)]/30",
+    ruby: "bg-[var(--accent-ruby)]/15 text-[var(--accent-ruby)] border-[var(--accent-ruby)]/30",
+    success: "bg-[var(--accent-forest)]/15 text-[var(--accent-forest)] border-[var(--accent-forest)]/30",
     warning: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
     danger: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
-    info: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-    neutral: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30",
+    neutral: "bg-[var(--bg-nested)] text-[var(--text-muted)] border-[var(--border-main)]",
   };
 
   const dotColors = {
-    success: "bg-emerald-500",
+    teal: "bg-[var(--brand-primary)]",
+    ruby: "bg-[var(--accent-ruby)]",
+    success: "bg-[var(--accent-forest)]",
     warning: "bg-amber-500",
     danger: "bg-rose-500",
-    info: "bg-blue-500",
-    neutral: "bg-slate-400",
+    neutral: "bg-[var(--text-muted)]",
   };
 
   return (
@@ -425,7 +423,6 @@ export function FloatingTooltip({
   position = "top",
 }: FloatingTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const { darkMode } = useTheme();
 
   const positionClasses = {
     top: "-top-10 left-1/2 -translate-x-1/2",
@@ -447,10 +444,8 @@ export function FloatingTooltip({
             initial={{ opacity: 0, scale: 0.9, y: position === "top" ? 4 : -4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.15 }}
-            className={`absolute ${positionClasses[position]} z-50 px-2.5 py-1 text-xs font-medium rounded-lg border shadow-lg whitespace-nowrap pointer-events-none ${
-              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
-            }`}
+            transition={{ duration: TIMING.MICRO }}
+            className={`absolute ${positionClasses[position]} z-50 px-2.5 py-1 text-xs font-medium rounded-lg border shadow-lg whitespace-nowrap pointer-events-none bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]`}
           >
             {content}
           </motion.div>
@@ -490,9 +485,9 @@ export function AnimatedListItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{
-        duration: 0.25,
+        duration: TIMING.NORMAL,
         delay: index * 0.04,
-        ease: "easeOut",
+        ease: EASING.OUT_CUBIC,
       }}
       className={className}
     >
@@ -514,43 +509,16 @@ export interface RevealOnScrollProps {
   threshold?: number;
 }
 
-const revealVariants = {
-  fadeUp: {
-    hidden: { opacity: 0, y: 28 },
-    visible: { opacity: 1, y: 0 },
-  },
-  fadeLeft: {
-    hidden: { opacity: 0, x: -24 },
-    visible: { opacity: 1, x: 0 },
-  },
-  fadeRight: {
-    hidden: { opacity: 0, x: 24 },
-    visible: { opacity: 1, x: 0 },
-  },
-  scale: {
-    hidden: { opacity: 0, scale: 0.94 },
-    visible: { opacity: 1, scale: 1 },
-  },
-  fade: {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-  },
-};
-
 export function RevealOnScroll({
   children,
   className = "",
   variant = "fadeUp",
   delay = 0,
-  duration = 0.6,
+  duration = TIMING.SECTION,
   threshold = 0.15,
 }: RevealOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
-
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
     if (!ref.current) return;
@@ -567,21 +535,31 @@ export function RevealOnScroll({
     return () => observer.disconnect();
   }, [threshold]);
 
-  const chosen = prefersReducedMotion
-    ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
-    : revealVariants[variant];
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const variantMap = {
+    fadeUp,
+    fadeLeft,
+    fadeRight,
+    scale: scaleIn,
+    fade: fadeIn,
+  };
+
+  const selectedVariant = variantMap[variant] || fadeUp;
 
   return (
     <motion.div
       ref={ref}
       className={className}
-      variants={chosen}
+      variants={selectedVariant}
       initial="hidden"
       animate={inView ? "visible" : "hidden"}
       transition={{
         duration: prefersReducedMotion ? 0 : duration,
         delay: prefersReducedMotion ? 0 : delay,
-        ease: [0.25, 0.1, 0.25, 1],
+        ease: EASING.OUT_CUBIC,
       }}
     >
       {children}
@@ -590,7 +568,7 @@ export function RevealOnScroll({
 }
 
 // ============================================================================
-// 10. StaggerContainer + StaggerItem — Cascade animation group
+// 10. StaggerContainer + StaggerItem
 // ============================================================================
 
 export function StaggerContainer({
@@ -627,25 +605,15 @@ export function StaggerContainer({
 export function StaggerItem({
   children,
   className = "",
-  variant = "fadeUp",
 }: {
   children: React.ReactNode;
   className?: string;
-  variant?: keyof typeof revealVariants;
 }) {
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  const chosen = prefersReducedMotion
-    ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
-    : revealVariants[variant];
-
   return (
     <motion.div
       className={className}
-      variants={chosen}
-      transition={{ duration: 0.55, ease: [0.25, 0.1, 0.25, 1] }}
+      variants={fadeUp}
+      transition={{ duration: TIMING.SECTION, ease: EASING.OUT_CUBIC }}
     >
       {children}
     </motion.div>
@@ -653,7 +621,7 @@ export function StaggerItem({
 }
 
 // ============================================================================
-// 11. RippleButton — Premium button with click ripple effect
+// 11. RippleButton — Tactile button with click ripple effect
 // ============================================================================
 
 export interface RippleButtonProps {
@@ -682,16 +650,19 @@ export function RippleButton({
   const [ripples, setRipples] = useState<RippleItem[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const addRipple = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!buttonRef.current || disabled) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const id = Date.now();
-    setRipples((prev) => [...prev, { id, x, y }]);
-    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 600);
-    onClick?.(e);
-  }, [disabled, onClick]);
+  const addRipple = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!buttonRef.current || disabled) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const id = Date.now();
+      setRipples((prev) => [...prev, { id, x, y }]);
+      setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 600);
+      onClick?.(e);
+    },
+    [disabled, onClick]
+  );
 
   return (
     <motion.button
@@ -701,16 +672,16 @@ export function RippleButton({
       aria-label={ariaLabel}
       onClick={addRipple}
       whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.97 }}
-      transition={{ duration: 0.15, ease: "easeOut" }}
-      className={`relative overflow-hidden select-none ${className}`}
+      whileTap={{ scale: disabled ? 1 : 0.98 }}
+      transition={{ duration: TIMING.MICRO, ease: EASING.SMOOTH }}
+      className={`relative overflow-hidden select-none cursor-pointer ${className}`}
     >
       {children}
       <AnimatePresence>
         {ripples.map((r) => (
           <motion.span
             key={r.id}
-            initial={{ scale: 0, opacity: 0.4 }}
+            initial={{ scale: 0, opacity: 0.35 }}
             animate={{ scale: 4, opacity: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
@@ -721,7 +692,7 @@ export function RippleButton({
               width: 32,
               height: 32,
               borderRadius: "50%",
-              background: "rgba(255,255,255,0.35)",
+              background: "rgba(255,255,255,0.4)",
               pointerEvents: "none",
             }}
           />
@@ -761,7 +732,7 @@ export function MorphingIcon({
             initial={{ opacity: 0, scale: 0.7, rotate: -15 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={{ opacity: 0, scale: 0.7, rotate: 15 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ duration: TIMING.MICRO, ease: EASING.OUT_CUBIC }}
           >
             <HoverIcon className={iconClassName} />
           </motion.span>
@@ -771,7 +742,7 @@ export function MorphingIcon({
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.7 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            transition={{ duration: TIMING.MICRO, ease: EASING.OUT_CUBIC }}
           >
             <Icon className={iconClassName} />
           </motion.span>

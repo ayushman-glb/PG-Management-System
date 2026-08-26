@@ -230,7 +230,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
           contact: (user as any)?.phone || "+919876543210",
         },
         theme: {
-          color: "#ff385c",
+          color: "#004D61",
         },
       };
 

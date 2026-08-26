@@ -7,6 +7,9 @@ import {
   X,
   ChevronRight,
   User,
+  Sparkles,
+  ShieldCheck,
+  Zap,
 } from "lucide-react";
 import type { Page } from "@app/App";
 import { ThemeToggle } from "@theme/index";
@@ -16,6 +19,7 @@ import { SearchPill } from "@components/ui/SearchPill";
 import { CategoryStrip } from "@components/ui/CategoryStrip";
 import { PropertyCard, PropertyCardData } from "@components/ui/PropertyCard";
 import { NewBadge } from "@components/ui/NewBadge";
+import { SpotlightCard } from "@components/animations/MotionPrimitives";
 import { useAuth } from "@hooks/useAuth";
 
 interface Props {
@@ -149,29 +153,33 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] text-[var(--text-main)] dark:text-[var(--text-main)] font-sans relative overflow-x-clip transition-colors">
-      {/* ─── Airbnb 80px Top Navigation ─────────────────────────── */}
-      <header className="sticky top-0 left-0 right-0 z-50 h-20 bg-white/95 dark:bg-[var(--bg-primary)]/95 backdrop-blur-md border-b border-[var(--border-subtle)] dark:border-[var(--border-subtle)] transition-colors">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] font-sans relative overflow-x-clip transition-colors">
+      {/* ─── Top Navigation ─────────────────────────── */}
+      <header className="sticky top-0 left-0 right-0 z-50 h-20 bg-[var(--bg-primary)]/90 backdrop-blur-md border-b border-[var(--border-subtle)] transition-colors">
         <div className="max-w-7xl mx-auto h-full px-4 md:px-6 flex items-center justify-between gap-4">
           {/* Left: Brand Logo */}
           <div className="flex-shrink-0">
             <Logo onClick={() => navigate("landing")} size="md" />
           </div>
 
-          {/* Center: Airbnb 3-Product Navigation Tabs */}
+          {/* Center: 3-Product Navigation Tabs */}
           <nav aria-label="Product categories" className="hidden md:flex items-center gap-6 lg:gap-8">
             <button
               type="button"
               onClick={() => setActiveProductTab("homes")}
               className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer ${
                 activeProductTab === "homes"
-                  ? "text-[var(--text-main)] dark:text-white"
-                  : "text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-black dark:hover:text-white"
+                  ? "text-[var(--text-main)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
               }`}
             >
               Homes & PGs
               {activeProductTab === "homes" && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] dark:bg-white rounded-full" />
+                <motion.span
+                  layoutId="landingNavTabIndicator"
+                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--brand-primary)] rounded-full"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
               )}
             </button>
 
@@ -183,13 +191,17 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               }}
               className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer ${
                 activeProductTab === "coliving"
-                  ? "text-[var(--text-main)] dark:text-white"
-                  : "text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-black dark:hover:text-white"
+                  ? "text-[var(--text-main)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
               }`}
             >
               Co-Living Hubs
               {activeProductTab === "coliving" && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] dark:bg-white rounded-full" />
+                <motion.span
+                  layoutId="landingNavTabIndicator"
+                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--brand-primary)] rounded-full"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
               )}
             </button>
 
@@ -205,7 +217,11 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               <span>Services</span>
               <NewBadge className="ml-1" />
               {activeProductTab === "services" && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] rounded-full" />
+                <motion.span
+                  layoutId="landingNavTabIndicator"
+                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--brand-primary)] rounded-full"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
               )}
             </button>
           </nav>
@@ -319,20 +335,41 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
         </div>
       </header>
 
-      {/* ─── Hero Section with Signature Search Pill ─────────────── */}
+      {/* ─── Hero Section with Staggered Entrance ─────────────── */}
       <section className="pt-8 pb-10 px-4 md:px-6 bg-[var(--bg-primary)] transition-colors">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-clamp-hero font-bold tracking-tight text-[var(--text-main)] mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border border-[var(--brand-primary)]/20 text-xs font-semibold mb-4"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Next-Gen Co-Living Marketplace</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="text-clamp-hero font-bold tracking-tight text-[var(--text-main)] mb-6"
+          >
             Find premium PGs & Co-Living spaces.
-          </h1>
-          {/* Centered Airbnb 3-Segment Search Pill */}
-          <div className="max-w-3xl mx-auto mb-8">
+          </motion.h1>
+
+          {/* Centered Search Pill */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 14 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-3xl mx-auto mb-8"
+          >
             <SearchPill onSearch={() => navigate("pg-listing")} />
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ─── Airbnb Sticky Category Filter Strip ─────────────────── */}
+      {/* ─── Category Filter Strip ─────────────────── */}
       <CategoryStrip
         selectedCategory={selectedCategory}
         onSelectCategory={(id) => {
@@ -342,7 +379,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
         onOpenFilters={() => navigate("pg-listing")}
       />
 
-      {/* ─── Photo-First Property Grid (Airbnb 4-Col Layout) ─────── */}
+      {/* ─── Photo-First Property Grid ─────── */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-10">
         <div className="flex items-baseline justify-between mb-6">
           <div>
@@ -384,9 +421,50 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
         </div>
       </main>
 
-      {/* ─── Airbnb Host / Property Owner Conversion Banner ───────── */}
+      {/* ─── Value Props Feature Grid ────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-12">
-        <div className="relative rounded-3xl overflow-hidden bg-neutral-950 text-white p-8 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <SpotlightCard className="p-8">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] flex items-center justify-center mb-5">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">
+              100% Superhost Verified
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Every PG undergoes rigorous on-ground audits covering food quality, high-speed WiFi uptime, and verified background safety.
+            </p>
+          </SpotlightCard>
+
+          <SpotlightCard className="p-8">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--accent-ruby)]/15 text-[var(--accent-ruby)] flex items-center justify-center mb-5">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">
+              Zero-Brokerage Escrow
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Direct owner contracts with transparent rent splits, zero hidden platform fees, and instant security deposit settlement.
+            </p>
+          </SpotlightCard>
+
+          <SpotlightCard className="p-8">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--accent-forest)]/15 text-[var(--accent-forest)] flex items-center justify-center mb-5">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">
+              Automated Resident OS
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              One-click digital KYC verification, automated UPI monthly billing, and SLA-guaranteed maintenance complaint resolution.
+            </p>
+          </SpotlightCard>
+        </div>
+      </section>
+
+      {/* ─── Property Owner Conversion Banner ───────── */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-12">
+        <div className="relative rounded-3xl overflow-hidden bg-neutral-950 text-white p-8 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl border border-[var(--brand-primary)]/30">
           <div className="max-w-xl z-10">
             <span className="text-xs font-bold uppercase tracking-widest text-[var(--brand-primary)] mb-2 inline-block">
               For Property Owners
@@ -429,7 +507,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
         </div>
       </section>
 
-      {/* ─── Inspiration for Future Stays (City Directory) ───────── */}
+      {/* ─── City Directory ───────── */}
       <section className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] py-12 px-4 md:px-6 transition-colors">
         <div className="max-w-7xl mx-auto">
           <h3 className="text-base font-bold text-[var(--text-main)] mb-6">
@@ -464,7 +542,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
         </div>
       </section>
 
-      {/* ─── Airbnb 3-Column Footer & Global Legal Band ───────────── */}
+      {/* ─── Footer & Legal Band ───────────── */}
       <footer className="border-t border-[var(--border-main)] bg-[var(--bg-primary)] pt-12 pb-8 px-4 md:px-6 text-xs text-[var(--text-muted)] transition-colors">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 md:gap-x-12 gap-y-8 pb-10 border-b border-[var(--border-subtle)] justify-start">

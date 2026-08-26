@@ -10,6 +10,7 @@ import {
   Wifi,
   SlidersHorizontal,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { NewBadge } from "./NewBadge";
 
@@ -58,16 +59,16 @@ export const CategoryStrip: React.FC<CategoryStripProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelectCategory(cat.id)}
-                className={`relative flex flex-col items-center gap-2 pb-2.5 flex-shrink-0 cursor-pointer transition-all duration-150 group ${
+                className={`relative flex flex-col items-center gap-2 pb-2.5 flex-shrink-0 cursor-pointer transition-all duration-200 group ${
                   isSelected
-                    ? "text-[var(--text-main)] font-semibold"
+                    ? "text-[var(--brand-primary)] font-semibold"
                     : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
                 }`}
               >
                 <div className="relative">
                   <Icon
-                    className={`w-6 h-6 transition-transform group-hover:scale-110 ${
-                      isSelected ? "text-[var(--text-main)]" : "opacity-75 group-hover:opacity-100"
+                    className={`w-6 h-6 transition-transform duration-200 group-hover:scale-110 ${
+                      isSelected ? "text-[var(--brand-primary)]" : "opacity-75 group-hover:opacity-100"
                     }`}
                   />
                   {cat.isNew && (
@@ -76,7 +77,11 @@ export const CategoryStrip: React.FC<CategoryStripProps> = ({
                 </div>
                 <span className="text-xs whitespace-nowrap">{cat.label}</span>
                 {isSelected && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] rounded-full" />
+                  <motion.span
+                    layoutId="activeCategoryIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[var(--brand-primary)] rounded-full"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
                 )}
               </button>
             );
@@ -88,7 +93,7 @@ export const CategoryStrip: React.FC<CategoryStripProps> = ({
           <button
             type="button"
             onClick={onOpenFilters}
-            className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-main)] text-xs font-semibold text-[var(--text-main)] hover:border-[var(--text-main)] transition-colors flex-shrink-0 cursor-pointer"
+            className="hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-main)] text-xs font-semibold text-[var(--text-main)] hover:border-[var(--brand-primary)] transition-colors flex-shrink-0 cursor-pointer"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Filters</span>

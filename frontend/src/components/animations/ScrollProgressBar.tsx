@@ -19,11 +19,11 @@ export function ScrollProgressBar() {
         scaleX,
         opacity,
         background: darkMode
-          ? "linear-gradient(90deg, #ff385c, #ff385c, #E8C98A)"
-          : "linear-gradient(90deg, #ff385c, #ff385c, #E7C4A0)",
+          ? "linear-gradient(90deg, #007A99, #9B336D, #4F6E52)"
+          : "linear-gradient(90deg, #004D61, #822659, #3E5641)",
         boxShadow: darkMode
-          ? "0 0 12px rgba(200, 154, 75, 0.6)"
-          : "0 0 12px rgba(217, 168, 124, 0.6)",
+          ? "0 0 12px rgba(0, 122, 153, 0.5)"
+          : "0 0 12px rgba(0, 77, 97, 0.4)",
       }}
     />
   );

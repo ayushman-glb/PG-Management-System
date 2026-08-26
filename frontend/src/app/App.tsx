@@ -367,21 +367,9 @@ function LoadingOverlay() {
         />
 
         <div className="flex gap-2.5 items-center">
-          <span
-            className={`h-2.5 w-2.5 rounded-full animate-bounce ${
-              darkMode ? "bg-[var(--brand-primary)]" : "bg-[var(--brand-primary)]"
-            }`}
-          />
-          <span
-            className={`h-2.5 w-2.5 rounded-full animate-bounce delay-150 ${
-              darkMode ? "bg-[var(--brand-primary)]" : "bg-[var(--brand-primary)]"
-            }`}
-          />
-          <span
-            className={`h-2.5 w-2.5 rounded-full animate-bounce delay-300 ${
-              darkMode ? "bg-[#E8C98A]" : "bg-[#E7C4A0]"
-            }`}
-          />
+          <span className="h-2.5 w-2.5 rounded-full animate-bounce bg-[var(--brand-primary)]" />
+          <span className="h-2.5 w-2.5 rounded-full animate-bounce delay-150 bg-[var(--accent-ruby)]" />
+          <span className="h-2.5 w-2.5 rounded-full animate-bounce delay-300 bg-[var(--accent-forest)]" />
         </div>
       </div>
     </motion.div>

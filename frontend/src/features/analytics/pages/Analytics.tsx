@@ -107,11 +107,11 @@ const paymentData = [
 ];
 
 const categoryPie = [
-  { name: "Plumbing", value: 32, color: "#ff385c" },
-  { name: "Electrical", value: 28, color: "#ff385c" },
-  { name: "Maintenance", value: 20, color: "#E7C4A0" },
-  { name: "Sanitation", value: 12, color: "#D9A441" },
-  { name: "Misc", value: 8, color: "#D96B5D" },
+  { name: "Plumbing", value: 32, color: "#004D61" },
+  { name: "Electrical", value: 28, color: "#822659" },
+  { name: "Maintenance", value: 20, color: "#3E5641" },
+  { name: "Sanitation", value: 12, color: "#007A99" },
+  { name: "Misc", value: 8, color: "#9B336D" },
 ];
 
 const vacancyPrediction = [
@@ -329,12 +329,12 @@ export default function Analytics({ navigate }: Props) {
                 <linearGradient id="revG" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
-                    stopColor={darkMode ? "#ff385c" : "#ff385c"}
+                    stopColor={darkMode ? "#007a99" : "#004d61"}
                     stopOpacity={0.25}
                   />
                   <stop
                     offset="95%"
-                    stopColor={darkMode ? "#ff385c" : "#ff385c"}
+                    stopColor={darkMode ? "#007a99" : "#004d61"}
                     stopOpacity={0}
                   />
                 </linearGradient>
@@ -368,7 +368,7 @@ export default function Analytics({ navigate }: Props) {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke={darkMode ? "#ff385c" : "#ff385c"}
+                stroke={darkMode ? "#007a99" : "#004d61"}
                 strokeWidth={2.5}
                 fill="url(#revG)"
                 name="Revenue"
@@ -435,7 +435,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="sunrise"
-                  stroke="#ff385c"
+                  stroke="#004D61"
                   strokeWidth={2}
                   dot={false}
                   name="Sunrise PG"
@@ -443,7 +443,7 @@ export default function Analytics({ navigate }: Props) {
                 <Line
                   type="monotone"
                   dataKey="greenValley"
-                  stroke="#ff385c"
+                  stroke="#3E5641"
                   strokeWidth={2}
                   dot={false}
                   name="Green Valley"
@@ -635,19 +635,19 @@ export default function Analytics({ navigate }: Props) {
                           background:
                             val === 100
                               ? darkMode
-                                ? "#ff385c"
-                                : "#ff385c"
+                                ? "#007a99"
+                                : "#004d61"
                               : val >= 80
                                 ? darkMode
-                                  ? "#ff385c"
-                                  : "#ff385c"
+                                  ? "#4f6e52"
+                                  : "#3e5641"
                                 : val >= 60
                                   ? darkMode
-                                    ? "#E8C98A"
-                                    : "#E7C4A0"
+                                    ? "#9b336d"
+                                    : "#822659"
                                   : darkMode
-                                    ? "#1e1e1e"
-                                    : "#f7f7f7",
+                                    ? "#2f3335"
+                                    : "#dfe5e6",
                           opacity: val === 0 ? 0.3 : 1,
                         }}
                         title={`${val}%`}
@@ -662,7 +662,7 @@ export default function Analytics({ navigate }: Props) {
                 Empty
               </span>
               <div className="flex gap-1 flex-1">
-                {["#f7f7f7", "#E7C4A0", "#ff385c", "#ff385c"].map((c) => (
+                {["#dfe5e6", "#822659", "#3e5641", "#004d61"].map((c) => (
                   <div
                     key={c}
                     className="flex-1 h-2 rounded-sm"
@@ -731,7 +731,7 @@ export default function Analytics({ navigate }: Props) {
                 />
                 <Bar
                   dataKey="predicted"
-                  fill={darkMode ? "#ff385c" : "#ff385c"}
+                  fill={darkMode ? "#007a99" : "#004d61"}
                   radius={[4, 4, 0, 0]}
                   name="Predicted Vacancies"
                 />
