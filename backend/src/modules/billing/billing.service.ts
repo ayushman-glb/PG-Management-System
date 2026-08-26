@@ -315,4 +315,68 @@ export class BillingService {
 
     return invoice;
   }
+
+  async levyFine(ownerId: string, data: { residentId: string; pgId: string; amount: number; fineType: FineType; reason: string; invoiceId?: string }): Promise<Fine> {
+    if (!data.residentId || !data.pgId || !data.amount || !data.reason) {
+      throw new BadRequestError('residentId, pgId, amount, and reason are required.');
+    }
+    const pg = await this.db.pG.findUnique({ where: { id: data.pgId } });
+    if (!pg || pg.ownerId !== ownerId) {
+      throw new ForbiddenError('Unauthorized to levy fine on this property.');
+    }
+
+    return this.db.fine.create({
+      data: {
+        residentId: data.residentId,
+        pgId: data.pgId,
+        amount: Number(data.amount),
+        fineType: data.fineType || FineType.OTHER,
+        reason: data.reason,
+        status: FineStatus.PENDING,
+        invoiceId: data.invoiceId,
+      },
+    });
+  }
+
+  async waiveFine(ownerId: string, fineId: string): Promise<Fine> {
+    const fine = await this.db.fine.findUnique({
+      where: { id: fineId },
+      include: { pg: true },
+    });
+    if (!fine) throw new NotFoundError('Fine record not found.');
+    if (fine.pg.ownerId !== ownerId) {
+      throw new ForbiddenError('Unauthorized to waive fine for this property.');
+    }
+
+    return this.db.fine.update({
+      where: { id: fineId },
+      data: {
+        status: FineStatus.WAIVED,
+        waivedById: ownerId,
+      },
+    });
+  }
+
+  async getFines(userId: string, role: Role, pgId?: string): Promise<Fine[]> {
+    if (role === Role.PG_OWNER) {
+      const where: any = { pg: { ownerId: userId } };
+      if (pgId) where.pgId = pgId;
+      return this.db.fine.findMany({
+        where,
+        include: {
+          resident: { select: { id: true, username: true, email: true, phone: true, profile: true } },
+          pg: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    return this.db.fine.findMany({
+      where: { residentId: userId },
+      include: {
+        pg: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

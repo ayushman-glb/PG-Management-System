@@ -1,6 +1,10 @@
 import { CronWorkerService } from '../../jobs/cronWorkers';
 import { prisma } from '../../config/prisma';
-import { TicketStatus, Priority, PaymentStatus, ResidentStatus } from '@prisma/client';
+import { PaymentStatus } from '@prisma/client';
+
+const TicketStatus = { OPEN: 'OPEN', IN_PROGRESS: 'IN_PROGRESS', RESOLVED: 'RESOLVED' } as any;
+const Priority = { HIGH: 'HIGH', LOW: 'LOW', MEDIUM: 'MEDIUM' } as any;
+const ResidentStatus = { ACTIVE: 'ACTIVE', INACTIVE: 'INACTIVE', CHECKED_OUT: 'CHECKED_OUT' } as any;
 
 jest.mock('../../config/prisma', () => ({
   prisma: {
@@ -27,7 +31,7 @@ describe('Phase 2 Backend Core Services & Messaging Layer Defect Sweep Unit Test
 
   describe('CronWorkerService Invoice & Late Fee Fixes', () => {
     test('generateMonthlyRentInvoices handles individual resident error without stopping batch', async () => {
-      (prisma.resident.findMany as jest.Mock).mockResolvedValue([
+      ((prisma as any).resident.findMany as jest.Mock).mockResolvedValue([
         { id: 'usr_fail_1', pgId: 'pg_1', status: ResidentStatus.ACTIVE },
         { id: 'usr_success_2', pgId: 'pg_1', status: ResidentStatus.ACTIVE },
       ]);
@@ -46,10 +50,11 @@ describe('Phase 2 Backend Core Services & Messaging Layer Defect Sweep Unit Test
     test('applyLateFees caps maximum late fee at ₹1,000 and skips capped invoices', async () => {
       const now = new Date();
       const pastDueDate = new Date(now.getTime() - 86400000); // 1 day ago
+      const pendingStatus = (PaymentStatus as any).PENDING || 'INITIATED';
 
       (prisma.payment.findMany as jest.Mock).mockResolvedValue([
-        { id: 'pay_1', lateFee: 0, totalAmount: 10000, status: PaymentStatus.PENDING, dueDate: pastDueDate, createdAt: new Date(now.getTime() - 172800000) },
-        { id: 'pay_2', lateFee: 1000, totalAmount: 11000, status: PaymentStatus.PENDING, dueDate: pastDueDate, createdAt: new Date(now.getTime() - 172800000) }, // Already capped
+        { id: 'pay_1', lateFee: 0, totalAmount: 10000, status: pendingStatus, dueDate: pastDueDate, createdAt: new Date(now.getTime() - 172800000) },
+        { id: 'pay_2', lateFee: 1000, totalAmount: 11000, status: pendingStatus, dueDate: pastDueDate, createdAt: new Date(now.getTime() - 172800000) }, // Already capped
       ]);
 
       (prisma.payment.update as jest.Mock).mockResolvedValue({ id: 'pay_1' });

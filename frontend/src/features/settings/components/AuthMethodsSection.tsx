@@ -109,17 +109,17 @@ export const AuthMethodsSection: React.FC = () => {
   return (
     <div
       className={`p-6 rounded-2xl border ${
-        darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-white border-slate-100 text-slate-900"
+        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-white border-[var(--border-main)] text-[var(--text-main)]"
       }`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500 border border-amber-500/30">
+          <div className="p-3 rounded-2xl bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30">
             <KeyRound className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base">Authentication Methods & Identity Providers</h3>
-            <p className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            <h3 className="font-extrabold text-base">Authentication Methods &amp; Identity Providers</h3>
+            <p className="text-xs text-[var(--text-muted)]">
               Manage sign-in options, linked Google identity, and account credentials
             </p>
           </div>
@@ -128,10 +128,10 @@ export const AuthMethodsSection: React.FC = () => {
         <button
           onClick={loadAuthMethods}
           disabled={loading}
-          className="p-2 rounded-xl border border-slate-700 hover:bg-slate-700/40 text-xs text-slate-400 cursor-pointer transition-colors"
+          className="p-2 rounded-xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-xs text-[var(--text-muted)] cursor-pointer transition-colors"
           title="Refresh auth methods"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-[var(--brand-primary)]" : ""}`} />
         </button>
       </div>
 
@@ -153,7 +153,7 @@ export const AuthMethodsSection: React.FC = () => {
         {/* Google Identity Provider Card */}
         <div
           className={`p-4 rounded-xl border ${
-            darkMode ? "bg-slate-900/70 border-slate-700" : "bg-slate-50 border-slate-200"
+            darkMode ? "bg-[var(--bg-surface)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
@@ -178,7 +178,7 @@ export const AuthMethodsSection: React.FC = () => {
               </svg>
               <div>
                 <h4 className="text-sm font-bold">Google Account</h4>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-muted)]">
                   {methods.isGoogleLinked ? methods.googleEmail || "Connected" : "Not Connected"}
                 </p>
               </div>
@@ -195,7 +195,7 @@ export const AuthMethodsSection: React.FC = () => {
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-700/50 flex justify-end">
+          <div className="mt-4 pt-3 border-t border-[var(--border-main)] flex justify-end">
             {methods.isGoogleLinked ? (
               <button
                 type="button"
@@ -208,7 +208,7 @@ export const AuthMethodsSection: React.FC = () => {
               <button
                 type="button"
                 onClick={handleConnectGoogle}
-                className="px-3 py-1.5 rounded-xl bg-amber-500 text-black font-extrabold text-xs cursor-pointer shadow-sm shadow-amber-500/20 hover:bg-amber-400 transition-all"
+                className="btn-primary px-3 py-1.5 text-xs font-bold"
               >
                 Connect Google
               </button>
@@ -219,17 +219,17 @@ export const AuthMethodsSection: React.FC = () => {
         {/* RoomBae Password Card */}
         <div
           className={`p-4 rounded-xl border ${
-            darkMode ? "bg-slate-900/70 border-slate-700" : "bg-slate-50 border-slate-200"
+            darkMode ? "bg-[var(--bg-surface)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <div className="p-2 rounded-xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="text-sm font-bold">RoomBae Password</h4>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-muted)]">
                   {methods.hasPassword ? "Password configured" : "No password set (Google only)"}
                 </p>
               </div>
@@ -240,17 +240,17 @@ export const AuthMethodsSection: React.FC = () => {
                 <CheckCircle2 className="w-3 h-3" /> Active
               </span>
             ) : (
-              <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold">
+              <span className="px-2.5 py-1 rounded-full bg-[var(--accent-ruby)]/20 text-[var(--accent-ruby)] border border-[var(--accent-ruby)]/30 text-xs font-bold">
                 Action Recommended
               </span>
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-700/50 flex justify-end">
+          <div className="mt-4 pt-3 border-t border-[var(--border-main)] flex justify-end">
             <button
               type="button"
               onClick={() => setShowPasswordModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs cursor-pointer transition-all"
+              className="btn-primary px-3 py-1.5 text-xs font-bold"
             >
               {methods.hasPassword ? "Change Password" : "Create Password"}
             </button>
@@ -263,11 +263,11 @@ export const AuthMethodsSection: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl ${
-              darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-900"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-white border-[var(--border-main)] text-[var(--text-main)]"
             }`}
           >
             <h3 className="text-lg font-black mb-2">Create RoomBae Password</h3>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-[var(--text-muted)] mb-4">
               Setting a password allows you to sign in with your email directly and enables safe recovery.
             </p>
 
@@ -279,9 +279,7 @@ export const AuthMethodsSection: React.FC = () => {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 ${
-                    darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-50 border-slate-200"
-                  }`}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs font-medium focus:outline-none focus:border-[var(--brand-primary)]"
                   placeholder="••••••••"
                 />
               </div>
@@ -293,9 +291,7 @@ export const AuthMethodsSection: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`w-full px-4 py-2.5 rounded-xl border text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/50 ${
-                    darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-50 border-slate-200"
-                  }`}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs font-medium focus:outline-none focus:border-[var(--brand-primary)]"
                   placeholder="••••••••"
                 />
               </div>
@@ -304,14 +300,14 @@ export const AuthMethodsSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-amber-500 text-black font-extrabold text-xs cursor-pointer shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all"
+                  className="btn-primary px-4 py-2 text-xs font-bold"
                 >
                   {actionLoading ? "Saving..." : "Set Password"}
                 </button>
@@ -326,11 +322,11 @@ export const AuthMethodsSection: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl ${
-              darkMode ? "bg-slate-900 border-slate-700 text-white" : "bg-white border-slate-200 text-slate-900"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-white border-[var(--border-main)] text-[var(--text-main)]"
             }`}
           >
             <h3 className="text-lg font-black mb-2 text-rose-500">Unlink Google Identity</h3>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-[var(--text-muted)] mb-4">
               Are you sure you want to disconnect Google? You will need your RoomBae password to sign in afterwards.
             </p>
 
@@ -343,9 +339,7 @@ export const AuthMethodsSection: React.FC = () => {
                     required
                     value={unlinkPassword}
                     onChange={(e) => setUnlinkPassword(e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-xl border text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/50 ${
-                      darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-slate-50 border-slate-200"
-                    }`}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs font-medium focus:outline-none focus:border-rose-500"
                     placeholder="Enter current password"
                   />
                 </div>
@@ -355,7 +349,7 @@ export const AuthMethodsSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowUnlinkModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -1,16 +1,19 @@
 import { Router } from 'express';
-import { SearchController } from './search.controller';
-import { SearchService } from './search.service';
-
-const searchService = new SearchService();
-const searchController = new SearchController(searchService);
+import { searchController } from './search.controller';
+import { searchAutocompleteLimiter, propertySearchLimiter } from '../../middleware/rateLimiter';
+import { validateSearchQuery } from './search.validation';
 
 const router = Router();
 
-// Public Unauthenticated Search
-router.get('/autocomplete', searchController.getAutocomplete);
-router.get('/featured', searchController.getFeatured);
-router.get('/', searchController.searchPGs);
-router.get('/pgs', searchController.searchPGs);
+// Public Location Intelligence Endpoints (Rate Limited)
+router.get('/autocomplete', searchAutocompleteLimiter, searchController.getAutocomplete);
+router.get('/locations/autocomplete', searchAutocompleteLimiter, searchController.getAutocomplete);
+router.get('/locations/geocode', searchAutocompleteLimiter, searchController.geocode);
+router.get('/locations/reverse', searchAutocompleteLimiter, searchController.reverseGeocode);
+
+// Public Property Search Endpoints (Rate Limited & Validated)
+router.get('/featured', propertySearchLimiter, searchController.getFeatured);
+router.get('/pgs', propertySearchLimiter, validateSearchQuery, searchController.searchPGs);
+router.get('/', propertySearchLimiter, validateSearchQuery, searchController.searchPGs);
 
 export { router as searchRoutes };

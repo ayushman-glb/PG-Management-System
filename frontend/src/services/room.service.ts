@@ -46,6 +46,11 @@ export class RoomService {
     const res = await api.post(`/rooms/transfer-requests/${requestId}/complete`, {});
     return res?.data ?? res;
   }
+
+  async convertRoomCapacity(roomId: string, newType: string) {
+    const res = await api.put(`/rooms/${roomId}/convert`, { newType });
+    return res?.data ?? res;
+  }
 }
 
 export const roomService = new RoomService();

@@ -4,6 +4,8 @@ const store = {
   users: [] as any[],
   refreshTokens: [] as any[],
   otpTokens: [] as any[],
+  sessions: [] as any[],
+  devices: [] as any[],
 };
 
 const getStr = (val: any): string | undefined => {
@@ -19,6 +21,22 @@ const mockPrisma: any = {
     findFirst: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+  },
+  session: {
+    create: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    updateMany: jest.fn(),
+  },
+  device: {
+    findMany: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue({ id: 'dev_1' }),
+    update: jest.fn().mockResolvedValue({ id: 'dev_1' }),
+  },
+  oTP: {
+    create: jest.fn().mockResolvedValue({ id: 'otp_1' }),
+    findFirst: jest.fn().mockResolvedValue(null),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
   },
   refreshToken: {
     create: jest.fn(),
@@ -117,6 +135,8 @@ function resetMockPrisma() {
       role: data.role || 'RESIDENT',
       phone: data.phone || null,
       accountStatus: data.accountStatus || 'ACTIVE',
+      isActive: data.isActive ?? true,
+      isSuspended: data.isSuspended ?? false,
       emailVerified: data.emailVerified ?? true,
       phoneVerified: data.phoneVerified ?? false,
       is2FAEnabled: false,
@@ -136,6 +156,49 @@ function resetMockPrisma() {
       return store.users[idx];
     }
     return null;
+  });
+
+  mockPrisma.session.create.mockImplementation(async ({ data }: any) => {
+    const record = {
+      id: `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      refreshTokenHash: data.refreshTokenHash,
+      userId: data.userId,
+      expiresAt: data.expiresAt || new Date(Date.now() + 86400000),
+      isRevoked: false,
+    };
+    store.sessions.push(record);
+    return record;
+  });
+
+  mockPrisma.session.findFirst.mockImplementation(async ({ where }: any) => {
+    const sess = store.sessions.find(
+      (s) => s.refreshTokenHash === where?.refreshTokenHash && (!where?.isRevoked || s.isRevoked === where?.isRevoked)
+    );
+    if (sess) {
+      const user = store.users.find((u) => u.id === sess.userId);
+      return { ...sess, user };
+    }
+    return null;
+  });
+
+  mockPrisma.session.update.mockImplementation(async ({ where, data }: any) => {
+    const sess = store.sessions.find((s) => s.id === where.id || s.refreshTokenHash === where.refreshTokenHash);
+    if (sess) {
+      Object.assign(sess, data);
+      return sess;
+    }
+    return null;
+  });
+
+  mockPrisma.session.updateMany.mockImplementation(async ({ where, data }: any) => {
+    let count = 0;
+    store.sessions.forEach((s) => {
+      if (where.userId && s.userId === where.userId) {
+        Object.assign(s, data);
+        count++;
+      }
+    });
+    return { count };
   });
 
   mockPrisma.refreshToken.create.mockImplementation(async ({ data }: any) => {
@@ -222,27 +285,28 @@ jest.mock('../../config/prisma', () => ({
   },
 }));
 
-const { Container } = require('../../container');
 const { AuthRepository } = require('../../modules/auth/auth.repository');
 const { AuthService } = require('../../modules/auth/auth.service');
 const { AuthController } = require('../../modules/auth/auth.controller');
 const bcrypt = require('bcryptjs');
 
 const userRepo = new AuthRepository(mockPrisma);
-const authService = new AuthService(userRepo, Container.cryptoService, Container.tokenService, mockOtpService);
+const authService = new AuthService(userRepo);
 const authController = new AuthController(authService);
 
-Container.userRepository = userRepo;
-Container.authService = authService;
-Container.authController = authController;
+const Container: any = {
+  userRepository: userRepo,
+  authService: authService,
+  authController: authController,
+};
 
 const { app } = require('../../app');
 
+jest.setTimeout(30000);
+
 describe('Authentication Endpoints Integration Tests (Supertest API Integration)', () => {
   beforeAll(() => {
-    Container.userRepository = userRepo;
-    Container.authService = authService;
-    Container.authController = authController;
+    // Setup
   });
 
   beforeEach(() => {

@@ -1,4 +1,5 @@
-import { Building2, Home, Compass, LayoutDashboard, Mail } from "lucide-react";
+import React, { useState } from "react";
+import { Building2, Home, Compass, LayoutDashboard, Mail, Check, Copy } from "lucide-react";
 import type { Page } from "@app/App";
 import { useTheme, ThemeToggle } from "@theme/index";
 
@@ -8,6 +9,13 @@ interface NotFoundPageProps {
 
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
   const { darkMode } = useTheme();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText("support@roombae.com");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div
@@ -39,9 +47,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               <Building2 className="h-4.5 w-4.5" />
             </span>
             <span
-              className={`font-bold text-lg ${
-                darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
-              }`}
+              className="font-bold text-lg text-[var(--text-main)]"
             >
               RoomBae
             </span>
@@ -54,11 +60,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="max-w-xl text-center">
           <div
-            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border ${
-              darkMode
-                ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                : "bg-amber-100 text-amber-800 border-amber-200"
-            }`}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border-[var(--brand-primary)]/30"
           >
             <span>Error 404</span>
             <span className="opacity-50">•</span>
@@ -66,17 +68,13 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
           </div>
 
           <h1
-            className={`text-4xl md:text-6xl font-black tracking-tight mb-4 ${
-              darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
-            }`}
+            className="text-4xl md:text-6xl font-black tracking-tight mb-4 text-[var(--text-main)]"
           >
             Looking for a room that doesn't exist?
           </h1>
 
           <p
-            className={`text-base md:text-lg mb-8 leading-relaxed ${
-              darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"
-            }`}
+            className="text-base md:text-lg mb-8 leading-relaxed text-[var(--text-muted)]"
           >
             The link you followed may be broken, or the page may have been relocated.
             Let's get you back on the right path.
@@ -85,7 +83,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
           <div className="flex flex-wrap items-center justify-center gap-3.5 mb-10">
             <button
               onClick={() => navigate("landing")}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-lg shadow-amber-500/20 transition-all hover:scale-105 cursor-pointer"
+              className="btn-primary flex items-center gap-2 px-5 py-3 text-sm shadow-lg shadow-[var(--brand-primary)]/20"
             >
               <Home className="w-4 h-4" />
               <span>Back to Home</span>
@@ -93,45 +91,45 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
 
             <button
               onClick={() => navigate("pg-listing")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border transition-all hover:scale-105 cursor-pointer ${
-                darkMode
-                  ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-card)]"
-                  : "bg-white border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-primary)]"
-              }`}
+              className="btn-secondary flex items-center gap-2 px-5 py-3 text-sm"
             >
-              <Compass className="w-4 h-4 text-amber-500" />
+              <Compass className="w-4 h-4 text-[var(--brand-primary)]" />
               <span>Explore PGs</span>
             </button>
 
             <button
               onClick={() => navigate("dashboard")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border transition-all hover:scale-105 cursor-pointer ${
-                darkMode
-                  ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-card)]"
-                  : "bg-white border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-primary)]"
-              }`}
+              className="btn-secondary flex items-center gap-2 px-5 py-3 text-sm"
             >
-              <LayoutDashboard className="w-4 h-4 text-amber-500" />
+              <LayoutDashboard className="w-4 h-4 text-[var(--brand-primary)]" />
               <span>Dashboard</span>
             </button>
           </div>
 
-          <div className="pt-6 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-400 flex items-center justify-center gap-2">
+          <div className="pt-6 border-t border-[var(--border-main)] text-xs text-[var(--text-muted)] flex flex-wrap items-center justify-center gap-3">
             <span>Need assistance?</span>
             <a
               href="mailto:support@roombae.com"
-              className="text-amber-500 hover:underline font-semibold flex items-center gap-1"
+              className="text-[var(--brand-primary)] hover:underline font-semibold flex items-center gap-1"
             >
               <Mail className="w-3.5 h-3.5" />
               <span>support@roombae.com</span>
             </a>
+            <button
+              type="button"
+              onClick={handleCopyEmail}
+              className="p-1.5 rounded-lg border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
+              title="Copy support email"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-xs text-slate-400 border-t border-slate-200/60 dark:border-slate-800/60">
-        © {new Date().getFullYear()} RoomBae. All rights reserved.
+      <footer className="text-center py-6 text-xs text-[var(--text-muted)] border-t border-[var(--border-main)]">
+        © {new Date().getFullYear()} RoomBae Technologies, Inc. All rights reserved.
       </footer>
     </div>
   );

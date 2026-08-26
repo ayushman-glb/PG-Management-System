@@ -147,14 +147,10 @@ export default function Billing({ navigate }: Props) {
         {/* Header Bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1
-              className={`text-2xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}
-            >
+            <h1 className="text-2xl font-black text-[var(--text-main)]">
               Banking &amp; Payments Hub
             </h1>
-            <p
-              className={`text-sm mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}
-            >
+            <p className="text-sm mt-0.5 text-[var(--text-muted)]">
               Enterprise Razorpay payment portal, virtual cards &amp; automated rent collection
             </p>
           </div>
@@ -162,7 +158,7 @@ export default function Billing({ navigate }: Props) {
             <button
               type="button"
               onClick={() => setIsPayModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black text-xs shadow-lg shadow-amber-500/20 hover:scale-105 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-xs shadow-md shadow-[var(--brand-primary)]/20 transition-all cursor-pointer"
             >
               <Zap className="w-4 h-4 fill-current" />
               1-Tap Pay Rent (Razorpay)
@@ -170,9 +166,7 @@ export default function Billing({ navigate }: Props) {
             <button
               type="button"
               onClick={handleExportCsv}
-              className={`flex items-center gap-2 border text-xs font-bold px-4 py-2.5 rounded-2xl transition-colors cursor-pointer ${
-                darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:bg-slate-50"
-              }`}
+              className="flex items-center gap-2 border border-[var(--border-main)] text-xs font-bold px-4 py-2.5 rounded-2xl hover:bg-[var(--bg-surface)] text-[var(--text-main)] transition-colors cursor-pointer"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
               Export CSV
@@ -180,12 +174,10 @@ export default function Billing({ navigate }: Props) {
             <button
               type="button"
               onClick={loadBillingData}
-              className={`p-2.5 rounded-2xl border transition-colors cursor-pointer ${
-                darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:bg-slate-50"
-              }`}
+              className="p-2.5 rounded-2xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-[var(--text-main)] transition-colors cursor-pointer"
               title="Refresh Data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-amber-500" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-[var(--brand-primary)]" : ""}`} />
             </button>
           </div>
         </div>
@@ -197,68 +189,56 @@ export default function Billing({ navigate }: Props) {
               label: "Collected Revenue",
               value: `₹${(totalRevenue / 1000).toFixed(1)}K`,
               icon: CheckCircle,
-              color: "text-green-600 dark:text-green-400",
-              bg: "bg-green-500/10 border-green-500/20",
+              color: "text-emerald-500",
+              bg: "bg-emerald-500/10 border-emerald-500/20",
             },
             {
               label: "Pending Dues",
               value: `₹${(pending / 1000).toFixed(1)}K`,
               icon: Clock,
-              color: "text-amber-600 dark:text-amber-400",
-              bg: "bg-amber-500/10 border-amber-500/20",
+              color: "text-[var(--accent-ruby)]",
+              bg: "bg-[var(--accent-ruby)]/10 border-[var(--accent-ruby)]/20",
             },
             {
               label: "Verified Transactions",
               value: `${successfulCount} txns`,
               icon: AlertCircle,
-              color: "text-rose-600 dark:text-rose-400",
-              bg: "bg-rose-500/10 border-rose-500/20",
+              color: "text-[var(--brand-primary)]",
+              bg: "bg-[var(--brand-primary)]/10 border-[var(--brand-primary)]/20",
             },
             {
               label: "Collection Efficiency",
               value: `${collectionRate}%`,
               icon: TrendingUp,
-              color: "text-blue-600 dark:text-blue-400",
-              bg: "bg-blue-500/10 border-blue-500/20",
+              color: "text-emerald-500",
+              bg: "bg-emerald-500/10 border-emerald-500/20",
             },
-          ].map((stat) => (
+          ].map((stat, i) => (
             <div
-              key={stat.label}
-              className={`p-4 rounded-2xl border ${
-                darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
-              }`}
+              key={i}
+              className={`p-4 rounded-2xl border ${stat.bg} ${
+                darkMode ? "bg-[var(--bg-card)]" : "bg-white"
+              } shadow-sm space-y-2`}
             >
               <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold ${
-                    darkMode ? "text-slate-400" : "text-slate-500"
-                  }`}
-                >
-                  {stat.label}
-                </span>
+                <span className="text-xs font-semibold text-[var(--text-muted)]">{stat.label}</span>
                 <stat.icon className={`w-4 h-4 ${stat.color}`} />
               </div>
-              <p
-                className={`text-xl font-black mt-2 ${
-                  darkMode ? "text-white" : "text-slate-900"
-                }`}
-              >
-                {stat.value}
-              </p>
+              <p className="text-xl font-black text-[var(--text-main)]">{stat.value}</p>
             </div>
           ))}
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200/20">
+        <div className="flex border-b border-[var(--border-main)]">
           {(["overview", "invoices", "transactions"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2.5 text-xs font-bold capitalize border-b-2 transition-all cursor-pointer ${
                 activeTab === tab
-                  ? "border-amber-500 text-amber-500"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
+                  ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
+                  : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]"
               }`}
             >
               {tab}
@@ -280,23 +260,17 @@ export default function Billing({ navigate }: Props) {
         {/* Invoices Tab */}
         {activeTab === "invoices" && (
           <div
-            className={`rounded-2xl border overflow-hidden ${
-              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
-            }`}
+            className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] overflow-hidden shadow-xs"
           >
-            <div className="p-4 border-b border-slate-200/20 flex flex-col sm:flex-row gap-3 justify-between items-center">
+            <div className="p-4 border-b border-[var(--border-main)] flex flex-col sm:flex-row gap-3 justify-between items-center">
               <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input
                   type="text"
                   placeholder="Search resident, invoice, or txn..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className={`w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
-                    darkMode
-                      ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-white"
-                      : "bg-[var(--bg-primary)] border-[var(--border-main)] text-slate-900"
-                  }`}
+                  className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)]"
                 />
               </div>
 
@@ -307,8 +281,8 @@ export default function Billing({ navigate }: Props) {
                     onClick={() => setFilter(f)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer ${
                       filter === f
-                        ? "bg-amber-500 text-black shadow-sm"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        ? "bg-[var(--brand-primary)] text-white shadow-xs"
+                        : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
                     }`}
                   >
                     {f}
@@ -320,9 +294,7 @@ export default function Billing({ navigate }: Props) {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead
-                  className={`uppercase font-bold tracking-wider border-b ${
-                    darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-slate-400" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-slate-500"
-                  }`}
+                  className="uppercase font-bold tracking-wider border-b border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-muted)]"
                 >
                   <tr>
                     <th className="p-3.5">Invoice ID</th>
@@ -335,10 +307,10 @@ export default function Billing({ navigate }: Props) {
                     <th className="p-3.5 text-right">PDF Invoice</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200/10">
+                <tbody className="divide-y divide-[var(--border-main)]/50">
                   {paymentsList.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-slate-400">
+                      <td colSpan={8} className="p-8 text-center text-[var(--text-muted)]">
                         No payments match the specified criteria.
                       </td>
                     </tr>
@@ -354,23 +326,21 @@ export default function Billing({ navigate }: Props) {
                       return (
                         <tr
                           key={inv.id}
-                          className={`hover:bg-amber-500/5 transition-colors ${
-                            darkMode ? "text-slate-300" : "text-slate-700"
-                          }`}
+                          className="hover:bg-[var(--bg-surface)] text-[var(--text-main)] transition-colors"
                         >
-                          <td className="p-3.5 font-mono font-bold text-amber-500">{invNo}</td>
+                          <td className="p-3.5 font-mono font-bold text-[var(--brand-primary)]">{invNo}</td>
                           <td className="p-3.5 font-semibold">{resName}</td>
                           <td className="p-3.5">{roomNo}</td>
                           <td className="p-3.5">{pgName}</td>
                           <td className="p-3.5 font-bold">₹{invAmt.toLocaleString("en-IN")}</td>
-                          <td className="p-3.5 text-slate-400">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</td>
+                          <td className="p-3.5 text-[var(--text-muted)]">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</td>
                           <td className="p-3.5">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                                 inv.status === "PAID" || inv.status === "VERIFIED"
                                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                   : inv.status === "PENDING" || inv.status === "PENDING_VERIFICATION" || inv.status === "INITIATED"
-                                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                  ? "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30"
                                   : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
                               }`}
                             >
@@ -382,7 +352,7 @@ export default function Billing({ navigate }: Props) {
                               href={billingService.getInvoicePdfUrl(invTargetId)}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[var(--brand-primary)]/30 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10 transition-colors"
                               title="Download PDF"
                             >
                               <Download className="w-3 h-3" />

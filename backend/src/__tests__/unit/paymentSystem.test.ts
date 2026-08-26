@@ -1,5 +1,13 @@
 import crypto from 'crypto';
-import { PaymentStatus } from '@prisma/client';
+const PaymentStatus = {
+  INITIATED: 'INITIATED',
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  VERIFIED: 'VERIFIED',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+  PAID: 'PAID',
+  PENDING: 'PENDING',
+} as any;
 import { PaymentService } from '../../modules/payments/payment.service';
 import { env } from '../../config/env';
 

@@ -29,10 +29,10 @@ jest.mock('../../services/tokenBlacklistService', () => ({
 describe('Concurrency & Load Simulation: Refresh Storm & Multi-Session Validation (Redis-Free)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue({ tokenVersion: 1 });
-    (prisma.user.update as jest.Mock).mockResolvedValue({ tokenVersion: 2 });
-    (prisma.refreshToken.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
-    (prisma.securityAuditEvent.create as jest.Mock).mockResolvedValue({ id: 'audit_conc' });
+    ((prisma as any).user.findUnique as jest.Mock).mockResolvedValue({ tokenVersion: 1 });
+    ((prisma as any).user.update as jest.Mock).mockResolvedValue({ tokenVersion: 2 });
+    ((prisma as any).refreshToken.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    ((prisma as any).securityAuditEvent.create as jest.Mock).mockResolvedValue({ id: 'audit_conc' });
     (tokenBlacklistService.isTokenBlacklisted as jest.Mock).mockResolvedValue(false);
     (tokenBlacklistService.blacklistToken as jest.Mock).mockResolvedValue(undefined);
   });

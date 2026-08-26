@@ -36,13 +36,13 @@ describe('Security Remediation: Unified Session Revocation Integration (Redis-Fr
     );
 
     // 1. All refresh tokens revoked in DB
-    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+    expect((prisma as any).refreshToken.updateMany).toHaveBeenCalledWith({
       where: { userId, revokedAt: null },
       data: { revokedAt: expect.any(Date) },
     });
 
     // 2. TokenVersion incremented in MongoDB
-    expect(prisma.user.update).toHaveBeenCalledWith({
+    expect((prisma as any).user.update).toHaveBeenCalledWith({
       where: { id: userId },
       data: { tokenVersion: { increment: 1 } },
       select: { tokenVersion: true },
@@ -52,7 +52,7 @@ describe('Security Remediation: Unified Session Revocation Integration (Redis-Fr
     expect(revokeSocketsSpy).toHaveBeenCalledWith(userId, 'REFRESH_TOKEN_REUSE_DETECTED');
 
     // 4. SecurityAuditEvent recorded
-    expect(prisma.securityAuditEvent.create).toHaveBeenCalledWith({
+    expect((prisma as any).securityAuditEvent.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId,
         eventType: 'SESSION_REVOKED',

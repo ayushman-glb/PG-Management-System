@@ -8,7 +8,7 @@ import mongoSanitize from "express-mongo-sanitize";
 const hpp = require("hpp");
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
-import apiRouter from "./routes/apiRouter";
+import { apiRouter } from "./routes/apiRouter";
 import { globalErrorHandler } from "./middleware/errorMiddleware";
 import { generalLimiter } from "./middleware/rateLimiter";
 import { correlationIdMiddleware } from "./middleware/correlationMiddleware";

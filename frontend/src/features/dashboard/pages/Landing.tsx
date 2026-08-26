@@ -10,6 +10,10 @@ import {
   Sparkles,
   ShieldCheck,
   Zap,
+  Mail,
+  Phone,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { Page } from "@app/App";
 import { ThemeToggle } from "@theme/index";
@@ -34,6 +38,20 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText("support@roombae.com");
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleCopyPhone = () => {
+    navigator.clipboard.writeText("+918000492233");
+    setCopiedPhone(true);
+    setTimeout(() => setCopiedPhone(false), 2000);
+  };
 
   const sampleProperties: PropertyCardData[] = [
     {
@@ -268,6 +286,27 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
                           <p className="font-bold text-xs text-[var(--text-main)] truncate">{user.name || "Member"}</p>
                           <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
                         </div>
+                        <div className="md:hidden px-2 py-1 border-b border-[var(--border-subtle)] space-y-1">
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); setActiveProductTab("homes"); }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--bg-surface)] text-[var(--text-main)] cursor-pointer"
+                          >
+                            Homes & PGs
+                          </button>
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); setActiveProductTab("coliving"); navigate("pg-listing"); }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--bg-surface)] text-[var(--text-main)] cursor-pointer"
+                          >
+                            Co-Living Hubs
+                          </button>
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); setActiveProductTab("services"); }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--bg-surface)] text-[var(--text-main)] flex items-center justify-between cursor-pointer"
+                          >
+                            <span>Services</span>
+                            <NewBadge />
+                          </button>
+                        </div>
                         <button
                           onClick={() => {
                             setMobileMenuOpen(false);
@@ -300,6 +339,27 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
                       </>
                     ) : (
                       <>
+                        <div className="md:hidden px-2 py-1 border-b border-[var(--border-subtle)] space-y-1">
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); setActiveProductTab("homes"); }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--bg-surface)] text-[var(--text-main)] cursor-pointer"
+                          >
+                            Homes & PGs
+                          </button>
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); setActiveProductTab("coliving"); navigate("pg-listing"); }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--bg-surface)] text-[var(--text-main)] cursor-pointer"
+                          >
+                            Co-Living Hubs
+                          </button>
+                          <button
+                            onClick={() => { setMobileMenuOpen(false); setActiveProductTab("services"); }}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--bg-surface)] text-[var(--text-main)] flex items-center justify-between cursor-pointer"
+                          >
+                            <span>Services</span>
+                            <NewBadge />
+                          </button>
+                        </div>
                         <button
                           onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
                           className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] font-bold text-[var(--text-main)] cursor-pointer"
@@ -550,8 +610,34 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               <h4 className="font-bold text-[var(--text-main)] mb-3">Support</h4>
               <ul className="space-y-2.5">
                 <li><button onClick={() => navigate("help-center")} className="hover:underline cursor-pointer">Help Center & Support</button></li>
-                <li><a href="mailto:support@roombae.com" className="hover:underline">Contact Support Team</a></li>
-                <li><a href="tel:+918000492233" className="hover:underline">+91 80004 92233</a></li>
+                <li className="flex items-center gap-2">
+                  <a href="mailto:support@roombae.com" className="hover:underline text-[var(--brand-primary)] flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>support@roombae.com</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleCopyEmail}
+                    className="p-1 rounded hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
+                    title="Copy support email"
+                  >
+                    {copiedEmail ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                  </button>
+                </li>
+                <li className="flex items-center gap-2">
+                  <a href="tel:+918000492233" className="hover:underline text-[var(--brand-primary)] flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>+91 80004 92233</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleCopyPhone}
+                    className="p-1 rounded hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
+                    title="Copy support phone number"
+                  >
+                    {copiedPhone ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                  </button>
+                </li>
                 <li><button onClick={() => navigate("terms-of-service")} className="hover:underline cursor-pointer">Cancellation Options</button></li>
                 <li><button onClick={() => navigate("privacy-policy")} className="hover:underline cursor-pointer">Safety Information</button></li>
               </ul>

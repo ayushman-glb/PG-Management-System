@@ -3,8 +3,10 @@ import { prisma } from '../../config/prisma';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../../core/errors/CustomErrors';
 
 export class BedService {
+  constructor(private customDb?: PrismaClient) {}
+
   private get db(): PrismaClient {
-    return (global as any).prismaSingleton || prisma;
+    return this.customDb || (global as any).prismaSingleton || prisma;
   }
 
   async createBed(ownerId: string, roomId: string, bedNumber: string, baseRent?: number, depositAmount?: number): Promise<Bed> {
@@ -64,8 +66,19 @@ export class BedService {
       data: { status: BedStatus.RESERVED },
     });
 
+    let holdRecord: any = null;
+    if ((this.db as any).bedHold?.create) {
+      holdRecord = await (this.db as any).bedHold.create({
+        data: {
+          bedId: data.bedId,
+          reason: data.reason,
+          notes: data.notes,
+        },
+      });
+    }
+
     return {
-      id: `hold_${data.bedId}`,
+      id: holdRecord?.id || `hold_${data.bedId}`,
       bedId: data.bedId,
       reason: data.reason,
       holdStartDate: data.holdStartDate || new Date().toISOString(),

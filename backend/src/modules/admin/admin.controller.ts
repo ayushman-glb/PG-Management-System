@@ -66,8 +66,11 @@ export class AdminController {
   verifyPG = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { status, rejectionReason, adminNotes } = req.body;
-      if (!status) throw new BadRequestError('status is required.');
+      let { status, approved, rejectionReason, adminNotes } = req.body;
+      if (!status && approved !== undefined) {
+        status = approved ? 'ACTIVE' : 'REJECTED';
+      }
+      if (!status) throw new BadRequestError('status or approved flag is required.');
 
       const pg = await this.adminService.verifyPG(id, status, rejectionReason, adminNotes);
       return ApiResponse.success(res, `PG status updated to ${status}.`, pg);
@@ -89,8 +92,11 @@ export class AdminController {
     try {
       if (!req.user?.id) throw new BadRequestError('User context missing.');
       const { id } = req.params;
-      const { status, rejectionReason } = req.body;
-      if (!status) throw new BadRequestError('status is required.');
+      let { status, approved, rejectionReason } = req.body;
+      if (!status && approved !== undefined) {
+        status = approved ? 'VERIFIED' : 'REJECTED';
+      }
+      if (!status) throw new BadRequestError('status or approved flag is required.');
 
       const doc = await this.adminService.verifyKYCDocument(id, req.user.id, status, rejectionReason);
       return ApiResponse.success(res, `KYC document status updated to ${status}.`, doc);

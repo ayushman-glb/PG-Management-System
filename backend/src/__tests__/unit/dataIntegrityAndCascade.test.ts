@@ -150,7 +150,7 @@ describe('Data Integrity, Cascade Update Engine & Repository Architecture', () =
             { id: 'usr_res_missing', name: 'John Doe', email: 'john@example.com', phone: '+919876543210', role: Role.RESIDENT },
           ]);
         }
-        if (where?.role === Role.OWNER) {
+        if (where?.role === ((Role as any).OWNER || Role.PG_OWNER)) {
           return Promise.resolve([]);
         }
         return Promise.resolve([]);

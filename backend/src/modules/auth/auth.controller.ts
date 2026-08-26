@@ -72,6 +72,108 @@ export class AuthController {
     }
   };
 
+  register = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password, role } = req.body;
+      if (!email || !password) {
+        throw new BadRequestError('Email and password are required.');
+      }
+
+      let firstName = req.body.firstName;
+      let lastName = req.body.lastName;
+      if (!firstName && req.body.name) {
+        const parts = req.body.name.trim().split(' ');
+        firstName = parts[0];
+        lastName = parts.slice(1).join(' ') || '.';
+      }
+
+      const username = req.body.username || email?.split('@')[0];
+      const phone = req.body.phone || '+919999999999';
+
+      const isOwner = role === 'OWNER' || role === 'PG_OWNER';
+      if (isOwner) {
+        const regRes = await this.authService.registerOwner({
+          email,
+          phone,
+          username,
+          password,
+          firstName: firstName || 'Owner',
+          lastName: lastName || '.',
+          ...req.body,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
+        const tokens = await this.authService.login(email, password);
+        setAuthCookies(res, { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+        return res.status(201).json({
+          success: true,
+          message: 'Account created successfully',
+          data: {
+            user: { ...regRes.user, role: 'OWNER' },
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+          },
+        });
+      } else {
+        const regRes = await this.authService.registerResident({
+          email,
+          phone,
+          username,
+          password,
+          firstName: firstName || 'Resident',
+          lastName: lastName || '.',
+          ...req.body,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+        });
+        const tokens = await this.authService.login(email, password);
+        setAuthCookies(res, { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+        return res.status(201).json({
+          success: true,
+          message: 'Account created successfully',
+          data: {
+            user: { ...regRes.user, role: 'RESIDENT' },
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+          },
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  sendOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phone, email } = req.body;
+      const target = phone || email;
+      const result = await this.authService.sendPhoneOtp(target);
+      return ApiResponse.success(res, result.message || 'OTP sent successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  sendPhoneOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phone } = req.body;
+      const result = await this.authService.sendPhoneOtp(phone);
+      return ApiResponse.success(res, result.message || 'OTP sent successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyPhoneOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { phone, otp } = req.body;
+      const result = await this.authService.verifyPhoneOtp(phone, otp);
+      return ApiResponse.success(res, result.message || 'Phone verified successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   verifyEmailOTP = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, otp } = req.body;
@@ -180,7 +282,14 @@ export class AuthController {
       const user = (req as AuthRequest).user;
       if (!user?.id) throw new BadRequestError('User context missing.');
       const userProfile = await this.authService.getMe(user.id);
-      return ApiResponse.success(res, 'User profile retrieved.', userProfile);
+      return res.status(200).json({
+        success: true,
+        message: 'User profile retrieved.',
+        data: {
+          user: userProfile,
+          ...userProfile,
+        },
+      });
     } catch (error) {
       next(error);
     }

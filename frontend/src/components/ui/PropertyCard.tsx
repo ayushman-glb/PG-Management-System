@@ -15,6 +15,8 @@ export interface PropertyCardData {
   isGuestFavorite?: boolean;
   isNew?: boolean;
   liked?: boolean;
+  distanceKm?: number;
+  distanceText?: string;
 }
 
 interface PropertyCardProps {
@@ -149,7 +151,16 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           {property.name} • {property.sharingType || "Single / Double"}
         </p>
 
-        <p className="text-[var(--text-muted-soft)] text-xs">Available now</p>
+        <div className="flex items-center justify-between text-xs">
+          <p className="text-[var(--text-muted-soft)] truncate">
+            {property.distanceText ? `📍 ${property.distanceText}` : "Available now"}
+          </p>
+          {property.distanceText && (
+            <span className="text-[10px] font-medium text-[var(--accent-forest)] bg-[var(--accent-forest)]/10 px-1.5 py-0.5 rounded">
+              Near Search
+            </span>
+          )}
+        </div>
 
         <div className="mt-1 flex items-baseline gap-1">
           <span className="font-bold text-[var(--text-main)]">

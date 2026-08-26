@@ -28,11 +28,9 @@ export const globalErrorHandler = (
     logger.error(`[${correlationId}] Error on ${req.method} ${req.originalUrl}:`, err);
   }
 
-  // 1. AppError (Domain & Business Logic Exceptions)
-  if (err instanceof AppError || err?.isOperational || err?.statusCode) {
-    const errCode = err.errorCode || err.code;
-    const action = err.statusCode === 401 ? (errCode === 'TOKEN_EXPIRED' ? 'refresh' : 'login') : err.statusCode === 403 ? 'contact_admin' : 'retry';
-    return ApiResponse.error(res, err.message, err.errors || [], err.statusCode, errCode, action);
+  // 1. Express / Body Parser JSON Syntax Errors
+  if ((err instanceof SyntaxError && ('body' in err || 'status' in err)) || err.type === 'entity.parse.failed' || (statusCode === 400 && err.message?.includes('JSON'))) {
+    return ApiResponse.error(res, 'Malformed JSON payload syntax', [], 400, 'INVALID_JSON', 'check_payload_format');
   }
 
   // 2. Zod Validation Errors
@@ -44,9 +42,11 @@ export const globalErrorHandler = (
     return ApiResponse.error(res, 'Validation failed: Invalid request payload', errors, 400, 'VALIDATION_ERROR', 'check_input');
   }
 
-  // 3. Express / Body Parser JSON Syntax Errors
-  if (err instanceof SyntaxError && 'body' in err && statusCode === 400) {
-    return ApiResponse.error(res, 'Malformed JSON payload syntax', [], 400, 'INVALID_JSON', 'check_payload_format');
+  // 3. AppError (Domain & Business Logic Exceptions)
+  if (err instanceof AppError || err?.isOperational || err?.statusCode) {
+    const errCode = err.errorCode || err.code;
+    const action = err.statusCode === 401 ? (errCode === 'TOKEN_EXPIRED' ? 'refresh' : 'login') : err.statusCode === 403 ? 'contact_admin' : 'retry';
+    return ApiResponse.error(res, err.message, err.errors || [], err.statusCode, errCode, action);
   }
 
   // 4. Prisma Specific Error Codes

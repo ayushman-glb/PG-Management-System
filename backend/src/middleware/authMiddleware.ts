@@ -78,7 +78,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     if (err.name === 'TokenExpiredError') {
       return next(new UnauthorizedError('Token expired.', 'TOKEN_EXPIRED'));
     }
-    return next(new UnauthorizedError('Invalid token signature.', 'TOKEN_INVALID'));
+    return next(new UnauthorizedError('Invalid token signature.', 'INVALID_TOKEN'));
   }
 };
 

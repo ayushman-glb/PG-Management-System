@@ -18,8 +18,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     return (
       <div className="min-h-[40vh] flex items-center justify-center p-8">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium text-neutral-400">Verifying role permissions...</p>
+          <div className="w-8 h-8 border-3 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-medium text-[var(--text-muted)]">Verifying role permissions...</p>
         </div>
       </div>
     );
@@ -33,7 +33,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
             🛑
           </div>
           <h3 className="text-lg font-bold mb-2 text-rose-500">Access Denied</h3>
-          <p className="text-sm text-neutral-400 mb-6">You must be logged in to view this section.</p>
+          <p className="text-sm text-[var(--text-muted)] mb-6">You must be logged in to view this section.</p>
         </div>
       </div>
     );
@@ -50,8 +50,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
             🔒
           </div>
           <h3 className="text-lg font-bold mb-2 text-rose-500">Restricted Access</h3>
-          <p className="text-sm text-neutral-400 mb-2">
-            Your account role (<span className="font-semibold text-amber-500">{user.role}</span>) does not have permission to view this page.
+          <p className="text-sm text-[var(--text-muted)] mb-2">
+            Your account role (<span className="font-semibold text-[var(--brand-primary)]">{user.role}</span>) does not have permission to view this page.
           </p>
         </div>
       </div>

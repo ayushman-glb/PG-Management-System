@@ -164,6 +164,7 @@ const envSchema = z.object({
 
   GOOGLE_CLOUD_PROJECT_ID: z.string().default("roombae-cff13"),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  GEOAPIFY_API_KEY: z.string().default(""),
   SMS_API_KEY: z.string().default("mock_sms_api_key"),
   NOMINATIM_USER_AGENT: z.string().default("RoomBae-PG-Management/1.0"),
   CLUSTER_MODE: z.string().default("false"),

@@ -141,18 +141,18 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-3xl bg-neutral-900 border border-white/10 p-6 text-white shadow-2xl"
+          className="relative w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-3xl bg-[var(--bg-card)] border border-[var(--border-main)] p-6 text-[var(--text-main)] shadow-2xl"
         >
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+          <div className="flex items-center justify-between border-b border-[var(--border-main)] pb-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <div className="p-3 rounded-2xl bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30">
                 <Bed className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-xl font-bold">
                   {mode === "resident-request" ? "Request Room Change" : "Manage Room Transfer Request"}
                 </h3>
-                <p className="text-sm text-neutral-400">
+                <p className="text-sm text-[var(--text-muted)]">
                   {mode === "resident-request"
                     ? "Submit your room or bed transfer preferences to property owner"
                     : `Request from ${requestData?.resident?.name || "Resident"}`}
@@ -161,7 +161,7 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -184,11 +184,11 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
             <form onSubmit={handleResidentSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1">PREFERRED SHARING TYPE</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PREFERRED SHARING TYPE</label>
                   <select
                     value={preferredSharingType}
                     onChange={(e) => setPreferredSharingType(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                   >
                     <option value="Single Sharing">Single Sharing (1 Bed)</option>
                     <option value="2 Sharing">2 Sharing (Double)</option>
@@ -198,44 +198,44 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1">PREFERRED ROOM # (OPTIONAL)</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PREFERRED ROOM # (OPTIONAL)</label>
                   <input
                     type="text"
                     placeholder="e.g. Room 204 or Single AC"
                     value={preferredRoomNumber}
                     onChange={(e) => setPreferredRoomNumber(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1">MONTHLY BUDGET (₹)</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">MONTHLY BUDGET (₹)</label>
                   <input
                     type="number"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1">PREFERRED MOVE DATE</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PREFERRED MOVE DATE</label>
                   <input
                     type="date"
                     value={preferredMoveDate}
                     onChange={(e) => setPreferredMoveDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-400 mb-1">PRIORITY LEVEL</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PRIORITY LEVEL</label>
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -246,40 +246,40 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-400 mb-1">REASON FOR ROOM CHANGE *</label>
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">REASON FOR ROOM CHANGE *</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="Explain why you want to change room..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-400 mb-1">ADDITIONAL NOTES</label>
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">ADDITIONAL NOTES</label>
                 <input
                   type="text"
                   placeholder="Any specific requests for owner..."
                   value={additionalNotes}
                   onChange={(e) => setAdditionalNotes(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
-              <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--border-main)] flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 py-2.5 rounded-xl bg-neutral-800 text-neutral-300 hover:text-white font-medium transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] font-medium transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors disabled:opacity-50"
+                  className="btn-primary flex items-center gap-2 px-6 py-2.5 text-xs font-semibold"
                 >
                   {isSubmitting ? "Submitting..." : "Submit Request"}
                   <ArrowRight className="w-4 h-4" />
@@ -288,52 +288,52 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
             </form>
           ) : (
             <div className="space-y-5">
-              <div className="p-4 rounded-2xl bg-neutral-800/60 border border-white/5 space-y-2 text-sm">
+              <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-main)] space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-neutral-400">Resident Name:</span>
-                  <span className="font-semibold text-white">{requestData?.resident?.name || "Rahul Sharma"}</span>
+                  <span className="text-[var(--text-muted)]">Resident Name:</span>
+                  <span className="font-semibold text-[var(--text-main)]">{requestData?.resident?.name || "Rahul Sharma"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-400">Current Bed:</span>
-                  <span className="font-medium text-amber-400">{requestData?.currentBed?.bedNumber || "Room 101-A"}</span>
+                  <span className="text-[var(--text-muted)]">Current Bed:</span>
+                  <span className="font-medium text-[var(--brand-primary)]">{requestData?.currentBed?.bedNumber || "Room 101-A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-400">Preferred Sharing:</span>
-                  <span className="font-medium text-emerald-400">{requestData?.preferredSharingType || "Single Sharing"}</span>
+                  <span className="text-[var(--text-muted)]">Preferred Sharing:</span>
+                  <span className="font-medium text-[var(--accent-forest)]">{requestData?.preferredSharingType || "Single Sharing"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-400">Reason:</span>
-                  <span className="italic text-neutral-300">&quot;{requestData?.reason || "Seeking single occupancy"}&quot;</span>
+                  <span className="text-[var(--text-muted)]">Reason:</span>
+                  <span className="italic text-[var(--text-main)]">&quot;{requestData?.reason || "Seeking single occupancy"}&quot;</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-400 mb-1">ASSIGN TARGET BED ID (FOR APPROVAL)</label>
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">ASSIGN TARGET BED ID (FOR APPROVAL)</label>
                 <input
                   type="text"
                   placeholder="Enter target Bed ID (e.g. bed_204_a)"
                   value={targetBedId}
                   onChange={(e) => setTargetBedId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-400 mb-1">REJECTION REASON (IF REJECTING)</label>
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">REJECTION REASON (IF REJECTING)</label>
                 <input
                   type="text"
                   placeholder="Specify why request cannot be fulfilled..."
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-neutral-800 border border-white/10 text-white focus:outline-none focus:border-rose-500"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-main)] text-[var(--text-main)] focus:outline-none focus:border-rose-500"
                 />
               </div>
 
-              <div className="pt-4 border-t border-white/10 flex flex-wrap justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--border-main)] flex flex-wrap justify-end gap-3">
                 <button
                   onClick={handleOwnerReject}
                   disabled={isSubmitting}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 font-medium hover:bg-rose-500/30 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 font-medium hover:bg-rose-500/30 transition-colors cursor-pointer"
                 >
                   <XCircle className="w-4 h-4" />
                   Reject Request
@@ -342,7 +342,7 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
                 <button
                   onClick={handleOwnerApprove}
                   disabled={isSubmitting}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium hover:bg-emerald-500/30 transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--accent-forest)]/20 text-[var(--accent-forest)] border border-[var(--accent-forest)]/30 font-medium hover:bg-[var(--accent-forest)]/30 transition-colors cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Approve Request
@@ -351,7 +351,7 @@ export const RoomTransferModal: React.FC<RoomTransferModalProps> = ({
                 <button
                   onClick={handleOwnerComplete}
                   disabled={isSubmitting}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
+                  className="btn-primary flex items-center gap-2 px-6 py-2.5 text-xs font-semibold"
                 >
                   <ArrowRight className="w-4 h-4" />
                   Complete Transfer

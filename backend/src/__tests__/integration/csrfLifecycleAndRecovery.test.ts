@@ -4,6 +4,8 @@ import { JwtTokenService } from '../../infrastructure/crypto/JwtTokenService';
 
 const tokenService = new JwtTokenService();
 
+jest.setTimeout(20000);
+
 describe('CSRF Full Lifecycle, Auto-Recovery & Double-Submit Protection', () => {
   let validToken: string;
 

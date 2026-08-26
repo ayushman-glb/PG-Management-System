@@ -24,8 +24,11 @@ router.get('/csrf-token', (req, res) => {
 // Public Authentication Endpoints
 router.post('/register/resident', authLimiter, authController.registerResident);
 router.post('/register/owner', authLimiter, authController.registerOwner);
-router.post('/register', authLimiter, authController.registerResident);
-router.post('/verify-otp', authLimiter, authController.verifyEmailOTP);
+router.post('/register', authLimiter, authController.register);
+router.post('/send-otp', authLimiter, authController.sendOtp);
+router.post('/send-phone-otp', authLimiter, authController.sendPhoneOtp);
+router.post('/verify-otp', authLimiter, authController.verifyPhoneOtp);
+router.post('/verify-phone-otp', authLimiter, authController.verifyPhoneOtp);
 router.post('/login', authLimiter, authController.login);
 router.post('/sign-in', authLimiter, authController.login);
 router.post('/verify-2fa', authLimiter, authController.verify2FA);

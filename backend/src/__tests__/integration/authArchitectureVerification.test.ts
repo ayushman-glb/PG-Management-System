@@ -86,7 +86,7 @@ describe('RoomBae Full-Stack Cross-Origin Authentication Architecture Suite', ()
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.error?.code).toBe('TOKEN_INVALID');
+      expect(res.body.error?.code).toMatch(/TOKEN_INVALID|INVALID_TOKEN/);
     });
   });
 

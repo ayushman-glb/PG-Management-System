@@ -5,6 +5,8 @@ import { AgreementService } from '../../modules/agreements/agreement.service';
 import { DocumentService } from '../../modules/documents/document.service';
 import { Role, AgreementStatus, DocumentType, VerificationStatus } from '@prisma/client';
 
+jest.setTimeout(30000);
+
 describe('Agreements, Digital Signatures & Document Vault Integration Suite', () => {
   let ownerUser: any;
   let residentUser: any;

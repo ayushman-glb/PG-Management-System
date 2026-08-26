@@ -6,3 +6,4 @@ export * from "./MotionPrimitives";
 export * from "./ScrollProgressBar";
 export * from "./SmoothScroll";
 export * from "./GSAPAnimations";
+export * from "./InteractiveVideoLoader";

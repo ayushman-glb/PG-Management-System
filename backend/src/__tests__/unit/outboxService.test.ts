@@ -17,7 +17,7 @@ describe('OutboxService Transactional Outbox Pattern', () => {
   });
 
   test('should create an outbox event with PENDING status', async () => {
-    (prisma.outboxEvent.create as jest.Mock).mockResolvedValue({
+    ((prisma as any).outboxEvent.create as jest.Mock).mockResolvedValue({
       id: 'outbox_1',
       eventType: 'SEND_INVOICE_EMAIL',
       payload: { invoiceId: 'inv_123', email: 'resident@test.com' },
@@ -30,7 +30,7 @@ describe('OutboxService Transactional Outbox Pattern', () => {
     });
 
     expect(event.id).toBe('outbox_1');
-    expect(prisma.outboxEvent.create).toHaveBeenCalledWith({
+    expect((prisma as any).outboxEvent.create).toHaveBeenCalledWith({
       data: {
         eventType: 'SEND_INVOICE_EMAIL',
         payload: { invoiceId: 'inv_123', email: 'resident@test.com' },
@@ -41,7 +41,7 @@ describe('OutboxService Transactional Outbox Pattern', () => {
   });
 
   test('should process pending outbox events', async () => {
-    (prisma.outboxEvent.findMany as jest.Mock).mockResolvedValue([
+    ((prisma as any).outboxEvent.findMany as jest.Mock).mockResolvedValue([
       {
         id: 'outbox_1',
         eventType: 'SEND_OTP_SMS',
@@ -50,12 +50,12 @@ describe('OutboxService Transactional Outbox Pattern', () => {
         attempts: 0,
       },
     ]);
-    (prisma.outboxEvent.update as jest.Mock).mockResolvedValue({ id: 'outbox_1' });
+    ((prisma as any).outboxEvent.update as jest.Mock).mockResolvedValue({ id: 'outbox_1' });
 
     const processedCount = await OutboxService.processPendingEvents();
 
     expect(processedCount).toBe(1);
-    expect(prisma.outboxEvent.update).toHaveBeenCalledWith({
+    expect((prisma as any).outboxEvent.update).toHaveBeenCalledWith({
       where: { id: 'outbox_1' },
       data: { status: 'PROCESSED' },
     });

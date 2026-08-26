@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { CreditCard, MessageSquare, Key, AlertTriangle, Send, ArrowLeft } from "lucide-react";
 import type { Page } from "@app/App";
 import { ThemeToggle, useTheme } from "@theme/index";
@@ -89,10 +89,10 @@ export default function MoveInDashboardPage({ navigate }: Props) {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] text-[var(--text-main)]"}`}>
-      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"}`}>
+      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[var(--bg-card)]/80 border-[var(--border-main)]" : "bg-white/80 border-[var(--border-main)]"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("pg-listing")} className="p-2 rounded-xl border border-white/10 hover:bg-white/5">
+            <button onClick={() => navigate("pg-listing")} className="p-2 rounded-xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] cursor-pointer">
               <ArrowLeft className="w-4 h-4" />
             </button>
             <h1 className="text-xl font-bold">Stage 4 • Move-In Tenant Dashboard</h1>
@@ -103,7 +103,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 pb-4 overflow-x-auto border-b border-white/10 mb-8">
+        <div className="flex gap-2 pb-4 overflow-x-auto border-b border-[var(--border-main)] mb-8">
           {[
             { id: "payments", label: "Rent & Payments", icon: CreditCard },
             { id: "messages", label: "Owner Chat", icon: MessageSquare },
@@ -115,12 +115,10 @@ export default function MoveInDashboardPage({ navigate }: Props) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   activeTab === tab.id
-                    ? "luxury-btn-primary"
-                    : darkMode
-                    ? "bg-[var(--bg-nested)] text-slate-300 hover:bg-[var(--bg-card)]"
-                    : "bg-white text-slate-700 hover:bg-slate-100"
+                    ? "bg-[var(--brand-primary)] text-white"
+                    : "bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-main)]"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -133,15 +131,15 @@ export default function MoveInDashboardPage({ navigate }: Props) {
         {/* Tab 1: Rent & Payments */}
         {activeTab === "payments" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`md:col-span-2 p-6 rounded-3xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
-              <h3 className="text-lg font-bold mb-4">Rent Dues & Razorpay Integration</h3>
-              <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between mb-6">
+            <div className={`md:col-span-2 p-6 rounded-3xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
+              <h3 className="text-lg font-bold mb-4">Rent Dues &amp; Razorpay Integration</h3>
+              <div className="p-5 rounded-2xl bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-xs font-bold text-amber-400">Upcoming Monthly Rent</p>
-                  <p className="text-3xl font-black mt-1">₹8,500</p>
-                  <p className="text-xs opacity-70 mt-1">Due Date: 5th of this month</p>
+                  <p className="text-xs font-bold text-[var(--brand-primary)]">Upcoming Monthly Rent</p>
+                  <p className="text-3xl font-black mt-1 text-[var(--text-main)]">₹8,500</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Due Date: 5th of this month</p>
                 </div>
-                <button onClick={handleInitiatePayment} className="luxury-btn-primary px-6 py-3 text-xs font-bold shadow-xl">
+                <button onClick={handleInitiatePayment} className="btn-primary px-6 py-3 text-xs font-bold shadow-md shadow-[var(--brand-primary)]/20">
                   Pay Now with Razorpay
                 </button>
               </div>
@@ -149,20 +147,20 @@ export default function MoveInDashboardPage({ navigate }: Props) {
               <h4 className="text-sm font-bold mb-3">Recent Payment Receipts</h4>
               <div className="space-y-3">
                 {[1, 2].map((i) => (
-                  <div key={i} className="p-4 rounded-2xl bg-white/5 flex items-center justify-between text-xs">
+                  <div key={i} className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-main)] flex items-center justify-between text-xs">
                     <div>
-                      <p className="font-bold">Monthly Rent & Maintenance #{i}</p>
-                      <p className="opacity-60">Paid on 1st of previous month via UPI</p>
+                      <p className="font-bold">Monthly Rent &amp; Maintenance #{i}</p>
+                      <p className="text-[var(--text-muted)]">Paid on 1st of previous month via UPI</p>
                     </div>
-                    <span className="font-bold text-emerald-400 text-sm">₹8,500 (PAID)</span>
+                    <span className="font-bold text-emerald-500 text-sm">₹8,500 (PAID)</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className={`p-6 rounded-3xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
+            <div className={`p-6 rounded-3xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
               <h3 className="text-base font-bold mb-3">Occupancy Pass</h3>
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold space-y-2">
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-bold space-y-2">
                 <p>Status: ACTIVE RESIDENT</p>
                 <p>Room 101 • Bed 101-A</p>
                 <p>Agreement: Valid till Dec 2026</p>
@@ -174,7 +172,7 @@ export default function MoveInDashboardPage({ navigate }: Props) {
         {/* Tab 2: Chat & Messages */}
         {activeTab === "messages" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[550px]">
-            <div className={`p-4 rounded-3xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
+            <div className={`p-4 rounded-3xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
               <h3 className="text-sm font-bold mb-3 px-2">Message Threads</h3>
               <div className="space-y-2">
                 {threads.map((t) => (
@@ -184,8 +182,8 @@ export default function MoveInDashboardPage({ navigate }: Props) {
                       setSelectedThread(t);
                       fetchThreadMessages(t.id);
                     }}
-                    className={`w-full p-3 rounded-2xl text-left text-xs transition-colors ${
-                      selectedThread?.id === t.id ? "luxury-btn-primary" : "hover:bg-white/5"
+                    className={`w-full p-3 rounded-2xl text-left text-xs transition-colors cursor-pointer ${
+                      selectedThread?.id === t.id ? "bg-[var(--brand-primary)] text-white" : "hover:bg-[var(--bg-surface)] text-[var(--text-main)]"
                     }`}
                   >
                     <p className="font-bold">{t.pg?.name || "Property Owner"}</p>
@@ -195,13 +193,13 @@ export default function MoveInDashboardPage({ navigate }: Props) {
               </div>
             </div>
 
-            <div className={`md:col-span-2 p-6 rounded-3xl border flex flex-col justify-between ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
+            <div className={`md:col-span-2 p-6 rounded-3xl border flex flex-col justify-between ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
               <div className="space-y-3 overflow-y-auto max-h-[420px] pr-2">
                 {messages.length === 0 ? (
-                  <div className="text-center py-20 text-xs opacity-50">No messages in thread yet. Type a message below!</div>
+                  <div className="text-center py-20 text-xs text-[var(--text-muted)]">No messages in thread yet. Type a message below!</div>
                 ) : (
                   messages.map((m) => (
-                    <div key={m.id} className={`p-3 rounded-2xl text-xs max-w-sm ${m.senderId === summary?.resident?.userId ? "ml-auto luxury-btn-primary" : "bg-white/10"}`}>
+                    <div key={m.id} className={`p-3 rounded-2xl text-xs max-w-sm ${m.senderId === summary?.resident?.userId ? "ml-auto bg-[var(--brand-primary)] text-white" : "bg-[var(--bg-surface)] text-[var(--text-main)] border border-[var(--border-main)]"}`}>
                       <p>{m.content}</p>
                       <p className="text-xs opacity-60 text-right mt-1">{new Date(m.createdAt).toLocaleTimeString()}</p>
                     </div>
@@ -209,15 +207,15 @@ export default function MoveInDashboardPage({ navigate }: Props) {
                 )}
               </div>
 
-              <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-white/10">
+              <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-[var(--border-main)]">
                 <input
                   type="text"
                   placeholder="Type your message to owner/staff..."
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
-                  className={`flex-1 p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
+                  className="flex-1 p-3 text-xs rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] outline-none focus:border-[var(--brand-primary)]"
                 />
-                <button type="submit" className="luxury-btn-primary p-3 rounded-xl">
+                <button type="submit" className="btn-primary p-3 rounded-xl">
                   <Send className="w-4 h-4" />
                 </button>
               </form>
@@ -227,28 +225,28 @@ export default function MoveInDashboardPage({ navigate }: Props) {
 
         {/* Tab 3: Move-In Checklist */}
         {activeTab === "moveInInfo" && (
-          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
+          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Key className="w-5 h-5 text-amber-500" /> Move-In Instructions & House Rules
+              <Key className="w-5 h-5 text-[var(--brand-primary)]" /> Move-In Instructions &amp; House Rules
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-white/5">
-                  <h4 className="text-xs font-bold text-amber-400 mb-1">Key Handover Details</h4>
-                  <p className="text-xs opacity-80">{moveInInfo?.keyHandoverDetails || "Key can be collected at main gate reception counter on move-in day."}</p>
+                <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-main)]">
+                  <h4 className="text-xs font-bold text-[var(--brand-primary)] mb-1">Key Handover Details</h4>
+                  <p className="text-xs text-[var(--text-muted)]">{moveInInfo?.keyHandoverDetails || "Key can be collected at main gate reception counter on move-in day."}</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white/5">
-                  <h4 className="text-xs font-bold text-amber-400 mb-1">Wi-Fi & Gate Access</h4>
-                  <p className="text-xs opacity-80">{moveInInfo?.wifiDetails || "SSID: RoomBae_Guest | Password: WelcomeRoomBae2026"}</p>
-                  <p className="text-xs opacity-80 mt-1">Main Gate PIN: {moveInInfo?.gateCode || "4321#"}</p>
+                <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-main)]">
+                  <h4 className="text-xs font-bold text-[var(--brand-primary)] mb-1">Wi-Fi &amp; Gate Access</h4>
+                  <p className="text-xs text-[var(--text-muted)]">{moveInInfo?.wifiDetails || "SSID: RoomBae_Guest | Password: WelcomeRoomBae2026"}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Main Gate PIN: {moveInInfo?.gateCode || "4321#"}</p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white/5">
-                <h4 className="text-xs font-bold text-amber-400 mb-2">House Rules</h4>
-                <ul className="space-y-2 text-xs opacity-80 list-disc list-inside">
+              <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-main)]">
+                <h4 className="text-xs font-bold text-[var(--brand-primary)] mb-2">House Rules</h4>
+                <ul className="space-y-2 text-xs text-[var(--text-muted)] list-disc list-inside">
                   {(moveInInfo?.houseRules || ["Curfew at 10:30 PM", "No loud music after 10 PM", "Visitors allowed in common areas till 8 PM"]).map((r: string, idx: number) => (
                     <li key={idx}>{r}</li>
                   ))}
@@ -260,23 +258,23 @@ export default function MoveInDashboardPage({ navigate }: Props) {
 
         {/* Tab 4: Complaints & Maintenance */}
         {activeTab === "complaints" && (
-          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
+          <div className={`p-8 rounded-3xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold">Maintenance Tickets</h3>
-              <button onClick={() => navigate("complaints")} className="luxury-btn-primary px-4 py-2 text-xs font-bold">
+              <button onClick={() => navigate("complaints")} className="btn-primary px-4 py-2 text-xs font-bold">
                 + Raise Ticket
               </button>
             </div>
 
             <div className="space-y-4">
               {[1].map((c) => (
-                <div key={c} className="p-4 rounded-2xl bg-white/5 flex items-center justify-between">
+                <div key={c} className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-main)] flex items-center justify-between">
                   <div>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400">Plumbing Issue</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]">Plumbing Issue</span>
                     <h4 className="font-bold text-sm mt-1">Tap leaking in Room 101 washroom</h4>
-                    <p className="text-xs opacity-60">Submitted 2 days ago</p>
+                    <p className="text-xs text-[var(--text-muted)]">Submitted 2 days ago</p>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
                     RESOLVED
                   </span>
                 </div>

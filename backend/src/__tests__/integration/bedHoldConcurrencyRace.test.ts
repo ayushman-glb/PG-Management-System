@@ -20,10 +20,11 @@ describe('Bed-Hold Concurrency & Mutex Lock Race Condition Integration', () => {
           });
         }),
         update: jest.fn().mockImplementation(() => {
-          if (bedStatus === BedStatus.HOLD || isOccupied) {
+          const holdStatus = (BedStatus as any).HOLD || BedStatus.RESERVED;
+          if (bedStatus === holdStatus || isOccupied) {
             throw new Error('Optimistic concurrency violation: Bed already on HOLD');
           }
-          bedStatus = BedStatus.HOLD;
+          bedStatus = holdStatus;
           return Promise.resolve({ id: testBedId, status: bedStatus });
         }),
       },

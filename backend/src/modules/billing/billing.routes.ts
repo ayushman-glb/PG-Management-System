@@ -8,13 +8,20 @@ const billingController = new BillingController(billingService);
 
 const router = Router();
 
-router.get('/invoices', authenticate, billingController.getInvoices);
-router.get('/invoices/:id/pdf', authenticate, billingController.downloadInvoicePdf);
-router.get('/invoices/:id/download', authenticate, billingController.downloadInvoicePdf);
-router.get('/invoices/:id', authenticate, billingController.getInvoiceById);
-router.get('/resident', authenticate, requireResident, billingController.getResidentInvoices);
-router.get('/owner', authenticate, requireOwner, billingController.getOwnerInvoices);
-router.get('/dues/:userId', authenticate, billingController.getUserDues);
-router.post('/generate', authenticate, requireOwner, billingController.generateInvoice);
+router.use(authenticate);
+
+router.get('/invoices', billingController.getInvoices);
+router.get('/invoices/:id/pdf', billingController.downloadInvoicePdf);
+router.get('/invoices/:id/download', billingController.downloadInvoicePdf);
+router.get('/invoices/:id', billingController.getInvoiceById);
+router.get('/resident', requireResident, billingController.getResidentInvoices);
+router.get('/owner', requireOwner, billingController.getOwnerInvoices);
+router.get('/dues/:userId', billingController.getUserDues);
+router.post('/generate', requireOwner, billingController.generateInvoice);
+
+// Fines
+router.get('/fines', billingController.getFines);
+router.post('/fines', requireOwner, billingController.levyFine);
+router.post('/fines/:id/waive', requireOwner, billingController.waiveFine);
 
 export { router as billingRoutes };

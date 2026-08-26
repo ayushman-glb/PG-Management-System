@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useTheme } from "@theme/index";
 import { NavigationProvider } from "./navigation";
 import { AppProviders } from "./providers";
 import { AppRoutes } from "./routes";
-import loadingImg from "../assets/loading.png";
+import { InteractiveVideoLoader } from "../components/animations/InteractiveVideoLoader";
 import { authService } from "../services/auth.service";
 import { useUIStore } from "../store/useUIStore";
 import { updateDocumentSEO } from "../config/seo.config";
@@ -181,36 +180,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    let timer: number;
     let debugTimer: number;
 
-    if (showOneTimeLoading) {
-      timer = window.setTimeout(() => {
-        setShowOneTimeLoading(false);
-        try {
-          sessionStorage.setItem(SESSION_KEY, "true");
-        } catch (e) {
-          console.error("Failed to update sessionStorage:", e);
-        }
-
-        if (ENABLE_SKELETON_DEBUG_DELAY) {
-          setSkeletonLoading(true);
-          debugTimer = window.setTimeout(() => {
-            setSkeletonLoading(false);
-          }, SKELETON_DEBUG_DELAY_MS);
-        }
-      }, BRANDED_LOADING_DURATION_MS);
-    } else {
-      if (ENABLE_SKELETON_DEBUG_DELAY) {
-        setSkeletonLoading(true);
-        debugTimer = window.setTimeout(() => {
-          setSkeletonLoading(false);
-        }, SKELETON_DEBUG_DELAY_MS);
-      }
+    if (!showOneTimeLoading && ENABLE_SKELETON_DEBUG_DELAY) {
+      setSkeletonLoading(true);
+      debugTimer = window.setTimeout(() => {
+        setSkeletonLoading(false);
+      }, SKELETON_DEBUG_DELAY_MS);
     }
 
     return () => {
-      window.clearTimeout(timer);
       window.clearTimeout(debugTimer);
     };
   }, [showOneTimeLoading]);
@@ -259,7 +238,21 @@ export default function App() {
     <AppProviders>
       <NavigationProvider goBack={goBack}>
         <AnimatePresence>
-          {showOneTimeLoading && <LoadingOverlay key="branded-overlay" />}
+          {showOneTimeLoading && (
+            <InteractiveVideoLoader
+              key="branded-spatial-loader"
+              videoSrc="/back.mp4"
+              durationMs={3000}
+              onComplete={() => {
+                setShowOneTimeLoading(false);
+                try {
+                  sessionStorage.setItem(SESSION_KEY, "true");
+                } catch (e) {
+                  console.error("Failed to update sessionStorage:", e);
+                }
+              }}
+            />
+          )}
         </AnimatePresence>
 
         <AnimatePresence mode="popLayout">
@@ -345,33 +338,3 @@ export default function App() {
   );
 }
 
-function LoadingOverlay() {
-  const { darkMode } = useTheme();
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      aria-busy="true"
-      aria-label="Loading RoomBae"
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-colors duration-300 ${
-        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
-      }`}
-    >
-      <div className="flex flex-col items-center gap-6">
-        <img
-          src={loadingImg}
-          alt="RoomBae"
-          className="w-52 md:w-60 animate-pulse filter drop-shadow-md"
-        />
-
-        <div className="flex gap-2.5 items-center">
-          <span className="h-2.5 w-2.5 rounded-full animate-bounce bg-[var(--brand-primary)]" />
-          <span className="h-2.5 w-2.5 rounded-full animate-bounce delay-150 bg-[var(--accent-ruby)]" />
-          <span className="h-2.5 w-2.5 rounded-full animate-bounce delay-300 bg-[var(--accent-forest)]" />
-        </div>
-      </div>
-    </motion.div>
-  );
-}

@@ -36,9 +36,19 @@ describe('RoomBae Enterprise Real-time WebSocket Subsystem Suite', () => {
   afterAll((done) => {
     try {
       const io = SocketServer.getIO();
-      io.close(() => {
+      if (io) {
+        io.close(() => {
+          if (httpServer.listening) {
+            httpServer.close(done);
+          } else {
+            done();
+          }
+        });
+      } else if (httpServer.listening) {
+        httpServer.close(done);
+      } else {
         done();
-      });
+      }
     } catch {
       if (httpServer.listening) {
         httpServer.close(done);

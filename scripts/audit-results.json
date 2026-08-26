@@ -152,12 +152,12 @@
     "frontendCall": "/owners/property/:param/building",
     "method": "POST",
     "file": "frontend/src/features/properties/pages/Properties.tsx",
-    "line": 672,
+    "line": 670,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/owners/property/:id/building",
       "subPath": "/property/:id/building",
-      "order": 3,
+      "order": 6,
       "handler": "ownerController.addBuilding",
       "middlewares": [
         "requireRole(Role.PG_OWNER)"
@@ -176,12 +176,12 @@
     "frontendCall": "/owners/property/:param/rooms/batch",
     "method": "POST",
     "file": "frontend/src/features/properties/pages/Properties.tsx",
-    "line": 679,
+    "line": 677,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/owners/property/:id/rooms/batch",
       "subPath": "/property/:id/rooms/batch",
-      "order": 4,
+      "order": 7,
       "handler": "ownerController.batchCreateRooms",
       "middlewares": [
         "requireRole(Role.PG_OWNER)"
@@ -237,29 +237,6 @@
     "status": "OK"
   },
   {
-    "frontendCall": "/rooms/:param/convert",
-    "method": "PUT",
-    "file": "frontend/src/features/rooms/components/RoomConversionModal.tsx",
-    "line": 38,
-    "matchedBackendRoute": {
-      "method": "PUT",
-      "fullPath": "/rooms/:id/convert",
-      "subPath": "/:id/convert",
-      "order": 8,
-      "handler": "roomController.convertRoom",
-      "middlewares": [
-        "requireOwner"
-      ],
-      "file": "modules/rooms/room.routes.ts",
-      "normalizedSegments": [
-        "rooms",
-        ":id",
-        "convert"
-      ]
-    },
-    "status": "OK"
-  },
-  {
     "frontendCall": "/admin/stats",
     "method": "GET",
     "file": "frontend/src/services/admin.service.ts",
@@ -283,7 +260,7 @@
     "frontendCall": "/admin/users",
     "method": "GET",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 16,
+    "line": 17,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/admin/users",
@@ -303,7 +280,7 @@
     "frontendCall": "/admin/users/:param/suspend",
     "method": "PATCH",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 20,
+    "line": 22,
     "matchedBackendRoute": {
       "method": "PATCH",
       "fullPath": "/admin/users/:id/suspend",
@@ -325,7 +302,7 @@
     "frontendCall": "/admin/pgs/pending",
     "method": "GET",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 24,
+    "line": 27,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/admin/pgs/pending",
@@ -346,7 +323,7 @@
     "frontendCall": "/admin/pgs/:param/verify",
     "method": "PATCH",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 28,
+    "line": 32,
     "matchedBackendRoute": {
       "method": "PATCH",
       "fullPath": "/admin/pgs/:id/verify",
@@ -368,7 +345,7 @@
     "frontendCall": "/admin/kyc/pending",
     "method": "GET",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 32,
+    "line": 37,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/admin/kyc/pending",
@@ -389,7 +366,7 @@
     "frontendCall": "/admin/kyc/:param/verify",
     "method": "PATCH",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 36,
+    "line": 42,
     "matchedBackendRoute": {
       "method": "PATCH",
       "fullPath": "/admin/kyc/:id/verify",
@@ -411,7 +388,7 @@
     "frontendCall": "/admin/audit-logs",
     "method": "GET",
     "file": "frontend/src/services/admin.service.ts",
-    "line": 44,
+    "line": 51,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/admin/audit-logs",
@@ -450,7 +427,7 @@
     "frontendCall": "/agreements/:param",
     "method": "GET",
     "file": "frontend/src/services/agreement.service.ts",
-    "line": 22,
+    "line": 23,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/agreements/:id",
@@ -470,7 +447,7 @@
     "frontendCall": "/agreements",
     "method": "POST",
     "file": "frontend/src/services/agreement.service.ts",
-    "line": 37,
+    "line": 39,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/agreements",
@@ -492,7 +469,7 @@
     "frontendCall": "/agreements/:param",
     "method": "PATCH",
     "file": "frontend/src/services/agreement.service.ts",
-    "line": 41,
+    "line": 44,
     "matchedBackendRoute": {
       "method": "PATCH",
       "fullPath": "/agreements/:id",
@@ -515,7 +492,7 @@
     "frontendCall": "/agreements/:param/send",
     "method": "POST",
     "file": "frontend/src/services/agreement.service.ts",
-    "line": 45,
+    "line": 49,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/agreements/:id/send",
@@ -539,7 +516,7 @@
     "frontendCall": "/agreements/:param/sign",
     "method": "POST",
     "file": "frontend/src/services/agreement.service.ts",
-    "line": 56,
+    "line": 62,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/agreements/:id/sign",
@@ -560,7 +537,7 @@
     "frontendCall": "/agreements/verify/:param",
     "method": "GET",
     "file": "frontend/src/services/agreement.service.ts",
-    "line": 60,
+    "line": 67,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/agreements/verify/:agreementNumber",
@@ -1291,7 +1268,7 @@
     "frontendCall": "/documents/upload",
     "method": "POST",
     "file": "frontend/src/services/document.service.ts",
-    "line": 11,
+    "line": 13,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/documents/upload",
@@ -1315,7 +1292,7 @@
     "frontendCall": "/documents/:param/reupload",
     "method": "POST",
     "file": "frontend/src/services/document.service.ts",
-    "line": 15,
+    "line": 18,
     "matchedBackendRoute": {
       "method": "POST",
       "fullPath": "/documents/:id/reupload",
@@ -1340,7 +1317,7 @@
     "frontendCall": "/documents/:param",
     "method": "GET",
     "file": "frontend/src/services/document.service.ts",
-    "line": 19,
+    "line": 23,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/documents/:id",
@@ -1360,7 +1337,7 @@
     "frontendCall": "/documents/:param/history",
     "method": "GET",
     "file": "frontend/src/services/document.service.ts",
-    "line": 23,
+    "line": 28,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/documents/:id/history",
@@ -1381,7 +1358,7 @@
     "frontendCall": "/documents/:param/verify",
     "method": "PATCH",
     "file": "frontend/src/services/document.service.ts",
-    "line": 27,
+    "line": 34,
     "matchedBackendRoute": {
       "method": "PATCH",
       "fullPath": "/documents/:id/verify",
@@ -1695,7 +1672,7 @@
       "method": "GET",
       "fullPath": "/owners/:id/status",
       "subPath": "/:id/status",
-      "order": 5,
+      "order": 8,
       "handler": "ownerController.getOnboardingStatus",
       "middlewares": [],
       "file": "modules/owners/owner.routes.ts",
@@ -2112,17 +2089,43 @@
     "status": "OK"
   },
   {
+    "frontendCall": "/rooms/:param/convert",
+    "method": "PUT",
+    "file": "frontend/src/services/room.service.ts",
+    "line": 51,
+    "matchedBackendRoute": {
+      "method": "PUT",
+      "fullPath": "/rooms/:id/convert",
+      "subPath": "/:id/convert",
+      "order": 8,
+      "handler": "roomController.convertRoom",
+      "middlewares": [
+        "requireOwner"
+      ],
+      "file": "modules/rooms/room.routes.ts",
+      "normalizedSegments": [
+        "rooms",
+        ":id",
+        "convert"
+      ]
+    },
+    "status": "OK"
+  },
+  {
     "frontendCall": "/search",
     "method": "GET",
     "file": "frontend/src/services/search.service.ts",
-    "line": 45,
+    "line": 120,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/search",
       "subPath": "/",
-      "order": 3,
+      "order": 7,
       "handler": "searchController.searchPGs",
-      "middlewares": [],
+      "middlewares": [
+        "propertySearchLimiter",
+        "validateSearchQuery"
+      ],
       "file": "modules/search/search.routes.ts",
       "normalizedSegments": [
         "search"
@@ -2131,37 +2134,19 @@
     "status": "OK"
   },
   {
-    "frontendCall": "/search/autocomplete",
-    "method": "GET",
-    "file": "frontend/src/services/search.service.ts",
-    "line": 53,
-    "matchedBackendRoute": {
-      "method": "GET",
-      "fullPath": "/search/autocomplete",
-      "subPath": "/autocomplete",
-      "order": 1,
-      "handler": "searchController.getAutocomplete",
-      "middlewares": [],
-      "file": "modules/search/search.routes.ts",
-      "normalizedSegments": [
-        "search",
-        "autocomplete"
-      ]
-    },
-    "status": "OK"
-  },
-  {
     "frontendCall": "/search/featured",
     "method": "GET",
     "file": "frontend/src/services/search.service.ts",
-    "line": 57,
+    "line": 137,
     "matchedBackendRoute": {
       "method": "GET",
       "fullPath": "/search/featured",
       "subPath": "/featured",
-      "order": 2,
+      "order": 5,
       "handler": "searchController.getFeatured",
-      "middlewares": [],
+      "middlewares": [
+        "propertySearchLimiter"
+      ],
       "file": "modules/search/search.routes.ts",
       "normalizedSegments": [
         "search",
@@ -2169,6 +2154,54 @@
       ]
     },
     "status": "OK"
+  },
+  {
+    "frontendCall": "/shortlist",
+    "method": "GET",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 143,
+    "status": "MISSING_ROUTE",
+    "details": "No route matching path /shortlist on backend"
+  },
+  {
+    "frontendCall": "/shortlist/:param",
+    "method": "POST",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 148,
+    "status": "MISSING_ROUTE",
+    "details": "No route matching path /shortlist/:param on backend"
+  },
+  {
+    "frontendCall": "/shortlist/:param",
+    "method": "POST",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 152,
+    "status": "MISSING_ROUTE",
+    "details": "No route matching path /shortlist/:param on backend"
+  },
+  {
+    "frontendCall": "/tours",
+    "method": "GET",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 156,
+    "status": "MISSING_ROUTE",
+    "details": "No route matching path /tours on backend"
+  },
+  {
+    "frontendCall": "/tours",
+    "method": "POST",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 161,
+    "status": "MISSING_ROUTE",
+    "details": "No route matching path /tours on backend"
+  },
+  {
+    "frontendCall": "/tours/:param",
+    "method": "PATCH",
+    "file": "frontend/src/services/search.service.ts",
+    "line": 170,
+    "status": "MISSING_ROUTE",
+    "details": "No route matching path /tours/:param on backend"
   },
   {
     "frontendCall": "/subscriptions/plans",

@@ -9,6 +9,7 @@ import { roomService } from "./room.service";
 import { bedService } from "./bed.service";
 import { visitorService } from "./visitor.service";
 import { agreementService } from "./agreement.service";
+import { searchService } from "./search.service";
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -229,6 +230,7 @@ class ApiClient {
   public approveRoomTransfer = roomService.approveRoomTransfer.bind(roomService);
   public rejectRoomTransfer = roomService.rejectRoomTransfer.bind(roomService);
   public completeRoomTransfer = roomService.completeRoomTransfer.bind(roomService);
+  public convertRoomCapacity = roomService.convertRoomCapacity.bind(roomService);
 
   public getResidentAgreements = agreementService.getResidentAgreements.bind(agreementService);
   public getAgreementById = agreementService.getAgreementById.bind(agreementService);
@@ -257,6 +259,12 @@ class ApiClient {
   public getMoveInInfo = (propertyId: string) => this.get(`/move-in/${propertyId}`);
   public updateMoveInInfo = (propertyId: string, data: any) => this.post(`/move-in/${propertyId}`, data);
   public getTenantDashboardSummary = () => this.get("/move-in/tenant-summary");
+
+  // Search & Location Intelligence
+  public searchProperties = (params: any, signal?: AbortSignal) => searchService.searchProperties(params, signal);
+  public searchLocations = (query: string, signal?: AbortSignal, limit?: number) => searchService.autocomplete(query, signal, limit);
+  public geocodeLocation = (address: string, signal?: AbortSignal, limit?: number) => searchService.geocode(address, signal, limit);
 }
 
 export const api = new ApiClient();
+

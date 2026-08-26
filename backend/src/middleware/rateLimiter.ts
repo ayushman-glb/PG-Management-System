@@ -148,3 +148,18 @@ export const csrfBootstrapLimiter = createLimiter(
   'Too many CSRF bootstrap requests. Please try again after 15 minutes.',
   'CSRF_RATE_EXCEEDED'
 );
+
+export const searchAutocompleteLimiter = createLimiter(
+  1 * 60 * 1000,
+  120,
+  'Too many location autocomplete requests. Please slow down.',
+  'AUTOCOMPLETE_RATE_EXCEEDED'
+);
+
+export const propertySearchLimiter = createLimiter(
+  1 * 60 * 1000,
+  60,
+  'Too many property search requests. Please slow down.',
+  'SEARCH_RATE_EXCEEDED'
+);
+

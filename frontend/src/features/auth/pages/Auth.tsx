@@ -693,7 +693,7 @@ export default function Auth({ navigate }: Props) {
                       <button
                         type="button"
                         onClick={() => switchAuthMode("register")}
-                        className="w-full py-2 px-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
+                        className="w-full py-2 px-4 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
                       >
                         <span>Create a RoomBae Account</span>
                         <ArrowRight className="w-4 h-4" />
@@ -750,7 +750,7 @@ export default function Auth({ navigate }: Props) {
                               setLoginPassword("god@3456");
                             }
                           }}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] bg-[var(--brand-primary)]/10 hover:bg-[var(--brand-primary)]/15 border border-[var(--brand-primary)]/30 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                         >
                           ⚡ Fill {loginRole === "resident" ? "Resident (Ankur)" : loginRole === "admin" ? "Admin (GOD)" : "PG Owner (Ayushman)"}
                         </button>
@@ -768,7 +768,7 @@ export default function Auth({ navigate }: Props) {
                               value={loginIdentifier}
                               onChange={(e) => setLoginIdentifier(e.target.value)}
                               placeholder={loginRole === "resident" ? "RES1001 or resident@roombae.com" : loginRole === "admin" ? "admin@roombae.com" : "owner@roombae.com"}
-                              className={`w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                              className={`w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] ${
                                 darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                               }`}
                             />
@@ -782,7 +782,7 @@ export default function Auth({ navigate }: Props) {
                             <button
                               type="button"
                               onClick={() => switchAuthMode("forgot")}
-                              className="text-xs font-semibold text-amber-500 hover:underline cursor-pointer"
+                              className="text-xs font-semibold text-[var(--brand-primary)] hover:underline cursor-pointer"
                             >
                               Forgot password?
                             </button>
@@ -794,14 +794,14 @@ export default function Auth({ navigate }: Props) {
                               value={loginPassword}
                               onChange={(e) => setLoginPassword(e.target.value)}
                               placeholder="••••••••"
-                              className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                              className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] ${
                                 darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                               }`}
                             />
                             <button
                               type="button"
                               onClick={() => setShowPass(!showPass)}
-                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand-primary)] transition-colors cursor-pointer"
                             >
                               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
@@ -814,7 +814,7 @@ export default function Auth({ navigate }: Props) {
                               type="checkbox"
                               checked={rememberMe}
                               onChange={(e) => setRememberMe(e.target.checked)}
-                              className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
+                              className="w-4 h-4 rounded accent-[var(--brand-primary)] cursor-pointer"
                             />
                             <span>Remember Me</span>
                           </label>
@@ -823,7 +823,7 @@ export default function Auth({ navigate }: Props) {
                         <button
                           type="submit"
                           disabled={isSubmitting}
-                          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.99] cursor-pointer ${
+                          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-sm shadow-lg shadow-[var(--brand-primary)]/20 transition-all duration-200 active:scale-[0.99] cursor-pointer ${
                             isSubmitting ? "opacity-50 pointer-events-none" : ""
                           }`}
                         >
@@ -840,7 +840,7 @@ export default function Auth({ navigate }: Props) {
                       <button
                         type="button"
                         onClick={handleGoogleSignUp}
-                        className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
+                        className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-sm font-bold transition-all cursor-pointer shadow-xs"
                       >
                         <svg className="w-5 h-5" viewBox="0 0 48 48">
                           <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
@@ -851,12 +851,12 @@ export default function Auth({ navigate }: Props) {
                         Continue with Google
                       </button>
 
-                      <p className="text-center text-xs mt-6 text-slate-500 dark:text-slate-400">
+                      <p className="text-center text-xs mt-6 text-[var(--text-muted)]">
                         Don't have an account?{" "}
                         <button
                           type="button"
                           onClick={() => switchAuthMode("register")}
-                          className="font-bold text-amber-500 hover:underline cursor-pointer"
+                          className="font-bold text-[var(--brand-primary)] hover:underline cursor-pointer"
                         >
                           Sign Up
                         </button>
@@ -873,14 +873,14 @@ export default function Auth({ navigate }: Props) {
                       exit={{ opacity: 0, x: 25, scale: 0.98 }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      <div className="mb-6 flex justify-between items-center border-b pb-4 border-amber-500/20">
+                      <div className="mb-6 flex justify-between items-center border-b pb-4 border-[var(--border-main)]">
                         <div>
                           <h2 className="text-2xl lg:text-3xl font-black">Create Your Account</h2>
-                          <p className="text-xs text-amber-500 font-semibold mt-0.5">
+                          <p className="text-xs text-[var(--brand-primary)] font-semibold mt-0.5">
                             Step {regStep} of 3 — {regStep === 1 ? "Choose Role" : regStep === 2 ? "Personal & Security Details" : selectedRole === "RESIDENT" ? "KYC & Documents" : "Owner Verification & Bank Details"}
                           </p>
                         </div>
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30">
                           {selectedRole === "RESIDENT" ? "🏠 Resident" : "🏢 PG Owner"}
                         </span>
                       </div>
@@ -888,7 +888,7 @@ export default function Auth({ navigate }: Props) {
                       {/* STEP 1: ROLE SELECTION */}
                       {regStep === 1 && (
                         <div className="space-y-5">
-                          <p className="text-xs font-bold uppercase tracking-wider text-amber-500">
+                          <p className="text-xs font-bold uppercase tracking-wider text-[var(--brand-primary)]">
                             Select your platform account type:
                           </p>
 
@@ -897,12 +897,12 @@ export default function Auth({ navigate }: Props) {
                               onClick={() => setSelectedRole("RESIDENT")}
                               className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                                 selectedRole === "RESIDENT"
-                                  ? "bg-amber-500/15 border-amber-500 shadow-xl"
-                                  : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
+                                  ? "bg-[var(--brand-primary)]/15 border-[var(--brand-primary)] shadow-md"
+                                  : "border-[var(--border-main)] bg-[var(--bg-primary)]/80 hover:border-[var(--brand-primary)]/50"
                               }`}
                             >
                               <div className="flex justify-between items-start">
-                                <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500">
+                                <div className="p-3 rounded-2xl bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]">
                                   <Home className="w-6 h-6" />
                                 </div>
                                 <input
@@ -910,12 +910,12 @@ export default function Auth({ navigate }: Props) {
                                   name="role-select"
                                   checked={selectedRole === "RESIDENT"}
                                   onChange={() => setSelectedRole("RESIDENT")}
-                                  className="w-5 h-5 accent-amber-500 cursor-pointer"
+                                  className="w-5 h-5 accent-[var(--brand-primary)] cursor-pointer"
                                 />
                               </div>
                               <div>
                                 <h3 className="text-base font-black">🏠 Resident</h3>
-                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                                <p className="text-xs text-[var(--text-muted)] mt-1 font-medium">
                                   Live in a PG. Pay rent, log complaints &amp; view digital agreements.
                                 </p>
                               </div>
@@ -925,12 +925,12 @@ export default function Auth({ navigate }: Props) {
                               onClick={() => setSelectedRole("OWNER")}
                               className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                                 selectedRole === "OWNER"
-                                  ? "bg-amber-500/15 border-amber-500 shadow-xl"
-                                  : "border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 hover:border-amber-500/50"
+                                  ? "bg-[var(--brand-primary)]/15 border-[var(--brand-primary)] shadow-md"
+                                  : "border-[var(--border-main)] bg-[var(--bg-primary)]/80 hover:border-[var(--brand-primary)]/50"
                               }`}
                             >
                               <div className="flex justify-between items-start">
-                                <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-500">
+                                <div className="p-3 rounded-2xl bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]">
                                   <Building2 className="w-6 h-6" />
                                 </div>
                                 <input
@@ -938,12 +938,12 @@ export default function Auth({ navigate }: Props) {
                                   name="role-select"
                                   checked={selectedRole === "OWNER"}
                                   onChange={() => setSelectedRole("OWNER")}
-                                  className="w-5 h-5 accent-amber-500 cursor-pointer"
+                                  className="w-5 h-5 accent-[var(--brand-primary)] cursor-pointer"
                                 />
                               </div>
                               <div>
                                 <h3 className="text-base font-black">🏢 PG Owner</h3>
-                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                                <p className="text-xs text-[var(--text-muted)] mt-1 font-medium">
                                   Manage PG properties, track occupancy &amp; collect rent seamlessly.
                                 </p>
                               </div>
@@ -959,7 +959,7 @@ export default function Auth({ navigate }: Props) {
                           <button
                             type="button"
                             onClick={handleGoogleSignUp}
-                            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-sm"
+                            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-sm font-bold transition-all cursor-pointer shadow-xs"
                           >
                             <svg className="w-5 h-5" viewBox="0 0 48 48">
                               <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
@@ -970,18 +970,18 @@ export default function Auth({ navigate }: Props) {
                             Continue with Google
                           </button>
 
-                          <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                          <div className="pt-4 flex justify-between items-center border-t border-[var(--border-main)]">
                             <button
                               type="button"
                               onClick={() => switchAuthMode("login")}
-                              className="text-xs font-bold text-amber-500 hover:underline cursor-pointer"
+                              className="text-xs font-bold text-[var(--brand-primary)] hover:underline cursor-pointer"
                             >
                               Already have an account? Sign In
                             </button>
                             <button
                               type="button"
                               onClick={() => setRegStep(2)}
-                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 hover:scale-105 transition-all"
+                              className="px-6 py-3 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md shadow-[var(--brand-primary)]/25 transition-all"
                             >
                               Continue to Details <ArrowRight className="w-4 h-4" />
                             </button>
@@ -1004,7 +1004,7 @@ export default function Auth({ navigate }: Props) {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block font-bold uppercase mb-1">
-                                Full Name <span className="text-amber-500">*</span>
+                                Full Name <span className="text-[var(--accent-ruby)]">*</span>
                               </label>
                               <input
                                 type="text"
@@ -1014,19 +1014,19 @@ export default function Auth({ navigate }: Props) {
                                 className={`w-full p-3 rounded-xl border text-xs focus:outline-none transition-all ${
                                   fullName && !isValidFullName
                                     ? "border-rose-500 text-rose-500 bg-rose-500/5"
-                                    : "border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:border-amber-500"
+                                    : "border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] focus:border-[var(--brand-primary)]"
                                 }`}
                               />
                             </div>
 
                             <div>
                               <label className="block font-bold uppercase mb-1">
-                                Gender <span className="text-amber-500">*</span>
+                                Gender <span className="text-[var(--accent-ruby)]">*</span>
                               </label>
                               <select
                                 value={gender}
                                 onChange={(e) => setGender(e.target.value)}
-                                className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs focus:border-[var(--brand-primary)]"
                               >
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
@@ -1038,7 +1038,7 @@ export default function Auth({ navigate }: Props) {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block font-bold uppercase mb-1">
-                                Email Address <span className="text-amber-500">*</span>
+                                Email Address <span className="text-[var(--accent-ruby)]">*</span>
                               </label>
                               <div className="flex gap-2">
                                 <input
@@ -1046,7 +1046,7 @@ export default function Auth({ navigate }: Props) {
                                   placeholder="name@roombae.com"
                                   value={email}
                                   onChange={(e) => handleEmailInputChange(e.target.value)}
-                                  className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                  className="flex-1 p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs focus:border-[var(--brand-primary)]"
                                 />
                                 <button
                                   type="button"
@@ -1055,7 +1055,7 @@ export default function Auth({ navigate }: Props) {
                                   className={`px-3 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
                                     isEmailVerified
                                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                      : "bg-amber-500 text-black hover:bg-amber-400"
+                                      : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)]"
                                   }`}
                                 >
                                   {isEmailVerified ? "✓ Verified" : isEmailLoading ? "Sending..." : "Verify"}
@@ -1085,10 +1085,10 @@ export default function Auth({ navigate }: Props) {
 
                             <div>
                               <label className="block font-bold uppercase mb-1">
-                                Mobile Number <span className="text-amber-500">*</span>
+                                Mobile Number <span className="text-[var(--accent-ruby)]">*</span>
                               </label>
                               <div className="flex gap-2">
-                                <span className="p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 text-xs font-mono font-bold flex items-center">
+                                <span className="p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-main)] text-xs font-mono font-bold flex items-center">
                                   +91
                                 </span>
                                 <input
@@ -1096,7 +1096,7 @@ export default function Auth({ navigate }: Props) {
                                   placeholder="9876543210"
                                   value={phone}
                                   onChange={(e) => handlePhoneInputChange(e.target.value)}
-                                  className="flex-1 p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                  className="flex-1 p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs focus:border-[var(--brand-primary)]"
                                 />
                                 <button
                                   type="button"
@@ -1105,7 +1105,7 @@ export default function Auth({ navigate }: Props) {
                                   className={`px-3 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
                                     isPhoneVerified
                                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                      : "bg-amber-500 text-black hover:bg-amber-400"
+                                      : "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-hover)]"
                                   }`}
                                 >
                                   {isPhoneVerified ? "✓ Verified" : isPhoneLoading ? "Sending..." : "Verify SMS"}
@@ -1131,7 +1131,7 @@ export default function Auth({ navigate }: Props) {
                                   <button
                                     type="button"
                                     onClick={() => setIsPhoneModalOpen(true)}
-                                    className="text-xs text-amber-500 hover:underline cursor-pointer"
+                                    className="text-xs text-[var(--brand-primary)] hover:underline cursor-pointer"
                                   >
                                     Open Modal
                                   </button>
@@ -1145,7 +1145,7 @@ export default function Auth({ navigate }: Props) {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block font-bold uppercase mb-1">
-                                Create Password <span className="text-amber-500">*</span>
+                                Create Password <span className="text-[var(--accent-ruby)]">*</span>
                               </label>
                               <div className="relative">
                                 <input
@@ -1153,7 +1153,7 @@ export default function Auth({ navigate }: Props) {
                                   placeholder="Min 8 chars, 1 Upper, 1 Special"
                                   value={password}
                                   onChange={(e) => setPassword(e.target.value)}
-                                  className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                  className="w-full p-3 pr-10 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs focus:border-[var(--brand-primary)]"
                                 />
                                 <button
                                   type="button"
@@ -1167,7 +1167,7 @@ export default function Auth({ navigate }: Props) {
 
                             <div>
                               <label className="block font-bold uppercase mb-1">
-                                Confirm Password <span className="text-amber-500">*</span>
+                                Confirm Password <span className="text-[var(--accent-ruby)]">*</span>
                               </label>
                               <div className="relative">
                                 <input
@@ -1175,7 +1175,7 @@ export default function Auth({ navigate }: Props) {
                                   placeholder="Re-enter password"
                                   value={confirmPassword}
                                   onChange={(e) => setConfirmPassword(e.target.value)}
-                                  className="w-full p-3 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs focus:border-amber-500"
+                                  className="w-full p-3 pr-10 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs focus:border-[var(--brand-primary)]"
                                 />
                                 <button
                                   type="button"
@@ -1190,20 +1190,20 @@ export default function Auth({ navigate }: Props) {
 
                           {/* Password Strength Rules */}
                           {password.length > 0 && (
-                            <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-700/60 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-                              <span className={passLength ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 8+ Chars</span>
-                              <span className={passUpper ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Uppercase</span>
-                              <span className={passLower ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Lowercase</span>
-                              <span className={passNumber ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Number</span>
-                              <span className={passSpecial ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Special</span>
+                            <div className="p-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-main)] grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                              <span className={passLength ? "text-emerald-400 font-bold" : "text-[var(--text-muted)]"}>✓ 8+ Chars</span>
+                              <span className={passUpper ? "text-emerald-400 font-bold" : "text-[var(--text-muted)]"}>✓ 1 Uppercase</span>
+                              <span className={passLower ? "text-emerald-400 font-bold" : "text-[var(--text-muted)]"}>✓ 1 Lowercase</span>
+                              <span className={passNumber ? "text-emerald-400 font-bold" : "text-[var(--text-muted)]"}>✓ 1 Number</span>
+                              <span className={passSpecial ? "text-emerald-400 font-bold" : "text-[var(--text-muted)]"}>✓ 1 Special</span>
                             </div>
                           )}
 
-                          <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                          <div className="pt-4 flex justify-between items-center border-t border-[var(--border-main)]">
                             <button
                               type="button"
                               onClick={() => setRegStep(1)}
-                              className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                              className="px-4 py-2.5 rounded-xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                             >
                               <ArrowLeft className="w-4 h-4" /> Back to Role
                             </button>
@@ -1211,7 +1211,7 @@ export default function Auth({ navigate }: Props) {
                               type="button"
                               disabled={!isStep2Valid}
                               onClick={() => isStep2Valid && setRegStep(3)}
-                              className={`px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 transition-all ${
+                              className={`px-6 py-3 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md shadow-[var(--brand-primary)]/25 transition-all ${
                                 !isStep2Valid ? "opacity-50 pointer-events-none" : ""
                               }`}
                             >
@@ -1247,7 +1247,7 @@ export default function Auth({ navigate }: Props) {
                                   placeholder="House No, Street, Village/Locality"
                                   value={permanentAddress}
                                   onChange={(e) => setPermanentAddress(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                  className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs"
                                 />
                               </div>
                               <div>
@@ -1257,7 +1257,7 @@ export default function Auth({ navigate }: Props) {
                                   placeholder="Near City Water Tank"
                                   value={landmark}
                                   onChange={(e) => setLandmark(e.target.value)}
-                                  className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                  className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs"
                                 />
                               </div>
                             </>
@@ -1284,7 +1284,7 @@ export default function Auth({ navigate }: Props) {
                                 value={addressProofPdf}
                                 onChange={setAddressProofPdf}
                               />
-                              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-semibold text-amber-400 flex items-center gap-2">
+                              <div className="p-3 rounded-xl bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 text-xs font-semibold text-[var(--brand-primary)] flex items-center gap-2">
                                 <Lock className="w-4 h-4 shrink-0" />
                                 <span>Financial &amp; Settlement Details (AES-256-GCM Encrypted Server-Side)</span>
                               </div>
@@ -1296,7 +1296,7 @@ export default function Auth({ navigate }: Props) {
                                     placeholder="Rajesh Kumar"
                                     value={accountHolderName}
                                     onChange={(e) => setAccountHolderName(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                    className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs"
                                   />
                                 </div>
                                 <div>
@@ -1306,7 +1306,7 @@ export default function Auth({ navigate }: Props) {
                                     placeholder="HDFC Bank"
                                     value={bankName}
                                     onChange={(e) => setBankName(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                    className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs"
                                   />
                                 </div>
                               </div>
@@ -1318,7 +1318,7 @@ export default function Auth({ navigate }: Props) {
                                     placeholder="5010023456789"
                                     value={accountNumber}
                                     onChange={(e) => setAccountNumber(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                    className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs"
                                   />
                                 </div>
                                 <div>
@@ -1328,7 +1328,7 @@ export default function Auth({ navigate }: Props) {
                                     placeholder="Re-enter account number"
                                     value={confirmAccountNumber}
                                     onChange={(e) => setConfirmAccountNumber(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs"
+                                    className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs"
                                   />
                                 </div>
                               </div>
@@ -1340,7 +1340,7 @@ export default function Auth({ navigate }: Props) {
                                     placeholder="HDFC0001234"
                                     value={ifscCode}
                                     onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-mono"
+                                    className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs font-mono"
                                   />
                                 </div>
                                 <div>
@@ -1350,7 +1350,7 @@ export default function Auth({ navigate }: Props) {
                                     placeholder="owner@okaxis"
                                     value={upiId}
                                     onChange={(e) => setUpiId(e.target.value)}
-                                    className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-xs font-mono"
+                                    className="w-full p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-primary)] text-[var(--text-main)] text-xs font-mono"
                                   />
                                 </div>
                               </div>
@@ -1363,26 +1363,26 @@ export default function Auth({ navigate }: Props) {
                                 type="checkbox"
                                 checked={agreeTerms}
                                 onChange={(e) => setAgreeTerms(e.target.checked)}
-                                className="w-4 h-4 mt-0.5 rounded accent-amber-500 cursor-pointer shrink-0"
+                                className="w-4 h-4 mt-0.5 rounded accent-[var(--brand-primary)] cursor-pointer shrink-0"
                               />
-                              <span className="text-xs leading-tight text-slate-400">
-                                I agree to the <span className="text-amber-500 font-bold hover:underline">Terms &amp; Conditions</span> and <span className="text-amber-500 font-bold hover:underline">Privacy Policy</span>. I verify that all uploaded documents and financial details are authentic.
+                              <span className="text-xs leading-tight text-[var(--text-muted)]">
+                                I agree to the <span className="text-[var(--brand-primary)] font-bold hover:underline">Terms &amp; Conditions</span> and <span className="text-[var(--brand-primary)] font-bold hover:underline">Privacy Policy</span>. I verify that all uploaded documents and financial details are authentic.
                               </span>
                             </label>
                           </div>
 
-                          <div className="pt-4 flex justify-between items-center border-t border-amber-500/20">
+                          <div className="pt-4 flex justify-between items-center border-t border-[var(--border-main)]">
                             <button
                               type="button"
                               onClick={() => setRegStep(2)}
-                              className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                              className="px-4 py-2.5 rounded-xl border border-[var(--border-main)] hover:bg-[var(--bg-surface)] text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                             >
                               <ArrowLeft className="w-4 h-4" /> Back to Details
                             </button>
                             <button
                               type="submit"
                               disabled={isSubmitting || !agreeTerms || !isStep3Valid}
-                              className={`px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 active:scale-[0.99] transition-all ${
+                              className={`px-8 py-3.5 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-sm flex items-center gap-2 cursor-pointer shadow-md shadow-[var(--brand-primary)]/25 active:scale-[0.99] transition-all ${
                                 isSubmitting || !agreeTerms || !isStep3Valid ? "opacity-50 pointer-events-none" : ""
                               }`}
                             >
@@ -1392,12 +1392,12 @@ export default function Auth({ navigate }: Props) {
                         </form>
                       )}
 
-                      <p className="text-center text-xs mt-6 text-slate-500 dark:text-slate-400">
+                      <p className="text-center text-xs mt-6 text-[var(--text-muted)]">
                         Already have an account?{" "}
                         <button
                           type="button"
                           onClick={() => switchAuthMode("login")}
-                          className="font-bold text-amber-500 hover:underline cursor-pointer"
+                          className="font-bold text-[var(--brand-primary)] hover:underline cursor-pointer"
                         >
                           Sign In
                         </button>
@@ -1429,7 +1429,7 @@ export default function Auth({ navigate }: Props) {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="name@roombae.com"
-                          className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                          className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] ${
                             darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                           }`}
                         />
@@ -1441,7 +1441,7 @@ export default function Auth({ navigate }: Props) {
                           setAuthSuccessMsg("Password reset email sent! Check your inbox.");
                           setTimeout(() => switchAuthMode("login"), 1500);
                         }}
-                        className="w-full py-3.5 rounded-xl bg-amber-500 text-black font-extrabold text-sm cursor-pointer hover:bg-amber-400 shadow-lg shadow-amber-500/20"
+                        className="w-full py-3.5 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-sm cursor-pointer shadow-md shadow-[var(--brand-primary)]/25"
                       >
                         Send Reset Link
                       </button>
@@ -1450,7 +1450,7 @@ export default function Auth({ navigate }: Props) {
                         <button
                           type="button"
                           onClick={() => switchAuthMode("login")}
-                          className="text-xs font-bold text-slate-400 hover:underline cursor-pointer"
+                          className="text-xs font-bold text-[var(--text-muted)] hover:underline cursor-pointer"
                         >
                           Back to Sign In
                         </button>
@@ -1469,7 +1469,7 @@ export default function Auth({ navigate }: Props) {
                       className="space-y-4"
                     >
                       <div className="text-left space-y-1">
-                        <div className="w-10 h-10 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center mb-2 border border-amber-500/30">
+                        <div className="w-10 h-10 bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] rounded-xl flex items-center justify-center mb-2 border border-[var(--brand-primary)]/30">
                           <ShieldCheck className="w-5 h-5" />
                         </div>
                         <h2 className="text-2xl font-black">Two-Factor Verification</h2>
@@ -1488,7 +1488,7 @@ export default function Auth({ navigate }: Props) {
                             value={totpCode}
                             onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
                             placeholder="123456"
-                            className={`w-full px-4 py-3 rounded-xl border text-center text-xl tracking-[0.5em] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
+                            className={`w-full px-4 py-3 rounded-xl border text-center text-xl tracking-[0.5em] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] ${
                               darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                             }`}
                           />
@@ -1497,7 +1497,7 @@ export default function Auth({ navigate }: Props) {
                         <button
                           type="submit"
                           disabled={isSubmitting || totpCode.length !== 6}
-                          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer ${
+                          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-bold text-sm shadow-md shadow-[var(--brand-primary)]/25 transition-all cursor-pointer ${
                             isSubmitting || totpCode.length !== 6 ? "opacity-50 pointer-events-none" : ""
                           }`}
                         >
@@ -1508,7 +1508,7 @@ export default function Auth({ navigate }: Props) {
                           <button
                             type="button"
                             onClick={() => switchAuthMode("login")}
-                            className="text-xs font-bold text-slate-400 hover:underline cursor-pointer"
+                            className="text-xs font-bold text-[var(--text-muted)] hover:underline cursor-pointer"
                           >
                             Back to Sign In
                           </button>

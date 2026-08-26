@@ -12,16 +12,9 @@ const CSRF_HEADER_NAME = 'x-csrf-token';
 // and state-changing (token rotation), making it exactly the kind of endpoint
 // CSRF protection is designed to defend.
 const CSRF_EXEMPT_PATHS = [
-  '/api/v1/auth/login',
-  '/api/v1/auth/sign-in',
-  '/api/v1/auth/register',
-  '/api/v1/auth/verify-otp',
-  '/api/v1/auth/verify-2fa',
   '/api/v1/auth/csrf-token',
   '/api/v1/auth/google',
   '/api/v1/auth/google/callback',
-  '/api/v1/auth/google/verify',
-  '/api/v1/auth/google/token',
   '/api/v1/payments/webhook',
   '/api/v1/payments/razorpay/webhook',
   '/soap',

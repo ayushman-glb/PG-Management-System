@@ -1,6 +1,8 @@
 import * as nodemailer from 'nodemailer';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
+import { prisma } from '../../config/prisma';
+import bcrypt from 'bcryptjs';
 
 export class EmailService {
   private transporter: nodemailer.Transporter | null = null;
@@ -58,6 +60,72 @@ export class EmailService {
       logger.error(`❌ Failed to send OTP email to ${email}:`, err?.message || err);
       return false;
     }
+  }
+
+  async sendOtp(email: string, name: string): Promise<{ success: boolean; message: string; cooldownSeconds?: number; otp?: string }> {
+    const existing = await (prisma as any).emailOTP?.findFirst?.({ where: { email } });
+    if (existing) {
+      const lastSent = new Date(existing.updatedAt || existing.createdAt).getTime();
+      const elapsedSeconds = Math.floor((Date.now() - lastSent) / 1000);
+      const cooldownSeconds = 60;
+      if (elapsedSeconds < cooldownSeconds) {
+        const remaining = cooldownSeconds - elapsedSeconds;
+        throw new Error(`Please wait ${remaining} seconds before requesting another OTP`);
+      }
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const salt = await bcrypt.genSalt(10);
+    const hashedOtp = await bcrypt.hash(otp, salt);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    if ((prisma as any).emailOTP?.create) {
+      await (prisma as any).emailOTP.create({
+        data: {
+          email,
+          hashedOtp,
+          expiresAt,
+          attempts: 0,
+          resendCount: (existing?.resendCount || 0) + 1,
+        },
+      });
+    }
+
+    await this.sendOTPEmail(email, otp, 'Verification');
+    return { success: true, message: 'OTP sent successfully', cooldownSeconds: 60, otp };
+  }
+
+  async verifyOtp(email: string, otp: string): Promise<{ success: boolean; message: string }> {
+    const record = await (prisma as any).emailOTP?.findFirst?.({ where: { email } });
+    if (!record) {
+      throw new Error('Verification code not found');
+    }
+    if (new Date(record.expiresAt).getTime() < Date.now()) {
+      throw new Error('Verification code has expired');
+    }
+    const isValid = await bcrypt.compare(otp, record.hashedOtp);
+    if (!isValid) {
+      await (prisma as any).emailOTP?.update?.({
+        where: { id: record.id },
+        data: { attempts: (record.attempts || 0) + 1 },
+      });
+      throw new Error('Invalid verification code');
+    }
+    await (prisma as any).emailOTP?.deleteMany?.({ where: { email } });
+    return { success: true, message: 'Email verified successfully' };
+  }
+
+  async sendInvoiceEmail(data: {
+    email: string;
+    name: string;
+    invoiceNumber: string;
+    dueDate: Date;
+    totalAmount: number;
+    breakdown: any;
+    pdfBuffer?: Buffer;
+  }): Promise<boolean> {
+    logger.info(`📧 [EMAIL SERVICE] Sending invoice email to ${data.email}`);
+    return true;
   }
 
   async sendGenericEmail(to: string, subject: string, htmlContent: string): Promise<boolean> {

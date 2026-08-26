@@ -414,11 +414,7 @@ export default function ContentPage({ navigate, page }: Props) {
             </p>
             <button
               onClick={() => navigate("auth")}
-              className={`mt-7 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-transform hover:scale-105 shadow-md ${
-                darkMode
-                  ? "bg-[var(--bg-primary)] text-[#E8C98A]"
-                  : "bg-[var(--bg-primary)] text-[var(--brand-primary)]"
-              }`}
+              className="mt-7 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-transform hover:scale-105 shadow-md bg-[var(--bg-primary)] text-[var(--brand-primary)] cursor-pointer"
             >
               Start free trial <ArrowRight className="h-4 w-4" />
             </button>

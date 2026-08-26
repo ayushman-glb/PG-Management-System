@@ -18,11 +18,16 @@ import { dashboardRoutes } from '../modules/dashboard';
 import { residentRoutes } from '../modules/residents';
 import { ownerRoutes } from '../modules/owners';
 import { documentRoutes } from '../modules/documents';
+import { shortlistRoutes } from '../modules/shortlist';
+import { tourRoutes } from '../modules/tours';
+import { applicationRoutes } from '../modules/applications';
+import { messageRoutes } from '../modules/messages';
+import { settingsRoutes } from '../modules/settings';
 import { uploadRoutes } from './upload.routes';
 import { env } from '../config/env';
 import { prisma } from '../config/prisma';
 
-const apiRouter = Router();
+export const apiRouter = Router();
 
 /**
  * Root Service Discovery & API Catalog Endpoint
@@ -46,6 +51,10 @@ apiRouter.get('/', (req, res) => {
       rooms: '/api/v1/rooms',
       beds: '/api/v1/beds',
       search: '/api/v1/search',
+      shortlist: '/api/v1/shortlist',
+      tours: '/api/v1/tours',
+      applications: '/api/v1/applications',
+      messages: '/api/v1/messages',
       bookings: '/api/v1/bookings',
       billing: '/api/v1/billing',
       payments: '/api/v1/payments',
@@ -66,7 +75,6 @@ apiRouter.get('/health', async (req, res) => {
   const startTime = Date.now();
   let dbStatus = 'DISCONNECTED';
   let dbLatency = 0;
-
   try {
     const dbStart = Date.now();
     await (prisma as any).$runCommandRaw({ ping: 1 });
@@ -93,6 +101,20 @@ apiRouter.get('/health', async (req, res) => {
   });
 });
 
+apiRouter.get('/health/pipeline-test', (req, res) => {
+  const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
+  res.status(200).json({
+    success: true,
+    message: 'Pipeline test healthy',
+    data: {
+      status: 'HEALTHY',
+      correlationId,
+      ip: req.ip || '127.0.0.1',
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
 // Domain Routes
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
@@ -104,6 +126,10 @@ apiRouter.use('/properties', propertyRoutes);
 apiRouter.use('/rooms', roomRoutes);
 apiRouter.use('/beds', bedRoutes);
 apiRouter.use('/search', searchRoutes);
+apiRouter.use('/shortlist', shortlistRoutes);
+apiRouter.use('/tours', tourRoutes);
+apiRouter.use('/applications', applicationRoutes);
+apiRouter.use('/messages', messageRoutes);
 apiRouter.use('/bookings', bookingRoutes);
 apiRouter.use('/billing', billingRoutes);
 apiRouter.use('/payments', paymentRoutes);
@@ -114,6 +140,7 @@ apiRouter.use('/move-in', moveInRoutes);
 apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
 apiRouter.use('/admin', adminRoutes);
+apiRouter.use('/settings', settingsRoutes);
 apiRouter.use('/uploads', uploadRoutes);
 apiRouter.use('/media', uploadRoutes);
 

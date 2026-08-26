@@ -20,7 +20,7 @@ describe('TokenBlacklistService Unit Tests (Redis-Free Database-Backed)', () => 
     jest.clearAllMocks();
     dbStore = new Map();
 
-    (prisma.revokedToken.upsert as jest.Mock).mockImplementation(async ({ where, create, update }: any) => {
+    ((prisma as any).revokedToken.upsert as jest.Mock).mockImplementation(async ({ where, create, update }: any) => {
       const record = {
         tokenHash: where.tokenHash,
         expiresAt: create?.expiresAt || update?.expiresAt,
@@ -30,7 +30,7 @@ describe('TokenBlacklistService Unit Tests (Redis-Free Database-Backed)', () => 
       return record;
     });
 
-    (prisma.revokedToken.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => {
+    ((prisma as any).revokedToken.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => {
       return dbStore.get(where.tokenHash) || null;
     });
   });
@@ -56,7 +56,7 @@ describe('TokenBlacklistService Unit Tests (Redis-Free Database-Backed)', () => 
       await tokenBlacklistService.blacklistToken(token);
 
       const expectedHash = crypto.createHash('sha256').update(token).digest('hex');
-      expect(prisma.revokedToken.upsert).toHaveBeenCalledWith(
+      expect((prisma as any).revokedToken.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tokenHash: expectedHash },
         })
@@ -69,7 +69,7 @@ describe('TokenBlacklistService Unit Tests (Redis-Free Database-Backed)', () => 
       await tokenBlacklistService.blacklistToken(unexpiredToken);
 
       const expectedHash = crypto.createHash('sha256').update(unexpiredToken).digest('hex');
-      expect(prisma.revokedToken.upsert).toHaveBeenCalledWith(
+      expect((prisma as any).revokedToken.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tokenHash: expectedHash },
         })

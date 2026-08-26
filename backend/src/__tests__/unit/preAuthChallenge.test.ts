@@ -22,20 +22,20 @@ describe('Security Remediation: PreAuth Challenge Token Authoritative Database S
     dbChallenges = new Map<string, any>();
     idCounter = 1;
 
-    (prisma.preAuthChallenge.create as jest.Mock).mockImplementation(async ({ data }: any) => {
+    ((prisma as any).preAuthChallenge.create as jest.Mock).mockImplementation(async ({ data }: any) => {
       const record = { id: `preauth_id_${idCounter++}`, ...data };
       dbChallenges.set(data.tokenHash, record);
       dbChallenges.set(record.id, record);
       return record;
     });
 
-    (prisma.preAuthChallenge.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => {
+    ((prisma as any).preAuthChallenge.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => {
       if (where.tokenHash) return dbChallenges.get(where.tokenHash) || null;
       if (where.id) return dbChallenges.get(where.id) || null;
       return null;
     });
 
-    (prisma.preAuthChallenge.update as jest.Mock).mockImplementation(async ({ where, data }: any) => {
+    ((prisma as any).preAuthChallenge.update as jest.Mock).mockImplementation(async ({ where, data }: any) => {
       let item = null;
       if (where.tokenHash) item = dbChallenges.get(where.tokenHash);
       if (where.id) item = dbChallenges.get(where.id);
@@ -51,7 +51,7 @@ describe('Security Remediation: PreAuth Challenge Token Authoritative Database S
     expect(token).toBeDefined();
     expect(token.startsWith('preauth_')).toBe(true);
 
-    expect(prisma.preAuthChallenge.create).toHaveBeenCalled();
+    expect((prisma as any).preAuthChallenge.create).toHaveBeenCalled();
   });
 
   test('should verify and atomically consume challenge on first use', async () => {

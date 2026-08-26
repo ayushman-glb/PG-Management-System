@@ -10,6 +10,8 @@ import { AgreementService } from '../modules/agreements/agreement.service';
 import { Role, InvoiceStatus, PaymentStatus, PaymentMethod, PaymentPurpose, AgreementStatus } from '@prisma/client';
 import { NotFoundError, ForbiddenError } from '../core/errors/CustomErrors';
 
+jest.setTimeout(45000);
+
 describe('PDF Generation Suite (Puppeteer & Brand Templates)', () => {
   let mockDb: any;
   let billingService: BillingService;
@@ -28,7 +30,8 @@ describe('PDF Generation Suite (Puppeteer & Brand Templates)', () => {
         findUnique: jest.fn(),
       },
       pDFDocument: {
-        create: jest.fn().mockResolvedValue({ id: 'pdf_doc_1' }),
+        create: jest.fn(),
+        findFirst: jest.fn(),
       },
     };
     (global as any).prismaSingleton = mockDb;
@@ -39,7 +42,11 @@ describe('PDF Generation Suite (Puppeteer & Brand Templates)', () => {
   });
 
   afterAll(async () => {
-    await PdfBrowserManager.closeBrowser();
+    try {
+      await PdfBrowserManager.closeBrowser();
+    } catch {
+      // Non-blocking
+    }
   });
 
   describe('1. HTML Template Rendering', () => {

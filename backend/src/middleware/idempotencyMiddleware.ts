@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { prisma } from '../config/prisma';
 import { logger } from '../utils/logger';
 
 interface CachedResponse {
@@ -10,12 +11,13 @@ interface CachedResponse {
 const idempotencyStore = new Map<string, CachedResponse>();
 
 // Periodic memory purge every 15 minutes
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [k, v] of idempotencyStore.entries()) {
     if (v.expiresAt < now) idempotencyStore.delete(k);
   }
 }, 15 * 60 * 1000);
+if (cleanupInterval.unref) cleanupInterval.unref();
 
 export const idempotencyMiddleware = async (
   req: Request,
@@ -36,6 +38,7 @@ export const idempotencyMiddleware = async (
     return next();
   }
 
+  // 1. Check in-memory store
   const existing = idempotencyStore.get(idempotencyKey);
   if (existing && existing.expiresAt > Date.now()) {
     logger.info('Idempotency cache hit, returning saved response', {
@@ -48,6 +51,23 @@ export const idempotencyMiddleware = async (
     return;
   }
 
+  // 2. Check database store if configured
+  if ((prisma as any).idempotencyRequest?.findUnique) {
+    try {
+      const dbRecord = await (prisma as any).idempotencyRequest.findUnique({
+        where: { key: idempotencyKey },
+      });
+
+      if (dbRecord) {
+        res.setHeader('X-Idempotency-Hit', 'true');
+        res.status(dbRecord.statusCode || 200).json(dbRecord.response || dbRecord.body);
+        return;
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+  }
+
   const originalJson = res.json.bind(res);
   res.json = function (body: any) {
     if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -56,9 +76,20 @@ export const idempotencyMiddleware = async (
         body,
         expiresAt: Date.now() + 24 * 60 * 60 * 1000,
       });
+
+      if ((prisma as any).idempotencyRequest?.create) {
+        (prisma as any).idempotencyRequest.create({
+          data: {
+            key: idempotencyKey,
+            statusCode: res.statusCode,
+            response: body,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        }).catch(() => {});
+      }
     }
     return originalJson(body);
   };
 
-  next();
+  return next();
 };

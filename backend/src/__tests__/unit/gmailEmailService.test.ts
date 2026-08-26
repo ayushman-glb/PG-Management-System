@@ -52,8 +52,8 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
 
   describe('1. Email OTP Generation & Storage Flow', () => {
     it('should generate 6-digit OTP, bcrypt-hash it, and persist to EmailOTP database table', async () => {
-      (prisma.emailOTP.findFirst as jest.Mock).mockResolvedValue(null);
-      (prisma.emailOTP.create as jest.Mock).mockResolvedValue({
+      ((prisma as any).emailOTP.findFirst as jest.Mock).mockResolvedValue(null);
+      ((prisma as any).emailOTP.create as jest.Mock).mockResolvedValue({
         id: 'otp_1',
         email: testEmail,
         hashedOtp: 'hashed_code_123',
@@ -66,12 +66,12 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
 
       expect(result.success).toBe(true);
       expect(result.cooldownSeconds).toBe(EMAIL_CONSTANTS.OTP.COOLDOWN_SECONDS);
-      expect(prisma.emailOTP.create).toHaveBeenCalledTimes(1);
+      expect((prisma as any).emailOTP.create).toHaveBeenCalledTimes(1);
     });
 
     it('should reject immediate repeated OTP request before 60s cooldown expires', async () => {
       const recentDate = new Date(); // 0 seconds ago
-      (prisma.emailOTP.findFirst as jest.Mock).mockResolvedValue({
+      ((prisma as any).emailOTP.findFirst as jest.Mock).mockResolvedValue({
         id: 'otp_1',
         email: testEmail,
         updatedAt: recentDate,
@@ -91,7 +91,7 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
       const salt = await bcrypt.genSalt(10);
       const hashedOtp = await bcrypt.hash(plainOtp, salt);
 
-      (prisma.emailOTP.findFirst as jest.Mock).mockResolvedValue({
+      ((prisma as any).emailOTP.findFirst as jest.Mock).mockResolvedValue({
         id: 'otp_1',
         email: testEmail,
         hashedOtp,
@@ -108,7 +108,7 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
       const verifyResult = await emailService.verifyOtp(testEmail, plainOtp);
       expect(verifyResult.success).toBe(true);
       expect(verifyResult.message).toContain('verified successfully');
-      expect(prisma.emailOTP.deleteMany).toHaveBeenCalledWith({ where: { email: testEmail } });
+      expect((prisma as any).emailOTP.deleteMany).toHaveBeenCalledWith({ where: { email: testEmail } });
     });
 
     it('should reject invalid OTP, increment attempt counter, and lock after max attempts', async () => {
@@ -116,7 +116,7 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
       const salt = await bcrypt.genSalt(10);
       const hashedOtp = await bcrypt.hash(plainOtp, salt);
 
-      (prisma.emailOTP.findFirst as jest.Mock).mockResolvedValue({
+      ((prisma as any).emailOTP.findFirst as jest.Mock).mockResolvedValue({
         id: 'otp_1',
         email: testEmail,
         hashedOtp,
@@ -130,7 +130,7 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
         /Invalid verification code/
       );
 
-      expect(prisma.emailOTP.update).toHaveBeenCalledWith({
+      expect((prisma as any).emailOTP.update).toHaveBeenCalledWith({
         where: { id: 'otp_1' },
         data: { attempts: 1 },
       });
@@ -141,7 +141,7 @@ describe('RoomBae Google Gmail SMTP Email Subsystem', () => {
       const salt = await bcrypt.genSalt(10);
       const hashedOtp = await bcrypt.hash(plainOtp, salt);
 
-      (prisma.emailOTP.findFirst as jest.Mock).mockResolvedValue({
+      ((prisma as any).emailOTP.findFirst as jest.Mock).mockResolvedValue({
         id: 'otp_1',
         email: testEmail,
         hashedOtp,

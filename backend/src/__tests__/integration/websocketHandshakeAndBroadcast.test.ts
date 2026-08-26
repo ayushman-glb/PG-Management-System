@@ -45,9 +45,15 @@ describe('WebSocket Handshake, Room Isolation, Broadcast & Live Revocation Integ
   afterAll((done) => {
     try {
       const io = SocketServer.getIO();
-      io.close(() => {
+      if (io) {
+        io.close(() => {
+          done();
+        });
+      } else if (httpServer.listening) {
+        httpServer.close(done);
+      } else {
         done();
-      });
+      }
     } catch {
       if (httpServer.listening) {
         httpServer.close(done);

@@ -3,6 +3,7 @@ import { BillingService } from './billing.service';
 import { ApiResponse } from '../../utils/apiResponse';
 import { BadRequestError } from '../../core/errors/CustomErrors';
 import { Role } from '@prisma/client';
+import { AuthRequest } from '../../middleware/authMiddleware';
 
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
@@ -107,6 +108,37 @@ export class BillingController {
       const { id } = req.params;
       const invoice = await this.billingService.getInvoiceById(id, req.user.id, req.user.role);
       return ApiResponse.success(res, 'Invoice details retrieved.', invoice);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  levyFine = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const fine = await this.billingService.levyFine(req.user.id, req.body);
+      return ApiResponse.success(res, 'Fine levied successfully.', fine, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  waiveFine = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const fine = await this.billingService.waiveFine(req.user.id, req.params.id);
+      return ApiResponse.success(res, 'Fine waived successfully.', fine);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getFines = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user?.id) throw new BadRequestError('User context missing.');
+      const { pgId } = req.query;
+      const fines = await this.billingService.getFines(req.user.id, req.user.role, pgId as string);
+      return ApiResponse.success(res, 'Fines retrieved successfully.', fines);
     } catch (error) {
       next(error);
     }

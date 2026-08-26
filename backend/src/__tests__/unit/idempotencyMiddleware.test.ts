@@ -35,12 +35,12 @@ describe('IdempotencyMiddleware', () => {
   test('should pass through if no Idempotency-Key header is provided', async () => {
     await idempotencyMiddleware(req, res, next);
     expect(next).toHaveBeenCalledTimes(1);
-    expect(prisma.idempotencyRequest.findUnique).not.toHaveBeenCalled();
+    expect((prisma as any).idempotencyRequest.findUnique).not.toHaveBeenCalled();
   });
 
   test('should return cached response on idempotency hit', async () => {
     req.headers['idempotency-key'] = 'idem-unique-key-12345';
-    (prisma.idempotencyRequest.findUnique as jest.Mock).mockResolvedValue({
+    ((prisma as any).idempotencyRequest.findUnique as jest.Mock).mockResolvedValue({
       id: 'idem_1',
       key: 'idem-unique-key-12345',
       statusCode: 201,
@@ -57,12 +57,12 @@ describe('IdempotencyMiddleware', () => {
 
   test('should call next and capture response on new idempotency key', async () => {
     req.headers['idempotency-key'] = 'idem-unique-key-99999';
-    (prisma.idempotencyRequest.findUnique as jest.Mock).mockResolvedValue(null);
+    ((prisma as any).idempotencyRequest.findUnique as jest.Mock).mockResolvedValue(null);
 
     await idempotencyMiddleware(req, res, next);
 
     expect(next).toHaveBeenCalledTimes(1);
-    expect(prisma.idempotencyRequest.findUnique).toHaveBeenCalledWith({
+    expect((prisma as any).idempotencyRequest.findUnique).toHaveBeenCalledWith({
       where: { key: 'idem-unique-key-99999' },
     });
   });

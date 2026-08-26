@@ -20,7 +20,7 @@ describe('Security Remediation: Database-Backed JWT Blacklist with In-Memory Fas
     jest.clearAllMocks();
     dbStore = new Map();
 
-    (prisma.revokedToken.upsert as jest.Mock).mockImplementation(async ({ where, create, update }: any) => {
+    ((prisma as any).revokedToken.upsert as jest.Mock).mockImplementation(async ({ where, create, update }: any) => {
       const record = {
         tokenHash: where.tokenHash,
         expiresAt: create?.expiresAt || update?.expiresAt,
@@ -30,7 +30,7 @@ describe('Security Remediation: Database-Backed JWT Blacklist with In-Memory Fas
       return record;
     });
 
-    (prisma.revokedToken.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => {
+    ((prisma as any).revokedToken.findUnique as jest.Mock).mockImplementation(async ({ where }: any) => {
       return dbStore.get(where.tokenHash) || null;
     });
   });
@@ -47,7 +47,7 @@ describe('Security Remediation: Database-Backed JWT Blacklist with In-Memory Fas
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    expect(prisma.revokedToken.upsert).toHaveBeenCalledWith(
+    expect((prisma as any).revokedToken.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tokenHash },
       })
@@ -65,7 +65,7 @@ describe('Security Remediation: Database-Backed JWT Blacklist with In-Memory Fas
     );
 
     await tokenBlacklistService.blacklistToken(token);
-    expect(prisma.revokedToken.upsert).not.toHaveBeenCalled();
+    expect((prisma as any).revokedToken.upsert).not.toHaveBeenCalled();
   });
 
   test('should accurately report blacklisted and non-blacklisted tokens', async () => {
