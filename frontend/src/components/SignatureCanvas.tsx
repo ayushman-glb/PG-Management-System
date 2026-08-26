@@ -144,7 +144,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
             Signer: <strong className="text-amber-400">{signerName}</strong> ({signerType})
           </p>
         </div>
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1">
           <ShieldCheck className="w-3 h-3" /> IT Act 2000 Compliant
         </span>
       </div>
@@ -212,7 +212,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           <button
             type="button"
             onClick={clearCanvas}
-            className="px-3 py-1 text-[11px] font-semibold text-neutral-400 hover:text-white flex items-center gap-1"
+            className="px-3 py-1 text-xs font-semibold text-neutral-400 hover:text-white flex items-center gap-1"
           >
             <RotateCcw className="w-3 h-3" /> Clear Drawing
           </button>
@@ -260,7 +260,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({
           onChange={(e) => setConsent(e.target.checked)}
           className="mt-0.5 rounded text-amber-500 focus:ring-amber-400"
         />
-        <span className="text-[11px] text-neutral-300 leading-snug">
+        <span className="text-xs text-neutral-300 leading-snug">
           I consent to sign this Residential Lease Agreement electronically in accordance with the Information Technology Act, 2000.
         </span>
       </label>

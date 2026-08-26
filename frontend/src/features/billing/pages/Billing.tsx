@@ -225,7 +225,7 @@ export default function Billing({ navigate }: Props) {
             <div
               key={stat.label}
               className={`p-4 rounded-2xl border ${
-                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+                darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -281,7 +281,7 @@ export default function Billing({ navigate }: Props) {
         {activeTab === "invoices" && (
           <div
             className={`rounded-2xl border overflow-hidden ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
             }`}
           >
             <div className="p-4 border-b border-slate-200/20 flex flex-col sm:flex-row gap-3 justify-between items-center">
@@ -294,8 +294,8 @@ export default function Billing({ navigate }: Props) {
                   onChange={(e) => setSearch(e.target.value)}
                   className={`w-full pl-9 pr-4 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/40 ${
                     darkMode
-                      ? "bg-[#121212] border-[#2e2e2e] text-white"
-                      : "bg-[#ffffff] border-[#dddddd] text-slate-900"
+                      ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-white"
+                      : "bg-[var(--bg-primary)] border-[var(--border-main)] text-slate-900"
                   }`}
                 />
               </div>
@@ -321,7 +321,7 @@ export default function Billing({ navigate }: Props) {
               <table className="w-full text-left text-xs">
                 <thead
                   className={`uppercase font-bold tracking-wider border-b ${
-                    darkMode ? "bg-[#252525] border-[#2e2e2e] text-slate-400" : "bg-[#ffffff] border-[#dddddd] text-slate-500"
+                    darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-slate-400" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-slate-500"
                   }`}
                 >
                   <tr>
@@ -366,7 +366,7 @@ export default function Billing({ navigate }: Props) {
                           <td className="p-3.5 text-slate-400">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</td>
                           <td className="p-3.5">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                              className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${
                                 inv.status === "PAID" || inv.status === "VERIFIED"
                                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                   : inv.status === "PENDING" || inv.status === "PENDING_VERIFICATION" || inv.status === "INITIATED"

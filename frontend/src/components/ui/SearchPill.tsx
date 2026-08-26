@@ -38,9 +38,9 @@ export const SearchPill: React.FC<SearchPillProps> = ({
     >
       {/* Segment 1: Where */}
       <div
-        className="flex-1 px-3 py-2 cursor-pointer rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800/60 transition-colors text-left"
+        className="flex-1 px-3.5 py-3 cursor-pointer rounded-full hover:bg-[var(--bg-surface)] transition-colors text-left flex flex-col gap-0.5"
       >
-        <div className="text-[11px] font-bold tracking-wider text-[#222222] dark:text-[#f7f7f7]">
+        <div className="text-xs font-semibold tracking-normal text-[var(--text-main)]">
           Where
         </div>
         <input
@@ -48,36 +48,36 @@ export const SearchPill: React.FC<SearchPillProps> = ({
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Search destinations"
-          className="w-full bg-transparent text-xs md:text-sm font-medium text-[#6a6a6a] dark:text-[#a1a1aa] outline-none truncate"
+          className="w-full bg-transparent text-xs md:text-sm font-medium text-[var(--text-muted)] outline-none truncate placeholder:text-[var(--text-muted-soft)]"
         />
       </div>
 
       {/* Hairline Divider */}
-      <div className="h-8 w-[1px] bg-[#dddddd] dark:bg-[#2e2e2e]" />
+      <div className="h-8 w-[1px] bg-[var(--border-main)]" />
 
       {/* Segment 2: When */}
       <div
-        className="hidden sm:block flex-1 px-4 py-2 cursor-pointer rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800/60 transition-colors text-left"
+        className="hidden sm:flex flex-1 px-4 py-3 cursor-pointer rounded-full hover:bg-[var(--bg-surface)] transition-colors text-left flex-col gap-0.5"
       >
-        <div className="text-[11px] font-bold tracking-wider text-[#222222] dark:text-[#f7f7f7]">
+        <div className="text-xs font-semibold tracking-normal text-[var(--text-main)]">
           When
         </div>
-        <div className="text-xs md:text-sm font-medium text-[#6a6a6a] dark:text-[#a1a1aa] truncate">
+        <div className="text-xs md:text-sm font-medium text-[var(--text-muted)] truncate">
           {checkIn}
         </div>
       </div>
 
       {/* Hairline Divider */}
-      <div className="hidden sm:block h-8 w-[1px] bg-[#dddddd] dark:bg-[#2e2e2e]" />
+      <div className="hidden sm:block h-8 w-[1px] bg-[var(--border-main)]" />
 
       {/* Segment 3: Who */}
       <div
-        className="hidden md:block flex-1 px-4 py-2 cursor-pointer rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800/60 transition-colors text-left"
+        className="hidden md:flex flex-1 px-4 py-3 cursor-pointer rounded-full hover:bg-[var(--bg-surface)] transition-colors text-left flex-col gap-0.5"
       >
-        <div className="text-[11px] font-bold tracking-wider text-[#222222] dark:text-[#f7f7f7]">
+        <div className="text-xs font-semibold tracking-normal text-[var(--text-main)]">
           Who
         </div>
-        <div className="text-xs md:text-sm font-medium text-[#6a6a6a] dark:text-[#a1a1aa] truncate">
+        <div className="text-xs md:text-sm font-medium text-[var(--text-muted)] truncate">
           {guests}
         </div>
       </div>

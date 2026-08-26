@@ -229,7 +229,7 @@ export const ResidentProfileModal: React.FC<ResidentProfileModalProps> = ({ resi
                       <FileText className="w-5 h-5 text-amber-400" />
                       <div>
                         <p className="text-sm font-medium text-white">{doc}</p>
-                        <p className="text-[10px] text-emerald-400 font-semibold">✔ Verified by Admin</p>
+                        <p className="text-xs text-emerald-400 font-semibold">✔ Verified by Admin</p>
                       </div>
                     </div>
                     <button className="px-3 py-1 text-xs rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30">View</button>

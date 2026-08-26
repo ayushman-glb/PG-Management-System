@@ -36,7 +36,7 @@ export function AnimatedTabs({
   return (
     <div
       className={`flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
-        darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"
+        darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-surface)] border-[var(--border-main)]"
       } ${className}`}
     >
       {tabs.map((tab) => {
@@ -52,11 +52,11 @@ export function AnimatedTabs({
             className={`relative flex items-center ${fullWidth ? "flex-1 justify-center text-center" : ""} gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 select-none cursor-pointer z-10 ${
               isActive
                 ? darkMode
-                  ? "text-[#f7f7f7]"
-                  : "text-[#222222]"
+                  ? "text-[var(--text-main)]"
+                  : "text-[var(--text-main)]"
                 : darkMode
-                ? "text-[#a1a1aa] hover:text-[#f7f7f7]"
-                : "text-[#6a6a6a] hover:text-[#222222]"
+                ? "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
             }`}
           >
             {isActive && (
@@ -65,24 +65,20 @@ export function AnimatedTabs({
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 className={`absolute inset-0 rounded-xl shadow-sm -z-10 ${
                   darkMode
-                    ? "bg-[#1e1e1e] border border-[#ff385c]/40 shadow-[0_2px_10px_rgba(200,154,75,0.15)]"
-                    : "bg-[#ffffff] border border-[#ff385c]/50 shadow-[0_2px_10px_rgba(217,168,124,0.2)]"
+                    ? "bg-[var(--bg-card)] border border-[var(--brand-primary)]/40 shadow-[0_2px_10px_rgba(200,154,75,0.15)]"
+                    : "bg-[var(--bg-primary)] border border-[var(--brand-primary)]/50 shadow-[0_2px_10px_rgba(217,168,124,0.2)]"
                 }`}
               />
             )}
 
-            {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (darkMode ? "text-[#ff385c]" : "text-[#ff385c]") : ""}`} />}
+            {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]") : ""}`} />}
             <span>{tab.label}</span>
             {tab.count !== undefined && (
               <span
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
                   isActive
-                    ? darkMode
-                      ? "bg-[#ff385c]/20 text-[#E8C98A]"
-                      : "bg-[#ff385c]/20 text-[#ff385c]"
-                    : darkMode
-                    ? "bg-[#252525] text-[#a1a1aa]"
-                    : "bg-[#dddddd] text-[#6a6a6a]"
+                    ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]"
+                    : "bg-[var(--bg-nested)] text-[var(--text-muted)]"
                 }`}
               >
                 {tab.count}
@@ -142,7 +138,7 @@ export function SpotlightCard({
       whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={`relative rounded-2xl border overflow-hidden transition-all duration-300 ${
-        darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
+        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
       } ${className}`}
       style={{
         boxShadow: isHovered
@@ -243,7 +239,7 @@ export function AnimatedAccordion({
           <div
             key={item.id}
             className={`rounded-2xl border overflow-hidden transition-colors ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
             }`}
           >
             <button
@@ -255,11 +251,11 @@ export function AnimatedAccordion({
                 {Icon && (
                   <Icon
                     className={`w-4.5 h-4.5 ${
-                      darkMode ? "text-[#ff385c]" : "text-[#ff385c]"
+                      darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"
                     }`}
                   />
                 )}
-                <span className={darkMode ? "text-[#f7f7f7]" : "text-[#222222]"}>
+                <span className={darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"}>
                   {item.title}
                 </span>
               </div>
@@ -267,7 +263,7 @@ export function AnimatedAccordion({
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: 0.2, ease: "easeInOut" }}
               >
-                <ChevronDown className={`w-4 h-4 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`} />
+                <ChevronDown className={`w-4 h-4 ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`} />
               </motion.div>
             </button>
 
@@ -282,8 +278,8 @@ export function AnimatedAccordion({
                   <div
                     className={`px-4 pb-4 pt-1 text-sm border-t ${
                       darkMode
-                        ? "border-[#2e2e2e] text-[#a1a1aa]"
-                        : "border-[#dddddd] text-[#6a6a6a]"
+                        ? "border-[var(--border-main)] text-[var(--text-muted)]"
+                        : "border-[var(--border-main)] text-[var(--text-muted)]"
                     }`}
                   >
                     {item.content}
@@ -339,7 +335,7 @@ export function AnimatedDialog({
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
             className={`relative w-full ${maxWidth} rounded-3xl border shadow-2xl p-6 overflow-hidden z-10 ${
-              darkMode ? "bg-[#252525] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+              darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
             }`}
           >
             {title && (
@@ -453,7 +449,7 @@ export function FloatingTooltip({
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.15 }}
             className={`absolute ${positionClasses[position]} z-50 px-2.5 py-1 text-xs font-medium rounded-lg border shadow-lg whitespace-nowrap pointer-events-none ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
             }`}
           >
             {content}

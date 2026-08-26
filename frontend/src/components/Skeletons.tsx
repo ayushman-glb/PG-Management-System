@@ -82,7 +82,7 @@ export function DashboardSkeleton() {
             <div
               key={i}
               className={`rounded-2xl p-4 border space-y-3 ${
-                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+                darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -101,7 +101,7 @@ export function DashboardSkeleton() {
           {/* Revenue chart placeholder */}
           <div
             className={`lg:col-span-2 rounded-2xl border p-6 space-y-4 ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
             }`}
           >
             <div className="flex justify-between items-center">
@@ -120,7 +120,7 @@ export function DashboardSkeleton() {
           {/* Occupancy Donut chart placeholder */}
           <div
             className={`rounded-2xl border p-6 space-y-4 ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
             }`}
           >
             <SkeletonBlock className="w-36 h-5" />
@@ -138,7 +138,7 @@ export function DashboardSkeleton() {
         {/* Resident Table Skeleton */}
         <div
           className={`rounded-2xl border overflow-hidden ${
-            darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+            darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
           }`}
         >
           <div className="p-4 border-b border-slate-200/20 flex justify-between">
@@ -179,7 +179,7 @@ export function ResidentsSkeleton() {
         {/* Left List Column */}
         <div
           className={`w-full lg:w-96 border-b lg:border-b-0 lg:border-r space-y-3 p-4 ${
-            darkMode ? "border-[#2e2e2e] bg-[#252525]" : "border-[#dddddd] bg-[#ffffff]"
+            darkMode ? "border-[var(--border-main)] bg-[var(--bg-nested)]" : "border-[var(--border-main)] bg-[var(--bg-primary)]"
           }`}
         >
           <div className="flex justify-between items-center">
@@ -196,7 +196,7 @@ export function ResidentsSkeleton() {
               <div
                 key={i}
                 className={`p-3 rounded-xl border flex items-center gap-3 ${
-                  darkMode ? "border-[#2e2e2e] bg-[#1e1e1e]" : "border-[#dddddd] bg-[#ffffff]"
+                  darkMode ? "border-[var(--border-main)] bg-[var(--bg-card)]" : "border-[var(--border-main)] bg-[var(--bg-primary)]"
                 }`}
               >
                 <SkeletonBlock className="w-10 h-10 rounded-full" />
@@ -246,7 +246,7 @@ export function PropertiesSkeleton() {
             <div
               key={i}
               className={`rounded-2xl border overflow-hidden space-y-3 ${
-                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+                darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
               }`}
             >
               <SkeletonBlock className="w-full h-36 rounded-none" />
@@ -265,7 +265,7 @@ export function PropertiesSkeleton() {
 
         <div
           className={`rounded-2xl border p-6 space-y-4 ${
-            darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+            darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
           }`}
         >
           <SkeletonBlock className="w-56 h-6" />
@@ -305,7 +305,7 @@ export function BillingSkeleton() {
             <div
               key={i}
               className={`p-4 rounded-2xl border space-y-2 ${
-                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+                darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
               }`}
             >
               <SkeletonBlock className="w-24 h-3.5" />
@@ -316,7 +316,7 @@ export function BillingSkeleton() {
 
         <div
           className={`rounded-2xl border overflow-hidden p-4 space-y-4 ${
-            darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+            darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
           }`}
         >
           <div className="flex justify-between items-center">
@@ -358,7 +358,7 @@ export function ComplaintsSkeleton() {
             <div
               key={col}
               className={`rounded-2xl border p-4 space-y-4 ${
-                darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"
+                darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-surface)] border-[var(--border-main)]"
               }`}
             >
               <SkeletonBlock className="w-32 h-6" />
@@ -366,7 +366,7 @@ export function ComplaintsSkeleton() {
                 <div
                   key={card}
                   className={`p-4 rounded-xl border space-y-3 ${
-                    darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+                    darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
                   }`}
                 >
                   <SkeletonBlock className="w-full h-5" />
@@ -408,7 +408,7 @@ export function AnalyticsSkeleton() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div
             className={`rounded-2xl border p-6 space-y-4 ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
             }`}
           >
             <SkeletonBlock className="w-48 h-6" />
@@ -416,7 +416,7 @@ export function AnalyticsSkeleton() {
           </div>
           <div
             className={`rounded-2xl border p-6 space-y-4 ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
             }`}
           >
             <SkeletonBlock className="w-48 h-6" />
@@ -437,13 +437,13 @@ export function PGListingSkeleton() {
   return (
     <div
       className={`min-h-screen ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } animate-fade-in`}
       aria-busy="true"
     >
       <div
         className={`border-b p-4 ${
-          darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
+          darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
         }`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -464,7 +464,7 @@ export function PGListingSkeleton() {
             <div
               key={i}
               className={`rounded-2xl border overflow-hidden space-y-3 ${
-                darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-white border-slate-100"
+                darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-slate-100"
               }`}
             >
               <SkeletonBlock className="w-full h-48 rounded-none" />
@@ -498,7 +498,7 @@ export function PGDetailsSkeleton() {
   return (
     <div
       className={`min-h-screen ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } animate-fade-in`}
       aria-busy="true"
     >
@@ -530,13 +530,13 @@ export function AuthSkeleton() {
   return (
     <div
       className={`min-h-screen flex items-center justify-center p-6 ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } animate-fade-in`}
       aria-busy="true"
     >
       <div
         className={`w-full max-w-md p-8 rounded-3xl border space-y-6 ${
-          darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
+          darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
         }`}
       >
         <div className="text-center space-y-2">
@@ -563,7 +563,7 @@ export function ResidentPortalSkeleton() {
   return (
     <div
       className={`min-h-screen ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } p-6 space-y-6 animate-fade-in`}
       aria-busy="true"
     >
@@ -587,13 +587,13 @@ export function ResidentRegisterSkeleton() {
   return (
     <div
       className={`min-h-screen ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } p-6 flex justify-center animate-fade-in`}
       aria-busy="true"
     >
       <div
         className={`w-full max-w-3xl p-8 rounded-3xl border space-y-6 ${
-          darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"
+          darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"
         }`}
       >
         <SkeletonBlock className="w-full h-12 rounded-2xl" />
@@ -634,7 +634,7 @@ export function OperationsSkeleton({ page }: { page?: string }) {
 
         <div
           className={`rounded-2xl border p-6 space-y-4 ${
-            darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+            darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
           }`}
         >
           <SkeletonBlock className="w-48 h-6" />
@@ -664,7 +664,7 @@ export function ContentPageSkeleton() {
   return (
     <div
       className={`min-h-screen ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } p-6 animate-fade-in`}
       aria-busy="true"
     >
@@ -691,7 +691,7 @@ export function LandingSkeleton() {
   return (
     <div
       className={`min-h-screen ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       } p-6 space-y-8 animate-fade-in`}
       aria-busy="true"
     >
@@ -775,7 +775,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
     <div
       aria-busy="true"
       className={`rounded-2xl border overflow-hidden p-4 space-y-3 ${
-        darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
       }`}
     >
       <div className="flex justify-between items-center pb-2 border-b border-slate-200/20">
@@ -808,7 +808,7 @@ export function FormSkeleton() {
     <div
       aria-busy="true"
       className={`p-6 rounded-2xl border space-y-5 ${
-        darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
       }`}
     >
       <SkeletonBlock className="w-48 h-6" />
@@ -839,7 +839,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
         <div
           key={i}
           className={`p-5 rounded-2xl border space-y-3 ${
-            darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+            darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
           }`}
         >
           <div className="flex justify-between items-center">
@@ -860,7 +860,7 @@ export function ResidentProfileSkeleton() {
     <div
       aria-busy="true"
       className={`p-6 rounded-2xl border space-y-6 ${
-        darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"
+        darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"
       }`}
     >
       <div className="flex items-center gap-4">

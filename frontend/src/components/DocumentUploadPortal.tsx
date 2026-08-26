@@ -103,10 +103,10 @@ export const DocumentUploadPortal: React.FC = () => {
 
   const docSlots = activeRoleTab === 'resident' ? RESIDENT_DOC_TYPES : OWNER_DOC_TYPES;
 
-  const containerBg = darkMode ? "bg-neutral-900/60 border-white/10 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
-  const cardBg = darkMode ? "bg-neutral-900 border-white/10 text-white shadow-xl" : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-md";
-  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const containerBg = darkMode ? "bg-neutral-900/60 border-white/10 text-white" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
+  const cardBg = darkMode ? "bg-neutral-900 border-white/10 text-white shadow-xl" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)] shadow-md";
+  const textPrimary = darkMode ? "text-white" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
 
   return (
     <div className="w-full space-y-6">
@@ -150,7 +150,7 @@ export const DocumentUploadPortal: React.FC = () => {
             onClick={loadDocuments}
             disabled={isLoading}
             className={`p-2 rounded-xl border flex items-center gap-1.5 text-xs font-semibold ${
-              darkMode ? "border-white/10 hover:bg-white/10" : "border-[#dddddd] hover:bg-white/40"
+              darkMode ? "border-white/10 hover:bg-white/10" : "border-[var(--border-main)] hover:bg-white/40"
             }`}
             title="Refresh documents"
           >
@@ -191,7 +191,7 @@ export const DocumentUploadPortal: React.FC = () => {
                   </div>
                   {uploadedDoc ? (
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                         isVerified
                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                           : isRejected
@@ -202,7 +202,7 @@ export const DocumentUploadPortal: React.FC = () => {
                       {isVerified ? '✔ VERIFIED' : isRejected ? '✖ REJECTED' : '⏳ UNDER REVIEW'}
                     </span>
                   ) : (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-neutral-500/20 text-neutral-400 border-neutral-500/30">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-neutral-500/20 text-neutral-400 border-neutral-500/30">
                       NOT UPLOADED
                     </span>
                   )}
@@ -212,7 +212,7 @@ export const DocumentUploadPortal: React.FC = () => {
                   <h4 className={`text-sm font-bold ${textPrimary}`}>{slot.label}</h4>
                   <p className={`text-xs ${textMuted}`}>{slot.description}</p>
                   {uploadedDoc && (
-                    <p className={`text-[10px] font-mono ${textMuted}`}>
+                    <p className={`text-xs font-mono ${textMuted}`}>
                       v{uploadedDoc.version}.0 • {uploadedDoc.documentNumber || `DOC-${uploadedDoc.id.slice(-6).toUpperCase()}`}
                     </p>
                   )}
@@ -226,7 +226,7 @@ export const DocumentUploadPortal: React.FC = () => {
                       type="button"
                       onClick={() => setPreviewDoc(uploadedDoc)}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer ${
-                        darkMode ? "bg-white/10 text-white hover:bg-white/20" : "bg-[#f7f7f7] text-[#222222] hover:bg-[#dddddd]"
+                        darkMode ? "bg-white/10 text-white hover:bg-white/20" : "bg-[var(--bg-surface)] text-[var(--text-main)] hover:bg-[var(--border-main)]"
                       }`}
                     >
                       <Eye className="w-3.5 h-3.5" /> Preview

@@ -70,10 +70,10 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       title={darkMode ? "Switch to light theme" : "Switch to dark theme"}
       className={`
         relative w-14 h-7 min-h-[28px] max-h-[28px] rounded-full transition-all duration-300 flex-shrink-0
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer border border-[#dddddd] dark:border-[#2e2e2e]
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 cursor-pointer border border-[var(--border-main)] dark:border-[var(--border-main)]
         ${darkMode
-          ? "bg-[#252525] focus-visible:ring-[#ff385c]"
-          : "bg-[#f2f2f2] focus-visible:ring-[#ff385c]"
+          ? "bg-[var(--bg-nested)] focus-visible:ring-[var(--brand-primary)]"
+          : "bg-[var(--bg-nested)] focus-visible:ring-[var(--brand-primary)]"
         }
         ${className}
       `}
@@ -89,8 +89,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
           flex items-center justify-center text-xs select-none
           transition-all duration-300 ease-in-out shadow-sm
           ${darkMode
-            ? "translate-x-7 bg-[#121212] text-white"
-            : "translate-x-0 bg-white text-[#ff385c]"
+            ? "translate-x-7 bg-[var(--bg-primary)] text-white"
+            : "translate-x-0 bg-white text-[var(--brand-primary)]"
           }
         `}
         aria-hidden="true"

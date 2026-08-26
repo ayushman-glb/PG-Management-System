@@ -11,7 +11,7 @@ export const LandingLayout: React.FC<LandingLayoutProps> = ({ children }) => {
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${
-        darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"
+        darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] text-[var(--text-main)]"
       }`}
     >
       <main>{children}</main>

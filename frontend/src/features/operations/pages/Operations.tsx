@@ -122,7 +122,7 @@ export default function Operations({ navigate, page }: Props) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-3">
             <div
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#252525] text-[#ff385c]" : "bg-[#f7f7f7] text-[#ff385c]"}`}
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[var(--bg-nested)] text-[var(--brand-primary)]" : "bg-[var(--bg-surface)] text-[var(--brand-primary)]"}`}
             >
               <Icon className="w-5 h-5" />
             </div>
@@ -161,7 +161,7 @@ export default function Operations({ navigate, page }: Props) {
                   {label}
                 </p>
                 {label === "Available" && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 badge-pulse">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 badge-pulse">
                     ● Available
                   </span>
                 )}
@@ -221,7 +221,7 @@ export default function Operations({ navigate, page }: Props) {
                   <div className="w-32 h-32 rounded-xl p-2 bg-white/10 flex items-center justify-center border border-white/20">
                     <span className="text-3xl">🔑</span>
                   </div>
-                  <p className="text-[10px] font-mono text-amber-400">Scan QR Code via Authenticator App</p>
+                  <p className="text-xs font-mono text-amber-400">Scan QR Code via Authenticator App</p>
                 </div>
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function Operations({ navigate, page }: Props) {
               {activity.map(([property, text, time, ActivityIcon]) => (
                 <div key={text} className="flex items-start gap-3">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[#1e1e1e] text-[#ff385c]" : "bg-[#f7f7f7] text-[#ff385c]"}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-[var(--bg-card)] text-[var(--brand-primary)]" : "bg-[var(--bg-surface)] text-[var(--brand-primary)]"}`}
                   >
                     <ActivityIcon className="w-4 h-4" />
                   </div>
@@ -300,7 +300,7 @@ export default function Operations({ navigate, page }: Props) {
                 <button
                   key={destination}
                   onClick={() => navigate(destination as Page)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${darkMode ? "bg-slate-700/50 hover:bg-[#1e1e1e] text-slate-300 hover:text-[#ff385c]" : "bg-slate-50 hover:bg-[#f7f7f7] text-slate-700 hover:text-[#ff385c]"}`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors ${darkMode ? "bg-slate-700/50 hover:bg-[var(--bg-card)] text-slate-300 hover:text-[var(--brand-primary)]" : "bg-slate-50 hover:bg-[var(--bg-surface)] text-slate-700 hover:text-[var(--brand-primary)]"}`}
                 >
                   {label}
                   <span aria-hidden="true">→</span>

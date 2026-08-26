@@ -12,15 +12,15 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
   return (
     <div
       className={`min-h-[100dvh] flex flex-col justify-between font-sans transition-colors duration-300 ${
-        darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"
+        darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] text-[var(--text-main)]"
       }`}
     >
       {/* Header */}
       <header
         className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
           darkMode
-            ? "bg-[#252525]/90 border-[#2e2e2e]"
-            : "bg-[#ffffff]/80 border-[#dddddd]/70"
+            ? "bg-[var(--bg-nested)]/90 border-[var(--border-main)]"
+            : "bg-[var(--bg-primary)]/80 border-[var(--border-main)]/70"
         } px-4 py-4 md:px-6 md:py-5`}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
@@ -42,7 +42,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
             </span>
             <span
               className={`font-bold text-lg ${
-                darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
+                darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
               }`}
             >
               RoomBae
@@ -69,7 +69,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
 
           <h1
             className={`text-4xl md:text-6xl font-black tracking-tight mb-4 ${
-              darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
+              darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
             }`}
           >
             Looking for a room that doesn't exist?
@@ -77,7 +77,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
 
           <p
             className={`text-base md:text-lg mb-8 leading-relaxed ${
-              darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"
+              darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"
             }`}
           >
             The link you followed may be broken, or the page may have been relocated.
@@ -97,8 +97,8 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               onClick={() => navigate("pg-listing")}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border transition-all hover:scale-105 cursor-pointer ${
                 darkMode
-                  ? "bg-[#252525] border-[#2e2e2e] text-[#f7f7f7] hover:bg-[#1e1e1e]"
-                  : "bg-white border-[#dddddd] text-[#222222] hover:bg-[#ffffff]"
+                  ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-card)]"
+                  : "bg-white border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-primary)]"
               }`}
             >
               <Compass className="w-4 h-4 text-amber-500" />
@@ -109,8 +109,8 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ navigate }) => {
               onClick={() => navigate("dashboard")}
               className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border transition-all hover:scale-105 cursor-pointer ${
                 darkMode
-                  ? "bg-[#252525] border-[#2e2e2e] text-[#f7f7f7] hover:bg-[#1e1e1e]"
-                  : "bg-white border-[#dddddd] text-[#222222] hover:bg-[#ffffff]"
+                  ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-card)]"
+                  : "bg-white border-[var(--border-main)] text-[var(--text-main)] hover:bg-[var(--bg-primary)]"
               }`}
             >
               <LayoutDashboard className="w-4 h-4 text-amber-500" />

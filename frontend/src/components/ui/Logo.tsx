@@ -42,7 +42,7 @@ export const Logo: React.FC<LogoProps> = ({
       type="button"
       onClick={onClick}
       aria-label="RoomBae Home"
-      className={`flex items-center gap-2.5 flex-shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff385c] rounded-xl ${className}`}
+      className={`flex items-center gap-2.5 flex-shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] rounded-xl ${className}`}
     >
       <div
         className={`${iconSizes[size]} rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 transition-transform group-hover:scale-105 shadow-sm`}
@@ -63,17 +63,17 @@ export const Logo: React.FC<LogoProps> = ({
               : variant === "auto"
               ? "inline-block"
               : "inline-block"
-          } ${darkMode ? "text-[#f7f7f7]" : "text-[#ff385c]"}`}
+          } ${darkMode ? "text-[var(--text-main)]" : "text-[var(--brand-primary)]"}`}
         >
           RoomBae
         </span>
 
         {badge && (
           <span
-            className={`hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            className={`hidden sm:inline-block text-xs font-bold px-2 py-0.5 rounded-full ${
               darkMode
-                ? "bg-[#252525] text-white border border-[#333333]"
-                : "bg-[#f7f7f7] text-[#222222] border border-[#dddddd]"
+                ? "bg-[var(--bg-nested)] text-white border border-[#333333]"
+                : "bg-[var(--bg-surface)] text-[var(--text-main)] border border-[var(--border-main)]"
             }`}
           >
             {badge}

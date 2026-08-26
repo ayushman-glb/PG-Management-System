@@ -155,8 +155,8 @@ export default function Residents({ navigate }: Props) {
                 className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-lg transition-colors font-medium ${
                   showPalette
                     ? darkMode
-                      ? "border-[#ff385c] text-[#ff385c] bg-[#1e1e1e]"
-                      : "border-[#ff385c] text-[#ff385c] bg-[#f7f7f7]"
+                      ? "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--bg-card)]"
+                      : "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--bg-surface)]"
                     : darkMode
                       ? "border-slate-600 text-slate-400 hover:bg-slate-700"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -199,8 +199,8 @@ export default function Residents({ navigate }: Props) {
                 className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors cursor-pointer ${
                   selected?.id === r.id
                     ? darkMode
-                      ? "bg-[#1e1e1e] border-l-4 border-[#ff385c]"
-                      : "bg-[#f7f7f7] border-l-4 border-[#ff385c]"
+                      ? "bg-[var(--bg-card)] border-l-4 border-[var(--brand-primary)]"
+                      : "bg-[var(--bg-surface)] border-l-4 border-[var(--brand-primary)]"
                     : darkMode
                       ? "hover:bg-slate-700/50"
                       : "hover:bg-slate-50"
@@ -218,8 +218,8 @@ export default function Residents({ navigate }: Props) {
                       className={`w-4 h-4 flex-shrink-0 ml-1 ${
                         selected?.id === r.id
                           ? darkMode
-                            ? "text-[#ff385c]"
-                            : "text-[#ff385c]"
+                            ? "text-[var(--brand-primary)]"
+                            : "text-[var(--brand-primary)]"
                           : darkMode
                             ? "text-slate-600"
                             : "text-slate-300"
@@ -255,7 +255,7 @@ export default function Residents({ navigate }: Props) {
             className={`flex min-h-[520px] flex-1 flex-col items-center justify-center p-8 text-center ${darkMode ? "bg-slate-900 text-slate-400" : "bg-slate-50 text-slate-500"}`}
           >
             <div className="max-w-md space-y-3">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-[#ff385c]/20 flex items-center justify-center text-2xl">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-[var(--brand-primary)]/20 flex items-center justify-center text-2xl">
                 👥
               </div>
               <h3 className={`text-lg font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>
@@ -311,7 +311,7 @@ export default function Residents({ navigate }: Props) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                  <span className="text-[11px] font-bold text-white/60 uppercase mr-1">Owner Action:</span>
+                  <span className="text-xs font-bold text-white/60 uppercase mr-1">Owner Action:</span>
                   <button
                     onClick={() => {
                       setSelected((prev: any) => ({ ...prev, status: "Active" }));
@@ -410,8 +410,8 @@ export default function Residents({ navigate }: Props) {
                   className={`py-4 text-sm font-semibold capitalize border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab
                       ? darkMode
-                        ? "border-[#ff385c] text-[#ff385c]"
-                        : "border-[#ff385c] text-[#ff385c]"
+                        ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
+                        : "border-[var(--brand-primary)] text-[var(--brand-primary)]"
                       : darkMode
                         ? "border-transparent text-slate-400 hover:text-slate-200"
                         : "border-transparent text-slate-500 hover:text-slate-700"
@@ -432,7 +432,7 @@ export default function Residents({ navigate }: Props) {
                   <h4
                     className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-slate-900"}`}
                   >
-                    <FileText className={`w-4 h-4 ${darkMode ? "text-[#ff385c]" : "text-[#ff385c]"}`} /> Agreement
+                    <FileText className={`w-4 h-4 ${darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"}`} /> Agreement
                     Details
                   </h4>
                   <div className="space-y-3 text-sm">
@@ -466,7 +466,7 @@ export default function Residents({ navigate }: Props) {
                   <h4
                     className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-slate-900"}`}
                   >
-                    <CreditCard className={`w-4 h-4 ${darkMode ? "text-[#ff385c]" : "text-[#ff385c]"}`} /> Rent
+                    <CreditCard className={`w-4 h-4 ${darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"}`} /> Rent
                     Summary
                   </h4>
                   <div className="space-y-3 text-sm">
@@ -512,7 +512,7 @@ export default function Residents({ navigate }: Props) {
                   <h4
                     className={`font-bold mb-4 flex items-center gap-2 ${darkMode ? "text-white" : "text-slate-900"}`}
                   >
-                    <MessageSquare className={`w-4 h-4 ${darkMode ? "text-[#ff385c]" : "text-[#ff385c]"}`} /> Recent
+                    <MessageSquare className={`w-4 h-4 ${darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"}`} /> Recent
                     Complaints
                   </h4>
                   <div className="space-y-3">

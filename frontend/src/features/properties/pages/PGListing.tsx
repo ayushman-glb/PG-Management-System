@@ -146,9 +146,9 @@ export default function PGListing({ navigate }: Props) {
   });
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#121212] text-[#222222] dark:text-[#f7f7f7] font-sans transition-colors">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] font-sans transition-colors">
       {/* ─── Airbnb Top Sticky Header ───────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-[#121212] border-b border-[#dddddd] dark:border-[#2e2e2e] transition-colors">
+      <header className="sticky top-0 z-40 bg-[var(--bg-primary)] border-b border-[var(--border-main)] transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <BackButton />
@@ -158,14 +158,14 @@ export default function PGListing({ navigate }: Props) {
           {/* Airbnb Compact Search Pill */}
           <div className="flex-1 max-w-xl mx-2">
             <div className="search-pill flex items-center h-12 px-4 gap-2">
-              <Search className="w-4 h-4 text-[#ff385c] flex-shrink-0" />
+              <Search className="w-4 h-4 text-[var(--brand-primary)] flex-shrink-0" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by city, neighborhood, or PG name..."
                 aria-label="Search properties"
-                className="w-full bg-transparent text-xs md:text-sm font-medium text-[#222222] dark:text-[#f7f7f7] placeholder-[#6a6a6a] dark:placeholder-[#a1a1aa] outline-none truncate"
+                className="w-full bg-transparent text-xs md:text-sm font-medium text-[var(--text-main)] placeholder:text-[var(--text-muted-soft)] outline-none truncate"
               />
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function PGListing({ navigate }: Props) {
               type="button"
               onClick={() => setShowFilters(!showFilters)}
               aria-expanded={showFilters}
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[#dddddd] dark:border-[#2e2e2e] text-xs font-semibold hover:border-black dark:hover:border-white transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-[var(--border-main)] text-xs font-semibold hover:border-[var(--text-main)] transition-colors cursor-pointer text-[var(--text-main)]"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Filters</span>
@@ -186,10 +186,10 @@ export default function PGListing({ navigate }: Props) {
 
         {/* Filter Drawer / Dropdown */}
         {showFilters && (
-          <div className="border-t border-[#dddddd] dark:border-[#2e2e2e] bg-[#f7f7f7] dark:bg-[#1a1a1a] px-4 md:px-6 py-4 animate-fade-in">
+          <div className="border-t border-[var(--border-main)] bg-[var(--bg-surface)] px-4 md:px-6 py-4 animate-fade-in">
             <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-[#6a6a6a] dark:text-[#a1a1aa]">
+                <span className="text-xs font-bold text-[var(--text-muted)]">
                   Sharing Type:
                 </span>
                 {(["All", "Men's", "Women's", "Mixed"] as const).map((t) => (
@@ -199,8 +199,8 @@ export default function PGListing({ navigate }: Props) {
                     onClick={() => setPgType(t)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                       pgType === t
-                        ? "bg-[#222222] text-white border-[#222222] dark:bg-white dark:text-[#222222] dark:border-white"
-                        : "bg-white dark:bg-[#252525] border-[#dddddd] dark:border-[#333333] text-[#222222] dark:text-[#f7f7f7]"
+                        ? "bg-[var(--text-main)] text-[var(--bg-primary)] border-[var(--text-main)]"
+                        : "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-main)]"
                     }`}
                   >
                     {t}
@@ -209,7 +209,7 @@ export default function PGListing({ navigate }: Props) {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-[#6a6a6a] dark:text-[#a1a1aa]">
+                <span className="text-xs font-bold text-[var(--text-muted)]">
                   Max Price: ₹{maxPrice.toLocaleString()}/mo
                 </span>
                 <input
@@ -220,7 +220,7 @@ export default function PGListing({ navigate }: Props) {
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
                   aria-label="Maximum monthly rent filter"
-                  className="w-36 accent-[#ff385c]"
+                  className="w-36 accent-[var(--brand-primary)]"
                 />
               </div>
             </div>
@@ -238,10 +238,10 @@ export default function PGListing({ navigate }: Props) {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div className="flex items-baseline justify-between mb-6">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#222222] dark:text-[#f7f7f7]">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[var(--text-main)]">
               Over {filtered.length} verified stays available
             </h1>
-            <p className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa] mt-0.5">
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
               Prices include taxes, high-speed WiFi, housekeeping and maintenance
             </p>
           </div>
@@ -260,10 +260,10 @@ export default function PGListing({ navigate }: Props) {
         {filtered.length === 0 && (
           <div className="text-center py-24">
             <p className="text-5xl mb-3">🏡</p>
-            <h2 className="text-lg font-bold text-[#222222] dark:text-[#f7f7f7] mb-1">
+            <h2 className="text-lg font-bold text-[var(--text-main)] mb-1">
               No exact matches found
             </h2>
-            <p className="text-sm text-[#6a6a6a] dark:text-[#a1a1aa]">
+            <p className="text-sm text-[var(--text-muted)]">
               Try widening your search terms or increasing your maximum price filter.
             </p>
           </div>

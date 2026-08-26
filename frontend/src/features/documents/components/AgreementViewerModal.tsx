@@ -134,19 +134,19 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
 
   const modalBg = darkMode
     ? "bg-neutral-900 border-white/10 text-white shadow-2xl"
-    : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-2xl";
+    : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)] shadow-2xl";
   const headerBg = darkMode
     ? "bg-gradient-to-r from-amber-500/20 via-neutral-900 to-neutral-900 border-b border-white/10"
-    : "bg-gradient-to-r from-[#f7f7f7] via-[#ffffff] to-[#ffffff] border-b border-[#dddddd]";
+    : "bg-gradient-to-r from-[#f7f7f7] via-[#ffffff] to-[#ffffff] border-b border-[var(--border-main)]";
   const cardBg = darkMode
     ? "bg-neutral-950 border-white/10 text-neutral-300"
-    : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
+    : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
   const subCardBg = darkMode
     ? "bg-neutral-900 border-white/10 text-neutral-300"
-    : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
-  const accentText = darkMode ? "text-amber-400" : "text-[#ff385c]";
+    : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const textPrimary = darkMode ? "text-white" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
+  const accentText = darkMode ? "text-amber-400" : "text-[var(--brand-primary)]";
 
   const agreementFileName = `RoomBae-Agreement-${agreement.agreementNumber || agreement.id}.pdf`;
 
@@ -169,7 +169,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               className={`absolute top-4 right-4 p-2 rounded-full transition-all cursor-pointer ${
                 darkMode
                   ? "bg-white/10 text-neutral-400 hover:text-white"
-                  : "bg-[#dddddd]/40 text-[#6a6a6a] hover:text-[#222222]"
+                  : "bg-[var(--bg-nested)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
               }`}
             >
               <X className="w-5 h-5" />
@@ -202,7 +202,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                   className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border cursor-pointer transition-all disabled:opacity-50 ${
                     darkMode
                       ? "bg-white/10 text-white hover:bg-white/20 border-white/10"
-                      : "bg-[#ff385c] text-black hover:bg-[#ff385c] hover:text-white border-[#ff385c]"
+                      : "bg-[var(--brand-primary)] text-black hover:bg-[var(--brand-primary)] hover:text-white border-[var(--brand-primary)]"
                   }`}
                 >
                   <Download
@@ -215,7 +215,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                 {getError(agreement.id, 'SIGNED_AGREEMENT') && (
                   <div className="absolute -bottom-5 left-0 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3 text-red-400" />
-                    <span className="text-[10px] text-red-400">Download failed</span>
+                    <span className="text-xs text-red-400">Download failed</span>
                   </div>
                 )}
               </div>
@@ -236,7 +236,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               className={`p-4 rounded-2xl border flex items-center gap-3 ${
                 darkMode
                   ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
-                  : "bg-[#F4E7DA] border-[#ff385c]/40 text-[#222222]"
+                  : "bg-[#F4E7DA] border-[var(--brand-primary)]/40 text-[var(--text-main)]"
               }`}
             >
               <ShieldCheck className={`w-6 h-6 flex-shrink-0 ${accentText}`} />
@@ -244,7 +244,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                 <p className={`font-semibold ${textPrimary}`}>
                   Digitally Executed under Indian Contract Act 1872 &amp; IT Act 2000
                 </p>
-                <p className={`text-[11px] ${textMuted}`}>
+                <p className={`text-xs ${textMuted}`}>
                   Contains SHA-256 cryptographic signature timestamps and public QR verification code.
                 </p>
               </div>
@@ -362,14 +362,14 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               {showResignPrompt && (
                 <div
                   className={`p-4 rounded-2xl border space-y-3 ${
-                    darkMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[#FDF3EB] border-[#ff385c]'
+                    darkMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-[#FDF3EB] border-[var(--brand-primary)]'
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
                     <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs font-bold text-amber-500">Signature Already Registered</p>
-                      <p className={`text-[11px] mt-1 leading-relaxed ${darkMode ? 'text-neutral-300' : 'text-[#54423A]'}`}>
+                      <p className={`text-xs mt-1 leading-relaxed ${darkMode ? 'text-neutral-300' : 'text-[#54423A]'}`}>
                         You have already digitally signed this lease agreement. How would you like to proceed?
                       </p>
                     </div>
@@ -390,7 +390,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                       className={`py-1.5 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
                         darkMode
                           ? 'border-white/10 hover:bg-white/10 text-neutral-300'
-                          : 'border-[#dddddd] bg-white text-[#6a6a6a] hover:bg-neutral-50'
+                          : 'border-[var(--border-main)] bg-white text-[var(--text-muted)] hover:bg-neutral-50'
                       }`}
                     >
                       <Ban className="w-3.5 h-3.5 text-red-400" />
@@ -421,7 +421,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`p-4 rounded-xl border space-y-2 ${subCardBg}`}>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}>
+                    <p className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>
                       RESIDENT SIGNATURE
                     </p>
                     {hasResidentSignature ? (
@@ -429,7 +429,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                         <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                           <CheckCircle2 className="w-4 h-4" /> Signed &amp; Verified
                         </span>
-                        <p className={`text-[10px] ${textMuted}`}>
+                        <p className={`text-xs ${textMuted}`}>
                           {residentName} • Digitally Executed
                         </p>
                       </div>
@@ -441,7 +441,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                   </div>
 
                   <div className={`p-4 rounded-xl border space-y-2 ${subCardBg}`}>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${textMuted}`}>
+                    <p className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>
                       OWNER / LESSOR SIGNATURE
                     </p>
                     {hasOwnerSignature ? (
@@ -449,7 +449,7 @@ export const AgreementViewerModal: React.FC<AgreementViewerModalProps> = ({
                         <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                           <CheckCircle2 className="w-4 h-4" /> Signed &amp; Stamp Verified
                         </span>
-                        <p className={`text-[10px] ${textMuted}`}>
+                        <p className={`text-xs ${textMuted}`}>
                           {ownerName} • Authorized Signatory
                         </p>
                       </div>

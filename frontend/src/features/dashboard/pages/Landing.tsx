@@ -15,6 +15,7 @@ import { Button } from "@components/ui/Button";
 import { SearchPill } from "@components/ui/SearchPill";
 import { CategoryStrip } from "@components/ui/CategoryStrip";
 import { PropertyCard, PropertyCardData } from "@components/ui/PropertyCard";
+import { NewBadge } from "@components/ui/NewBadge";
 import { useAuth } from "@hooks/useAuth";
 
 interface Props {
@@ -148,9 +149,9 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#121212] text-[#222222] dark:text-[#f7f7f7] font-sans relative overflow-x-clip transition-colors">
+    <div className="min-h-screen bg-white dark:bg-[var(--bg-primary)] text-[var(--text-main)] dark:text-[var(--text-main)] font-sans relative overflow-x-clip transition-colors">
       {/* ─── Airbnb 80px Top Navigation ─────────────────────────── */}
-      <header className="sticky top-0 left-0 right-0 z-50 h-20 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-[#ebebeb] dark:border-[#242424] transition-colors">
+      <header className="sticky top-0 left-0 right-0 z-50 h-20 bg-white/95 dark:bg-[var(--bg-primary)]/95 backdrop-blur-md border-b border-[var(--border-subtle)] dark:border-[var(--border-subtle)] transition-colors">
         <div className="max-w-7xl mx-auto h-full px-4 md:px-6 flex items-center justify-between gap-4">
           {/* Left: Brand Logo */}
           <div className="flex-shrink-0">
@@ -164,13 +165,13 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               onClick={() => setActiveProductTab("homes")}
               className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer ${
                 activeProductTab === "homes"
-                  ? "text-[#222222] dark:text-white"
-                  : "text-[#6a6a6a] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white"
+                  ? "text-[var(--text-main)] dark:text-white"
+                  : "text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-black dark:hover:text-white"
               }`}
             >
               Homes & PGs
               {activeProductTab === "homes" && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#222222] dark:bg-white rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] dark:bg-white rounded-full" />
               )}
             </button>
 
@@ -182,13 +183,13 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               }}
               className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer ${
                 activeProductTab === "coliving"
-                  ? "text-[#222222] dark:text-white"
-                  : "text-[#6a6a6a] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white"
+                  ? "text-[var(--text-main)] dark:text-white"
+                  : "text-[var(--text-muted)] dark:text-[var(--text-muted)] hover:text-black dark:hover:text-white"
               }`}
             >
               Co-Living Hubs
               {activeProductTab === "coliving" && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#222222] dark:bg-white rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] dark:bg-white rounded-full" />
               )}
             </button>
 
@@ -197,16 +198,14 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               onClick={() => setActiveProductTab("services")}
               className={`relative py-2 text-sm font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
                 activeProductTab === "services"
-                  ? "text-[#222222] dark:text-white"
-                  : "text-[#6a6a6a] dark:text-[#a1a1aa] hover:text-black dark:hover:text-white"
+                  ? "text-[var(--text-main)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
               }`}
             >
               <span>Services</span>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-[#ff385c] text-white px-1.5 py-0.2 rounded-full">
-                NEW
-              </span>
+              <NewBadge className="ml-1" />
               {activeProductTab === "services" && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#222222] dark:bg-white rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--text-main)] rounded-full" />
               )}
             </button>
           </nav>
@@ -216,7 +215,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
             <button
               type="button"
               onClick={() => navigate("auth")}
-              className="hidden lg:block text-xs font-semibold px-3.5 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#222222] dark:text-[#f7f7f7] transition-colors cursor-pointer"
+              className="hidden lg:block text-xs font-semibold px-3.5 py-2 rounded-full hover:bg-[var(--bg-surface)] text-[var(--text-main)] transition-colors cursor-pointer"
             >
               RoomBae your property
             </button>
@@ -228,11 +227,11 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="flex items-center gap-2.5 p-1.5 pl-3 rounded-full border border-[#dddddd] dark:border-[#2e2e2e] hover:shadow-md transition-all cursor-pointer bg-white dark:bg-[#1e1e1e]"
+                className="flex items-center gap-2.5 p-1.5 pl-3 rounded-full border border-[var(--border-main)] hover:shadow-md transition-all cursor-pointer bg-[var(--bg-card)]"
                 aria-label="User navigation menu"
               >
-                <Menu className="w-4 h-4 text-[#222222] dark:text-[#f7f7f7]" />
-                <div className="w-8 h-8 rounded-full bg-[#ff385c] text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                <Menu className="w-4 h-4 text-[var(--text-main)]" />
+                <div className="w-8 h-8 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center text-xs font-bold shadow-sm">
                   {isAuthenticated && user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                 </div>
               </button>
@@ -245,13 +244,13 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-12 w-64 rounded-2xl bg-white dark:bg-[#1e1e1e] border border-[#dddddd] dark:border-[#2e2e2e] shadow-xl py-2 z-50 text-sm overflow-hidden"
+                    className="absolute right-0 top-12 w-64 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-main)] shadow-xl py-2 z-50 text-sm overflow-hidden"
                   >
                     {isAuthenticated && user ? (
                       <>
-                        <div className="px-4 py-2 border-b border-[#dddddd] dark:border-[#2e2e2e]">
-                          <p className="font-bold text-xs text-[#222222] dark:text-[#f7f7f7] truncate">{user.name || "Member"}</p>
-                          <p className="text-[11px] text-[#6a6a6a] dark:text-[#a1a1aa] truncate">{user.email}</p>
+                        <div className="px-4 py-2 border-b border-[var(--border-subtle)]">
+                          <p className="font-bold text-xs text-[var(--text-main)] truncate">{user.name || "Member"}</p>
+                          <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
                         </div>
                         <button
                           onClick={() => {
@@ -260,25 +259,25 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
                             else if (rawRole === "ADMIN" || rawRole === "SUPER_ADMIN") navigate("admin-console");
                             else navigate("dashboard");
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-semibold text-[#222222] dark:text-[#f7f7f7] flex items-center justify-between cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] font-semibold text-[var(--text-main)] flex items-center justify-between cursor-pointer"
                         >
                           <span>{rawRole === "RESIDENT" ? "Resident Portal" : "Management Dashboard"}</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-[#ff385c]" />
+                          <ArrowRight className="w-3.5 h-3.5 text-[var(--brand-primary)]" />
                         </button>
                         <button
                           onClick={() => { setMobileMenuOpen(false); navigate("pg-listing"); }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#6a6a6a] dark:text-[#a1a1aa] cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                         >
                           Explore All PGs
                         </button>
-                        <div className="h-[1px] bg-[#dddddd] dark:bg-[#2e2e2e] my-1" />
+                        <div className="h-[1px] bg-[var(--border-subtle)] my-1" />
                         <button
                           onClick={async () => {
                             setMobileMenuOpen(false);
                             await logout();
                             navigate("auth");
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#c13515] font-medium cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] text-rose-600 font-medium cursor-pointer"
                         >
                           Log out
                         </button>
@@ -287,26 +286,26 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
                       <>
                         <button
                           onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-bold text-[#222222] dark:text-[#f7f7f7] cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] font-bold text-[var(--text-main)] cursor-pointer"
                         >
                           Sign up
                         </button>
                         <button
                           onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#222222] dark:text-[#f7f7f7] cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] text-[var(--text-main)] cursor-pointer"
                         >
                           Log in
                         </button>
-                        <div className="h-[1px] bg-[#dddddd] dark:bg-[#2e2e2e] my-1" />
+                        <div className="h-[1px] bg-[var(--border-subtle)] my-1" />
                         <button
                           onClick={() => { setMobileMenuOpen(false); navigate("pg-listing"); }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#6a6a6a] dark:text-[#a1a1aa] cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                         >
                           Find PGs & Co-Living
                         </button>
                         <button
                           onClick={() => { setMobileMenuOpen(false); navigate("auth"); }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[#6a6a6a] dark:text-[#a1a1aa] cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
                         >
                           Host your PG
                         </button>
@@ -321,9 +320,9 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
       </header>
 
       {/* ─── Hero Section with Signature Search Pill ─────────────── */}
-      <section className="pt-8 pb-10 px-4 md:px-6 bg-white dark:bg-[#121212] transition-colors">
+      <section className="pt-8 pb-10 px-4 md:px-6 bg-[var(--bg-primary)] transition-colors">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-clamp-hero font-bold tracking-tight text-[#222222] dark:text-[#f7f7f7] mb-6">
+          <h1 className="text-clamp-hero font-bold tracking-tight text-[var(--text-main)] mb-6">
             Find premium PGs & Co-Living spaces.
           </h1>
           {/* Centered Airbnb 3-Segment Search Pill */}
@@ -345,21 +344,21 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
 
       {/* ─── Photo-First Property Grid (Airbnb 4-Col Layout) ─────── */}
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-baseline justify-between mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-[#222222] dark:text-[#f7f7f7]">
+            <h2 className="text-xl md:text-2xl font-bold text-[var(--text-main)]">
               Trending stays across top tech hubs
             </h2>
-            <p className="text-sm text-[#6a6a6a] dark:text-[#a1a1aa]">
+            <p className="text-sm text-[var(--text-muted)]">
               Verified luxury & student co-living spaces with premium amenities
             </p>
           </div>
           <button
             onClick={() => navigate("pg-listing")}
-            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-[#ff385c] hover:underline cursor-pointer"
+            className="hidden sm:inline-flex items-baseline gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline cursor-pointer"
           >
             <span>Show all</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 self-center" />
           </button>
         </div>
 
@@ -389,7 +388,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-12">
         <div className="relative rounded-3xl overflow-hidden bg-neutral-950 text-white p-8 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
           <div className="max-w-xl z-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#ff385c] mb-2 inline-block">
+            <span className="text-xs font-bold uppercase tracking-widest text-[var(--brand-primary)] mb-2 inline-block">
               For Property Owners
             </span>
             <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">
@@ -422,15 +421,18 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1000&q=80"
               alt="Luxury property"
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop&auto=format";
+              }}
             />
           </div>
         </div>
       </section>
 
       {/* ─── Inspiration for Future Stays (City Directory) ───────── */}
-      <section className="border-t border-[#ebebeb] dark:border-[#242424] bg-[#f7f7f7] dark:bg-[#181818] py-12 px-4 md:px-6 transition-colors">
+      <section className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] py-12 px-4 md:px-6 transition-colors">
         <div className="max-w-7xl mx-auto">
-          <h3 className="text-base font-bold text-[#222222] dark:text-[#f7f7f7] mb-6">
+          <h3 className="text-base font-bold text-[var(--text-main)] mb-6">
             Popular destinations for student & professional stays
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 text-xs">
@@ -446,13 +448,16 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
                 key={item.city}
                 type="button"
                 onClick={() => navigate("pg-listing")}
-                className="text-left group cursor-pointer"
+                className="text-left group cursor-pointer rounded-xl p-2 -m-2 hover:bg-[var(--bg-nested)] transition-colors flex flex-col"
               >
-                <p className="font-bold text-[#222222] dark:text-[#f7f7f7] group-hover:text-[#ff385c] transition-colors">
-                  {item.city}
-                </p>
-                <p className="text-[#6a6a6a] dark:text-[#a1a1aa] mt-0.5">{item.count}</p>
-                <p className="text-[10px] text-[#929292] truncate mt-0.5">{item.sub}</p>
+                <div className="flex items-center justify-between w-full">
+                  <p className="font-bold text-[var(--text-main)] group-hover:text-[var(--brand-primary)] transition-colors">
+                    {item.city}
+                  </p>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--brand-primary)] flex-shrink-0" />
+                </div>
+                <p className="text-[var(--text-muted)] mt-0.5">{item.count}</p>
+                <p className="text-xs text-[var(--text-muted-soft)] truncate mt-0.5">{item.sub}</p>
               </button>
             ))}
           </div>
@@ -460,11 +465,11 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
       </section>
 
       {/* ─── Airbnb 3-Column Footer & Global Legal Band ───────────── */}
-      <footer className="border-t border-[#dddddd] dark:border-[#2e2e2e] bg-white dark:bg-[#121212] pt-12 pb-8 px-4 md:px-6 text-xs text-[#6a6a6a] dark:text-[#a1a1aa] transition-colors">
+      <footer className="border-t border-[var(--border-main)] bg-[var(--bg-primary)] pt-12 pb-8 px-4 md:px-6 text-xs text-[var(--text-muted)] transition-colors">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-[#ebebeb] dark:border-[#242424]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 md:gap-x-12 gap-y-8 pb-10 border-b border-[var(--border-subtle)] justify-start">
             <div>
-              <h4 className="font-bold text-[#222222] dark:text-[#f7f7f7] mb-3">Support</h4>
+              <h4 className="font-bold text-[var(--text-main)] mb-3">Support</h4>
               <ul className="space-y-2.5">
                 <li><button onClick={() => navigate("help-center")} className="hover:underline cursor-pointer">Help Center & Support</button></li>
                 <li><a href="mailto:support@roombae.com" className="hover:underline">Contact Support Team</a></li>
@@ -475,7 +480,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
             </div>
 
             <div>
-              <h4 className="font-bold text-[#222222] dark:text-[#f7f7f7] mb-3">Hosting</h4>
+              <h4 className="font-bold text-[var(--text-main)] mb-3">Hosting</h4>
               <ul className="space-y-2.5">
                 <li><button onClick={() => navigate("auth")} className="hover:underline cursor-pointer">List your PG or Co-Living space</button></li>
                 <li><button onClick={() => navigate("documentation")} className="hover:underline cursor-pointer">RoomBae for Property Owners</button></li>
@@ -485,7 +490,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
             </div>
 
             <div>
-              <h4 className="font-bold text-[#222222] dark:text-[#f7f7f7] mb-3">RoomBae</h4>
+              <h4 className="font-bold text-[var(--text-main)] mb-3">RoomBae</h4>
               <ul className="space-y-2.5">
                 <li><button onClick={() => navigate("about")} className="hover:underline cursor-pointer">About Us</button></li>
                 <li><button onClick={() => navigate("blog")} className="hover:underline cursor-pointer">Newsroom & Blog</button></li>
@@ -507,7 +512,7 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
               <button onClick={() => navigate("cookie-policy")} className="hover:underline cursor-pointer">Sitemap</button>
             </div>
 
-            <div className="flex items-center gap-6 font-semibold text-[#222222] dark:text-[#f7f7f7]">
+            <div className="flex items-center gap-6 font-semibold text-[var(--text-main)]">
               <span className="flex items-center gap-1 cursor-pointer hover:underline">
                 🌐 English (IN)
               </span>
@@ -526,31 +531,31 @@ export const Landing: React.FC<Props> = ({ navigate }) => {
           onClick={() => setShowDemo(false)}
         >
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white dark:bg-[#1e1e1e] shadow-2xl"
+            className="w-full max-w-2xl overflow-hidden rounded-2xl bg-[var(--bg-card)] shadow-2xl border border-[var(--border-main)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#dddddd] dark:border-[#2e2e2e] px-6 py-4">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-[#ff385c]">
+                <p className="text-xs font-bold uppercase tracking-widest text-[var(--brand-primary)]">
                   Product tour
                 </p>
-                <h2 className="mt-1 text-lg font-bold text-[#222222] dark:text-[#f7f7f7]">
+                <h2 className="mt-1 text-lg font-bold text-[var(--text-main)]">
                   See RoomBae in action
                 </h2>
               </div>
               <button
                 onClick={() => setShowDemo(false)}
                 aria-label="Close demo"
-                className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="rounded-full p-2 text-neutral-400 hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-6">
               <div className="aspect-video w-full rounded-xl bg-neutral-900 flex items-center justify-center text-white mb-4">
-                <Play className="w-12 h-12 text-[#ff385c]" />
+                <Play className="w-12 h-12 text-[var(--brand-primary)]" />
               </div>
-              <p className="text-sm text-[#6a6a6a] dark:text-[#a1a1aa] mb-6">
+              <p className="text-sm text-[var(--text-muted)] mb-6">
                 RoomBae helps thousands of property owners automate billing, KYC, and complaint tracking effortlessly.
               </p>
               <div className="flex justify-end gap-3">

@@ -85,9 +85,9 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
   const [unreadNotifCount, setUnreadNotifCount] = useState(2);
   const { darkMode } = useTheme();
 
-  const sidebarBg = darkMode ? "bg-[#181818] border-r border-[#242424]" : "bg-white border-r border-[#ebebeb]";
-  const mainBg = darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#f7f7f7] text-[#222222]";
-  const headerBg = darkMode ? "bg-[#181818] border-b border-[#242424]" : "bg-white border-b border-[#ebebeb]";
+  const sidebarBg = darkMode ? "bg-[#181818] border-r border-[var(--border-subtle)]" : "bg-white border-r border-[var(--border-subtle)]";
+  const mainBg = darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-surface)] text-[var(--text-main)]";
+  const headerBg = darkMode ? "bg-[#181818] border-b border-[var(--border-subtle)]" : "bg-white border-b border-[var(--border-subtle)]";
 
   return (
     <div className={`flex h-screen overflow-hidden ${mainBg}`}>
@@ -114,7 +114,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <div className={`flex items-center justify-between p-4 border-b ${darkMode ? "border-[#242424]" : "border-[#ebebeb]"}`}>
+        <div className={`flex items-center justify-between p-4 border-b ${darkMode ? "border-[var(--border-subtle)]" : "border-[var(--border-subtle)]"}`}>
           <Logo onClick={() => navigate("dashboard")} variant={collapsed ? "icon-only" : "full"} />
           <button
             type="button"
@@ -148,13 +148,13 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                 aria-current={isActive ? "page" : undefined}
                 className={`
                   w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff385c] relative group
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] relative group
                   ${
                     isActive
-                      ? "bg-[#ff385c] text-white shadow-sm font-semibold"
+                      ? "bg-[var(--brand-primary)] text-white shadow-sm font-semibold"
                       : darkMode
-                        ? "text-[#a1a1aa] hover:text-white hover:bg-[#252525]"
-                        : "text-[#6a6a6a] hover:text-[#222222] hover:bg-[#f7f7f7]"
+                        ? "text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-nested)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-surface)]"
                   }
                 `}
               >
@@ -163,8 +163,8 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                     isActive
                       ? "text-white"
                       : darkMode
-                        ? "text-[#a1a1aa] group-hover:text-white"
-                        : "text-[#6a6a6a] group-hover:text-[#222222]"
+                        ? "text-[var(--text-muted)] group-hover:text-white"
+                        : "text-[var(--text-muted)] group-hover:text-[var(--text-main)]"
                   }`}
                   aria-hidden="true"
                 />
@@ -174,11 +174,11 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
           })}
         </nav>
 
-        <div className={`p-4 border-t space-y-3 ${darkMode ? "border-[#242424]" : "border-[#ebebeb]"}`}>
+        <div className={`p-4 border-t space-y-3 ${darkMode ? "border-[var(--border-subtle)]" : "border-[var(--border-subtle)]"}`}>
           {!collapsed && (
             <button
               onClick={() => setIsOnboardingOpen(true)}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#ff385c] hover:bg-[#e00b41] text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="w-full py-2.5 px-3 rounded-lg bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-3.5 h-3.5" /> Add New PG Property
             </button>
@@ -199,10 +199,10 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             />
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold truncate ${darkMode ? "text-[#f7f7f7]" : "text-[#222222]"}`}>
+                <p className={`text-sm font-semibold truncate ${darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"}`}>
                   {user?.name || "User"}
                 </p>
-                <p className={`text-xs capitalize truncate ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+                <p className={`text-xs capitalize truncate ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
                   {user?.role ? user.role.toLowerCase() : "User"}
                 </p>
               </div>
@@ -254,13 +254,13 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             onClick={() => setIsSearchOpen(true)}
             className={`hidden sm:flex items-center gap-2 flex-1 min-w-0 max-w-[180px] md:max-w-xs lg:max-w-sm px-3.5 py-2 rounded-full border transition-all cursor-pointer ${
               darkMode
-                ? "bg-[#1e1e1e] border-[#2e2e2e] hover:border-neutral-500"
-                : "bg-white border-[#dddddd] hover:border-neutral-400 shadow-sm"
+                ? "bg-[var(--bg-card)] border-[var(--border-main)] hover:border-neutral-500"
+                : "bg-white border-[var(--border-main)] hover:border-neutral-400 shadow-sm"
             }`}
             title="Global Search (Ctrl + K)"
           >
-            <Search className="w-4 h-4 flex-shrink-0 text-[#ff385c]" />
-            <span className="text-xs font-medium text-[#6a6a6a] dark:text-[#a1a1aa] truncate">
+            <Search className="w-4 h-4 flex-shrink-0 text-[var(--brand-primary)]" />
+            <span className="text-xs font-medium text-[var(--text-muted)] dark:text-[var(--text-muted)] truncate">
               Search... (Ctrl+K)
             </span>
           </div>
@@ -272,8 +272,8 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             title="Global Search"
             className={`sm:hidden p-2 rounded-full border transition-colors flex-shrink-0 ${
               darkMode
-                ? "bg-[#1e1e1e] border-[#2e2e2e] text-white"
-                : "bg-white border-[#dddddd] text-[#ff385c]"
+                ? "bg-[var(--bg-card)] border-[var(--border-main)] text-white"
+                : "bg-white border-[var(--border-main)] text-[var(--brand-primary)]"
             }`}
           >
             <Search className="w-4 h-4" />
@@ -284,7 +284,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
             <button
               onClick={() => setIsAdminQueueOpen(true)}
               title="Verification Queue"
-              className="px-3 py-1.5 rounded-full bg-[#ff385c]/10 text-[#ff385c] font-semibold text-xs border border-[#ff385c]/20 hover:bg-[#ff385c]/20 flex items-center gap-1 cursor-pointer flex-shrink-0 transition-colors"
+              className="px-3 py-1.5 rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] font-semibold text-xs border border-[var(--brand-primary)]/20 hover:bg-[var(--brand-primary)]/20 flex items-center gap-1 cursor-pointer flex-shrink-0 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="hidden md:inline">Verification</span>
@@ -311,8 +311,8 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
               type="button"
               className={`p-2 rounded-full transition-colors flex-shrink-0 border ${
                 darkMode
-                  ? "text-[#a1a1aa] bg-[#1e1e1e] border-[#2e2e2e] hover:text-white"
-                  : "text-[#6a6a6a] bg-white border-[#dddddd] hover:text-black"
+                  ? "text-[var(--text-muted)] bg-[var(--bg-card)] border-[var(--border-main)] hover:text-white"
+                  : "text-[var(--text-muted)] bg-white border-[var(--border-main)] hover:text-black"
               }`}
               aria-label="Audit Logs"
               title="System Audit Logs"
@@ -325,8 +325,8 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
               type="button"
               className={`relative p-2 rounded-xl transition-colors flex-shrink-0 ${
                 darkMode
-                  ? "text-[#a1a1aa] bg-[#1e1e1e] hover:bg-[#252525] hover:text-[#f7f7f7]"
-                  : "text-[#6a6a6a] bg-[#f7f7f7] hover:bg-[#f2f2f2] hover:text-[#222222]"
+                  ? "text-[var(--text-muted)] bg-[var(--bg-card)] hover:bg-[var(--bg-nested)] hover:text-[var(--text-main)]"
+                  : "text-[var(--text-muted)] bg-[var(--bg-surface)] hover:bg-[var(--bg-nested)] hover:text-[var(--text-main)]"
               }`}
               aria-label="Notifications"
               title="Notifications"
@@ -358,8 +358,8 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
                 type="button"
                 className={`p-2 rounded-xl transition-colors flex-shrink-0 cursor-pointer ${
                   darkMode
-                    ? "text-[#a1a1aa] bg-[#1e1e1e] hover:bg-[#252525] hover:text-rose-400"
-                    : "text-[#6a6a6a] bg-[#f7f7f7] hover:bg-[#f2f2f2] hover:text-rose-600"
+                    ? "text-[var(--text-muted)] bg-[var(--bg-card)] hover:bg-[var(--bg-nested)] hover:text-rose-400"
+                    : "text-[var(--text-muted)] bg-[var(--bg-surface)] hover:bg-[var(--bg-nested)] hover:text-rose-600"
                 }`}
                 aria-label="Sign Out"
                 title="Sign Out"
@@ -376,7 +376,7 @@ export default function DashboardLayout({ children, navigate, activePage }: Prop
         </header>
 
         <main
-          className={`flex-1 overflow-y-auto overflow-x-hidden ${darkMode ? "bg-[#121212]" : "bg-[#f7f7f7]"}`}
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-surface)]"}`}
         >
           {children}
         </main>

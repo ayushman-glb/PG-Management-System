@@ -356,7 +356,7 @@ function LoadingOverlay() {
       aria-busy="true"
       aria-label="Loading RoomBae"
       className={`fixed inset-0 z-50 flex items-center justify-center transition-colors duration-300 ${
-        darkMode ? "bg-[#121212]" : "bg-[#ffffff]"
+        darkMode ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-primary)]"
       }`}
     >
       <div className="flex flex-col items-center gap-6">
@@ -369,12 +369,12 @@ function LoadingOverlay() {
         <div className="flex gap-2.5 items-center">
           <span
             className={`h-2.5 w-2.5 rounded-full animate-bounce ${
-              darkMode ? "bg-[#ff385c]" : "bg-[#ff385c]"
+              darkMode ? "bg-[var(--brand-primary)]" : "bg-[var(--brand-primary)]"
             }`}
           />
           <span
             className={`h-2.5 w-2.5 rounded-full animate-bounce delay-150 ${
-              darkMode ? "bg-[#ff385c]" : "bg-[#ff385c]"
+              darkMode ? "bg-[var(--brand-primary)]" : "bg-[var(--brand-primary)]"
             }`}
           />
           <span

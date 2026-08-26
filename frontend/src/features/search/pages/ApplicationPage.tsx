@@ -88,8 +88,8 @@ export default function ApplicationPage({ navigate }: Props) {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-white text-[#222222]"}`}>
-      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[#252525] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-white text-[var(--text-main)]"}`}>
+      <div className={`sticky top-0 z-40 border-b px-6 py-4 backdrop-blur-md ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("pg-listing")} className="p-2 rounded-xl border border-white/10 hover:bg-white/5">
@@ -119,7 +119,7 @@ export default function ApplicationPage({ navigate }: Props) {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         {activeTab === "submit" ? (
-          <div className={`p-8 rounded-3xl border shadow-xl ${darkMode ? "bg-[#252525] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+          <div className={`p-8 rounded-3xl border shadow-xl ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
             <div className="mb-6">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                 Stage 3 • Verified Digital Application
@@ -137,7 +137,7 @@ export default function ApplicationPage({ navigate }: Props) {
                   placeholder="e.g. 660f1a9b2c3d4e5f6a7b8c9d"
                   value={pgId}
                   onChange={(e) => setPgId(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#dddddd]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 
@@ -149,7 +149,7 @@ export default function ApplicationPage({ navigate }: Props) {
                     required
                     value={moveInDate}
                     onChange={(e) => setMoveInDate(e.target.value)}
-                    className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#dddddd]" : "bg-slate-50 border-slate-200"}`}
+                    className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
                   />
                 </div>
 
@@ -160,7 +160,7 @@ export default function ApplicationPage({ navigate }: Props) {
                     required
                     value={monthlyRent}
                     onChange={(e) => setMonthlyRent(e.target.value)}
-                    className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#dddddd]" : "bg-slate-50 border-slate-200"}`}
+                    className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
                   />
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function ApplicationPage({ navigate }: Props) {
                   placeholder="Student at St. Joseph's College, moving in mid-month..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#dddddd]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 
@@ -202,10 +202,10 @@ export default function ApplicationPage({ navigate }: Props) {
               </div>
             ) : (
               applications.map((app) => (
-                <div key={app.id} className={`p-6 rounded-3xl border ${darkMode ? "bg-[#252525] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+                <div key={app.id} className={`p-6 rounded-3xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400">
                         {app.pg?.name || "RoomBae Property"}
                       </span>
                       <h3 className="text-lg font-bold mt-2">Application #{app.id.slice(-6)}</h3>
@@ -245,7 +245,7 @@ export default function ApplicationPage({ navigate }: Props) {
       {/* E-Signing Modal */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className={`w-full max-w-lg p-6 rounded-3xl border shadow-2xl ${darkMode ? "bg-[#252525] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+          <div className={`w-full max-w-lg p-6 rounded-3xl border shadow-2xl ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
             <div className="flex items-center gap-2 mb-4">
               <ShieldCheck className="w-6 h-6 text-amber-500" />
               <h3 className="text-lg font-bold">E-Sign Digital Lease Agreement</h3>
@@ -264,7 +264,7 @@ export default function ApplicationPage({ navigate }: Props) {
                   placeholder="e.g. Rahul Sharma"
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#dddddd]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 
@@ -276,11 +276,11 @@ export default function ApplicationPage({ navigate }: Props) {
                   placeholder="rahul.sharma@domain.com"
                   value={signerEmail}
                   onChange={(e) => setSignerEmail(e.target.value)}
-                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[#121212] border-[#dddddd]" : "bg-slate-50 border-slate-200"}`}
+                  className={`w-full p-3 text-xs rounded-xl border outline-none ${darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)]" : "bg-slate-50 border-slate-200"}`}
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-400">
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400">
                 🔒 Digital Signature Certificate Token: HMAC-SHA256-{selectedApp.id.slice(-8)}
               </div>
 

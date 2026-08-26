@@ -43,11 +43,11 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
       l.user?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
-  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
-  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222] placeholder-[#6a6a6a]";
+  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
+  const textPrimary = darkMode ? "text-white" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
+  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)] placeholder-[#6a6a6a]";
 
   return (
     <AnimatePresence>
@@ -73,14 +73,14 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
             <div className="flex items-center gap-2">
               <button
                 onClick={fetchLogs}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
+                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
                 title="Refresh Logs"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={onClose}
-                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
+                className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -107,10 +107,10 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
                 className={`p-3.5 rounded-2xl border transition-all space-y-2 ${cardBg}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     {log.action}
                   </span>
-                  <span className={`text-[11px] flex items-center gap-1 font-mono ${textMuted}`}>
+                  <span className={`text-xs flex items-center gap-1 font-mono ${textMuted}`}>
                     <Clock className="w-3 h-3" />
                     {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -118,7 +118,7 @@ export const AuditLogDrawer: React.FC<AuditLogDrawerProps> = ({ isOpen, onClose 
 
                 <p className={`text-xs font-medium leading-relaxed ${textPrimary}`}>{log.details}</p>
 
-                <div className="flex items-center justify-between text-[11px] pt-2 border-t border-amber-500/10">
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-amber-500/10">
                   <div className="flex items-center gap-1.5 text-amber-500 font-medium">
                     <User className="w-3 h-3" />
                     <span>{log.user?.name || 'System User'} ({log.user?.role || 'OWNER'})</span>

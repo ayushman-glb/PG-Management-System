@@ -22,16 +22,16 @@ const BREAKDOWN_CIRCLES = [
 export const SpendBreakdownChart: React.FC = () => {
   const { darkMode } = useTheme();
 
-  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
-  const textPrimary = darkMode ? "text-[#f7f7f7]" : "text-[#222222]";
-  const textMuted = darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]";
+  const cardBg = darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]";
+  const textPrimary = darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]";
 
   return (
     <div className={`p-6 rounded-3xl border shadow-xl backdrop-blur-xl space-y-6 ${cardBg}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <span className={`text-[11px] font-bold uppercase tracking-wider ${textMuted}`}>
+          <span className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>
             This Month
           </span>
           <h3 className={`text-xl font-extrabold tracking-tight ${textPrimary}`}>
@@ -78,7 +78,7 @@ export const SpendBreakdownChart: React.FC = () => {
               key={c.name}
               whileHover={{ y: -3 }}
               className={`p-3 rounded-2xl border flex flex-col items-center justify-center ${
-                darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"
+                darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-surface)] border-[var(--border-main)]"
               }`}
             >
               <div
@@ -87,7 +87,7 @@ export const SpendBreakdownChart: React.FC = () => {
               >
                 {c.percent}%
               </div>
-              <span className={`text-[10px] font-semibold truncate max-w-full ${textMuted}`}>
+              <span className={`text-xs font-semibold truncate max-w-full ${textMuted}`}>
                 {c.name}
               </span>
             </motion.div>
@@ -96,7 +96,7 @@ export const SpendBreakdownChart: React.FC = () => {
       </div>
 
       {/* Account Info Bar Matching Mockup */}
-      <div className={`p-4 rounded-2xl border space-y-3 ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
+      <div className={`p-4 rounded-2xl border space-y-3 ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-surface)] border-[var(--border-main)]"}`}>
         <div className="flex items-center justify-between text-xs font-mono">
           <span className={textMuted}>Account Number:</span>
           <span className={`font-bold ${textPrimary}`}>2255 4595 9874 4423</span>
@@ -106,8 +106,8 @@ export const SpendBreakdownChart: React.FC = () => {
           <span className={`font-bold ${textPrimary}`}>12/24</span>
         </div>
         <div className="flex items-center justify-between pt-1">
-          <span className={`text-[11px] font-bold ${textMuted}`}>Security Standard</span>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+          <span className={`text-xs font-bold ${textMuted}`}>Security Standard</span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
             <ShieldCheck className="w-3 h-3" /> PCI DSS Protected
           </span>
         </div>

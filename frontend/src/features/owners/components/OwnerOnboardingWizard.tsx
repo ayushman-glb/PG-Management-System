@@ -217,14 +217,14 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
 
   const modalBg = darkMode
     ? "bg-neutral-900 border-white/10 text-white"
-    : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
+    : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
   const cardBg = darkMode
     ? "bg-neutral-950/80 border-white/10 text-white"
-    : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
+    : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
   const inputBg = darkMode
     ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500"
-    : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+    : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
 
   const stepTitles = [
     "Personal Details",
@@ -252,7 +252,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
           className={`w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-3xl border flex flex-col shadow-2xl ${modalBg}`}
         >
           <div
-            className={`p-6 border-b flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]"}`}
+            className={`p-6 border-b flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[var(--bg-surface)] border-[var(--border-main)]"}`}
           >
             <div>
               <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-full cursor-pointer ${darkMode ? "bg-white/10 text-neutral-400 hover:text-white" : "bg-[#dddddd] text-[#6a6a6a] hover:text-[#222222]"}`}
+              className={`p-2 rounded-full cursor-pointer ${darkMode ? "bg-white/10 text-neutral-400 hover:text-white" : "bg-[var(--border-main)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -332,7 +332,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                         }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
-                      <span className="absolute right-3 top-3 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                      <span className="absolute right-3 top-3 text-xs font-bold text-emerald-500 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                       </span>
                     </div>
@@ -350,7 +350,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                         }
                         className={`w-full p-3 rounded-xl border text-xs ${inputBg}`}
                       />
-                      <span className="absolute right-3 top-3 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                      <span className="absolute right-3 top-3 text-xs font-bold text-emerald-500 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                       </span>
                     </div>
@@ -375,14 +375,14 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
             {currentStep === 2 && (
               <div className="space-y-4 animate-fade-in">
                 <div
-                  className={`p-4 rounded-2xl border flex items-center gap-3 ${darkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-[#f7f7f7] border-[#ff385c] text-[#222222]"}`}
+                  className={`p-4 rounded-2xl border flex items-center gap-3 ${darkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-[var(--bg-surface)] border-[var(--brand-primary)] text-[var(--text-main)]"}`}
                 >
                   <ShieldCheck className="w-6 h-6 flex-shrink-0" />
                   <div>
                     <p className="font-bold">
                       Govt Identity &amp; Biometric Live Verification
                     </p>
-                    <p className="text-[11px] opacity-80">
+                    <p className="text-xs opacity-80">
                       Upload Aadhaar, PAN, and complete instant face check
                     </p>
                   </div>
@@ -424,7 +424,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     <Camera className="w-6 h-6 text-amber-500" />
                     <div>
                       <p className="font-bold">Live AI Face Verification</p>
-                      <p className={`text-[11px] ${textMuted}`}>
+                      <p className={`text-xs ${textMuted}`}>
                         Matches owner selfie against uploaded Aadhaar card
                       </p>
                     </div>
@@ -682,7 +682,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                     <MapPin className="w-6 h-6 text-amber-500" />
                     <div>
                       <p className="font-bold">Google Maps Geolocation Pin</p>
-                      <p className={`text-[11px] ${textMuted}`}>
+                      <p className={`text-xs ${textMuted}`}>
                         Lat: {location.latitude}, Lng: {location.longitude}
                       </p>
                     </div>
@@ -800,7 +800,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                       </select>
                     </div>
                   </div>
-                  <p className="text-[11px] text-emerald-500 font-semibold pt-2">
+                  <p className="text-xs text-emerald-500 font-semibold pt-2">
                     ⚡ Will generate{" "}
                     {roomConfig.floorsCount * roomConfig.roomsPerFloor} Rooms
                     and{" "}
@@ -818,7 +818,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`p-4 rounded-2xl border space-y-2 ${cardBg}`}>
                     <p className="font-bold">Property Ownership Proof</p>
-                    <p className={`text-[11px] ${textMuted}`}>
+                    <p className={`text-xs ${textMuted}`}>
                       Upload Property Tax Receipt / Ownership Deed
                     </p>
                     <button className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-bold">
@@ -827,7 +827,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                   </div>
                   <div className={`p-4 rounded-2xl border space-y-2 ${cardBg}`}>
                     <p className="font-bold">Fire Safety &amp; Municipal NOC</p>
-                    <p className={`text-[11px] ${textMuted}`}>
+                    <p className={`text-xs ${textMuted}`}>
                       Required for commercial PG licensing
                     </p>
                     <button className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-bold">
@@ -885,8 +885,8 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
                       <p className="text-lg font-black text-emerald-500 my-1">
                         {plan.price}
                       </p>
-                      <p className="text-[10px]">{plan.cap}</p>
-                      <p className="text-[10px]">{plan.props}</p>
+                      <p className="text-xs">{plan.cap}</p>
+                      <p className="text-xs">{plan.props}</p>
                     </button>
                   ))}
                 </div>
@@ -895,12 +895,12 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
           </div>
 
           <div
-            className={`p-4 border-t flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]"}`}
+            className={`p-4 border-t flex justify-between items-center ${darkMode ? "bg-neutral-900 border-white/10" : "bg-[var(--bg-surface)] border-[var(--border-main)]"}`}
           >
             <button
               onClick={prevStep}
               disabled={currentStep === 1}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1 disabled:opacity-30 cursor-pointer ${darkMode ? "bg-neutral-800 text-white" : "bg-[#dddddd] text-[#222222]"}`}
+              className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1 disabled:opacity-30 cursor-pointer ${darkMode ? "bg-neutral-800 text-white" : "bg-[var(--border-main)] text-[var(--text-main)]"}`}
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
@@ -930,7 +930,7 @@ export const OwnerOnboardingWizard: React.FC<OwnerOnboardingWizardProps> = ({
               </button>
             )}
             {submitError && (
-              <p className="text-[11px] font-bold text-rose-400 w-full text-center pt-1">
+              <p className="text-xs font-bold text-rose-400 w-full text-center pt-1">
                 {submitError}
               </p>
             )}

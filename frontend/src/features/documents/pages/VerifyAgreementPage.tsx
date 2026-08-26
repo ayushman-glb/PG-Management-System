@@ -47,14 +47,14 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
     verify(agreementCode);
   };
 
-  const containerBg = darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]";
-  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
+  const containerBg = darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] text-[var(--text-main)]";
+  const cardBg = darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]";
 
   return (
     <div className={`min-h-screen flex flex-col ${containerBg}`}>
       {/* Header */}
       <header className={`px-6 py-4 border-b flex justify-between items-center ${
-        darkMode ? "bg-[#252525]/80 border-[#2e2e2e]" : "bg-[#ffffff]/80 border-[#dddddd]"
+        darkMode ? "bg-[var(--bg-nested)]/80 border-[var(--border-main)]" : "bg-[var(--bg-primary)]/80 border-[var(--border-main)]"
       }`}>
         <div className="flex items-center gap-3">
           {navigate && (
@@ -135,7 +135,7 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
             {/* Contract Key Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="p-4 rounded-2xl bg-neutral-950/40 border border-white/5 space-y-2">
-                <span className="text-neutral-500 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <span className="text-neutral-500 font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-amber-500" /> Contract Identification
                 </span>
                 <p><strong className="text-neutral-400">Agreement Code:</strong> <span className="font-mono text-amber-400">{result.agreementNumber}</span></p>
@@ -144,7 +144,7 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-950/40 border border-white/5 space-y-2">
-                <span className="text-neutral-500 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <span className="text-neutral-500 font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
                   <Building className="w-3.5 h-3.5 text-blue-400" /> Property Premises
                 </span>
                 <p><strong className="text-neutral-400">Property:</strong> {result.propertyName}</p>
@@ -152,7 +152,7 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-950/40 border border-white/5 space-y-2">
-                <span className="text-neutral-500 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <span className="text-neutral-500 font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Contracting Parties
                 </span>
                 <p><strong className="text-neutral-400">Lessor (Owner):</strong> {result.ownerName}</p>
@@ -160,7 +160,7 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-950/40 border border-white/5 space-y-2">
-                <span className="text-neutral-500 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                <span className="text-neutral-500 font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-purple-400" /> Term &amp; Financials
                 </span>
                 <p><strong className="text-neutral-400">Duration:</strong> {new Date(result.startDate).toLocaleDateString('en-IN')} to {new Date(result.endDate).toLocaleDateString('en-IN')}</p>
@@ -178,14 +178,14 @@ export const VerifyAgreementPage: React.FC<Props> = ({ navigate }) => {
                 {result.signatures.map((sig, i) => (
                   <div key={i} className="flex items-center justify-between py-1 border-b border-white/5">
                     <span className="font-semibold text-emerald-400">✔ {sig.role} Signature</span>
-                    <span className="text-neutral-400 font-mono text-[11px]">{new Date(sig.signedAt).toISOString()} ({sig.type})</span>
+                    <span className="text-neutral-400 font-mono text-xs">{new Date(sig.signedAt).toISOString()} ({sig.type})</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Hash Footprint */}
-            <div className="p-3.5 rounded-xl bg-neutral-950 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 text-[10px] text-neutral-500 font-mono">
+            <div className="p-3.5 rounded-xl bg-neutral-950 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 text-xs text-neutral-500 font-mono">
               <span>SHA-256: {result.documentHash || 'Generated on document completion'}</span>
               <span>Verified at: {new Date(result.verifiedAt).toLocaleString('en-IN')}</span>
             </div>

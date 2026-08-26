@@ -285,7 +285,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={`w-full max-w-5xl rounded-3xl border shadow-2xl overflow-hidden relative ${
-            darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+            darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
           }`}
         >
           {/* Modal Header & Close Button */}
@@ -296,7 +296,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
               </div>
               <div>
                 <h2 className="text-lg font-black tracking-tight">Secure Checkout</h2>
-                <p className="text-[11px] text-amber-500 font-mono font-bold flex items-center gap-1">
+                <p className="text-xs text-amber-500 font-mono font-bold flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5" /> 256-BIT ENCRYPTED RAZORPAY GATEWAY
                 </p>
               </div>
@@ -369,7 +369,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-sans">Transaction ID:</span>
-                  <span className="text-slate-300 font-mono text-[11px]">{verifiedResult?.transactionId || "TXN_RZP_VERIFIED"}</span>
+                  <span className="text-slate-300 font-mono text-xs">{verifiedResult?.transactionId || "TXN_RZP_VERIFIED"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-sans">Date & Time:</span>
@@ -550,7 +550,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                           {focusedCardField !== "cvv" ? (
                             <>
                               <div className="flex justify-between items-start">
-                                <div className="w-10 h-8 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500/80 shadow-sm flex items-center justify-center font-bold text-black text-[9px]">
+                                <div className="w-10 h-8 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500/80 shadow-sm flex items-center justify-center font-bold text-black text-xs">
                                   CHIP
                                 </div>
                                 <span className="font-mono text-xs text-amber-400/80 tracking-widest font-black">
@@ -564,13 +564,13 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
 
                               <div className="flex justify-between items-end">
                                 <div>
-                                  <div className="text-[8px] uppercase tracking-wider text-slate-400">Card Holder</div>
+                                  <div className="text-xs uppercase tracking-wider text-slate-400">Card Holder</div>
                                   <div className="text-xs font-bold uppercase tracking-wide truncate max-w-[150px]">
                                     {cardHolder || (user as any)?.name || "RESIDENT NAME"}
                                   </div>
                                 </div>
                                 <div>
-                                  <div className="text-[8px] uppercase tracking-wider text-slate-400">Expires</div>
+                                  <div className="text-xs uppercase tracking-wider text-slate-400">Expires</div>
                                   <div className="text-xs font-mono font-bold">{expiryDate || "MM/YY"}</div>
                                 </div>
                               </div>
@@ -579,12 +579,12 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                             <div className="flex flex-col justify-between h-full pt-2">
                               <div className="h-9 bg-black/60 -mx-6 mb-2"></div>
                               <div className="text-right pr-4">
-                                <div className="text-[9px] uppercase tracking-wider text-slate-400">CVV Security Code</div>
+                                <div className="text-xs uppercase tracking-wider text-slate-400">CVV Security Code</div>
                                 <div className="font-mono font-bold text-base text-amber-400 tracking-widest">
                                   {cvv || "•••"}
                                 </div>
                               </div>
-                              <div className="text-[9px] text-slate-400">
+                              <div className="text-xs text-slate-400">
                                 Protected by Razorpay 256-bit encryption.
                               </div>
                             </div>
@@ -707,7 +707,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                          <div className="flex items-center gap-2 text-xs text-slate-400">
                             <Smartphone className="w-3.5 h-3.5 text-amber-500" />
                             <span>Supported: GPay, PhonePe, Paytm, BHIM, Amazon Pay</span>
                           </div>
@@ -718,7 +718,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                             {/* Visual QR Simulator */}
                             <div className="w-full h-full border-2 border-dashed border-black flex flex-col items-center justify-center">
                               <QrCode className="w-24 h-24 text-black" />
-                              <span className="text-[9px] font-mono text-black font-bold">UPI 2.0 QR</span>
+                              <span className="text-xs font-mono text-black font-bold">UPI 2.0 QR</span>
                             </div>
                           </div>
                           <p className="text-xs text-slate-400">
@@ -754,7 +754,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                               <span className="text-lg">{w.logo}</span>
                               <div>
                                 <div>{w.name}</div>
-                                <div className="text-[10px] text-slate-400 font-normal">{w.desc}</div>
+                                <div className="text-xs text-slate-400 font-normal">{w.desc}</div>
                               </div>
                             </div>
                             {isSel && <Check className="w-4 h-4 text-amber-500" />}
@@ -791,7 +791,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                                 <span>{b.logo}</span>
                                 <span>{b.name}</span>
                               </div>
-                              <span className="text-[10px] font-mono text-slate-400">{b.code}</span>
+                              <span className="text-xs font-mono text-slate-400">{b.code}</span>
                             </div>
                           );
                         })}
@@ -825,7 +825,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                 <div>
                   <div className="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-4">
                     <h3 className="font-black text-sm uppercase tracking-wider">Order Summary</h3>
-                    <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-extrabold border border-amber-500/30">
+                    <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-extrabold border border-amber-500/30">
                       {itemCategory}
                     </span>
                   </div>
@@ -856,7 +856,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
 
                   {/* PROMO COUPON CODE INPUT */}
                   <div className="pt-4 border-t border-white/10 mt-4 space-y-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
                       Have a Promo Code? (Try: ROOMBAE1000)
                     </label>
                     <div className="flex gap-2">
@@ -887,7 +887,7 @@ export const PayRentModal: React.FC<PayRentModalProps> = ({
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-[10px] text-slate-400 flex items-center gap-2">
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-400 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>Includes instant digital GST invoice download &amp; SMS confirmation.</span>
                   </div>

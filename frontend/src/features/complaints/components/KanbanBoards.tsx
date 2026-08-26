@@ -73,11 +73,11 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
   const [transfers, setTransfers] = useState(INITIAL_TRANSFERS);
   const [beds, setBeds] = useState(INITIAL_BEDS);
 
-  const columnBg = darkMode ? "bg-neutral-900/60 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]";
-  const cardBg = darkMode ? "bg-neutral-800/80 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222] shadow-sm";
-  const cardTextPrimary = darkMode ? "text-white" : "text-[#222222]";
-  const cardTextMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
-  const tabBg = darkMode ? "bg-neutral-900/40 border-white/10" : "bg-[#f7f7f7] border-[#dddddd]";
+  const columnBg = darkMode ? "bg-neutral-900/60 border-white/10" : "bg-[var(--bg-surface)] border-[var(--border-main)]";
+  const cardBg = darkMode ? "bg-neutral-800/80 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)] shadow-sm";
+  const cardTextPrimary = darkMode ? "text-white" : "text-[var(--text-main)]";
+  const cardTextMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
+  const tabBg = darkMode ? "bg-neutral-900/40 border-white/10" : "bg-[var(--bg-surface)] border-[var(--border-main)]";
 
   const [selectedTransfer, setSelectedTransfer] = useState<any>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -257,7 +257,7 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
                         {col.id !== "ACTIVE" && (
                           <button
                             onClick={(e) => { e.stopPropagation(); moveResidentStatus(res.id, "ACTIVE"); }}
-                            className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-500 text-[10px] font-semibold hover:bg-emerald-500/40 cursor-pointer"
+                            className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-500 text-xs font-semibold hover:bg-emerald-500/40 cursor-pointer"
                           >
                             Set Active 🟢
                           </button>
@@ -265,7 +265,7 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
                         {col.id !== "HOME" && (
                           <button
                             onClick={(e) => { e.stopPropagation(); moveResidentStatus(res.id, "HOME"); }}
-                            className="px-2 py-1 rounded bg-blue-500/20 text-blue-500 text-[10px] font-semibold hover:bg-blue-500/40 cursor-pointer"
+                            className="px-2 py-1 rounded bg-blue-500/20 text-blue-500 text-xs font-semibold hover:bg-blue-500/40 cursor-pointer"
                           >
                             Set Home 🏠
                           </button>
@@ -273,7 +273,7 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
                         {col.id !== "ON_LEAVE" && (
                           <button
                             onClick={(e) => { e.stopPropagation(); moveResidentStatus(res.id, "ON_LEAVE"); }}
-                            className="px-2 py-1 rounded bg-amber-500/20 text-amber-500 text-[10px] font-semibold hover:bg-amber-500/40 cursor-pointer"
+                            className="px-2 py-1 rounded bg-amber-500/20 text-amber-500 text-xs font-semibold hover:bg-amber-500/40 cursor-pointer"
                           >
                             Set Leave 🟡
                           </button>
@@ -316,14 +316,14 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
                     >
                       <div className="flex justify-between items-start">
                         <span className={`font-bold text-sm ${cardTextPrimary}`}>{t.residentName || "Rahul Sharma"}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
                           {t.priority}
                         </span>
                       </div>
                       <p className={`text-xs ${cardTextMuted}`}>Current: <span className={`font-medium ${cardTextPrimary}`}>{t.currentRoom}</span></p>
                       <p className="text-xs text-amber-400 font-medium">Requested: {t.preferredRoom || "Single AC"}</p>
                       <p className={`text-xs italic ${cardTextMuted}`}>&quot;{t.reason}&quot;</p>
-                      <div className={`flex justify-between items-center text-[11px] pt-1 border-t border-amber-500/10 ${cardTextMuted}`}>
+                      <div className={`flex justify-between items-center text-xs pt-1 border-t border-amber-500/10 ${cardTextMuted}`}>
                         <span>Budget: {t.budget}</span>
                         <span className="text-amber-400 flex items-center gap-1 font-semibold">Action <ArrowRight className="w-3 h-3" /></span>
                       </div>
@@ -371,7 +371,7 @@ export const KanbanBoards: React.FC<KanbanBoardsProps> = ({ onSelectResident }) 
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-sm text-amber-400">Bed #{bed.bedNumber}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">
                           {bed.roomNumber}
                         </span>
                       </div>

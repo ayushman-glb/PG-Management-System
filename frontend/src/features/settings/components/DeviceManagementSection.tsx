@@ -250,7 +250,7 @@ export const DeviceManagementSection: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-neutral-500">
+                        <div className="flex items-center gap-2 text-xs text-neutral-500">
                           <Clock className="w-3 h-3" />
                           <span>Last active: {new Date(device.lastSeenAt).toLocaleString()}</span>
                         </div>
@@ -300,7 +300,7 @@ export const DeviceManagementSection: React.FC = () => {
                     <span className="font-semibold text-white truncate">{log.deviceLabel}</span>
                     {getStatusBadge(log.status)}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-neutral-400 text-[11px]">
+                  <div className="flex flex-wrap items-center gap-3 text-neutral-400 text-xs">
                     <span className="flex items-center gap-1 font-mono">
                       <Globe className="w-3 h-3 text-neutral-500" />
                       {log.ipAddress}
@@ -319,7 +319,7 @@ export const DeviceManagementSection: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="text-neutral-500 text-[11px] shrink-0">
+                <div className="text-neutral-500 text-xs shrink-0">
                   {new Date(log.createdAt).toLocaleString()}
                 </div>
               </div>
@@ -338,7 +338,7 @@ export const DeviceManagementSection: React.FC = () => {
                 <span className="font-mono text-amber-400 font-semibold">{evt.eventType}</span>
                 <span className="text-neutral-400 ml-2">Risk: {evt.riskLevel}</span>
               </div>
-              <span className="text-neutral-500 text-[11px]">
+              <span className="text-neutral-500 text-xs">
                 {new Date(evt.createdAt).toLocaleString()}
               </span>
             </div>

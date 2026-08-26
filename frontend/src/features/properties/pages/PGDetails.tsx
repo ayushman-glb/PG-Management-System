@@ -42,9 +42,9 @@ export default function PGDetails({ navigate }: Props) {
   const [moveInDate, setMoveInDate] = useState("2026-09-01");
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#121212] text-[#222222] dark:text-[#f7f7f7] font-sans transition-colors">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-main)] font-sans transition-colors">
       {/* ─── Airbnb Sticky Top Header ───────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-[#121212] border-b border-[#ebebeb] dark:border-[#242424] transition-colors">
+      <header className="sticky top-0 z-40 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)] transition-colors">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BackButton />
@@ -59,7 +59,7 @@ export default function PGDetails({ navigate }: Props) {
                   navigator.share({ title: "RoomBae Indiranagar", url: window.location.href });
                 }
               }}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full hover:bg-[var(--bg-surface)] transition-colors text-[var(--text-main)] cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Share</span>
@@ -68,9 +68,9 @@ export default function PGDetails({ navigate }: Props) {
             <button
               type="button"
               onClick={() => setLiked(!liked)}
-              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full hover:bg-[var(--bg-surface)] transition-colors text-[var(--text-main)] cursor-pointer"
             >
-              <Heart className={`w-4 h-4 ${liked ? "fill-[#ff385c] text-[#ff385c]" : ""}`} />
+              <Heart className={`w-4 h-4 ${liked ? "fill-[var(--brand-primary)] text-[var(--brand-primary)]" : ""}`} />
               <span className="hidden sm:inline">{liked ? "Saved" : "Save"}</span>
             </button>
 
@@ -82,18 +82,18 @@ export default function PGDetails({ navigate }: Props) {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         {/* Title Header */}
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#222222] dark:text-[#f7f7f7]">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--text-main)]">
             RoomBae Luxury Co-Living & Executive Suites
           </h1>
-          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-[#6a6a6a] dark:text-[#a1a1aa] mt-2">
-            <div className="flex items-center gap-1 text-[#222222] dark:text-[#f7f7f7] font-bold">
-              <Star className="w-3.5 h-3.5 fill-current" />
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-[var(--text-muted)] mt-2">
+            <div className="flex items-center gap-1 text-[var(--text-main)] font-bold">
+              <Star className="w-3.5 h-3.5 fill-current text-[var(--star-rating)]" />
               <span>4.96</span>
               <span>·</span>
               <span className="underline cursor-pointer">128 reviews</span>
             </div>
             <span>·</span>
-            <span className="text-[#222222] dark:text-[#f7f7f7] font-bold">🏆 Superhost</span>
+            <span className="text-[var(--text-main)] font-bold">🏆 Superhost</span>
             <span>·</span>
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
@@ -110,6 +110,9 @@ export default function PGDetails({ navigate }: Props) {
               src={photoGallery[0]}
               alt="RoomBae suite"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
+              onError={(e) => {
+                e.currentTarget.src = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop&auto=format";
+              }}
             />
           </div>
 
@@ -121,6 +124,9 @@ export default function PGDetails({ navigate }: Props) {
                   src={photo}
                   alt={`RoomBae photo ${i + 2}`}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop&auto=format";
+                  }}
                 />
               </div>
             ))}
@@ -134,64 +140,64 @@ export default function PGDetails({ navigate }: Props) {
           <div className="lg:col-span-7 space-y-8">
             
             {/* Host Banner */}
-            <div className="pb-6 border-b border-[#dddddd] dark:border-[#2e2e2e] flex items-center justify-between">
+            <div className="pb-6 border-b border-[var(--border-main)] flex items-center justify-between">
               <div>
-                <h2 className="text-lg md:text-xl font-bold text-[#222222] dark:text-[#f7f7f7]">
+                <h2 className="text-lg md:text-xl font-bold text-[var(--text-main)]">
                   Entire suite managed by RoomBae Verified Host
                 </h2>
-                <p className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa] mt-0.5">
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
                   Private bedroom • Attached washroom • 100 Mbps WiFi • 3 Meals included
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-[#ff385c] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-[var(--brand-primary)] text-white flex items-center justify-center font-bold text-lg shadow-sm">
                 RB
               </div>
             </div>
 
             {/* ─── Airbnb Guest Favorite Laurels Box ─────────────────── */}
-            <div className="p-6 rounded-2xl border border-[#dddddd] dark:border-[#2e2e2e] flex items-center justify-between bg-[#f7f7f7] dark:bg-[#1a1a1a]">
+            <div className="p-6 rounded-2xl border border-[var(--border-main)] flex items-center justify-between bg-[var(--bg-surface)]">
               <div className="flex items-center gap-4">
                 <span className="text-2xl">🌿</span>
                 <div>
-                  <h3 className="font-bold text-sm text-[#222222] dark:text-[#f7f7f7]">
+                  <h3 className="font-bold text-sm text-[var(--text-main)]">
                     Guest favorite
                   </h3>
-                  <p className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa]">
+                  <p className="text-xs text-[var(--text-muted)]">
                     One of the most loved PGs on RoomBae based on ratings, reviews, and reliability.
                   </p>
                 </div>
               </div>
               <div className="text-right flex-shrink-0 pl-4">
-                <div className="text-clamp-rating text-[#222222] dark:text-[#f7f7f7]">
+                <div className="text-clamp-rating text-[var(--text-main)]">
                   4.96
                 </div>
-                <div className="flex justify-end text-xs text-[#222222] dark:text-[#f7f7f7]">
+                <div className="flex justify-end text-xs text-[var(--text-main)]">
                   ★★★★★
                 </div>
               </div>
             </div>
 
             {/* Highlights */}
-            <div className="space-y-4 pb-6 border-b border-[#dddddd] dark:border-[#2e2e2e]">
+            <div className="space-y-4 pb-6 border-b border-[var(--border-main)]">
               <div className="flex items-start gap-4">
-                <ShieldCheck className="w-5 h-5 text-[#ff385c] flex-shrink-0 mt-0.5" />
+                <ShieldCheck className="w-5 h-5 text-[var(--brand-primary)] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-[#222222] dark:text-[#f7f7f7]">
+                  <h4 className="font-bold text-sm text-[var(--text-main)]">
                     100% Superhost Verified
                   </h4>
-                  <p className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa]">
+                  <p className="text-xs text-[var(--text-muted)]">
                     Superhosts are experienced, highly rated hosts committed to great stays.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <Wifi className="w-5 h-5 text-[#ff385c] flex-shrink-0 mt-0.5" />
+                <Wifi className="w-5 h-5 text-[var(--brand-primary)] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-[#222222] dark:text-[#f7f7f7]">
+                  <h4 className="font-bold text-sm text-[var(--text-main)]">
                     High-speed Dedicated WiFi
                   </h4>
-                  <p className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa]">
+                  <p className="text-xs text-[var(--text-muted)]">
                     Gigabit fiber internet with power backup for uninterrupted remote work.
                   </p>
                 </div>
@@ -199,21 +205,21 @@ export default function PGDetails({ navigate }: Props) {
             </div>
 
             {/* 7-Day Weekly Food Menu */}
-            <div className="pb-6 border-b border-[#dddddd] dark:border-[#2e2e2e]">
-              <h3 className="text-base font-bold text-[#222222] dark:text-[#f7f7f7] mb-4 flex items-center gap-2">
-                <Utensils className="w-4 h-4 text-[#ff385c]" />
+            <div className="pb-6 border-b border-[var(--border-main)]">
+              <h3 className="text-base font-bold text-[var(--text-main)] mb-4 flex items-center gap-2">
+                <Utensils className="w-4 h-4 text-[var(--brand-primary)]" />
                 7-Day Homestyle Mess Menu
               </h3>
               <div className="space-y-2.5 text-xs">
                 {WEEKLY_MEALS.map((meal) => (
                   <div
                     key={meal.day}
-                    className="p-3 rounded-xl border border-[#dddddd] dark:border-[#2e2e2e] bg-white dark:bg-[#1e1e1e]"
+                    className="p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)]"
                   >
-                    <span className="font-bold text-[#222222] dark:text-[#f7f7f7] block mb-1">
+                    <span className="font-bold text-[var(--text-main)] block mb-1">
                       {meal.day}
                     </span>
-                    <p className="text-[#6a6a6a] dark:text-[#a1a1aa]">
+                    <p className="text-[var(--text-muted)]">
                       Breakfast: {meal.b} • Lunch: {meal.l} • Dinner: {meal.d}
                     </p>
                   </div>
@@ -225,46 +231,46 @@ export default function PGDetails({ navigate }: Props) {
 
           {/* Right Column (Sticky Reservation Box) */}
           <div className="lg:col-span-5">
-            <div className="sticky top-28 p-6 rounded-2xl border border-[#dddddd] dark:border-[#2e2e2e] shadow-xl bg-white dark:bg-[#1e1e1e] space-y-5">
+            <div className="sticky top-28 p-6 rounded-2xl border border-[var(--border-main)] shadow-xl bg-[var(--bg-card)] space-y-5">
               
               <div className="flex items-baseline justify-between">
                 <div>
-                  <span className="text-2xl font-black text-[#222222] dark:text-[#f7f7f7]">
+                  <span className="text-2xl font-black text-[var(--text-main)]">
                     ₹14,500
                   </span>
-                  <span className="text-xs text-[#6a6a6a] dark:text-[#a1a1aa] ml-1">
+                  <span className="text-xs text-[var(--text-muted)] ml-1">
                     month
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-[#222222] dark:text-[#f7f7f7]">
-                  <Star className="w-3.5 h-3.5 fill-current" />
+                <div className="flex items-center gap-1 text-xs font-bold text-[var(--text-main)]">
+                  <Star className="w-3.5 h-3.5 fill-current text-[var(--star-rating)]" />
                   <span>4.96</span>
-                  <span className="text-[#6a6a6a] dark:text-[#a1a1aa]">(128)</span>
+                  <span className="text-[var(--text-muted)]">(128)</span>
                 </div>
               </div>
 
               {/* Stacked Selection Box */}
-              <div className="rounded-xl border border-[#dddddd] dark:border-[#2e2e2e] overflow-hidden text-xs">
-                <div className="p-3 border-b border-[#dddddd] dark:border-[#2e2e2e] bg-[#f7f7f7] dark:bg-[#252525]">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#6a6a6a] dark:text-[#a1a1aa] mb-1">
+              <div className="rounded-xl border border-[var(--border-main)] overflow-hidden text-xs">
+                <div className="p-3 border-b border-[var(--border-main)] bg-[var(--bg-surface)]">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
                     Move-In Date
                   </label>
                   <input
                     type="date"
                     value={moveInDate}
                     onChange={(e) => setMoveInDate(e.target.value)}
-                    className="w-full bg-transparent font-medium outline-none text-[#222222] dark:text-[#f7f7f7]"
+                    className="w-full bg-transparent font-medium outline-none text-[var(--text-main)]"
                   />
                 </div>
 
-                <div className="p-3 bg-white dark:bg-[#1e1e1e]">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#6a6a6a] dark:text-[#a1a1aa] mb-1">
+                <div className="p-3 bg-[var(--bg-card)]">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
                     Room / Sharing
                   </label>
                   <select
                     value={sharingOption}
                     onChange={(e) => setSharingOption(e.target.value)}
-                    className="w-full bg-transparent font-medium outline-none text-[#222222] dark:text-[#f7f7f7]"
+                    className="w-full bg-transparent font-medium outline-none text-[var(--text-main)]"
                   >
                     <option value="Single Private Suite">Single Private Suite - ₹14,500/mo</option>
                     <option value="Double Sharing Executive">Double Sharing Executive - ₹9,500/mo</option>
@@ -279,17 +285,16 @@ export default function PGDetails({ navigate }: Props) {
                 fullWidth
                 size="lg"
                 onClick={() => navigate("auth")}
-                className="btn-rausch"
               >
                 Reserve Bed
               </Button>
 
-              <p className="text-center text-[11px] text-[#6a6a6a] dark:text-[#a1a1aa]">
+              <p className="text-center text-xs text-[var(--text-muted-soft)]">
                 You won't be charged yet · Free cancellation within 48 hours
               </p>
 
               {/* Transparent Pricing Table */}
-              <div className="space-y-2 pt-4 border-t border-[#dddddd] dark:border-[#2e2e2e] text-xs text-[#6a6a6a] dark:text-[#a1a1aa]">
+              <div className="space-y-2 pt-4 border-t border-[var(--border-main)] text-xs text-[var(--text-muted)]">
                 <div className="flex justify-between">
                   <span>₹14,500 x 1 month</span>
                   <span>₹14,500</span>
@@ -302,7 +307,7 @@ export default function PGDetails({ navigate }: Props) {
                   <span>Zero-Deposit Escrow Protection</span>
                   <span>₹0 (Included)</span>
                 </div>
-                <div className="flex justify-between font-bold text-sm text-[#222222] dark:text-[#f7f7f7] pt-2 border-t border-[#dddddd] dark:border-[#2e2e2e]">
+                <div className="flex justify-between font-bold text-sm text-[var(--text-main)] pt-2 border-t border-[var(--border-main)]">
                   <span>Total (INR)</span>
                   <span>₹14,500</span>
                 </div>

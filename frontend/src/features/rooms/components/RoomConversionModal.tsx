@@ -50,10 +50,10 @@ export const RoomConversionModal: React.FC<RoomConversionModalProps> = ({
     }
   };
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const cardBg = darkMode ? "bg-neutral-800/40 border-white/5 text-neutral-300" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
-  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const cardBg = darkMode ? "bg-neutral-800/40 border-white/5 text-neutral-300" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
+  const textPrimary = darkMode ? "text-white" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
 
   return (
     <AnimatePresence>
@@ -76,7 +76,7 @@ export const RoomConversionModal: React.FC<RoomConversionModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -113,11 +113,11 @@ export const RoomConversionModal: React.FC<RoomConversionModalProps> = ({
                         ? "bg-amber-500/20 border-amber-500/50 text-amber-500 font-bold shadow-lg"
                         : darkMode
                           ? "bg-neutral-800/60 border-white/5 text-neutral-400 hover:text-white"
-                          : "bg-[#f7f7f7] border-[#dddddd] text-[#6a6a6a] hover:text-[#222222]"
+                          : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
                     }`}
                   >
                     <p className="text-sm font-black">{opt.label}</p>
-                    <p className="text-[10px] opacity-70 mt-0.5">{opt.beds}</p>
+                    <p className="text-xs opacity-70 mt-0.5">{opt.beds}</p>
                   </button>
                 ))}
               </div>
@@ -133,7 +133,7 @@ export const RoomConversionModal: React.FC<RoomConversionModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className={`px-4 py-2 rounded-xl font-medium cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-300 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
+                className={`px-4 py-2 rounded-xl font-medium cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-300 hover:text-white" : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
               >
                 Cancel
               </button>

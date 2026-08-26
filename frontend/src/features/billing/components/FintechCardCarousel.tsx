@@ -71,9 +71,9 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
     setActiveIndex((prev) => (prev - 1 + DEFAULT_CARDS.length) % DEFAULT_CARDS.length);
   };
 
-  const cardBg = darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]";
-  const textPrimary = darkMode ? "text-[#f7f7f7]" : "text-[#222222]";
-  const textMuted = darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]";
+  const cardBg = darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]";
+  const textPrimary = darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]";
 
   return (
     <div className={`p-6 rounded-3xl border shadow-xl backdrop-blur-xl ${cardBg}`}>
@@ -92,7 +92,7 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
             type="button"
             onClick={() => setShowFullNumber(!showFullNumber)}
             className={`p-2 rounded-xl border transition-all cursor-pointer ${
-              darkMode ? "bg-[#1e1e1e] border-[#2e2e2e] text-[#a1a1aa] hover:text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#6a6a6a] hover:text-black"
+              darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)] text-[var(--text-muted)] hover:text-white" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-muted)] hover:text-black"
             }`}
             title="Toggle Card Number Visibility"
           >
@@ -115,7 +115,7 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
             <div className="absolute -right-10 -top-10 w-36 h-36 rounded-full bg-white/10 blur-xl pointer-events-none" />
 
             <div className="flex justify-between items-start z-10">
-              <span className="text-[11px] font-bold tracking-widest uppercase opacity-80">
+              <span className="text-xs font-bold tracking-widest uppercase opacity-80">
                 {currentCard.type} CARD
               </span>
               <span className="text-xs font-mono font-semibold tracking-wider bg-white/15 px-2 py-0.5 rounded-full border border-white/20">
@@ -133,7 +133,7 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
 
             <div className="flex justify-between items-end z-10">
               <div>
-                <span className="text-[9px] uppercase tracking-wider opacity-70 block">
+                <span className="text-xs uppercase tracking-wider opacity-70 block">
                   Card Holder
                 </span>
                 <p className="font-bold text-sm tracking-wide">{currentCard.cardHolder}</p>
@@ -170,7 +170,7 @@ export const FintechCardCarousel: React.FC<FintechCardCarouselProps> = ({
       </div>
 
       <div className="flex items-center justify-between gap-3 mt-4">
-        <div className={`flex items-center p-1 rounded-2xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-[#f7f7f7] border-[#dddddd]"}`}>
+        <div className={`flex items-center p-1 rounded-2xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-[var(--bg-surface)] border-[var(--border-main)]"}`}>
           <button
             type="button"
             onClick={() => setActiveType("DEBIT")}

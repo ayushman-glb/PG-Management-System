@@ -30,8 +30,8 @@ export const FineManagementModal: React.FC<FineManagementModalProps> = ({
     onClose();
   };
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
+  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
 
   return (
     <AnimatePresence>

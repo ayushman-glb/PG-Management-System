@@ -283,14 +283,14 @@ export default function ResidentRegister({ navigate }: Props) {
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-white text-[#222222]"}`}>
+    <div className={`min-h-screen flex flex-col ${darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-white text-[var(--text-main)]"}`}>
       {toastMsg && (
         <div role="status" aria-live="polite" className="fixed top-5 right-5 z-50 animate-bounce bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2">
           <FileCheck className="w-4 h-4" /> {toastMsg}
         </div>
       )}
 
-      <header className={`sticky top-0 z-30 px-6 py-4 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[#252525]/90 border-[#dddddd]" : "bg-white/90 border-[#dddddd]"}`}>
+      <header className={`sticky top-0 z-30 px-6 py-4 border-b backdrop-blur-md flex items-center justify-between ${darkMode ? "bg-[var(--bg-nested)]/90 border-[var(--border-main)]" : "bg-white/90 border-[var(--border-main)]"}`}>
         <button
           type="button"
           onClick={() => navigate("landing")}
@@ -305,7 +305,7 @@ export default function ResidentRegister({ navigate }: Props) {
           </div>
           <div>
             <h1 className="font-bold text-lg leading-tight">RoomBae Resident Onboarding</h1>
-            <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Join your PG community in 5 simple steps</p>
+            <p className={`text-xs ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>Join your PG community in 5 simple steps</p>
           </div>
         </button>
 
@@ -316,7 +316,7 @@ export default function ResidentRegister({ navigate }: Props) {
       </header>
 
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8 space-y-8">
-        <div className={` p-4 md:p-6 border shadow-sm ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+        <div className={` p-4 md:p-6 border shadow-sm ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 dark:bg-slate-700 z-0" />
             <div
@@ -344,16 +344,16 @@ export default function ResidentRegister({ navigate }: Props) {
                         ? "bg-[#5E9F72] text-white shadow-md"
                         : isCurrent
                           ? darkMode
-                            ? "bg-[#ff385c] text-[#121212] ring-4 ring-[#ff385c]/20 shadow-md"
-                            : "bg-[#ff385c] text-white ring-4 ring-[#ff385c]/30 shadow-md"
+                            ? "bg-[var(--brand-primary)] text-[var(--badge-new-text)] ring-4 ring-[var(--brand-primary)]/20 shadow-md"
+                            : "bg-[var(--brand-primary)] text-white ring-4 ring-[var(--brand-primary)]/30 shadow-md"
                           : darkMode
-                            ? "bg-[#1e1e1e] text-[#a1a1aa] border border-[#dddddd]"
-                            : "bg-[#f7f7f7] text-[#6a6a6a] border border-[#dddddd]"
+                            ? "bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-main)]"
+                            : "bg-[var(--bg-surface)] text-[var(--text-muted)] border border-[var(--border-main)]"
                     }`}
                   >
                     {isDone ? <Check className="w-5 h-5" /> : <Icon className="w-4 h-4" />}
                   </button>
-                  <span className={`text-xs font-semibold hidden md:block ${isCurrent ? (darkMode ? "text-[#ff385c]" : "text-[#ff385c]") : (darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]")}`}>
+                  <span className={`text-xs font-semibold hidden md:block ${isCurrent ? (darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]") : (darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]")}`}>
                     {s.label}
                   </span>
                 </div>
@@ -362,12 +362,12 @@ export default function ResidentRegister({ navigate }: Props) {
           </div>
         </div>
 
-        <div ref={stepCardRef} className={` p-6 md:p-8 ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+        <div ref={stepCardRef} className={` p-6 md:p-8 ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
           {step === 1 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-black mb-1">Personal Details</h2>
-                <p className={`text-sm ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Provide your basic identification and contact details</p>
+                <p className={`text-sm ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>Provide your basic identification and contact details</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -504,7 +504,7 @@ export default function ResidentRegister({ navigate }: Props) {
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-black mb-1">Identity &amp; KYC Verification</h2>
-                <p className={`text-sm ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Upload your profile photo and government ID proof documents</p>
+                <p className={`text-sm ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>Upload your profile photo and government ID proof documents</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -565,11 +565,11 @@ export default function ResidentRegister({ navigate }: Props) {
                         className={`border-2 border-dashed rounded-2xl p-4 transition-all duration-300 relative flex flex-col justify-between ${
                           isDragging
                             ? darkMode
-                              ? "border-[#ff385c] bg-[#ff385c]/10 scale-[1.02]"
-                              : "border-[#ff385c] bg-[#ff385c]/10 scale-[1.02]"
+                              ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 scale-[1.02]"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 scale-[1.02]"
                             : darkMode
-                              ? "border-[#dddddd] bg-[#252525]"
-                              : "border-[#dddddd] bg-[#f7f7f7]/40"
+                              ? "border-[var(--border-main)] bg-[var(--bg-nested)]"
+                              : "border-[var(--border-main)] bg-[var(--bg-surface)]/40"
                         }`}
                       >
                         {doc && doc.status === "uploading" ? (
@@ -577,11 +577,11 @@ export default function ResidentRegister({ navigate }: Props) {
                             <p className="text-xs font-bold">Uploading {doc.fileName}...</p>
                             <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-[#ff385c] dark:bg-[#ff385c] transition-all duration-200"
+                                className="h-full bg-[var(--brand-primary)] dark:bg-[var(--brand-primary)] transition-all duration-200"
                                 style={{ width: `${doc.progress}%` }}
                               />
                             </div>
-                            <span className="text-[10px] font-mono text-slate-400">{doc.progress}% Completed</span>
+                            <span className="text-xs font-mono text-slate-400">{doc.progress}% Completed</span>
                           </div>
                         ) : doc && doc.status === "success" ? (
                           <div className="space-y-3">
@@ -599,8 +599,8 @@ export default function ResidentRegister({ navigate }: Props) {
                               )}
                               <div className="min-w-0 flex-1">
                                 <p className="font-bold text-xs truncate">{doc.fileName}</p>
-                                <p className="text-[10px] text-slate-400">{doc.fileSize} · {doc.uploadTime}</p>
-                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+                                <p className="text-xs text-slate-400">{doc.fileSize} · {doc.uploadTime}</p>
+                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
                                   <Check className="w-3 h-3" /> Uploaded Successfully
                                 </span>
                               </div>
@@ -634,9 +634,9 @@ export default function ResidentRegister({ navigate }: Props) {
                           </div>
                         ) : (
                           <div className="py-4 text-center flex flex-col items-center justify-center">
-                            <Upload className={`w-6 h-6 mb-2 ${darkMode ? "text-[#ff385c]" : "text-[#ff385c]"}`} />
+                            <Upload className={`w-6 h-6 mb-2 ${darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"}`} />
                             <p className="text-xs font-bold mb-0.5">{field.label}</p>
-                            <p className="text-[10px] text-slate-400 mb-2">Drag &amp; Drop or Browse File</p>
+                            <p className="text-xs text-slate-400 mb-2">Drag &amp; Drop or Browse File</p>
                             <label className="luxury-btn-primary px-3 py-1.5 text-xs font-bold cursor-pointer">
                               Select File
                               <input
@@ -662,7 +662,7 @@ export default function ResidentRegister({ navigate }: Props) {
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-black mb-1">Address &amp; Guardian Details</h2>
-                <p className={`text-sm ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Provide permanent residence and guardian contact information</p>
+                <p className={`text-sm ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>Provide permanent residence and guardian contact information</p>
               </div>
 
               <div className="space-y-4">
@@ -721,7 +721,7 @@ export default function ResidentRegister({ navigate }: Props) {
                   </div>
                 </div>
 
-                <hr className={`my-4 ${darkMode ? "border-[#dddddd]" : "border-[#dddddd]"}`} />
+                <hr className={`my-4 ${darkMode ? "border-[var(--border-main)]" : "border-[var(--border-main)]"}`} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -751,7 +751,7 @@ export default function ResidentRegister({ navigate }: Props) {
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-black mb-1">PG &amp; Stay Preferences</h2>
-                <p className={`text-sm ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Select your preferred RoomBae property, room sharing, and stay requirements</p>
+                <p className={`text-sm ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>Select your preferred RoomBae property, room sharing, and stay requirements</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -814,10 +814,10 @@ export default function ResidentRegister({ navigate }: Props) {
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-black mb-1">Review &amp; Refund Bank Details</h2>
-                <p className={`text-sm ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>Verify your details and add account details for deposit refund processing</p>
+                <p className={`text-sm ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>Verify your details and add account details for deposit refund processing</p>
               </div>
 
-              <div className={`p-4 rounded-xl space-y-3 ${darkMode ? "bg-[#252525] border border-[#dddddd]" : "bg-[#f7f7f7] border border-[#dddddd]"}`}>
+              <div className={`p-4 rounded-xl space-y-3 ${darkMode ? "bg-[var(--bg-nested)] border border-[var(--border-main)]" : "bg-[var(--bg-surface)] border border-[var(--border-main)]"}`}>
                 <h3 className="font-bold text-sm">Registration Summary</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                   <div>
@@ -872,9 +872,9 @@ export default function ResidentRegister({ navigate }: Props) {
                     type="checkbox"
                     checked={formData.agreeTerms}
                     onChange={(e) => updateForm("agreeTerms", e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded accent-[#ff385c]"
+                    className="mt-1 w-4 h-4 rounded accent-[var(--brand-primary)]"
                   />
-                  <span className={`text-xs leading-relaxed ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+                  <span className={`text-xs leading-relaxed ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
                     I confirm all provided information and KYC documents are accurate. I agree to abide by RoomBae's Resident Code of Conduct and Booking Terms.
                   </span>
                 </label>
@@ -887,7 +887,7 @@ export default function ResidentRegister({ navigate }: Props) {
             {step > 1 ? (
               <button
                 onClick={() => setStep(step - 1)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer ${darkMode ? "bg-[#252525] hover:bg-[#3E3735] text-[#f7f7f7]" : "bg-[#f7f7f7] hover:bg-[#EAE0D5] text-[#222222]"}`}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors cursor-pointer ${darkMode ? "bg-[var(--bg-nested)] hover:bg-[#3E3735] text-[var(--text-main)]" : "bg-[var(--bg-surface)] hover:bg-[#EAE0D5] text-[var(--text-main)]"}`}
               >
                 <ArrowLeft className="w-4 h-4" /> Previous
               </button>
@@ -913,7 +913,7 @@ export default function ResidentRegister({ navigate }: Props) {
 
       {previewModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className={` w-full max-w-lg p-6 ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+          <div className={` w-full max-w-lg p-6 ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-base">{previewModal.fileName}</h3>
               <button onClick={() => setPreviewModal(null)}><X className="w-5 h-5" /></button>
@@ -922,7 +922,7 @@ export default function ResidentRegister({ navigate }: Props) {
               <img src={previewModal.previewUrl} alt={previewModal.fileName} className="w-full h-64 object-cover rounded-xl border mb-4" />
             ) : (
               <div className="h-64 bg-slate-100 dark:bg-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 p-6 text-center mb-4">
-                <FileText className="w-16 h-16 mb-2 text-[#ff385c]" />
+                <FileText className="w-16 h-16 mb-2 text-[var(--brand-primary)]" />
                 <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{previewModal.fileName}</p>
                 <p className="text-xs text-slate-400 mt-1">Verified PDF Copy ({previewModal.fileSize})</p>
               </div>
@@ -936,16 +936,16 @@ export default function ResidentRegister({ navigate }: Props) {
 
       {submitted && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className={` w-full max-w-md p-8 text-center animate-slide-in-up ${darkMode ? "bg-[#1e1e1e] border-[#dddddd]" : "bg-white border-[#dddddd]"}`}>
+          <div className={` w-full max-w-md p-8 text-center animate-slide-in-up ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-black mb-2">Welcome to RoomBae!</h2>
-            <p className={`text-sm mb-6 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+            <p className={`text-sm mb-6 ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
               Your resident onboarding for <strong>Sunrise PG Homes</strong> has been submitted. Your assigned Resident ID:
             </p>
 
-            <div className={`p-4 rounded-xl mb-6 font-mono font-bold text-lg border ${darkMode ? "bg-[#252525] border-[#dddddd] text-[#ff385c]" : "bg-[#f7f7f7] border-[#dddddd] text-[#ff385c]"}`}>
+            <div className={`p-4 rounded-xl mb-6 font-mono font-bold text-lg border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)] text-[var(--brand-primary)]" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--brand-primary)]"}`}>
               Resident ID: RES1001
             </div>
 

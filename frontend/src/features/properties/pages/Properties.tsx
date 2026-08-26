@@ -168,8 +168,8 @@ export default function Properties({ navigate }: Props) {
                 className={`rounded-2xl border overflow-hidden cursor-pointer card-hover transition-all ${darkMode ? "bg-slate-800" : "bg-white"} ${
                   selectedProperty?.id === prop.id
                     ? darkMode
-                      ? "border-[#ff385c] shadow-lg shadow-[#ff385c]/10"
-                      : "border-[#ff385c] shadow-lg shadow-[#ff385c]/15"
+                      ? "border-[var(--brand-primary)] shadow-lg shadow-[#ff385c]/10"
+                      : "border-[var(--brand-primary)] shadow-lg shadow-[#ff385c]/15"
                     : darkMode
                       ? "border-slate-700"
                       : "border-slate-100"
@@ -221,7 +221,7 @@ export default function Properties({ navigate }: Props) {
                     </div>
                     <div className="text-center">
                       <p
-                        className={`font-bold text-sm ${darkMode ? "text-[#ff385c]" : "text-[#ff385c]"}`}
+                        className={`font-bold text-sm ${darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"}`}
                       >
                         {prop.occupied ?? prop.currentOccupancy ?? 0}
                       </p>
@@ -332,18 +332,18 @@ export default function Properties({ navigate }: Props) {
                 onDragLeave={() => setDragOver(null)}
                 className={`
                   relative rounded-xl p-3 text-center cursor-pointer transition-all select-none
-                  ${bed.status === "occupied" ? (darkMode ? "bg-[#1e1e1e] border-2 border-[#ff385c] hover:border-[#E8C98A]" : "bg-[#f7f7f7] border-2 border-[#ff385c] hover:border-[#ff385c]") : ""}
-                  ${bed.status === "vacant" ? (darkMode ? "bg-[#252525] border-2 border-dashed border-[#dddddd] hover:border-[#ff385c]" : "bg-white border-2 border-dashed border-[#dddddd] hover:border-[#ff385c]") : ""}
+                  ${bed.status === "occupied" ? (darkMode ? "bg-[var(--bg-card)] border-2 border-[var(--brand-primary)] hover:border-[#E8C98A]" : "bg-[var(--bg-surface)] border-2 border-[var(--brand-primary)] hover:border-[var(--brand-primary)]") : ""}
+                  ${bed.status === "vacant" ? (darkMode ? "bg-[var(--bg-nested)] border-2 border-dashed border-[var(--border-main)] hover:border-[var(--brand-primary)]" : "bg-white border-2 border-dashed border-[var(--border-main)] hover:border-[var(--brand-primary)]") : ""}
                   ${bed.status === "maintenance" ? (darkMode ? "bg-orange-900/20 border-2 border-orange-700" : "bg-orange-50 border-2 border-orange-200") : ""}
-                  ${dragOver === bed.id ? "scale-105 border-[#ff385c]" : ""}
+                  ${dragOver === bed.id ? "scale-105 border-[var(--brand-primary)]" : ""}
                 `}
               >
                 <BedDouble
                   className={`w-4 h-4 mx-auto mb-1 ${
                     bed.status === "occupied"
                       ? darkMode
-                        ? "text-[#ff385c]"
-                        : "text-[#ff385c]"
+                        ? "text-[var(--brand-primary)]"
+                        : "text-[var(--brand-primary)]"
                       : bed.status === "vacant"
                         ? darkMode
                           ? "text-slate-500"
@@ -377,7 +377,7 @@ export default function Properties({ navigate }: Props) {
               {
                 label: "Occupied",
                 value: beds.filter((b) => b.status === "occupied").length,
-                color: darkMode ? "text-[#ff385c]" : "text-[#ff385c]",
+                color: darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]",
               },
               {
                 label: "Vacant",
@@ -419,10 +419,10 @@ export default function Properties({ navigate }: Props) {
             >
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-[#252525]" : "bg-[#f7f7f7]"}`}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${darkMode ? "bg-[var(--bg-nested)]" : "bg-[var(--bg-surface)]"}`}
                 >
                   <Building2
-                    className={`w-5 h-5 ${darkMode ? "text-[#ff385c]" : "text-[#ff385c]"}`}
+                    className={`w-5 h-5 ${darkMode ? "text-[var(--brand-primary)]" : "text-[var(--brand-primary)]"}`}
                   />
                 </div>
                 <h3
@@ -464,7 +464,7 @@ export default function Properties({ navigate }: Props) {
                   value={form.name}
                   onChange={(e) => updateForm("name", e.target.value)}
                   placeholder="e.g. Sunrise PG Homes"
-                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                 />
               </div>
 
@@ -479,7 +479,7 @@ export default function Properties({ navigate }: Props) {
                   value={form.address}
                   onChange={(e) => updateForm("address", e.target.value)}
                   placeholder="Full address"
-                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                 />
               </div>
 
@@ -495,7 +495,7 @@ export default function Properties({ navigate }: Props) {
                     value={form.city}
                     onChange={(e) => updateForm("city", e.target.value)}
                     placeholder="e.g. Bengaluru"
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                   />
                 </div>
                 <div>
@@ -509,7 +509,7 @@ export default function Properties({ navigate }: Props) {
                     value={form.pincode}
                     onChange={(e) => updateForm("pincode", e.target.value)}
                     placeholder="560038"
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                   />
                 </div>
               </div>
@@ -525,7 +525,7 @@ export default function Properties({ navigate }: Props) {
                   value={form.buildingName}
                   onChange={(e) => updateForm("buildingName", e.target.value)}
                   placeholder="e.g. Main Block"
-                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400" : "border-slate-200"}`}
                 />
               </div>
 
@@ -543,7 +543,7 @@ export default function Properties({ navigate }: Props) {
                     onChange={(e) =>
                       updateForm("floorsCount", parseInt(e.target.value) || 0)
                     }
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
                   />
                 </div>
                 <div>
@@ -559,7 +559,7 @@ export default function Properties({ navigate }: Props) {
                     onChange={(e) =>
                       updateForm("roomsPerFloor", parseInt(e.target.value) || 0)
                     }
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
                   />
                 </div>
               </div>
@@ -574,7 +574,7 @@ export default function Properties({ navigate }: Props) {
                   <select
                     value={form.sharingType}
                     onChange={(e) => updateForm("sharingType", e.target.value)}
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
                   >
                     <option value="SINGLE">Single Sharing</option>
                     <option value="DOUBLE">Double Sharing (2)</option>
@@ -595,13 +595,13 @@ export default function Properties({ navigate }: Props) {
                     onChange={(e) =>
                       updateForm("rentAmount", parseFloat(e.target.value) || 0)
                     }
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#ff385c] dark:focus:ring-[#ff385c] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] dark:focus:ring-[var(--brand-primary)] focus:border-transparent ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "border-slate-200"}`}
                   />
                 </div>
               </div>
 
               <div
-                className={`p-3 rounded-xl text-center text-sm font-bold ${darkMode ? "bg-slate-700 text-[#ff385c]" : "bg-slate-50 text-[#ff385c]"}`}
+                className={`p-3 rounded-xl text-center text-sm font-bold ${darkMode ? "bg-slate-700 text-[var(--brand-primary)]" : "bg-slate-50 text-[var(--brand-primary)]"}`}
               >
                 ⏱ Will generate {form.floorsCount * form.roomsPerFloor} Rooms &{" "}
                 {form.totalBeds} Beds

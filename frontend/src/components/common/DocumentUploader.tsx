@@ -77,7 +77,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
             <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
               Click to select PDF Document
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">PDF max size 10MB</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">PDF max size 10MB</p>
           </div>
         </div>
       )}
@@ -108,7 +108,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
                 href={currentUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] text-slate-400 hover:text-white underline truncate block max-w-xs"
+                className="text-xs text-slate-400 hover:text-white underline truncate block max-w-xs"
               >
                 View Document
               </a>

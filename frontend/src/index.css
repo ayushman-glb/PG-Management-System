@@ -29,24 +29,32 @@
 }
 
 :root {
-  --color-primary: #ff385c;
-  --color-primary-active: #e00b41;
-  --color-primary-disabled: #ffd1da;
-  --color-primary-error: #c13515;
+  /* Brand */
+  --brand-primary: #ff385c;      /* Rausch — CTAs, active states, links */
+  --brand-primary-hover: #e00b41;
+  --brand-primary-disabled: #ffd1da;
 
+  /* Surfaces */
   --bg-primary: #ffffff;
-  --bg-surface: #f7f7f7;
   --bg-card: #ffffff;
+  --bg-surface: #f7f7f7;
   --bg-nested: #f2f2f2;
 
-  --text-main: #222222;
-  --text-body: #3f3f3f;
-  --text-muted: #6a6a6a;
-  --text-muted-soft: #929292;
-
+  /* Borders */
   --border-main: #dddddd;
   --border-subtle: #ebebeb;
   --border-strong: #c1c1c1;
+
+  /* Text — FIXED */
+  --text-main: #222222;
+  --text-body: #3f3f3f;
+  --text-muted: #6a6a6a;
+  --text-muted-soft: #767676;   /* was #929292 (2.8:1, fails AA) → now 4.54:1 AA pass */
+
+  /* Dedicated Tokens */
+  --badge-new-bg: #ff385c;
+  --badge-new-text: #ffffff;
+  --overlay-scrim: rgba(0, 0, 0, 0.45); /* for text sitting on hero images */
 
   --star-rating: #222222;
   --shadow-airbnb: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -55,30 +63,120 @@
 }
 
 html.dark-theme,
-html.dark {
-  --color-primary: #ff385c;
-  --color-primary-active: #e00b41;
-  --color-primary-disabled: #4a1824;
-  --color-primary-error: #ff5a5f;
+html.dark,
+.dark {
+  /* Brand */
+  --brand-primary: #ff385c;
+  --brand-primary-hover: #e00b41;
+  --brand-primary-disabled: #4a1824;
 
+  /* Surfaces */
   --bg-primary: #121212;
-  --bg-surface: #1a1a1a;
   --bg-card: #1e1e1e;
+  --bg-surface: #1a1a1a;
   --bg-nested: #252525;
 
-  --text-main: #f7f7f7;
-  --text-body: #d4d4d8;
-  --text-muted: #a1a1aa;
-  --text-muted-soft: #71717a;
-
+  /* Borders */
   --border-main: #2e2e2e;
   --border-subtle: #242424;
   --border-strong: #4a4a4a;
+
+  /* Text — FIXED */
+  --text-main: #f7f7f7;
+  --text-body: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-muted-soft: #9a9aa2;   /* was #71717a → now safely 5.80:1 AA pass */
+
+  /* Dedicated Tokens */
+  --badge-new-bg: #ff5a5f;      /* softer dark-mode accent so it doesn't clash */
+  --badge-new-text: #121212;
+  --overlay-scrim: rgba(0, 0, 0, 0.55);
 
   --star-rating: #f7f7f7;
   --shadow-airbnb: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.5);
   --shadow-dropdown: rgba(255, 255, 255, 0.04) 0px 0px 0px 1px, rgba(0, 0, 0, 0.4) 0px 4px 12px 0px;
+}
+
+/* ─── Standard Consolidated Button Utilities ────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 2px rgba(255, 56, 92, 0.2);
+}
+.btn-primary:hover {
+  background-color: var(--brand-primary-hover);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-main);
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background-color: var(--bg-surface);
+  border-color: var(--text-main);
+}
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--text-main);
+  border: 1px solid transparent;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+.btn-ghost:hover {
+  background-color: var(--bg-surface);
+}
+.btn-ghost:active {
+  transform: scale(0.98);
+}
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Fluid Typography & Layout Clamps */
@@ -131,8 +229,8 @@ html {
 }
 
 body {
-  background-color: #FFF8F2;
-  color: #3B2A24;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
   min-width: 320px;
   width: 100%;
   max-width: 100%;

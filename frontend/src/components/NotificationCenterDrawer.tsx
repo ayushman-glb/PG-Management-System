@@ -80,9 +80,9 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
 
   if (!isOpen) return null;
 
-  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const textPrimary = darkMode ? "text-white" : "text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const drawerBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const textPrimary = darkMode ? "text-white" : "text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
 
   return (
     <AnimatePresence>
@@ -100,7 +100,7 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
               <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 relative">
                 <Bell className="w-6 h-6" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-black text-[10px] font-black flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-black text-xs font-black flex items-center justify-center">
                     {unreadCount}
                   </span>
                 )}
@@ -112,7 +112,7 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
             </div>
             <button
               onClick={onClose}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[#f7f7f7] text-[#6a6a6a] hover:text-[#222222]"}`}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${darkMode ? "bg-neutral-800 text-neutral-400 hover:text-white" : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -144,10 +144,10 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
                   n.isRead
                     ? darkMode
                       ? 'bg-neutral-800/40 border-white/5 opacity-70'
-                      : 'bg-[#f7f7f7]/60 border-[#dddddd] opacity-70'
+                      : 'bg-[var(--bg-surface)]/60 border-[var(--border-main)] opacity-70'
                     : darkMode
                       ? 'bg-neutral-800/90 border-amber-500/30 shadow-lg'
-                      : 'bg-[#ffffff] border-[#ff385c] shadow-md'
+                      : 'bg-[var(--bg-primary)] border-[var(--brand-primary)] shadow-md'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -155,7 +155,7 @@ export const NotificationCenterDrawer: React.FC<NotificationCenterDrawerProps> =
                     <span className="w-2 h-2 rounded-full bg-amber-400" />
                     <h4 className={`font-bold text-sm ${textPrimary}`}>{n.title}</h4>
                   </div>
-                  <span className={`text-[10px] ${textMuted}`}>
+                  <span className={`text-xs ${textMuted}`}>
                     {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>

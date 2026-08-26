@@ -51,9 +51,9 @@ export const AdminVerificationQueue: React.FC<AdminVerificationQueueProps> = ({ 
     setQueue(prev => prev.map(item => item.id === id ? { ...item, status: 'REJECTED' } : item));
   };
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
 
   return (
     <AnimatePresence>
@@ -88,7 +88,7 @@ export const AdminVerificationQueue: React.FC<AdminVerificationQueueProps> = ({ 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm">{item.name}</span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         item.status === 'APPROVED'
                           ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
                           : item.status === 'REJECTED'

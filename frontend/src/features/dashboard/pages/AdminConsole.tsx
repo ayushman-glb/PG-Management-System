@@ -161,7 +161,7 @@ export default function AdminConsole({ navigate }: Props) {
                 </div>
               </div>
               <p className={`text-3xl font-black ${darkMode ? "text-white" : "text-slate-900"}`}>{m.value}</p>
-              <span className="text-[11px] font-semibold text-emerald-400 mt-2 block">{m.change}</span>
+              <span className="text-xs font-semibold text-emerald-400 mt-2 block">{m.change}</span>
             </div>
           ))}
         </div>
@@ -207,7 +207,7 @@ export default function AdminConsole({ navigate }: Props) {
                     <p className={`text-xs ${darkMode ? "text-neutral-400" : "text-slate-600"}`}>
                       Property: <strong className="text-amber-500">{v.pgName}</strong> • {v.city}
                     </p>
-                    <div className="flex items-center gap-3 text-[11px] text-neutral-400 font-mono pt-1">
+                    <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono pt-1">
                       <span>Aadhaar: {v.aadhaarNumber}</span>
                       <span>•</span>
                       <span>PAN: {v.panNumber}</span>

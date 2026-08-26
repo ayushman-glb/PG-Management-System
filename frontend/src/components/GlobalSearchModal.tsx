@@ -51,10 +51,10 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
   if (!isOpen) return null;
 
-  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[#ffffff] border-[#dddddd] text-[#222222]";
-  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222]";
-  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[#f7f7f7] border-[#dddddd] text-[#222222] placeholder-[#6a6a6a]";
-  const textMuted = darkMode ? "text-neutral-400" : "text-[#6a6a6a]";
+  const modalBg = darkMode ? "bg-neutral-900 border-white/10 text-white" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]";
+  const cardBg = darkMode ? "bg-neutral-800/60 border-white/5 text-white" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]";
+  const inputBg = darkMode ? "bg-neutral-800 border-white/10 text-white placeholder-neutral-500" : "bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)] placeholder-[#6a6a6a]";
+  const textMuted = darkMode ? "text-neutral-400" : "text-[var(--text-muted)]";
 
   return (
     <AnimatePresence>
@@ -86,7 +86,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             {/* Residents */}
             {results.residents.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-bold text-[11px] uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" /> Residents ({results.residents.length})
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -98,7 +98,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                     >
                       <div>
                         <p className="font-bold text-sm">{r.name}</p>
-                        <p className={`text-[11px] ${textMuted}`}>Room: {r.room} • {r.phone}</p>
+                        <p className={`text-xs ${textMuted}`}>Room: {r.room} • {r.phone}</p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-amber-500 opacity-60" />
                     </div>
@@ -110,7 +110,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             {/* Rooms & Beds */}
             {results.rooms.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-bold text-[11px] uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                   <Home className="w-3.5 h-3.5" /> Rooms &amp; Beds ({results.rooms.length})
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -122,7 +122,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                     >
                       <div>
                         <p className="font-bold text-sm">{rm.roomNumber}</p>
-                        <p className={`text-[11px] ${textMuted}`}>{rm.type} • {rm.rent}</p>
+                        <p className={`text-xs ${textMuted}`}>{rm.type} • {rm.rent}</p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-amber-500 opacity-60" />
                     </div>
@@ -134,7 +134,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             {/* Complaints */}
             {results.complaints.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-bold text-[11px] uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5" /> Complaints &amp; Tickets ({results.complaints.length})
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
@@ -146,7 +146,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                     >
                       <div>
                         <p className="font-bold text-sm">{c.ticketCode} - {c.title}</p>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500">{c.status}</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-500">{c.status}</span>
                       </div>
                       <ArrowRight className="w-4 h-4 text-amber-500 opacity-60" />
                     </div>

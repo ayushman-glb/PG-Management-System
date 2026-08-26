@@ -94,7 +94,7 @@ export const NewDeviceNotificationModal: React.FC<NewDeviceNotificationModalProp
                   <h3 className="text-lg font-bold text-white tracking-tight">
                     New Device Sign-in Detected
                   </h3>
-                  <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full uppercase tracking-wider">
+                  <span className="px-2 py-0.5 text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full uppercase tracking-wider">
                     Alert
                   </span>
                 </div>
@@ -122,7 +122,7 @@ export const NewDeviceNotificationModal: React.FC<NewDeviceNotificationModalProp
                 <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 flex items-center gap-2.5">
                   <Monitor className="w-4 h-4 text-neutral-400 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[11px] text-neutral-400">Screen Size</p>
+                    <p className="text-xs text-neutral-400">Screen Size</p>
                     <p className="text-xs font-medium text-neutral-200 truncate">
                       {screenResolution || "Auto-detected"}
                     </p>
@@ -132,7 +132,7 @@ export const NewDeviceNotificationModal: React.FC<NewDeviceNotificationModalProp
                 <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 flex items-center gap-2.5">
                   <Globe className="w-4 h-4 text-neutral-400 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[11px] text-neutral-400">IP Address</p>
+                    <p className="text-xs text-neutral-400">IP Address</p>
                     <p className="text-xs font-mono font-medium text-neutral-200 truncate">
                       {ipAddress || "127.0.0.1"}
                     </p>
@@ -143,7 +143,7 @@ export const NewDeviceNotificationModal: React.FC<NewDeviceNotificationModalProp
               <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[11px] text-neutral-400">Location / Region</p>
+                  <p className="text-xs text-neutral-400">Location / Region</p>
                   <p className="text-xs font-medium text-neutral-200 truncate">
                     {region || "Localhost / Local Dev Environment"}
                   </p>

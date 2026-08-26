@@ -32,7 +32,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const { darkMode } = useTheme();
 
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-all duration-150 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff385c] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none rounded-lg active:scale-[0.98]";
+      "inline-flex items-center justify-center font-medium transition-all duration-150 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none rounded-lg active:scale-[0.98]";
 
     const sizeStyles = {
       sm: "text-xs px-3.5 py-2 min-h-[36px] gap-1.5",
@@ -42,20 +42,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       primary:
-        "bg-[#ff385c] hover:bg-[#e00b41] text-white shadow-sm shadow-rose-500/15 font-semibold",
+        "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white shadow-sm shadow-rose-500/15 font-semibold",
       secondary: darkMode
-        ? "bg-[#1e1e1e] text-[#f7f7f7] border border-[#2e2e2e] hover:bg-[#252525] font-semibold"
-        : "bg-white text-[#222222] border border-[#222222] hover:bg-[#f7f7f7] font-semibold",
-      outline: darkMode
-        ? "bg-transparent text-[#f7f7f7] border border-[#4a4a4a] hover:bg-[#1a1a1a]"
-        : "bg-transparent text-[#222222] border border-[#dddddd] hover:bg-[#f7f7f7]",
+        ? "bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] hover:bg-[var(--bg-nested)] font-semibold"
+        : "bg-white text-[var(--text-main)] border border-[var(--text-main)] hover:bg-[var(--bg-surface)] font-semibold",
+      outline:
+        "bg-transparent text-[var(--text-main)] border border-[var(--border-main)] hover:bg-[var(--bg-surface)]",
       "pill-rausch":
-        "bg-[#ff385c] hover:bg-[#e00b41] text-white rounded-full px-5 py-2 font-semibold shadow-sm",
-      ghost: darkMode
-        ? "bg-transparent text-[#d4d4d8] hover:bg-[#1a1a1a] hover:text-white"
-        : "bg-transparent text-[#222222] hover:bg-[#f7f7f7] hover:text-black",
+        "bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)] text-white rounded-full px-5 py-2 font-semibold shadow-sm",
+      ghost:
+        "bg-transparent text-[var(--text-main)] hover:bg-[var(--bg-surface)]",
       danger:
-        "bg-[#c13515] hover:bg-[#b32505] text-white font-semibold",
+        "bg-rose-600 hover:bg-rose-700 text-white font-semibold",
     };
 
     return (

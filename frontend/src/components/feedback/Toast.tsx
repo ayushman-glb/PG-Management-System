@@ -22,7 +22,7 @@ export const Toast: React.FC<ToastProps> = ({ id, type = "info", message, onClos
   return (
     <div
       className={`flex items-center gap-3 p-4 rounded-xl border shadow-lg transition-all duration-300 ${
-        darkMode ? "bg-[#2A2725] border-[#2e2e2e] text-[#f7f7f7]" : "bg-white border-[#dddddd] text-[#222222]"
+        darkMode ? "bg-[#2A2725] border-[var(--border-main)] text-[var(--text-main)]" : "bg-white border-[var(--border-main)] text-[var(--text-main)]"
       }`}
     >
       {iconMap[type]}

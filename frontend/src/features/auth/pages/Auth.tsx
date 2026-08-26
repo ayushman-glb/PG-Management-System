@@ -542,9 +542,9 @@ export default function Auth({ navigate }: Props) {
   const isSignUp = mode === "register";
 
   return (
-    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-white text-[#222222]"}`}>
+    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] text-[var(--text-main)]"}`}>
       {/* Top Header Bar */}
-      <header className="w-full px-6 py-4 flex items-center justify-between z-30 border-b border-[#ebebeb] dark:border-[#242424]">
+      <header className="w-full px-6 py-4 flex items-center justify-between z-30 border-b border-[var(--border-subtle)]">
         <Logo onClick={() => navigate("landing")} />
 
         <div className="flex items-center gap-3">
@@ -556,8 +556,8 @@ export default function Auth({ navigate }: Props) {
       {/* Main Split Authentication Container */}
       <main className="flex-1 flex items-center justify-center p-4 md:p-8 lg:p-12 relative overflow-hidden">
         {/* Background Ambient Glow Orbs */}
-        <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#ff385c]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#ff385c]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-10 w-96 h-96 bg-[var(--brand-primary)]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[var(--brand-primary)]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-6xl relative z-10">
           {/* Incomplete Signup Resume Alert Banner */}
@@ -565,20 +565,20 @@ export default function Auth({ navigate }: Props) {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-2xl bg-[#ff385c]/10 border border-[#ff385c]/30 text-[#ff385c] text-xs font-semibold flex items-center justify-between gap-3 shadow-sm backdrop-blur-md"
+              className="mb-6 p-4 rounded-2xl bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 text-[var(--brand-primary)] text-xs font-semibold flex items-center justify-between gap-3 shadow-sm backdrop-blur-md"
             >
               <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-[#ff385c] shrink-0" />
+                <Sparkles className="w-5 h-5 text-[var(--brand-primary)] shrink-0" />
                 <div>
                   <span className="font-extrabold block">Incomplete Signup Draft Detected</span>
-                  <span className="text-[11px] text-[#6a6a6a] dark:text-[#a1a1aa]">Resume from where you left off as {incompleteDraft.fullName || "User"}.</span>
+                  <span className="text-xs text-[var(--text-muted)]">Resume from where you left off as {incompleteDraft.fullName || "User"}.</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={resumeIncompleteSignup}
-                  className="px-3.5 py-1.5 rounded-full bg-[#ff385c] text-white font-semibold text-xs shadow-sm hover:bg-[#e00b41] transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-[var(--brand-primary)] text-white font-semibold text-xs shadow-sm hover:bg-[var(--brand-primary-hover)] transition-all cursor-pointer"
                 >
                   Resume
                 </button>
@@ -613,7 +613,7 @@ export default function Auth({ navigate }: Props) {
             >
               <div className="relative z-10 space-y-8">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white border border-white/20 text-xs font-mono font-bold">
-                  <ShieldCheck className="w-4 h-4 text-[#ff385c]" />
+                  <ShieldCheck className="w-4 h-4 text-[var(--brand-primary)]" />
                   <span>256-BIT ENCRYPTED PLATFORM</span>
                 </div>
 
@@ -636,7 +636,7 @@ export default function Auth({ navigate }: Props) {
                     "AES-256-GCM Financial Data Encryption",
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-[#ff385c]/20 text-[#ff385c] rounded-full flex items-center justify-center shrink-0 border border-[#ff385c]/30">
+                      <div className="w-5 h-5 bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] rounded-full flex items-center justify-center shrink-0 border border-[var(--brand-primary)]/30">
                         <Check className="w-3 h-3" />
                       </div>
                       <span className="text-white/90 text-xs font-medium">{item}</span>
@@ -652,8 +652,8 @@ export default function Auth({ navigate }: Props) {
                   { value: "99.9%", label: "Uptime" },
                 ].map((s) => (
                   <div key={s.label} className="bg-white/5 backdrop-blur-md rounded-2xl p-3 text-center border border-white/10">
-                    <p className="text-xl font-bold text-[#ff385c]">{s.value}</p>
-                    <p className="text-white/70 text-[10px] mt-0.5 font-medium">{s.label}</p>
+                    <p className="text-xl font-bold text-[var(--brand-primary)]">{s.value}</p>
+                    <p className="text-white/70 text-xs mt-0.5 font-medium">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -665,7 +665,7 @@ export default function Auth({ navigate }: Props) {
               transition={{ type: "spring", stiffness: 220, damping: 28 }}
               className={`lg:col-span-7 ${isSignUp ? "order-2 lg:order-1" : "order-2 lg:order-2"}`}
             >
-              <div className={`rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xl border ${darkMode ? "bg-[#1e1e1e] border-[#2e2e2e]" : "bg-white border-[#dddddd]"}`}>
+              <div className={`rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xl border ${darkMode ? "bg-[var(--bg-card)] border-[var(--border-main)]" : "bg-white border-[var(--border-main)]"}`}>
                 
                 {/* Global Status Messages */}
                 {authSuccessMsg && (
@@ -714,7 +714,7 @@ export default function Auth({ navigate }: Props) {
                     >
                       <div className="mb-6">
                         <h2 className="text-2xl lg:text-3xl font-black">Welcome Back</h2>
-                        <p className={`text-xs mt-1 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+                        <p className={`text-xs mt-1 ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
                           Enter your credentials to access your portal or dashboard
                         </p>
                       </div>
@@ -735,7 +735,7 @@ export default function Auth({ navigate }: Props) {
 
                       {/* Quick Test Demo Account Fill Pill */}
                       <div className="mb-4 flex items-center justify-between px-1">
-                        <span className="text-[11px] font-medium text-neutral-400">Authoritative Demo:</span>
+                        <span className="text-xs font-medium text-neutral-400">Authoritative Demo:</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -750,7 +750,7 @@ export default function Auth({ navigate }: Props) {
                               setLoginPassword("god@3456");
                             }
                           }}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                         >
                           ⚡ Fill {loginRole === "resident" ? "Resident (Ankur)" : loginRole === "admin" ? "Admin (GOD)" : "PG Owner (Ayushman)"}
                         </button>
@@ -769,7 +769,7 @@ export default function Auth({ navigate }: Props) {
                               onChange={(e) => setLoginIdentifier(e.target.value)}
                               placeholder={loginRole === "resident" ? "RES1001 or resident@roombae.com" : loginRole === "admin" ? "admin@roombae.com" : "owner@roombae.com"}
                               className={`w-full px-4 py-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                                darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+                                darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                               }`}
                             />
                             <Mail className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -795,7 +795,7 @@ export default function Auth({ navigate }: Props) {
                               onChange={(e) => setLoginPassword(e.target.value)}
                               placeholder="••••••••"
                               className={`w-full px-4 py-3 rounded-xl border text-sm pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                                darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+                                darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                               }`}
                             />
                             <button
@@ -832,9 +832,9 @@ export default function Auth({ navigate }: Props) {
                       </form>
 
                       <div className="flex items-center gap-3 my-6">
-                        <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
+                        <div className={`flex-1 h-px ${darkMode ? "bg-[var(--border-main)]" : "bg-[var(--border-main)]"}`} />
                         <span className="text-xs font-semibold text-slate-400">OR</span>
-                        <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
+                        <div className={`flex-1 h-px ${darkMode ? "bg-[var(--border-main)]" : "bg-[var(--border-main)]"}`} />
                       </div>
 
                       <button
@@ -951,9 +951,9 @@ export default function Auth({ navigate }: Props) {
                           </div>
 
                           <div className="flex items-center gap-3 my-4">
-                            <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
+                            <div className={`flex-1 h-px ${darkMode ? "bg-[var(--border-main)]" : "bg-[var(--border-main)]"}`} />
                             <span className="text-xs font-semibold text-slate-400">OR</span>
-                            <div className={`flex-1 h-px ${darkMode ? "bg-[#2e2e2e]" : "bg-[#dddddd]"}`} />
+                            <div className={`flex-1 h-px ${darkMode ? "bg-[var(--border-main)]" : "bg-[var(--border-main)]"}`} />
                           </div>
 
                           <button
@@ -1052,7 +1052,7 @@ export default function Auth({ navigate }: Props) {
                                   type="button"
                                   onClick={handleSendEmailVerification}
                                   disabled={!isValidEmail || isEmailLoading || isEmailVerified}
-                                  className={`px-3 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
+                                  className={`px-3 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
                                     isEmailVerified
                                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                       : "bg-amber-500 text-black hover:bg-amber-400"
@@ -1080,7 +1080,7 @@ export default function Auth({ navigate }: Props) {
                                   </button>
                                 </div>
                               )}
-                              {emailError && <p className="text-rose-500 text-[10px] mt-1">{emailError}</p>}
+                              {emailError && <p className="text-rose-500 text-xs mt-1">{emailError}</p>}
                             </div>
 
                             <div>
@@ -1102,7 +1102,7 @@ export default function Auth({ navigate }: Props) {
                                   type="button"
                                   onClick={handleSendPhoneOtp}
                                   disabled={!isValidPhone || isPhoneLoading || isPhoneVerified}
-                                  className={`px-3 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
+                                  className={`px-3 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
                                     isPhoneVerified
                                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                       : "bg-amber-500 text-black hover:bg-amber-400"
@@ -1131,13 +1131,13 @@ export default function Auth({ navigate }: Props) {
                                   <button
                                     type="button"
                                     onClick={() => setIsPhoneModalOpen(true)}
-                                    className="text-[11px] text-amber-500 hover:underline cursor-pointer"
+                                    className="text-xs text-amber-500 hover:underline cursor-pointer"
                                   >
                                     Open Modal
                                   </button>
                                 </div>
                               )}
-                              {phoneAuthError && <p className="text-rose-500 text-[10px] mt-1">{phoneAuthError}</p>}
+                              {phoneAuthError && <p className="text-rose-500 text-xs mt-1">{phoneAuthError}</p>}
                             </div>
                           </div>
 
@@ -1190,7 +1190,7 @@ export default function Auth({ navigate }: Props) {
 
                           {/* Password Strength Rules */}
                           {password.length > 0 && (
-                            <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-700/60 grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px]">
+                            <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-700/60 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                               <span className={passLength ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 8+ Chars</span>
                               <span className={passUpper ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Uppercase</span>
                               <span className={passLower ? "text-emerald-400 font-bold" : "text-slate-400"}>✓ 1 Lowercase</span>
@@ -1284,7 +1284,7 @@ export default function Auth({ navigate }: Props) {
                                 value={addressProofPdf}
                                 onChange={setAddressProofPdf}
                               />
-                              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] font-semibold text-amber-400 flex items-center gap-2">
+                              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-semibold text-amber-400 flex items-center gap-2">
                                 <Lock className="w-4 h-4 shrink-0" />
                                 <span>Financial &amp; Settlement Details (AES-256-GCM Encrypted Server-Side)</span>
                               </div>
@@ -1365,7 +1365,7 @@ export default function Auth({ navigate }: Props) {
                                 onChange={(e) => setAgreeTerms(e.target.checked)}
                                 className="w-4 h-4 mt-0.5 rounded accent-amber-500 cursor-pointer shrink-0"
                               />
-                              <span className="text-[11px] leading-tight text-slate-400">
+                              <span className="text-xs leading-tight text-slate-400">
                                 I agree to the <span className="text-amber-500 font-bold hover:underline">Terms &amp; Conditions</span> and <span className="text-amber-500 font-bold hover:underline">Privacy Policy</span>. I verify that all uploaded documents and financial details are authentic.
                               </span>
                             </label>
@@ -1417,7 +1417,7 @@ export default function Auth({ navigate }: Props) {
                     >
                       <div>
                         <h2 className="text-2xl font-black">Reset Password</h2>
-                        <p className={`text-xs mt-1 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+                        <p className={`text-xs mt-1 ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
                           Enter your registered email address to receive password recovery instructions.
                         </p>
                       </div>
@@ -1430,7 +1430,7 @@ export default function Auth({ navigate }: Props) {
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="name@roombae.com"
                           className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                            darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+                            darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                           }`}
                         />
                       </div>
@@ -1473,7 +1473,7 @@ export default function Auth({ navigate }: Props) {
                           <ShieldCheck className="w-5 h-5" />
                         </div>
                         <h2 className="text-2xl font-black">Two-Factor Verification</h2>
-                        <p className={`text-xs ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+                        <p className={`text-xs ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
                           Enter the 6-digit verification code from your Authenticator app (Google Authenticator, Authy, etc.).
                         </p>
                       </div>
@@ -1489,7 +1489,7 @@ export default function Auth({ navigate }: Props) {
                             onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
                             placeholder="123456"
                             className={`w-full px-4 py-3 rounded-xl border text-center text-xl tracking-[0.5em] font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 ${
-                              darkMode ? "bg-[#121212] border-[#2e2e2e] text-[#f7f7f7]" : "bg-[#ffffff] border-[#dddddd] text-[#222222]"
+                              darkMode ? "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)] text-[var(--text-main)]"
                             }`}
                           />
                         </div>

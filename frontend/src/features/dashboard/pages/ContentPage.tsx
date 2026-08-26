@@ -293,14 +293,14 @@ export default function ContentPage({ navigate, page }: Props) {
   return (
     <div
       className={`min-h-screen font-sans transition-colors duration-300 ${
-        darkMode ? "bg-[#121212] text-[#f7f7f7]" : "bg-[#ffffff] text-[#222222]"
+        darkMode ? "bg-[var(--bg-primary)] text-[var(--text-main)]" : "bg-[var(--bg-primary)] text-[var(--text-main)]"
       }`}
     >
       <header
         className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
           darkMode
-            ? "bg-[#252525]/90 border-[#2e2e2e]"
-            : "bg-[#ffffff]/80 border-[#dddddd]/70"
+            ? "bg-[var(--bg-nested)]/90 border-[var(--border-main)]"
+            : "bg-[var(--bg-primary)]/80 border-[var(--border-main)]/70"
         } px-4 py-4 md:px-6 md:py-5`}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
@@ -322,7 +322,7 @@ export default function ContentPage({ navigate, page }: Props) {
             </span>
             <span
               className={`font-bold ${
-                darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
+                darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
               }`}
             >
               RoomBae
@@ -339,22 +339,22 @@ export default function ContentPage({ navigate, page }: Props) {
           <div
             className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
               darkMode
-                ? "border-[#2e2e2e] bg-[#1e1e1e] text-[#ff385c]"
-                : "border-[#dddddd] bg-[#f7f7f7] text-[#ff385c]"
+                ? "border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--brand-primary)]"
+                : "border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--brand-primary)]"
             }`}
           >
             <Icon className="h-3.5 w-3.5" /> {content.eyebrow}
           </div>
           <h1
             className={`text-4xl font-black leading-tight md:text-6xl ${
-              darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
+              darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
             }`}
           >
             {content.title}
           </h1>
           <p
             className={`mt-6 max-w-2xl text-lg leading-relaxed ${
-              darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"
+              darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"
             }`}
           >
             {content.description}
@@ -369,29 +369,29 @@ export default function ContentPage({ navigate, page }: Props) {
               key={title}
               className={` p-6 rounded-2xl border transition-all ${
                 darkMode
-                  ? "bg-[#1e1e1e] border-[#2e2e2e]"
-                  : "bg-[#ffffff] border-[#dddddd]"
+                  ? "bg-[var(--bg-card)] border-[var(--border-main)]"
+                  : "bg-[var(--bg-primary)] border-[var(--border-main)]"
               }`}
             >
               <div
                 className={`mb-6 flex h-10 w-10 items-center justify-center rounded-xl ${
                   darkMode
-                    ? "bg-[#252525] text-[#ff385c]"
-                    : "bg-[#f7f7f7] text-[#ff385c]"
+                    ? "bg-[var(--bg-nested)] text-[var(--brand-primary)]"
+                    : "bg-[var(--bg-surface)] text-[var(--brand-primary)]"
                 }`}
               >
                 <CheckCircle className="h-5 w-5" />
               </div>
               <h2
                 className={`font-bold ${
-                  darkMode ? "text-[#f7f7f7]" : "text-[#222222]"
+                  darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"
                 }`}
               >
                 {title}
               </h2>
               <p
                 className={`mt-2 text-sm leading-relaxed ${
-                  darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"
+                  darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"
                 }`}
               >
                 {description}
@@ -420,8 +420,8 @@ export default function ContentPage({ navigate, page }: Props) {
               onClick={() => navigate("auth")}
               className={`mt-7 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-transform hover:scale-105 shadow-md ${
                 darkMode
-                  ? "bg-[#121212] text-[#E8C98A]"
-                  : "bg-[#ffffff] text-[#ff385c]"
+                  ? "bg-[var(--bg-primary)] text-[#E8C98A]"
+                  : "bg-[var(--bg-primary)] text-[var(--brand-primary)]"
               }`}
             >
               Start free trial <ArrowRight className="h-4 w-4" />

@@ -239,7 +239,7 @@ export default function Complaints({ navigate }: Props) {
                       }
                       onDragEnd={() => setDragging(null)}
                       onClick={() => setSelected(complaint)}
-                      className={`rounded-xl border p-4 cursor-pointer transition-all select-none focus-visible:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 hover:border-[#ff385c] hover:shadow-lg focus-visible:ring-[#ff385c]" : "bg-white border-slate-100 hover:border-[#ff385c] hover:shadow-md focus-visible:ring-[#ff385c]"}`}
+                      className={`rounded-xl border p-4 cursor-pointer transition-all select-none focus-visible:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 hover:border-[var(--brand-primary)] hover:shadow-lg focus-visible:ring-[var(--brand-primary)]" : "bg-white border-slate-100 hover:border-[var(--brand-primary)] hover:shadow-md focus-visible:ring-[var(--brand-primary)]"}`}
                       tabIndex={0}
                       role="button"
                       aria-label={`View complaint: ${complaint.title}`}
@@ -454,7 +454,7 @@ export default function Complaints({ navigate }: Props) {
               className={`flex items-center justify-between px-6 py-5 border-b ${darkMode ? "border-slate-700" : "border-slate-100"}`}
             >
               <h3
-                className={`font-bold ${darkMode ? "text-[#f7f7f7]" : "text-[#222222]"}`}
+                className={`font-bold ${darkMode ? "text-[var(--text-main)]" : "text-[var(--text-main)]"}`}
               >
                 New Complaint
               </h3>
@@ -479,7 +479,7 @@ export default function Complaints({ navigate }: Props) {
                   <input
                     type="text"
                     placeholder={f.placeholder}
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[#ff385c]" : "border-slate-200 text-slate-800 focus:ring-[#ff385c]"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[var(--brand-primary)]" : "border-slate-200 text-slate-800 focus:ring-[var(--brand-primary)]"}`}
                   />
                 </div>
               ))}
@@ -492,7 +492,7 @@ export default function Complaints({ navigate }: Props) {
                 <textarea
                   rows={3}
                   placeholder="Detailed description..."
-                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 resize-none ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[#ff385c]" : "border-slate-200 text-slate-800 focus:ring-[#ff385c]"}`}
+                  className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 resize-none ${darkMode ? "bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:ring-[var(--brand-primary)]" : "border-slate-200 text-slate-800 focus:ring-[var(--brand-primary)]"}`}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -503,7 +503,7 @@ export default function Complaints({ navigate }: Props) {
                     Priority
                   </label>
                   <select
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white focus:ring-[#ff385c]" : "bg-white border-slate-200 focus:ring-[#ff385c]"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white focus:ring-[var(--brand-primary)]" : "bg-white border-slate-200 focus:ring-[var(--brand-primary)]"}`}
                   >
                     <option>High</option>
                     <option>Medium</option>
@@ -517,7 +517,7 @@ export default function Complaints({ navigate }: Props) {
                     Category
                   </label>
                   <select
-                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white focus:ring-[#ff385c]" : "bg-white border-slate-200 focus:ring-[#ff385c]"}`}
+                    className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-slate-700 border-slate-600 text-white focus:ring-[var(--brand-primary)]" : "bg-white border-slate-200 focus:ring-[var(--brand-primary)]"}`}
                   >
                     <option>Plumbing</option>
                     <option>Electrical</option>

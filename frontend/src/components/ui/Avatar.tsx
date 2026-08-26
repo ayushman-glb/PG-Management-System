@@ -11,7 +11,7 @@ export interface AvatarProps {
 }
 
 const sizeClasses = {
-  xs: "w-6 h-6 text-[10px]",
+  xs: "w-6 h-6 text-xs",
   sm: "w-8 h-8 text-xs",
   md: "w-9 h-9 text-xs",
   lg: "w-10 h-10 text-sm font-bold",
@@ -113,7 +113,7 @@ export function Avatar({
           className={`
             absolute bottom-0 right-0 rounded-full border-2
             ${size === "xs" || size === "sm" ? "w-2.5 h-2.5" : "w-3 h-3"}
-            ${darkMode ? "border-[#121212]" : "border-white"}
+            ${darkMode ? "border-[var(--bg-primary)]" : "border-white"}
             ${isOnline ? "bg-emerald-500" : "bg-amber-500"}
           `}
         />
@@ -165,8 +165,8 @@ export function AvatarThemeSelector() {
   ];
 
   return (
-    <div className={`p-3 rounded-xl border ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}>
-      <p className={`text-xs font-semibold mb-2.5 ${darkMode ? "text-[#a1a1aa]" : "text-[#6a6a6a]"}`}>
+    <div className={`p-3 rounded-xl border ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"}`}>
+      <p className={`text-xs font-semibold mb-2.5 ${darkMode ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
         Avatar Color Theme
       </p>
       <div className="flex items-center gap-2 flex-wrap">
@@ -181,11 +181,11 @@ export function AvatarThemeSelector() {
                 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all
                 ${isSelected
                   ? darkMode
-                    ? "bg-[#1e1e1e] text-[#f7f7f7] ring-2 ring-[#ff385c]"
-                    : "bg-[#f7f7f7] text-[#222222] ring-2 ring-[#ff385c]"
+                    ? "bg-[var(--bg-card)] text-[var(--text-main)] ring-2 ring-[var(--brand-primary)]"
+                    : "bg-[var(--bg-surface)] text-[var(--text-main)] ring-2 ring-[var(--brand-primary)]"
                   : darkMode
-                    ? "text-[#6a6a6a] hover:text-[#f7f7f7] hover:bg-[#1e1e1e]"
-                    : "text-[#6a6a6a] hover:text-[#222222] hover:bg-[#f7f7f7]"
+                    ? "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-surface)]"
                 }
               `}
             >

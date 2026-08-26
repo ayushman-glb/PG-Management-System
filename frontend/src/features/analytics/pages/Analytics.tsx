@@ -220,8 +220,8 @@ export default function Analytics({ navigate }: Props) {
               change: `${growthPct >= 0 ? "+" : ""}${growthPct.toFixed(1)}%`,
               up: growthPct >= 0,
               icon: CreditCard,
-              color: "text-[#ff385c] dark:text-[#ff385c]",
-              bg: "bg-[#ff385c]/10 border-[#ff385c]/20",
+              color: "text-[var(--brand-primary)] dark:text-[var(--brand-primary)]",
+              bg: "bg-[var(--brand-primary)]/10 border-[var(--brand-primary)]/20",
             },
             {
               label: "Avg Occupancy",
@@ -247,15 +247,15 @@ export default function Analytics({ navigate }: Props) {
               change: "+34%",
               up: true,
               icon: TrendingUp,
-              color: "text-[#ff385c] dark:text-[#ff385c]",
-              bg: "bg-[#ff385c]/10 border-[#ff385c]/20",
+              color: "text-[var(--brand-primary)] dark:text-[var(--brand-primary)]",
+              bg: "bg-[var(--brand-primary)]/10 border-[var(--brand-primary)]/20",
             },
           ].map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.label}
-                className={`bento-card bento-card-interactive p-5 ${darkMode ? "bg-[#252525] border-[#2e2e2e]" : "bg-[#ffffff] border-[#dddddd]"}`}
+                className={`bento-card bento-card-interactive p-5 ${darkMode ? "bg-[var(--bg-nested)] border-[var(--border-main)]" : "bg-[var(--bg-primary)] border-[var(--border-main)]"}`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div
@@ -280,7 +280,7 @@ export default function Analytics({ navigate }: Props) {
                   {s.value}
                 </p>
                 <p
-                  className={`text-xs mt-0.5 ${darkMode ? "text-[#a1a1aa]" : "text-slate-500"}`}
+                  className={`text-xs mt-0.5 ${darkMode ? "text-[var(--text-muted)]" : "text-slate-500"}`}
                 >
                   {s.label}
                 </p>
@@ -309,7 +309,7 @@ export default function Analytics({ navigate }: Props) {
               className={`flex items-center gap-4 text-xs ${darkMode ? "text-slate-400" : "text-slate-600"}`}
             >
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 bg-[#ff385c] rounded-full inline-block" />{" "}
+                <span className="w-3 h-1.5 bg-[var(--brand-primary)] rounded-full inline-block" />{" "}
                 Actual
               </span>
               <span className="flex items-center gap-1.5">
@@ -685,7 +685,7 @@ export default function Analytics({ navigate }: Props) {
               >
                 Vacancy Prediction
               </h3>
-              <span className="text-xs bg-[#f7f7f7] text-[#ff385c] font-bold px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-[var(--bg-surface)] text-[var(--brand-primary)] font-bold px-2 py-0.5 rounded-full">
                 AI
               </span>
             </div>

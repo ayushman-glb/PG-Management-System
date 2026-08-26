@@ -9,3 +9,4 @@ export * from "./Logo";
 export * from "./SearchPill";
 export * from "./CategoryStrip";
 export * from "./PropertyCard";
+export * from "./NewBadge";
