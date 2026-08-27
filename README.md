@@ -15,8 +15,7 @@
 
 **Production-grade, zero-trust multi-tenant SaaS ecosystem designed for modern Paying Guest (PG) hostels, coliving facilities, and property operators.**
 
-[Live Application (Vercel)](https://pg-management-system.vercel.app) • [Interactive Web Preview (GitHub Pages)](https://ayushman-glb.github.io/PG-Management-System/) • [Production REST API](https://pg-management-system-boxb.onrender.com/api/v1) • [API Swagger Docs](https://pg-management-system-boxb.onrender.com/api/docs) • [Master Credentials](./USER_CREDENTIALS.md)
-
+[Live Application (Vercel)](https://pg-management-system-chi.vercel.app) • [Interactive Web Preview (GitHub Pages)](https://ayushman-glb.github.io/PG-Management-System/) • [Production REST API](https://pg-management-system-boxb.onrender.com/api/v1) • [API Swagger Docs](https://pg-management-system-boxb.onrender.com/api/docs)
 </div>
 
 ---
@@ -77,45 +76,52 @@ The platform provides a unified dual-experience interface:
 ## ⚡ Key Features
 
 ### 1. Public Discovery & Resident Acquisition
+
 - **Location-Based Search**: Real-time property search powered by Geoapify geocoding, locality matching, and city filters.
 - **Dynamic Filtering**: Filter by gender accommodation (`BOYS`, `GIRLS`, `CO_LIVING`), room sharing type (`SINGLE`, `DOUBLE`, `TRIPLE`, `FOUR_SHARING`), budget range, and amenity tags.
 - **Shortlisting & Tour Scheduling**: Save favorite properties and schedule physical or virtual property walkthroughs with calendar slot management.
 - **Digital Resident Registration**: Multi-step online application flow capturing applicant profile, emergency contacts, occupation, and identification documents.
 
 ### 2. Resident Portal & Tenancy Lifecycle
+
 - **Tenant Self-Service Dashboard**: Real-time overview of current room assignment, active booking status, upcoming dues, and notifications.
 - **Digital Tenancy Agreements**: In-browser agreement review with e-signatures (drawn, typed, or uploaded) generating downloadable PDF contracts.
 - **KYC & Document Center**: Secure upload pipeline for Aadhaar, PAN card, college/corporate ID, and police verification documents with review status tracking.
 - **Visitor & Gate Passes**: Digital visitor pass requests and overnight exit pass generation with QR code check-ins.
 
 ### 3. Automated Invoicing & Financial Operations
+
 - **Rent Scheduler & Invoicing Engine**: Automated monthly invoice generation with itemized rent, utility charges, meal plans, and 18% GST calculation.
 - **Late Fine Automation**: Configurable grace periods and automated late fee assessments.
 - **Integrated Payments**: Online checkout via Razorpay alongside offline manual UPI/bank transfer verification workflows.
 - **Refund & Security Deposit Tracking**: Complete settlement workflow for security deposits and move-out refunds.
 
 ### 4. Maintenance & Helpdesk Ticketing
+
 - **Categorized Issue Tracking**: Tickets classified by category (`MAINTENANCE`, `CLEANLINESS`, `FOOD`, `WIFI`, `SECURITY`, `BILLING`) and priority (`LOW`, `MEDIUM`, `HIGH`, `URGENT`).
 - **Real-Time Ticket Threads**: Interactive conversation logs between residents and property maintenance teams for each ticket.
 - **State Machine Workflow**: Managed ticket lifecycle from `OPEN` → `ACKNOWLEDGED` → `IN_PROGRESS` → `RESOLVED` → `CLOSED`.
 
 ### 5. Owner & Inventory Operations Workspace
+
 - **Hierarchical Inventory Matrix**: Visual room and bed allocation grid mapping across Properties → Floors → Rooms → Beds (`AVAILABLE`, `OCCUPIED`, `RESERVED`, `MAINTENANCE`).
 - **10-Step PG Onboarding**: Comprehensive wizard for property creation, floor plans, room pricing, meal schedules, house rules, and KYC approval requests.
 - **P&L Financial Analytics**: Revenue breakdowns, collection trends, occupancy rates, and operational expense logs (electricity, groceries, staff salaries, internet, maintenance).
 - **Subscription Management**: Integrated SaaS billing tiers (`BASIC`, `PROFESSIONAL`, `ENTERPRISE`) with property limits and automated renewal tracking.
 
 ### 6. Platform Administration & Moderation
+
 - **Master Admin Console ("GOD" View)**: Global oversight of all registered users, owner KYC approvals, property verification, and system metrics.
 - **Audit Logging**: Comprehensive trace logs recording user actions, role changes, and financial modifications with IP and device correlation IDs.
 
 ### 7. Real-Time WebSockets & Background Automation
+
 - **Socket.IO Real-Time Pipeline**: Instant delivery of direct chat messages, ticket updates, payment notifications, and system announcements.
 - **Scheduled Cron Workers**: Daily Node-Cron jobs handling automated rent invoice generation, payment due reminders, overdue fine calculations, and session cleanups.
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠 Technology Stack
 
 | Domain | Technology | Description |
 | :--- | :--- | :--- |
@@ -139,7 +145,7 @@ The platform provides a unified dual-experience interface:
 
 ---
 
-## 🏛️ System Architecture
+## 🏛 System Architecture
 
 ### High-Level Architecture
 
@@ -320,6 +326,7 @@ Ensure the following runtimes are installed on your workstation:
 - **Git**: Latest version
 
 Verify your environment:
+
 ```bash
 node -v
 npm -v
@@ -330,13 +337,16 @@ npm -v
 ### Installation
 
 1. **Clone the Repository**:
+
    ```bash
    git clone https://github.com/ayushman-glb/PG-Management-System.git
    cd PG-Management-System
    ```
 
 2. **Install All Dependencies**:
+
    Install root, backend, and frontend packages:
+
    ```bash
    # Install root dependencies
    npm install
@@ -355,15 +365,19 @@ npm -v
 Create the local configuration files for both services from the provided templates:
 
 1. **Backend Environment Setup**:
+
    ```bash
    cp backend/.env.example backend/.env.development
    ```
+
    *Edit `backend/.env.development` and ensure `DATABASE_URL` points to a valid MongoDB connection string.*
 
 2. **Frontend Environment Setup**:
+
    ```bash
    cp frontend/.env.example frontend/.env.development
    ```
+
    *For local development, `VITE_API_BASE_URL` defaults to `http://localhost:5000/api/v1` and `VITE_SOCKET_URL` to `http://localhost:5000`.*
 
 ---
@@ -371,24 +385,30 @@ Create the local configuration files for both services from the provided templat
 ### Database Setup & Seed Data
 
 1. **Generate Prisma Client**:
+
    ```bash
    cd backend
    npm run prisma:generate
    ```
 
 2. **Push Schema to MongoDB**:
+
    ```bash
    npm run prisma:push
    ```
 
 3. **Seed Master Multi-Tenant Demo Data**:
+
    Populate the database with realistic properties, rooms, beds, residents, agreements, invoices, and payment histories:
+
    ```bash
    npm run db:seed:demo
    ```
 
 4. **Verify Seeded Credentials**:
+
    Run the automated login verification check:
+
    ```bash
    npm run verify:seeded-logins
    cd ..
@@ -401,6 +421,7 @@ Create the local configuration files for both services from the provided templat
 You can launch the backend and frontend services from the root directory or within their respective folders:
 
 #### Option A: Running from Root (Recommended)
+
 ```bash
 # Terminal 1 — Start Backend Server (port 5000)
 npm run dev:backend
@@ -412,6 +433,7 @@ npm run dev:frontend
 #### Option B: Running Individually
 
 **Backend**:
+
 ```bash
 cd backend
 npm run dev
@@ -421,6 +443,7 @@ npm run dev
 ```
 
 **Frontend**:
+
 ```bash
 cd frontend
 npm run dev
@@ -579,8 +602,8 @@ All REST routes are mounted under the `/api/v1` prefix. Interactive API document
 | **Complaints** | `/api/v1/complaints` | `GET /`, `POST /`, `PATCH /:id/status`, `POST /:id/messages` | Issue tickets, priority assignment, and threaded discussion | Yes |
 | **Direct Messaging** | `/api/v1/messages` | `GET /threads`, `POST /send`, `GET /threads/:id` | Live resident-to-owner messaging channels | Yes |
 | **Move-In Workflow** | `/api/v1/move-in` | `GET /checklist`, `POST /submit-inspection`, `POST /handover-keys` | Move-in inspection verification and key handover | Yes |
-| **Subscriptions** | `/api/v1/subscriptions`| `GET /plans`, `POST /subscribe`, `GET /my-subscription` | Owner SaaS tier management and billing cycles | Yes |
-| **Notifications** | `/api/v1/notifications`| `GET /`, `PATCH /:id/read`, `PUT /preferences` | In-app notification center and delivery preferences | Yes |
+| **Subscriptions** | `/api/v1/subscriptions` | `GET /plans`, `POST /subscribe`, `GET /my-subscription` | Owner SaaS tier management and billing cycles | Yes |
+| **Notifications** | `/api/v1/notifications` | `GET /`, `PATCH /:id/read`, `PUT /preferences` | In-app notification center and delivery preferences | Yes |
 | **Analytics** | `/api/v1/analytics` | `GET /revenue`, `GET /occupancy`, `GET /expenses` | Financial P&L reports, expense records, and occupancy trends | Yes (`PG_OWNER` / `ADMIN`) |
 | **Admin Console** | `/api/v1/admin` | `GET /users`, `PATCH /users/:id/status`, `GET /audit-logs`, `GET /kyc-pending` | Platform-wide user moderation, KYC approvals, and system audit logs | Yes (`ADMIN`) |
 | **Media Uploads** | `/api/v1/uploads` | `POST /image`, `POST /document` | Multer + Sharp + Cloudinary image and document pipeline | Yes |
@@ -593,6 +616,7 @@ All REST routes are mounted under the `/api/v1` prefix. Interactive API document
 RoomBae maintains multi-layered test coverage across unit, integration, and browser end-to-end suites:
 
 ### Running Backend Tests (Jest)
+
 ```bash
 cd backend
 
@@ -613,6 +637,7 @@ npm run test:qa
 ```
 
 ### Running Frontend Tests (Vitest & Playwright)
+
 ```bash
 cd frontend
 
@@ -656,6 +681,7 @@ kubectl apply -f k8s/deployment.yaml
 ```
 
 The configuration includes:
+
 - **Replica Scaling**: 3 minimum replicas with auto-scaling up to 20 pods based on CPU (70%) and Memory (80%) utilization.
 - **Health Probes**: Configured `/live` and `/ready` probes for automated zero-downtime rolling updates.
 - **Resource Constraints**: Requests (250m CPU, 512Mi Memory) and limits (1000m CPU, 2Gi Memory).
@@ -699,18 +725,25 @@ The configuration includes:
 ## 🤝 Contributing
 
 1. **Fork the Repository** on GitHub.
+
 2. **Create a Feature Branch**:
+
    ```bash
    git checkout -b feature/YourFeatureName
    ```
+
 3. **Commit Your Changes**:
+
    ```bash
    git commit -m "feat(module): add new functionality"
    ```
+
 4. **Push to Your Branch**:
+
    ```bash
    git push origin feature/YourFeatureName
    ```
+
 5. **Open a Pull Request** with a summary of the implemented changes and test results.
 
 ---
